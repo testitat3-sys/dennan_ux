@@ -1,0 +1,62 @@
+:root {
+  /* ─── Colors ────────────────────────────────────────────────────── */
+  --color-brand-primary: #d35097;
+  --color-brand-primary-dark: #a63e74;
+  --color-brand-primary-light: #f07fb8;
+  --color-brand-secondary: #832c7a;
+  --color-brand-accent: #e1d328;
+
+  --color-anchor: #111111;
+  --color-on-primary: #ffffff;
+  --color-gallery-white: #ffffff;
+
+  --color-support-blue: #4dbee3;
+  --color-support-green: #7fa93e;
+  --color-support-red: #e53e3e;
+
+  --text-primary: var(--color-anchor);
+  --text-secondary: #555555;
+  --text-tertiary: #888888;
+
+  /* ─── Surfaces ──────────────────────────────────────────────────── */
+  --surface: #ffffff;
+  --surface-container-low: #faf9f8;
+  --surface-container: #f4f2f0;
+  --surface-container-high: #ede9e5;
+  --surface-container-highest: #e5e0db;
+
+  /* ─── Typography ────────────────────────────────────────────────── */
+  --font-editorial: 'Newsreader', serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  --display-lg: 3.5rem;
+  --headline-md: 1.75rem;
+  --title-md: 1.125rem;
+  --body-md: 0.875rem;
+  --label-sm: 0.6875rem;
+
+  /* ─── Spacing ───────────────────────────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* ─── Shadows ───────────────────────────────────────────────────── */
+  --shadow-ambient: rgba(17, 17, 17, 0.06);
+  --shadow-deep: rgba(17, 17, 17, 0.15);
+  --shadow-primary: rgba(211, 80, 151, 0.12);
+  --shadow-secondary: rgba(131, 44, 122, 0.12);
+
+  /* ─── Radii ─────────────────────────────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+}

@@ -1,0 +1,101 @@
+.checkout-stepper-container {
+  width: 100%;
+  padding: 2rem 0;
+  display: flex;
+  justify-content: center;
+  background-color: var(--surface);
+}
+
+.checkout-stepper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 600px;
+  width: 100%;
+  padding: 0 1rem;
+}
+
+.stepper-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.stepper-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--surface-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.stepper-item.is-current .stepper-icon-wrapper {
+  background-color: var(--color-anchor);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-deep);
+}
+
+.stepper-item.is-completed .stepper-icon-wrapper {
+  background-color: var(--color-brand-primary-light);
+  color: var(--color-brand-primary-dark);
+}
+
+.stepper-check {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background-color: var(--color-support-green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface);
+}
+
+.stepper-label {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}
+
+.stepper-item.is-current .stepper-label {
+  color: var(--text-primary);
+}
+
+.stepper-item.is-completed .stepper-label {
+  color: var(--color-brand-primary-dark);
+}
+
+.stepper-line {
+  flex-grow: 1;
+  height: 2px;
+  background-color: var(--surface-container-high);
+  margin-top: -1.25rem; /* Align with icons */
+  transition: background-color 0.4s ease;
+}
+
+.stepper-line.is-active {
+  background-color: var(--color-brand-accent); /* Saffron Signal for progress */
+}
+
+@media (max-width: 480px) {
+  .stepper-label {
+    display: none;
+  }
+  .stepper-line {
+    margin-top: 0;
+  }
+}

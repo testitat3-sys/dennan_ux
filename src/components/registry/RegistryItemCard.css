@@ -1,0 +1,195 @@
+.registry-item-card {
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.registry-item-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px var(--shadow-ambient);
+}
+
+.registry-item-card.purchased {
+  opacity: 0.75;
+}
+
+.card-image-container {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--surface-container);
+  overflow: hidden;
+}
+
+.item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.registry-item-card:hover .item-image {
+  transform: scale(1.08);
+}
+
+.must-have-badge {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  background: color-mix(in srgb, var(--color-brand-primary), transparent 15%);
+  color: var(--color-on-primary);
+  padding: 4px var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--label-sm);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  z-index: 2;
+  box-shadow: 0 4px 12px var(--shadow-primary);
+}
+
+.purchased-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  z-index: 1;
+}
+
+.purchased-overlay span {
+  background: var(--color-anchor);
+  color: var(--color-on-primary);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-pill);
+  font-size: var(--label-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.card-content {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--space-5);
+}
+
+.item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-meta h3 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.price-tag {
+  font-family: var(--font-editorial);
+  font-size: 1.375rem;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.group-gifting-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-bar-bg {
+  height: 6px;
+  background: var(--surface-container-high);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--color-brand-accent); /* Saffron Signal for progress */
+  border-radius: var(--radius-pill);
+  transition: width 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.card-actions {
+  margin-top: auto;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.card-actions button {
+  flex: 1;
+  padding: 0.75rem var(--space-3);
+  font-size: var(--label-sm);
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-action {
+  background: var(--surface-container);
+  border: none;
+  color: var(--text-secondary);
+}
+
+.btn-action:hover {
+  background: var(--surface-container-high);
+  color: var(--text-primary);
+}
+
+.btn-action.active {
+  background: color-mix(in srgb, var(--color-brand-primary), transparent 85%);
+  color: var(--color-brand-primary-dark);
+}
+
+.btn-primary {
+  background: var(--color-anchor);
+  color: var(--color-on-primary);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: var(--color-anchor);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-deep);
+}
+
+/* Sophisticated bloom effect for primary buttons */
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-brand-primary);
+  opacity: 0;
+  transition: opacity 0.3s;
+  border-radius: inherit;
+}
+.btn-primary:hover::after { opacity: 0.15; }
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--color-anchor), transparent 85%);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-container-low);
+  border-color: var(--color-anchor);
+}
+
+.btn-secondary.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -1,0 +1,106 @@
+.brand-page {
+  background: var(--surface);
+  min-height: 100vh;
+}
+
+.brand-page__main {
+  position: relative;
+}
+
+.brand-page__products {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.brand-page__bundles {
+  max-width: 1200px;
+  margin: var(--space-20) auto;
+  padding: 0 var(--space-6);
+}
+
+.brand-page__bundles-header {
+  margin-bottom: var(--space-10);
+  text-align: center;
+}
+
+.brand-page__bundles-title {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-md);
+  margin-bottom: var(--space-2);
+}
+
+.brand-page__bundles-subtitle {
+  color: var(--text-secondary);
+}
+
+.brand-page__bundle-card {
+  display: flex;
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-ambient);
+  transition: transform 0.3s ease;
+}
+
+.brand-page__bundle-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-deep);
+}
+
+.brand-page__bundle-img {
+  width: 40%;
+  object-fit: cover;
+}
+
+.brand-page__bundle-info {
+  padding: var(--space-10);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.brand-page__bundle-info h3 {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-md);
+}
+
+.brand-page__bundle-info p {
+  color: var(--text-secondary);
+}
+
+.brand-page__bundle-btn {
+  background: var(--color-anchor);
+  color: var(--color-on-primary);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  margin-top: var(--space-4);
+  align-self: flex-start;
+  transition: all 0.3s ease;
+}
+
+.brand-page__bundle-btn:hover {
+  background: var(--color-brand-primary);
+  box-shadow: var(--shadow-primary);
+}
+
+.brand-loading {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-editorial);
+  font-size: var(--headline-md);
+  color: var(--color-brand-primary);
+}
+
+@media (max-width: 768px) {
+  .brand-page__bundle-card {
+    flex-direction: column;
+  }
+  .brand-page__bundle-img {
+    width: 100%;
+    height: 250px;
+  }
+}

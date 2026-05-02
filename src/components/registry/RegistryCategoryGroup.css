@@ -1,0 +1,39 @@
+.category-group {
+  margin-bottom: var(--space-16);
+}
+
+.category-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  margin-bottom: var(--space-10);
+  padding-bottom: var(--space-2);
+}
+
+.category-header h2 {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-md);
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.count-badge {
+  font-size: var(--label-sm);
+  color: var(--text-tertiary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-8);
+}
+
+@media (max-width: 640px) {
+  .items-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--space-5);
+  }
+}
