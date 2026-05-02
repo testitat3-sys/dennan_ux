@@ -44,14 +44,14 @@
 
 @media (max-width: 768px) {
   .toast-container {
-    top: auto;
-    bottom: var(--space-20); /* Above bottom nav/modal */
+    top: var(--space-4);
+    bottom: auto;
     right: var(--space-4);
     left: var(--space-4);
   }
   
   .toast {
-    transform: translateY(200%);
+    transform: translateY(-200%);
     justify-content: center;
   }
   

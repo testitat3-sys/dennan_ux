@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Hero from '../components/home/Hero';
 import SearchStrip from '../components/home/SearchStrip';
 import BrandsBanner from '../components/home/BrandsBanner';
@@ -7,6 +7,8 @@ import JourneySection from '../components/home/JourneySection';
 import TierSection from '../components/home/TierSection';
 import ReelsSection from '../components/home/ReelsSection';
 import TrustStrip from '../components/home/TrustStrip';
+import QuickViewModal from '../components/ui/QuickViewModal';
+import Toast from '../components/ui/Toast';
 
 const mostLovedProducts = [
   {
@@ -85,6 +87,20 @@ const curatedProducts = [
 ];
 
 const Home = () => {
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  const handleAddToCart = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleModalSuccess = (product) => {
+    setToastMessage(`${product.name} added to cart`);
+    setShowToast(true);
+  };
   useEffect(() => {
     // Stagger-in observer for below-fold sections
     const observer = new IntersectionObserver((entries) => {
@@ -118,6 +134,7 @@ const Home = () => {
         viewAllLink="/category"
         viewAllText="View most loved"
         isScroll={true}
+        onAddToCart={handleAddToCart}
       />
       
       <JourneySection />
@@ -129,10 +146,26 @@ const Home = () => {
         products={curatedProducts}
         viewAllLink="/category"
         viewAllText="View all"
+        onAddToCart={handleAddToCart}
       />
       
       <ReelsSection />
       <TrustStrip />
+
+      {selectedProduct && (
+        <QuickViewModal 
+          product={selectedProduct} 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onSuccess={handleModalSuccess}
+        />
+      )}
+
+      <Toast 
+        isOpen={showToast} 
+        message={toastMessage} 
+        onClose={() => setShowToast(false)} 
+      />
     </>
   );
 };

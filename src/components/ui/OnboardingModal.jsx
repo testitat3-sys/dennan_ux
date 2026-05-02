@@ -19,7 +19,10 @@ const OnboardingModal = ({ isOpen, onClose }) => {
       setIsMounted(true);
       const timer = setTimeout(() => setActive(true), 10);
       document.body.style.overflow = 'hidden';
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = 'unset';
+      };
     } else {
       setActive(false);
       const timer = setTimeout(() => setIsMounted(false), 400);

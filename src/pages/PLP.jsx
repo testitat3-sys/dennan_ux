@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { stages, products } from '../data/productData';
 import ProductCard from '../components/ui/ProductCard';
 import SearchStrip from '../components/home/SearchStrip';
@@ -9,16 +9,36 @@ import './PLP.css';
 
 const PLP = () => {
   const { stageId } = useParams();
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get('q') || '';
+  
   const stage = stages[stageId] || stages.newborn;
   
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [activeFilters, setActiveFilters] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     // Filter by stage
-    let results = products.filter(p => p.stage === stageId);
+    let results = products;
+    
+    // Only filter by stage if it's not 'all'
+    if (stageId !== 'all') {
+      results = results.filter(p => p.stage === stageId);
+    }
+    
+    // Apply search query
+    if (query) {
+      const lowQuery = query.toLowerCase();
+      results = results.filter(p => 
+        p.name.toLowerCase().includes(lowQuery) || 
+        p.category.toLowerCase().includes(lowQuery) ||
+        (p.tier && p.tier.toLowerCase().includes(lowQuery))
+      );
+    }
     
     // Apply additional filters if any
     if (activeFilters.length > 0) {
@@ -27,7 +47,7 @@ const PLP = () => {
     
     setFilteredProducts(results);
     window.scrollTo(0, 0);
-  }, [stageId, activeFilters]);
+  }, [stageId, activeFilters, query]);
 
   const toggleFilter = (filter) => {
     setActiveFilters(prev => 
@@ -38,6 +58,11 @@ const PLP = () => {
   const handleAddToCart = (product) => {
     setSelectedProduct(product);
     setIsModalOpen(true);
+  };
+
+  const handleModalSuccess = (product) => {
+    setToastMessage(`${product.name} added to cart`);
+    setShowToast(true);
   };
 
   const categories = [...new Set(products.filter(p => p.stage === stageId).map(p => p.category))];
@@ -57,7 +82,7 @@ const PLP = () => {
       </header>
 
       <section className="plp__search-wrap">
-        <SearchStrip />
+        <SearchStrip initialQuery={query} />
       </section>
 
       <div className="plp__container">
@@ -142,8 +167,15 @@ const PLP = () => {
           product={selectedProduct} 
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
+          onSuccess={handleModalSuccess}
         />
       )}
+
+      <Toast 
+        isOpen={showToast} 
+        message={toastMessage} 
+        onClose={() => setShowToast(false)} 
+      />
     </main>
   );
 };

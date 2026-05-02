@@ -5,6 +5,8 @@ import StageNavRail from '../components/brand/StageNavRail';
 import BrandStory from '../components/brand/BrandStory';
 import ProductSection from '../components/home/ProductSection';
 import SearchStrip from '../components/home/SearchStrip';
+import QuickViewModal from '../components/ui/QuickViewModal';
+import Toast from '../components/ui/Toast';
 import { brands } from '../data/brandData';
 import './BrandPage.css';
 
@@ -13,6 +15,20 @@ const BrandPage = () => {
   const [brand, setBrand] = useState(null);
   const [activeStage, setActiveStage] = useState('all');
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  const handleAddToCart = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleModalSuccess = (product) => {
+    setToastMessage(`${product.name} added to cart`);
+    setShowToast(true);
+  };
 
   useEffect(() => {
     // Scroll to top on mount
@@ -54,6 +70,7 @@ const BrandPage = () => {
             products={filteredProducts}
             viewAllLink="#"
             viewAllText=""
+            onAddToCart={handleAddToCart}
           />
         </div>
         
@@ -74,6 +91,21 @@ const BrandPage = () => {
             </div>
           </div>
         </section>
+
+        {selectedProduct && (
+          <QuickViewModal 
+            product={selectedProduct} 
+            isOpen={isModalOpen} 
+            onClose={() => setIsModalOpen(false)} 
+            onSuccess={handleModalSuccess}
+          />
+        )}
+
+        <Toast 
+          isOpen={showToast} 
+          message={toastMessage} 
+          onClose={() => setShowToast(false)} 
+        />
       </main>
     </div>
   );

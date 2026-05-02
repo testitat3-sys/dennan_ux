@@ -1,7 +1,7 @@
 import React from 'react';
 import ProductCard from '../ui/ProductCard';
 
-const ProductSection = ({ title, eyebrow, subtitle, products, viewAllLink, viewAllText = 'View all', isScroll = false }) => {
+const ProductSection = ({ title, eyebrow, subtitle, products, viewAllLink, viewAllText = 'View all', isScroll = false, onAddToCart }) => {
   return (
     <section className="section" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, '-')}-heading`}>
       <div className="rec-rail__header">
@@ -23,7 +23,7 @@ const ProductSection = ({ title, eyebrow, subtitle, products, viewAllLink, viewA
       <div className={isScroll ? 'product-scroll-wrap' : ''}>
         <div className={isScroll ? 'product-scroll' : 'product-grid'}>
           {products.map((product, i) => (
-            <ProductCard key={i} product={product} />
+            <ProductCard key={i} product={product} onAddToCart={onAddToCart} />
           ))}
         </div>
       </div>

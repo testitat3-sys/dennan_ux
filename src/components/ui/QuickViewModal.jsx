@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import './QuickViewModal.css';
 
-const QuickViewModal = ({ product, isOpen, onClose }) => {
+const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
+  const navigate = useNavigate();
   const { addToCart, cartItems, subtotal } = useCart();
   const [size, setSize] = useState('M');
   const [quantity, setQuantity] = useState(1);
@@ -13,18 +15,20 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       setIsMounted(true);
-      setIsSuccess(false); // Reset success state when opening
-      // Small delay to ensure browser picks up initial state before applying active class
+      setIsSuccess(false);
       const timer = setTimeout(() => {
         setActive(true);
       }, 10);
       document.body.style.overflow = 'hidden';
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = 'unset';
+      };
     } else {
       setActive(false);
       const timer = setTimeout(() => {
         setIsMounted(false);
-      }, 400); // Match CSS transition duration
+      }, 400);
       document.body.style.overflow = 'unset';
       return () => clearTimeout(timer);
     }
@@ -37,6 +41,9 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
   const handleAddToCart = () => {
     addToCart(product, quantity, size);
     setIsSuccess(true);
+    if (onSuccess) {
+      onSuccess(product);
+    }
   };
 
   return (
@@ -116,6 +123,15 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                   <button className="btn-primary" onClick={handleAddToCart}>
                     Add to Cart
                   </button>
+                  <button 
+                    className="btn-link quick-view-details-link"
+                    onClick={() => {
+                      onClose();
+                      navigate(`/product/${product.id}`);
+                    }}
+                  >
+                    View Full Details
+                  </button>
                 </div>
               </div>
             </>
@@ -127,40 +143,28 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </div>
-                <h2 className="success-title">Success!</h2>
-                <p className="success-message">{product.name} was added to your cart.</p>
+                <h2 className="success-title">Added to Cart</h2>
+                <p className="success-message">Your item is ready for checkout.</p>
               </div>
 
-              <div className="cart-summary">
-                <h3 className="summary-title">Your Cart ({cartItems.length} items)</h3>
-                <div className="cart-items-list">
-                  {cartItems.map((item, index) => (
-                    <div key={`${item.id}-${item.size}-${index}`} className="mini-cart-item">
-                      <div className="mini-cart-img">
-                        <img src={item.image} alt={item.name} />
-                      </div>
-                      <div className="mini-cart-info">
-                        <span className="mini-cart-name">{item.name}</span>
-                        <span className="mini-cart-meta">Size: {item.size} • Qty: {item.quantity}</span>
-                        <span className="mini-cart-price">{item.price}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="summary-footer">
-                  <div className="subtotal-row">
-                    <span>Subtotal</span>
-                    <span className="subtotal-amount">£{subtotal.toFixed(2)}</span>
+              <div className="added-product-card">
+                <div className="mini-cart-item">
+                  <div className="mini-cart-img">
+                    <img src={product.image} alt={product.name} />
+                  </div>
+                  <div className="mini-cart-info">
+                    <span className="mini-cart-name">{product.name}</span>
+                    <span className="mini-cart-meta">Size: {size} • Qty: {quantity}</span>
+                    <span className="mini-cart-price">{product.price}</span>
                   </div>
                 </div>
               </div>
 
               <div className="success-actions">
-                <button className="btn-primary full-width" onClick={() => window.location.href = '/checkout'}>
-                  Checkout
+                <button className="btn-primary full-width" onClick={() => navigate('/checkout')}>
+                  Proceed to Checkout
                 </button>
-                <button className="btn-secondary full-width" onClick={() => onClose()}>
+                <button className="btn-secondary full-width" onClick={onClose}>
                   Continue Shopping
                 </button>
               </div>

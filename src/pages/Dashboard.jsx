@@ -1,16 +1,33 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import MilestoneTimeline from '../components/dashboard/MilestoneTimeline';
 import NextMilestoneCard from '../components/dashboard/NextMilestoneCard';
 import PredictiveFeed from '../components/dashboard/PredictiveFeed';
 import MilestoneBadges from '../components/dashboard/MilestoneBadges';
+import QuickViewModal from '../components/ui/QuickViewModal';
+import Toast from '../components/ui/Toast';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const { user, getStageInfo } = useUser();
   const navigate = useNavigate();
   const stageInfo = getStageInfo();
+
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  const handleAddToCart = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleModalSuccess = (product) => {
+    setToastMessage(`${product.name} added to cart`);
+    setShowToast(true);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -42,13 +59,13 @@ const Dashboard = () => {
           <section className="dashboard__section">
             <h2 className="dashboard__section-title">The Now Feed</h2>
             <p className="dashboard__section-desc">Products specifically for your current week.</p>
-            <PredictiveFeed type="now" stageInfo={stageInfo} />
+            <PredictiveFeed type="now" stageInfo={stageInfo} onAddToCart={handleAddToCart} />
           </section>
 
           <section className="dashboard__section">
             <h2 className="dashboard__section-title">Next Up Sneak Peek</h2>
             <p className="dashboard__section-desc">Get a head start on what’s coming next.</p>
-            <PredictiveFeed type="next" stageInfo={stageInfo} />
+            <PredictiveFeed type="next" stageInfo={stageInfo} onAddToCart={handleAddToCart} />
           </section>
         </div>
 
@@ -86,6 +103,21 @@ const Dashboard = () => {
           </div>
         </div>
       </section>
+
+      {selectedProduct && (
+        <QuickViewModal 
+          product={selectedProduct} 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onSuccess={handleModalSuccess}
+        />
+      )}
+
+      <Toast 
+        isOpen={showToast} 
+        message={toastMessage} 
+        onClose={() => setShowToast(false)} 
+      />
     </div>
   );
 };

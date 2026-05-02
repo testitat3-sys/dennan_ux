@@ -8,10 +8,14 @@ import PLP from './pages/PLP';
 import Dashboard from './pages/Dashboard';
 import RegistryPage from './pages/RegistryPage';
 import CheckoutPage from './pages/CheckoutPage';
+import PDP from './pages/PDP';
+
+import ScrollToTop from './utils/ScrollToTop';
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -21,6 +25,7 @@ function App() {
           <Route path="/registry" element={<RegistryPage />} />
           <Route path="/registry/:registryId" element={<RegistryPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/product/:productId" element={<PDP />} />
           {/* Catch-all route to home for now */}
           <Route path="*" element={<Home />} />
         </Routes>

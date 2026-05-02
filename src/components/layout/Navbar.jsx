@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MegaMenu from './MegaMenu';
 import OnboardingModal from '../ui/OnboardingModal';
+import CartModal from '../ui/CartModal';
 import { useUser } from '../../context/UserContext';
+import { useCart } from '../../context/CartContext';
 
 
 const navData = [
@@ -35,7 +37,7 @@ const navData = [
     }
   },
   {
-    title: 'Kid',
+    title: 'Toddler',
     type: 'kid',
     icon: <><rect width="8" height="8" x="2" y="14" rx="1"/><rect width="8" height="8" x="14" y="14" rx="1"/><rect width="8" height="8" x="8" y="2" rx="1"/></>,
     menu: {
@@ -80,10 +82,14 @@ const navData = [
 const Navbar = () => {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { setIsCartOpen, totalItems } = useCart();
   const [activeMenu, setActiveMenu] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeView, setActiveView] = useState('main');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
   let timeoutId = null;
 
   const handleAccountClick = () => {
@@ -109,7 +115,40 @@ const Navbar = () => {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
     setActiveView('main');
+    setMobileSearchQuery('');
+    setShowMobileSuggestions(false);
   };
+
+  const handleMobileSearch = (e) => {
+    e.preventDefault();
+    if (mobileSearchQuery.trim()) {
+      navigate(`/category/all?q=${encodeURIComponent(mobileSearchQuery.trim())}`);
+      setIsMenuOpen(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setMobileSearchQuery(suggestion);
+    setShowMobileSuggestions(false);
+    navigate(`/category/all?q=${encodeURIComponent(suggestion)}`);
+    setIsMenuOpen(false);
+  };
+
+  useEffect(() => {
+    if (mobileSearchQuery.length > 1) {
+      const allLinks = navData.flatMap(item => 
+        item.menu.columns.flatMap(col => col.links.map(l => l.text))
+      );
+      const filtered = [...new Set(allLinks)].filter(text => 
+        text.toLowerCase().includes(mobileSearchQuery.toLowerCase())
+      ).slice(0, 5);
+      setSearchSuggestions(filtered);
+      setShowMobileSuggestions(true);
+    } else {
+      setSearchSuggestions([]);
+      setShowMobileSuggestions(false);
+    }
+  }, [mobileSearchQuery]);
 
   const activeCategory = navData.find(item => item.type === activeView);
 
@@ -153,7 +192,7 @@ const Navbar = () => {
                 {item.title}
               </div>
             )}
-            <MegaMenu isOpen={activeMenu === item.type} data={item.menu} />
+            <MegaMenu isOpen={activeMenu === item.type} data={item.menu} categoryType={item.type} />
           </li>
         ))}
       </ul>
@@ -180,12 +219,17 @@ const Navbar = () => {
           </svg>
         </Link>
 
-        <button className="nav__icon-btn nav__cart-badge" aria-label="Cart">
+        <button 
+          className="nav__icon-btn nav__cart-badge" 
+          aria-label="Cart"
+          onClick={() => setIsCartOpen(true)}
+        >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
             <line x1="3" y1="6" x2="21" y2="6"/>
             <path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
+          {totalItems > 0 && <span className="cart-count-dot">{totalItems}</span>}
         </button>
       </div>
       <div className={`mobile-menu ${isMenuOpen ? 'is-open' : ''}`}>
@@ -208,6 +252,52 @@ const Navbar = () => {
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
+        </div>
+
+        <div className="mobile-menu__search">
+          <form className="mobile-menu__search-form" onSubmit={handleMobileSearch}>
+            <div className="mobile-menu__search-inner">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mobile-menu__search-icon">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input 
+                type="text" 
+                placeholder="Search products, brands..." 
+                className="mobile-menu__search-input"
+                value={mobileSearchQuery}
+                onChange={(e) => setMobileSearchQuery(e.target.value)}
+                onFocus={() => mobileSearchQuery.length > 1 && setShowMobileSuggestions(true)}
+              />
+              {mobileSearchQuery && (
+                <button 
+                  type="button" 
+                  className="mobile-menu__search-clear"
+                  onClick={() => setMobileSearchQuery('')}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+            
+            {showMobileSuggestions && searchSuggestions.length > 0 && (
+              <div className="mobile-menu__suggestions">
+                {searchSuggestions.map((suggestion, index) => (
+                  <button 
+                    key={index} 
+                    className="mobile-menu__suggestion-item"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+          </form>
         </div>
 
         <div className="mobile-menu__pane-container" style={{ transform: activeView === 'main' ? 'translateX(0)' : 'translateX(-50%)' }}>
@@ -249,7 +339,13 @@ const Navbar = () => {
                   Back to Main
                 </button>
 
-                <h2 className="mobile-menu__category-title">{activeCategory.title}</h2>
+                <Link 
+                  to={`/category/${activeCategory.type}`} 
+                  className="mobile-menu__category-link"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <h2 className="mobile-menu__category-title">{activeCategory.title}</h2>
+                </Link>
                 
                 {activeCategory.menu.columns.map((col, idx) => (
                   <div key={idx} className="mobile-menu__section">
@@ -258,7 +354,9 @@ const Navbar = () => {
                       {col.links.map((link, lIdx) => (
                         <li key={lIdx}>
                           <Link 
-                            to={link.href} 
+                            to={link.href === '#' && ['mother', 'newborn', 'kid'].includes(activeCategory.type) 
+                              ? `/category/${activeCategory.type}?q=${encodeURIComponent(link.text)}` 
+                              : link.href} 
                             className="mobile-menu__link"
                             onClick={() => setIsMenuOpen(false)}
                           >
@@ -279,6 +377,8 @@ const Navbar = () => {
         isOpen={showOnboarding} 
         onClose={() => setShowOnboarding(false)} 
       />
+
+      <CartModal />
     </nav>
     </>
 

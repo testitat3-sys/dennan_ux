@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const suggestions = [
   { text: 'Newborn essentials checklist', sub: '18 curated products', type: 'checklist' },
@@ -16,10 +17,15 @@ const popularChips = [
   { text: 'Postpartum recovery' }
 ];
 
-const SearchStrip = () => {
-  const [query, setQuery] = useState('');
+const SearchStrip = ({ initialQuery = '' }) => {
+  const [query, setQuery] = useState(initialQuery);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const containerRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -45,7 +51,7 @@ const SearchStrip = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (query.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(query)}`;
+      navigate(`/category/all?q=${encodeURIComponent(query.trim())}`);
     }
   };
 

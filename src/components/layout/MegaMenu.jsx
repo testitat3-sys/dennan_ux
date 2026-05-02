@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const MegaMenu = ({ isOpen, data }) => {
+const MegaMenu = ({ isOpen, data, categoryType }) => {
   if (!data) return null;
   const { featured, columns } = data;
 
@@ -19,7 +19,13 @@ const MegaMenu = ({ isOpen, data }) => {
           <span className="mega-menu__col-title">{col.title}</span>
           <ul className="mega-menu__list">
             {col.links.map((link, lIdx) => (
-              <li key={lIdx}><Link to={link.href}>{link.text}</Link></li>
+              <li key={lIdx}>
+                <Link to={link.href === '#' && ['mother', 'newborn', 'kid'].includes(categoryType) 
+                  ? `/category/${categoryType}?q=${encodeURIComponent(link.text)}` 
+                  : link.href}>
+                  {link.text}
+                </Link>
+              </li>
             ))}
           </ul>
         </div>

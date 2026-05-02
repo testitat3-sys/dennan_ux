@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CheckoutStepper from '../components/checkout/CheckoutStepper';
 import LocationModal from '../components/checkout/LocationModal';
+import RiderTracking from '../components/checkout/RiderTracking';
 import Toast from '../components/ui/Toast';
 import { useCart } from '../context/CartContext';
 import { getKampalaETA } from '../utils/deliveryUtils';
@@ -14,6 +15,7 @@ const CheckoutPage = () => {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isOrderConfirmed, setIsOrderConfirmed] = useState(false);
+  const [showTracking, setShowTracking] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   // Mock data for order summary if cart is empty
@@ -165,79 +167,85 @@ const CheckoutPage = () => {
         </div>
       ) : (
         <div className="confirmation-view">
-          <div className="confirmation-hero">
-            <div className="celebration-badge">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
-            </div>
-            <h1 className="confirmation-title">Order Confirmed</h1>
-            <p className="confirmation-subtitle">We're preparing your order for {selectedAddress?.zone || 'Kampala'}.</p>
-            
-            <div className="eta-card">
-              <span className="eta-label">Expected Arrival</span>
-              <div className="eta-time">{eta?.timeString}</div>
-              <p className="eta-countdown">Our rider is dispatched. Arriving in approximately {eta?.travelTime} minutes.</p>
-            </div>
-          </div>
+          {!showTracking ? (
+            <>
+              <div className="confirmation-hero">
+                <div className="celebration-badge">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                </div>
+                <h1 className="confirmation-title">Order Confirmed</h1>
+                <p className="confirmation-subtitle">We're preparing your order for {selectedAddress?.zone || 'Kampala'}.</p>
+                
+                <div className="eta-card">
+                  <span className="eta-label">Expected Arrival</span>
+                  <div className="eta-time">{eta?.timeString}</div>
+                  <p className="eta-countdown">Our rider is dispatched. Arriving in approximately {eta?.travelTime} minutes.</p>
+                </div>
+              </div>
 
-          <div className="confirmation-content">
-            <div className="order-summary-section">
-              <h3 className="section-title">Order Summary</h3>
-              <div className="summary-items">
-                {displayItems.map((item, index) => (
-                  <div key={index} className="summary-item">
-                    <div className="item-img-wrapper">
-                      <img src={item.image} alt={item.name} />
-                      <span className={`stage-badge stage--${item.stage?.toLowerCase()}`}>
-                        {item.stage}
-                      </span>
+              <div className="confirmation-content">
+                <div className="order-summary-section">
+                  <h3 className="section-title">Order Summary</h3>
+                  <div className="summary-items">
+                    {displayItems.map((item, index) => (
+                      <div key={index} className="summary-item">
+                        <div className="item-img-wrapper">
+                          <img src={item.image} alt={item.name} />
+                          <span className={`stage-badge stage--${item.stage?.toLowerCase()}`}>
+                            {item.stage}
+                          </span>
+                        </div>
+                        <div className="item-details">
+                          <span className="item-name">{item.name}</span>
+                          <span className="item-meta">Qty: {item.quantity} • {item.price}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="confirmation-actions">
+                  <div className="tracking-actions">
+                    <button className="btn-tracking btn-primary" onClick={() => setShowTracking(true)}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                      </svg>
+                      Track Rider on Map
+                    </button>
+                    <button className="btn-contact btn-secondary" onClick={() => window.location.href = 'tel:+256700000000'}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                      </svg>
+                      Contact Delivery Lead
+                    </button>
+                  </div>
+
+                  <div className="secondary-promos">
+                    <div className="promo-card profile">
+                      <h4>Save Profile</h4>
+                      <p>Track your toddler's growth with a personalized dashboard.</p>
+                      <button className="text-link">Create Account →</button>
                     </div>
-                    <div className="item-details">
-                      <span className="item-name">{item.name}</span>
-                      <span className="item-meta">Qty: {item.quantity} • {item.price}</span>
+                    <div className="promo-card refer">
+                      <h4>Refer a Friend</h4>
+                      <p>Send a mom 10,000 UGX off her first order.</p>
+                      <button className="text-link">Get Referral Link →</button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            <div className="confirmation-actions">
-              <div className="tracking-actions">
-                <button className="btn-tracking btn-primary">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                  </svg>
-                  Track Rider on Map
-                </button>
-                <button className="btn-contact btn-secondary">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                  </svg>
-                  Contact Delivery Lead
-                </button>
-              </div>
-
-              <div className="secondary-promos">
-                <div className="promo-card profile">
-                  <h4>Save Profile</h4>
-                  <p>Track your toddler's growth with a personalized dashboard.</p>
-                  <button className="text-link">Create Account →</button>
-                </div>
-                <div className="promo-card refer">
-                  <h4>Refer a Friend</h4>
-                  <p>Send a mom 10,000 UGX off her first order.</p>
-                  <button className="text-link">Get Referral Link →</button>
+                  <button className="btn-continue btn-primary full-width" onClick={() => window.location.href = '/'}>
+                    Continue Shopping
+                  </button>
                 </div>
               </div>
-
-              <button className="btn-continue btn-primary full-width" onClick={() => window.location.href = '/'}>
-                Continue Shopping
-              </button>
-            </div>
-          </div>
+            </>
+          ) : (
+            <RiderTracking initialETA={eta?.travelTime || 18} location={selectedAddress?.zone || 'Kampala'} />
+          )}
         </div>
       )}
 
