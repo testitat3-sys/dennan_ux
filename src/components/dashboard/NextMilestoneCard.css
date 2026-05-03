@@ -1,0 +1,67 @@
+.next-milestone-card {
+  padding: var(--space-10);
+  background: var(--color-anchor);
+  border-radius: var(--radius-lg);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.next-milestone-card::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: var(--space-37-5); /* 150px / 4 = 37.5 */
+  height: var(--space-37-5);
+  background: var(--color-brand-primary);
+  filter: blur(60px);
+  opacity: 0.4;
+  border-radius: 50%;
+}
+
+.next-milestone-card__eyebrow {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: var(--label-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-brand-primary-light);
+  margin-bottom: var(--space-4);
+}
+
+.next-milestone-card__title {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-md);
+  margin-bottom: var(--space-3);
+  font-weight: 400;
+}
+
+.next-milestone-card__desc {
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  line-height: 1.6;
+  opacity: 0.8;
+  margin-bottom: var(--space-6);
+}
+
+.next-milestone-card__btn {
+  width: 100%;
+  padding: var(--space-3-5);
+  background: white;
+  color: var(--color-anchor);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.next-milestone-card__btn:hover {
+  background: var(--color-brand-primary);
+  color: white;
+  transform: translateY(calc(-1 * var(--space-0-5)));
+}

@@ -1,13 +1,13 @@
 .ds-page {
   padding: var(--space-20) var(--space-12);
   background: var(--surface);
-  max-width: 1400px;
+  max-width: var(--width-wide);
   margin: 0 auto;
 }
 
 .ds-header {
   margin-bottom: var(--space-20);
-  max-width: 800px;
+  max-width: var(--width-medium);
 }
 
 .ds-title {
@@ -50,8 +50,7 @@
 
 /* Color Grid */
 .ds-color-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--space-70), 1fr));
   gap: var(--space-6);
 }
 
@@ -67,7 +66,7 @@
 }
 
 .ds-color-swatch {
-  height: 160px;
+  height: var(--space-40);
   width: 100%;
 }
 
@@ -185,7 +184,7 @@
   padding: var(--space-10);
   border-radius: var(--radius-lg);
   margin-top: var(--space-6);
-  min-height: 80px;
+  min-height: var(--space-20);
 }
 
 .ds-surface-label {
@@ -258,7 +257,7 @@
 }
 
 .ds-input-wrap {
-  max-width: 400px;
+  max-width: var(--width-narrow);
 }
 
 .ds-input-wrap input {
@@ -280,8 +279,7 @@
 
 /* Components Grid */
 .ds-component-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--space-75), 1fr));
   gap: var(--space-10);
 }
 

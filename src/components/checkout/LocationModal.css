@@ -21,9 +21,9 @@
 .location-modal {
   background-color: var(--surface);
   width: 100%;
-  max-width: 500px;
-  border-radius: 2rem;
-  padding: 3rem;
+  max-width: var(--width-compact);
+  border-radius: var(--radius-3xl);
+  padding: var(--space-12);
   position: relative;
   transform: translateY(20px);
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
@@ -36,13 +36,13 @@
 
 .close-modal-btn {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
+  top: var(--space-6);
+  right: var(--space-6);
   background: none;
   border: none;
   color: var(--text-tertiary);
   cursor: pointer;
-  padding: 0.5rem;
+  padding: var(--space-2);
   border-radius: 50%;
   transition: all 0.3s ease;
 }
@@ -53,7 +53,7 @@
 }
 
 .location-modal-header {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
   text-align: center;
 }
 
@@ -61,19 +61,19 @@
   font-family: 'Newsreader', serif;
   font-size: 2.25rem;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 
 .modal-subtitle {
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--body-sm);
 }
 
 .location-hint {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
   color: var(--text-tertiary);
   font-size: 0.75rem;
   justify-content: center;
@@ -81,7 +81,7 @@
 
 /* Reveal Section */
 .reveal-section {
-  min-height: 200px;
+  min-height: var(--space-50);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,13 +92,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: var(--space-6);
   animation: fadeIn 0.4s ease;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: var(--space-10);
+  height: var(--space-10);
   border: 3px solid var(--surface-container-high);
   border-top-color: var(--color-brand-primary);
   border-radius: 50%;
@@ -120,8 +120,8 @@
 }
 
 .success-icon-wrapper {
-  width: 64px;
-  height: 64px;
+  width: var(--space-16);
+  height: var(--space-16);
   background-color: var(--color-support-green);
   color: white;
   border-radius: 50%;
@@ -134,17 +134,17 @@
 
 .reveal-message {
   font-family: 'Newsreader', serif;
-  font-size: 1.5rem;
+  font-size: var(--headline-sm);
   color: var(--text-primary);
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .reveal-timer {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
   color: var(--color-support-green);
 }
 
@@ -155,25 +155,25 @@
 }
 
 .timer-unit {
-  font-size: 1.25rem;
+  font-size: var(--title-lg);
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .reveal-subtext {
   color: var(--text-secondary);
-  font-size: 0.9375rem;
-  margin-bottom: 2rem;
+  font-size: var(--body-md);
+  margin-bottom: var(--space-8);
 }
 
 .selection-preview {
   background-color: var(--surface-container-low);
-  padding: 1rem;
-  border-radius: 1rem;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 2rem;
+  gap: var(--space-1);
+  margin-bottom: var(--space-8);
 }
 
 .preview-label {
@@ -191,16 +191,16 @@
 
 .btn-confirm-location {
   width: 100%;
-  padding: 1.25rem;
+  padding: var(--space-5);
   background-color: var(--color-anchor);
   color: white;
   border: none;
-  border-radius: 1rem;
+  border-radius: var(--radius-lg);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--body-lg);
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .btn-confirm-location:hover {
@@ -214,7 +214,7 @@
   border: none;
   color: var(--text-secondary);
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--body-sm);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 4px;

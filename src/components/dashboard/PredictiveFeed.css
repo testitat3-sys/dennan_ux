@@ -1,0 +1,18 @@
+.predictive-feed__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5);
+}
+
+@media (min-width: 768px) {
+  .predictive-feed__grid {
+    grid-template-columns: repeat(auto-fill, minmax(var(--space-50), 1fr));
+    gap: var(--space-6);
+  }
+}
+
+.predictive-feed__empty {
+  font-family: var(--font-sans);
+  font-style: italic;
+  color: var(--text-tertiary);
+}

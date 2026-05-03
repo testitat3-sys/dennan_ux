@@ -66,7 +66,7 @@
 }
 
 .brand-item:hover {
-  transform: translateY(-8px);
+  transform: translateY(calc(-1 * var(--space-2)));
 }
 
 .brand-item__logo {
@@ -107,15 +107,15 @@
 
 .brand-item__discount {
   position: absolute;
-  top: -8px;
-  left: -8px;
+  top: calc(-1 * var(--space-2));
+  left: calc(-1 * var(--space-2));
   font-size: var(--label-md);
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-tertiary);
   background: var(--surface-container-highest);
-  padding: 3px 8px;
+  padding: var(--space-0-75) var(--space-2);
   border-radius: 4px;
   border: 1px solid transparent;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -144,6 +144,6 @@
   .brand-item { min-width: 140px; }
   .brand-item__logo { width: 140px; height: 70px; }
   .brand-item__logo img { max-width: 110px; max-height: 40px; }
-  .brand-item__discount { top: -6px; left: -6px; font-size: var(--label-md); }
+  .brand-item__discount { top: calc(-1 * var(--space-1-5)); left: calc(-1 * var(--space-1-5)); font-size: var(--label-md); }
 }
 

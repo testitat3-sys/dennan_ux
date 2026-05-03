@@ -16,7 +16,7 @@
   padding-top: var(--space-8);
 
   opacity: 0;
-  transform: translateY(24px);
+  transform: translateY(var(--space-6));
   animation: fadeUp 0.7s ease forwards;
   animation-delay: 0.1s;
 }
@@ -29,7 +29,7 @@
   border-radius: var(--radius-pill);
 }
 .hero__eyebrow-dot {
-  width: 6px; height: 6px;
+  width: var(--space-1-5); height: var(--space-1-5);
   border-radius: 50%;
   background: var(--color-brand-primary);
   flex-shrink: 0;
@@ -94,7 +94,7 @@
   font-family: var(--font-editorial);
   font-size: var(--headline-md);
   line-height: 1;
-  margin-bottom: 2px;
+  margin-bottom: var(--space-0-5);
 }
 
 .heritage-mini-card__stat--orchid { color: var(--color-brand-primary); }
@@ -130,7 +130,7 @@
   background: var(--surface-container);
 
   opacity: 0;
-  transform: translateY(32px) scale(0.98);
+  transform: translateY(var(--space-8)) scale(0.98);
   animation: fadeUp 0.8s ease forwards;
   animation-delay: 0.25s;
 }
@@ -162,7 +162,7 @@
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 .hero__image-tag-label { font-size: var(--label-md); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
 .hero__image-tag-value { font-family: var(--font-editorial); font-size: var(--body-sm); color: var(--text-primary); }
@@ -172,7 +172,7 @@
   position: absolute;
   top: var(--space-6);
   right: var(--space-6);
-  width: 3rem; height: 3rem;
+  width: var(--space-12); height: var(--space-12);
   border-radius: 50%;
   background: var(--color-brand-primary);
   opacity: 0.35;

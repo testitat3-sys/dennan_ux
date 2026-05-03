@@ -1,4 +1,5 @@
 import React from 'react';
+import './PredictiveFeed.css';
 import { products } from '../../data/productData';
 import ProductCard from '../ui/ProductCard';
 
@@ -34,19 +35,6 @@ const PredictiveFeed = ({ type, stageInfo, onAddToCart }) => {
         ))}
       </div>
 
-      <style>{`
-        .predictive-feed__grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 24px;
-        }
-        
-        .predictive-feed__empty {
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-style: italic;
-          color: var(--text-tertiary);
-        }
-      `}</style>
     </div>
   );
 };

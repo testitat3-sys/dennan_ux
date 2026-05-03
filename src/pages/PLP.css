@@ -56,10 +56,10 @@
 
 .plp__hero-shape {
   position: absolute;
-  top: -40px;
-  left: -20px;
-  width: 120px;
-  height: 120px;
+  top: calc(-1 * var(--space-10));
+  left: calc(-1 * var(--space-5));
+  width: var(--space-30);
+  height: var(--space-30);
   border-radius: 50%;
   background: var(--color-brand-primary);
   filter: blur(40px);
@@ -103,8 +103,8 @@
   width: 260px;
   flex-shrink: 0;
   position: sticky;
-  top: 100px;
-  height: calc(100vh - 120px);
+  top: var(--space-25);
+  height: calc(100vh - var(--space-30));
   overflow-y: auto;
   padding-right: var(--space-4);
 }
@@ -142,8 +142,8 @@
 }
 
 .filter-item__checkbox {
-  width: 18px;
-  height: 18px;
+  width: var(--space-4-5);
+  height: var(--space-4-5);
   border-radius: var(--radius-sm);
   background: var(--surface-container);
   transition: all 0.2s;
@@ -231,7 +231,7 @@
 }
 
 @media (max-width: 640px) {
-  .plp__grid { grid-template-columns: 1fr; }
+  .plp__grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
   .plp__hero { height: 35vh; min-height: 300px; padding: 0 var(--space-6); }
   .plp__hero-title { font-size: var(--headline-lg); }
 }

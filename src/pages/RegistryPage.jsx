@@ -70,7 +70,7 @@ const RegistryPage = () => {
   };
 
   return (
-    <div className="registry-page container">
+    <div className="registry-page">
       <RegistryHeader 
         profile={registryProfile} 
         viewMode={viewMode} 

@@ -124,7 +124,7 @@
   background: rgba(17, 17, 17, 0.7);
   backdrop-filter: blur(8px);
   color: #fff;
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
   border-radius: var(--radius-pill);
   font-size: var(--label-md);
   font-weight: 600;
@@ -133,7 +133,7 @@
 .reel-card__multi-chip {
   background: var(--color-brand-accent);
   color: var(--color-anchor);
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
   border-radius: var(--radius-pill);
   font-size: var(--label-md);
   font-weight: 700;
@@ -154,7 +154,7 @@
   font-size: var(--label-md);
   font-weight: 600;
   opacity: 0.9;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 .reel-card__caption {
   font-family: var(--font-sans);
@@ -188,7 +188,7 @@
   z-index: 3;
   background: var(--color-anchor);
   color: #fff;
-  padding: 0.875rem;
+  padding: var(--space-3-5);
   border-radius: var(--radius-md);
   font-size: var(--label-md);
   font-weight: 700;

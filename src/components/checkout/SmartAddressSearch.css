@@ -1,7 +1,7 @@
 .smart-search-container {
   position: relative;
   width: 100%;
-  max-width: 500px;
+  max-width: var(--width-compact);
   margin-top: var(--space-4);
 }
 
@@ -70,7 +70,7 @@
   right: 0;
   background: var(--surface-container-high);
   z-index: 10;
-  max-height: 400px;
+  max-height: var(--width-narrow);
   overflow-y: auto;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-deep);

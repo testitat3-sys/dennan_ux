@@ -1,6 +1,6 @@
 .checkout-stepper-container {
   width: 100%;
-  padding: 2rem 0;
+  padding: var(--space-8) 0;
   display: flex;
   justify-content: center;
   background-color: var(--surface);
@@ -9,24 +9,24 @@
 .checkout-stepper {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  max-width: 600px;
+  gap: var(--space-4);
+  max-width: var(--width-modal);
   width: 100%;
-  padding: 0 1rem;
+  padding: 0 var(--space-4);
 }
 
 .stepper-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   position: relative;
   flex-shrink: 0;
 }
 
 .stepper-icon-wrapper {
-  width: 40px;
-  height: 40px;
+  width: var(--space-10);
+  height: var(--space-10);
   border-radius: 50%;
   background-color: var(--surface-container);
   display: flex;
@@ -52,8 +52,8 @@
   position: absolute;
   top: -2px;
   right: -2px;
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
   background-color: var(--color-support-green);
   border-radius: 50%;
   display: flex;
@@ -81,9 +81,9 @@
 
 .stepper-line {
   flex-grow: 1;
-  height: 2px;
+  height: var(--space-0-5);
   background-color: var(--surface-container-high);
-  margin-top: -1.25rem; /* Align with icons */
+  margin-top: calc(-1 * var(--space-5)); /* Align with icons */
   transition: background-color 0.4s ease;
 }
 

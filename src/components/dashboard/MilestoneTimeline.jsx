@@ -1,4 +1,4 @@
-import React from 'react';
+import './MilestoneTimeline.css';
 
 const MilestoneTimeline = ({ info }) => {
   const milestones = info.type === 'expecting' 
@@ -46,69 +46,6 @@ const MilestoneTimeline = ({ info }) => {
         })}
       </div>
       
-      <style>{`
-        .milestone-timeline {
-          padding: 60px 0 40px;
-          position: relative;
-        }
-        
-        .timeline-track {
-          height: 4px;
-          background: var(--surface-container-high);
-          border-radius: 2px;
-          position: relative;
-        }
-        
-        .timeline-progress {
-          height: 100%;
-          background: var(--color-brand-primary);
-          border-radius: 2px;
-          position: relative;
-          transition: width 1s ease-out;
-        }
-        
-        .timeline-marker {
-          position: absolute;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-        }
-        
-        .marker-dot {
-          width: 12px;
-          height: 12px;
-          background: white;
-          border: 2px solid var(--surface-container-highest);
-          border-radius: 50%;
-          transition: all 0.3s ease;
-          z-index: 2;
-        }
-        
-        .timeline-marker.is-active .marker-dot {
-          background: var(--color-brand-primary);
-          border-color: var(--color-brand-primary);
-          transform: scale(1.2);
-          box-shadow: 0 0 15px color-mix(in srgb, var(--color-brand-primary), transparent 60%);
-        }
-        
-        .marker-label {
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: var(--text-tertiary);
-          white-space: nowrap;
-          position: absolute;
-          top: 20px;
-          transition: color 0.3s ease;
-        }
-        
-        .timeline-marker.is-active .marker-label {
-          color: var(--color-anchor);
-        }
-      `}</style>
     </div>
   );
 };

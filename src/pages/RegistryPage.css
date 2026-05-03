@@ -7,9 +7,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
-  max-width: 1400px;
+  max-width: var(--width-max);
   margin: 0 auto;
-  padding: 0 var(--space-8);
+  padding-inline: var(--layout-inset);
 }
 
 /* --- Control Strip: Editorial Navigation --- */
@@ -149,13 +149,13 @@
 
 /* --- Empty State: Lookbook Feel --- */
 .empty-state {
-  padding: var(--space-24) var(--space-12);
+  padding: var(--space-20) var(--space-10);
   text-align: left; /* Asymmetric alignment */
   background: var(--surface-container-low);
   border-radius: var(--radius-xl);
   position: relative;
   overflow: hidden;
-  margin-top: var(--space-8);
+  margin-top: var(--space-10);
 }
 
 .starter-kit {
@@ -245,8 +245,8 @@
 }
 
 .mini-thumb {
-  width: 64px;
-  height: 64px;
+  width: var(--space-16);
+  height: var(--space-16);
   border-radius: var(--radius-sm);
   object-fit: cover;
   background: var(--surface-container);
@@ -266,8 +266,8 @@
 .delivery-privacy-footer::after {
   content: '';
   position: absolute;
-  top: -100px; right: -100px;
-  width: 300px; height: 300px;
+  top: calc(-1 * var(--space-25)); right: calc(-1 * var(--space-25));
+  width: var(--space-75); height: var(--space-75);
   background: radial-gradient(circle at center, color-mix(in srgb, var(--color-brand-primary), transparent 92%), transparent 70%);
 }
 
@@ -285,10 +285,6 @@
 }
 
 @media (max-width: 1024px) {
-  .registry-content {
-    padding: 0 var(--space-6);
-  }
-  
   .desktop-only {
     display: none;
   }

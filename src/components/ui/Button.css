@@ -4,7 +4,7 @@
   gap: var(--space-2);
   background: var(--color-anchor);
   color: var(--color-on-primary);
-  padding: 0.875rem var(--space-6);
+  padding: var(--space-3-5) var(--space-6);
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
   font-size: var(--label-md);
@@ -40,7 +40,7 @@
   align-items: center;
   gap: var(--space-2);
   color: var(--text-secondary);
-  padding: 0.875rem var(--space-6);
+  padding: var(--space-3-5) var(--space-6);
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
   font-size: var(--label-md);
@@ -78,7 +78,7 @@
 .btn-ghost:hover svg { transform: translateX(3px); }
 
 .btn-sm {
-  padding: 0.5rem 1rem;
+  padding: var(--space-2) var(--space-4);
   font-size: 0.65rem;
 }
 

@@ -51,7 +51,7 @@
   top: var(--space-6);
   left: 50%;
   transform: translateX(-50%);
-  width: 7rem; height: 7rem;
+  width: var(--space-28); height: var(--space-28);
   border-radius: 50%;
   opacity: 0.22;
   z-index: 0;

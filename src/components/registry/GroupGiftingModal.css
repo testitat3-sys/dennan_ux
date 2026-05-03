@@ -17,7 +17,7 @@
   border-radius: var(--radius-xl);
   padding: var(--space-12);
   position: relative;
-  box-shadow: 0 24px 64px rgba(17, 17, 17, 0.2);
+  box-shadow: var(--shadow-deep);
   display: flex;
   flex-direction: column;
   gap: var(--space-10);
@@ -119,7 +119,7 @@
 
 .full-width {
   width: 100%;
-  padding: 1rem var(--space-8);
+  padding: var(--space-4) var(--space-8);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--label-md);

@@ -1,4 +1,4 @@
-import React from 'react';
+import './MilestoneBadges.css';
 
 const BadgeIcons = {
   start: () => (
@@ -98,105 +98,8 @@ const MilestoneBadges = ({ user, stageInfo }) => {
           </div>
         ))}
       </div>
-      
-      <style>{`
-        .milestone-badges {
-          padding: 32px;
-          background: var(--surface-container-low);
-          border-radius: var(--radius-lg);
-        }
-        
-        .milestone-badges__title {
-          font-family: 'Newsreader', serif;
-          font-size: 1.25rem;
-          margin-bottom: 24px;
-          color: var(--color-anchor);
-        }
-        
-        .milestone-badges__grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 16px;
-        }
-        
-        .milestone-badge {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          padding: 24px 16px;
-          background: white;
-          border-radius: var(--radius-md);
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          position: relative;
-          overflow: visible;
-        }
-        
-        .milestone-badge.is-locked {
-          opacity: 0.5;
-          filter: grayscale(0.8) blur(0.5px);
-        }
-        
-        .milestone-badge.is-unlocked {
-          box-shadow: var(--shadow-ambient);
-        }
-        
-        .milestone-badge.is-unlocked:hover {
-          transform: translateY(-4px) scale(1.02);
-          box-shadow: var(--shadow-deep), 0 0 20px color-mix(in srgb, var(--color-brand-primary), transparent 90%);
-        }
-        
-        .milestone-badge__icon {
-          width: 48px;
-          height: 48px;
-          margin-bottom: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.3s ease;
-        }
-        
-        .milestone-badge.is-unlocked:hover .milestone-badge__icon {
-          transform: scale(1.1);
-        }
-        
-        .badge-svg {
-          width: 100%;
-          height: 100%;
-        }
-        
-        .milestone-badge__label {
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: var(--color-anchor);
-          line-height: 1.2;
-        }
-        
-        .milestone-badge__promo {
-          position: absolute;
-          top: -8px;
-          right: -8px;
-          background: var(--color-brand-accent);
-          color: var(--color-brand-secondary);
-          font-size: 0.65rem;
-          font-weight: 800;
-          padding: 4px 10px;
-          border-radius: 20px;
-          box-shadow: var(--shadow-deep);
-          animation: float 3s ease-in-out infinite;
-          z-index: 2;
-          white-space: nowrap;
-        }
-
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-3px); }
-        }
-      `}</style>
     </div>
   );
 };
 
 export default MilestoneBadges;
-

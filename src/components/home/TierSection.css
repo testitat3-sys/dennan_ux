@@ -53,7 +53,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 2px 8px;
+  padding: var(--space-0-5) var(--space-2);
   border-radius: var(--radius-pill);
 }
 .tier-card--essentials .tier-card__badge { background: color-mix(in srgb, var(--color-support-green), transparent 75%); color: var(--color-support-green); }

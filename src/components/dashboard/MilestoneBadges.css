@@ -1,0 +1,93 @@
+.milestone-badges {
+  padding: var(--space-8);
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+}
+
+.milestone-badges__title {
+  font-family: var(--font-editorial);
+  font-size: var(--title-lg);
+  margin-bottom: var(--space-6);
+  color: var(--color-anchor);
+}
+
+.milestone-badges__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.milestone-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  background: white;
+  border-radius: var(--radius-md);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: visible;
+}
+
+.milestone-badge.is-locked {
+  opacity: 0.5;
+  filter: grayscale(0.8) blur(0.5px);
+}
+
+.milestone-badge.is-unlocked {
+  box-shadow: var(--shadow-ambient);
+}
+
+.milestone-badge.is-unlocked:hover {
+  transform: translateY(calc(-1 * var(--space-1))) scale(1.02);
+  box-shadow: var(--shadow-deep), 0 0 20px color-mix(in srgb, var(--color-brand-primary), transparent 90%);
+}
+
+.milestone-badge__icon {
+  width: var(--space-12);
+  height: var(--space-12);
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.milestone-badge.is-unlocked:hover .milestone-badge__icon {
+  transform: scale(1.1);
+}
+
+.badge-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.milestone-badge__label {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 600;
+  color: var(--color-anchor);
+  line-height: 1.2;
+}
+
+.milestone-badge__promo {
+  position: absolute;
+  top: calc(-1 * var(--space-2));
+  right: calc(-1 * var(--space-2));
+  background: var(--color-brand-accent);
+  color: var(--color-brand-secondary);
+  font-size: var(--label-sm);
+  font-weight: 800;
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-deep);
+  animation: float 3s ease-in-out infinite;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(-1 * var(--space-0-75))); }
+}

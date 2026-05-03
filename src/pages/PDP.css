@@ -5,7 +5,7 @@
 }
 
 .pdp__container {
-  max-width: 1200px;
+  max-width: var(--width-container);
   margin: 0 auto;
   padding: 0 var(--space-8) var(--space-20);
 }
@@ -184,7 +184,7 @@
 }
 
 .age-scale__bar {
-  height: 4px;
+  height: var(--space-1);
   background: color-mix(in srgb, var(--color-brand-primary), transparent 85%);
   border-radius: 2px;
   position: relative;
@@ -200,14 +200,14 @@
 
 .age-scale__pointer {
   position: absolute;
-  right: -6px;
+  right: calc(-1 * var(--space-1-5));
   top: 50%;
   transform: translateY(-50%);
-  width: 12px;
-  height: 12px;
+  width: var(--space-3);
+  height: var(--space-3);
   background: var(--color-brand-primary);
   border-radius: 50%;
-  box-shadow: 0 0 0 4px white;
+  box-shadow: 0 0 0 var(--space-1) white;
 }
 
 .age-scale__markers {
@@ -369,7 +369,7 @@
   font-size: var(--body-lg);
   line-height: 1.6;
   color: var(--text-secondary);
-  max-width: 800px;
+  max-width: var(--width-medium);
   margin-bottom: var(--space-8);
 }
 
@@ -398,7 +398,7 @@
 
 .specs-table {
   width: 100%;
-  max-width: 600px;
+  max-width: var(--width-modal);
   border-collapse: collapse;
 }
 
@@ -427,7 +427,7 @@
 }
 
 .review-card {
-  max-width: 800px;
+  max-width: var(--width-medium);
   padding-bottom: var(--space-8);
   border-bottom: 1px solid var(--surface-container-low);
 }
@@ -442,7 +442,7 @@
 .review-rating {
   color: var(--color-brand-accent);
   display: flex;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .review-age {

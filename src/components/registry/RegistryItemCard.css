@@ -77,13 +77,13 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: var(--space-5);
+  gap: var(--space-6); /* Increased gap for editorial feel */
 }
 
 .item-meta {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .item-meta h3 {
@@ -95,19 +95,19 @@
 
 .price-tag {
   font-family: var(--font-editorial);
-  font-size: 1.375rem;
+  font-size: var(--title-lg);
   color: var(--text-primary);
-  margin-top: 2px;
+  margin-top: var(--space-1);
 }
 
 .group-gifting-progress {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .progress-bar-bg {
-  height: 6px;
+  height: var(--space-1-5);
   background: var(--surface-container-high);
   border-radius: var(--radius-pill);
   overflow: hidden;
@@ -128,7 +128,7 @@
 
 .card-actions button {
   flex: 1;
-  padding: 0.75rem var(--space-3);
+  padding: var(--space-3-5) var(--space-3);
   font-size: var(--label-md);
   font-weight: 700;
   border-radius: var(--radius-md);

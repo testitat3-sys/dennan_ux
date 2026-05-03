@@ -1,9 +1,9 @@
 .registry-header {
-  padding: var(--space-16) 0 var(--space-12);
+  padding: var(--space-15) 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-10);
-  margin-bottom: var(--space-12);
+  margin-bottom: var(--space-10);
   position: relative;
 }
 
@@ -64,15 +64,15 @@
   justify-content: center;
   background: var(--color-anchor);
   color: var(--color-on-primary);
-  width: 72px;
-  height: 72px;
+  width: var(--space-18);
+  height: var(--space-18);
   border-radius: var(--radius-md);
   box-shadow: 0 4px 12px var(--shadow-ambient);
 }
 
 .countdown-number {
   font-family: var(--font-editorial);
-  font-size: 2rem;
+  font-size: var(--headline-lg);
   line-height: 1;
 }
 
@@ -102,7 +102,7 @@
 .view-switcher {
   display: flex;
   background: var(--surface-container-low);
-  padding: 4px;
+  padding: var(--space-1);
   border-radius: var(--radius-pill);
 }
 

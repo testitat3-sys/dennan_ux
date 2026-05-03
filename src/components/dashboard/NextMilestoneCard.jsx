@@ -1,4 +1,4 @@
-import React from 'react';
+import './NextMilestoneCard.css';
 
 const NextMilestoneCard = ({ stageInfo }) => {
   const getNextContent = () => {
@@ -24,75 +24,6 @@ const NextMilestoneCard = ({ stageInfo }) => {
         <button className="next-milestone-card__btn">{content.action}</button>
       </div>
       
-      <style>{`
-        .next-milestone-card {
-          padding: 40px;
-          background: var(--color-anchor);
-          border-radius: var(--radius-lg);
-          color: white;
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .next-milestone-card::after {
-          content: '';
-          position: absolute;
-          top: -20%;
-          right: -10%;
-          width: 150px;
-          height: 150px;
-          background: var(--color-brand-primary);
-          filter: blur(60px);
-          opacity: 0.4;
-          border-radius: 50%;
-        }
-        
-        .next-milestone-card__eyebrow {
-          display: block;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 0.7rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.15em;
-          color: var(--color-brand-primary-light);
-          margin-bottom: 16px;
-        }
-        
-        .next-milestone-card__title {
-          font-family: 'Newsreader', serif;
-          font-size: 2rem;
-          margin-bottom: 12px;
-          font-weight: 400;
-        }
-        
-        .next-milestone-card__desc {
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 0.9375rem;
-          line-height: 1.6;
-          opacity: 0.8;
-          margin-bottom: 24px;
-        }
-        
-        .next-milestone-card__btn {
-          width: 100%;
-          padding: 14px;
-          background: white;
-          color: var(--color-anchor);
-          border: none;
-          border-radius: var(--radius-md);
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 0.875rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        
-        .next-milestone-card__btn:hover {
-          background: var(--color-brand-primary);
-          color: white;
-          transform: translateY(-2px);
-        }
-      `}</style>
     </div>
   );
 };
