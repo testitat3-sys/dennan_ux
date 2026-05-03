@@ -31,7 +31,7 @@
   flex: 1;
 }
 
-.profile-info .label-sm {
+.profile-info .label-md {
   color: var(--color-brand-primary);
   margin-bottom: var(--space-2);
   display: block;
@@ -76,7 +76,7 @@
   line-height: 1;
 }
 
-.event-info .title-md {
+.event-info .title-sm {
   font-family: var(--font-sans);
   font-weight: 600;
   margin-bottom: 2px;
@@ -96,7 +96,7 @@
 
 .btn-sm {
   padding: 0.625rem var(--space-5);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
 }
 
 .view-switcher {
@@ -109,7 +109,7 @@
 .switch-btn {
   padding: var(--space-2) var(--space-6);
   border-radius: var(--radius-pill);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   border: none;
   background: transparent;
@@ -159,3 +159,4 @@
     flex: 1;
   }
 }
+

@@ -177,3 +177,4 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
 };
 
 export default QuickViewModal;
+

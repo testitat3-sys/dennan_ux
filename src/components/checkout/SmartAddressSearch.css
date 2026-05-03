@@ -27,7 +27,7 @@
   border: none;
   background: transparent;
   font-family: var(--font-sans);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
   color: var(--text-primary);
   outline: none;
 }
@@ -88,7 +88,7 @@
 
 .group-label {
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   color: var(--text-tertiary);
   padding: 0 var(--space-4) var(--space-2);
   letter-spacing: 0.05em;
@@ -120,14 +120,14 @@
 
 .item-name {
   font-family: var(--font-sans);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
   color: var(--text-primary);
   font-weight: 500;
 }
 
 .item-sub {
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   color: var(--text-secondary);
 }
 
@@ -135,10 +135,11 @@
   padding: var(--space-6);
   text-align: center;
   font-family: var(--font-sans);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
   color: var(--text-secondary);
 }
 
 .search-initial-state {
   padding-bottom: var(--space-2);
 }
+

@@ -29,3 +29,4 @@ const RegistryCategoryGroup = ({ category, items, viewMode, onToggleMustHave, on
 };
 
 export default RegistryCategoryGroup;
+

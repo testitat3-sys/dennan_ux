@@ -1,0 +1,110 @@
+.coming-soon {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  overflow: hidden;
+  position: relative;
+  background-color: var(--surface);
+}
+
+.coming-soon__content {
+  max-width: 600px;
+  text-align: center;
+  z-index: 2;
+  position: relative;
+}
+
+.coming-soon__badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-brand-primary-light);
+  color: var(--color-brand-secondary);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-6);
+}
+
+.coming-soon__title {
+  font-family: var(--font-editorial);
+  font-size: var(--display-lg);
+  line-height: 1.1;
+  color: var(--color-brand-secondary);
+  margin-bottom: var(--space-6);
+}
+
+.coming-soon__description {
+  font-family: var(--font-sans);
+  font-size: var(--title-lg);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-10);
+}
+
+.coming-soon__cta {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+}
+
+.coming-soon__visual {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.coming-soon__circle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+}
+
+.coming-soon__circle--1 {
+  width: 400px;
+  height: 400px;
+  background: var(--color-brand-primary);
+  top: -100px;
+  right: -100px;
+}
+
+.coming-soon__circle--2 {
+  width: 300px;
+  height: 300px;
+  background: var(--color-brand-accent);
+  bottom: -50px;
+  left: -50px;
+}
+
+.coming-soon__circle--3 {
+  width: 200px;
+  height: 200px;
+  background: var(--color-support-blue);
+  top: 20%;
+  left: 10%;
+}
+
+@media (max-width: 768px) {
+  .coming-soon__title {
+    font-size: var(--headline-md);
+  }
+  
+  .coming-soon__description {
+    font-size: var(--body-lg);
+  }
+  
+  .coming-soon__cta {
+    flex-direction: column;
+  }
+}
+

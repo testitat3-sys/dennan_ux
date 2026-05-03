@@ -13,20 +13,20 @@ const RegistryItemCard = ({ item, viewMode, onToggleMustHave, onBuy, onContribut
         <img src={item.image} alt={item.name} className="item-image" />
         {item.isMustHave && (
           <div className="must-have-badge">
-            <span className="label-sm">Most Wanted</span>
+            <span className="label-md">Most Wanted</span>
           </div>
         )}
         {isPurchased && (
           <div className="purchased-overlay">
-            <span className="label-sm">Purchased</span>
+            <span className="label-md">Purchased</span>
           </div>
         )}
       </div>
 
       <div className="card-content">
         <div className="item-meta">
-          <span className="label-sm text-tertiary">{item.category}</span>
-          <h3 className="title-md">{item.name}</h3>
+          <span className="label-md text-tertiary">{item.category}</span>
+          <h3 className="title-sm">{item.name}</h3>
           <p className="price-tag">£{item.price.toFixed(2)}</p>
         </div>
 
@@ -35,7 +35,7 @@ const RegistryItemCard = ({ item, viewMode, onToggleMustHave, onBuy, onContribut
             <div className="progress-bar-bg">
               <div className="progress-bar-fill" style={{ width: `${Math.min(progress, 100)}%` }}></div>
             </div>
-            <p className="label-sm text-secondary">{Math.round(progress)}% contributed</p>
+            <p className="label-md text-secondary">{Math.round(progress)}% contributed</p>
           </div>
         )}
 
@@ -77,3 +77,4 @@ const RegistryItemCard = ({ item, viewMode, onToggleMustHave, onBuy, onContribut
 };
 
 export default RegistryItemCard;
+

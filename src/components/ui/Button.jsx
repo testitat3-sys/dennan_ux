@@ -1,4 +1,5 @@
 import React from 'react';
+import './Button.css';
 
 const Button = ({ children, variant = 'primary', as: Component = 'a', className = '', ...props }) => {
   const baseClass = variant === 'primary' ? 'btn-primary' : 'btn-ghost';
@@ -11,3 +12,4 @@ const Button = ({ children, variant = 'primary', as: Component = 'a', className 
 };
 
 export default Button;
+

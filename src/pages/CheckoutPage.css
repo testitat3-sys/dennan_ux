@@ -19,14 +19,14 @@
 
 .section-title {
   font-family: 'Newsreader', serif;
-  font-size: 1.75rem;
+  font-size: var(--headline-md);
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .section-desc {
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--body-sm);
   margin-bottom: 1.5rem;
 }
 
@@ -43,7 +43,7 @@
   border: none;
   color: var(--color-brand-primary);
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--body-sm);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -94,13 +94,13 @@
 }
 
 .trigger-desc {
-  font-size: 0.75rem;
+  font-size: var(--label-md);
   color: var(--text-secondary);
 }
 
 .trigger-arrow {
   color: var(--text-tertiary);
-  font-size: 1.25rem;
+  font-size: var(--title-lg);
 }
 
 /* Selected Address Badge */
@@ -126,7 +126,7 @@
 }
 
 .address-zone {
-  font-size: 0.75rem;
+  font-size: var(--label-md);
   color: var(--text-secondary);
 }
 
@@ -137,14 +137,14 @@
 }
 
 .eta-label {
-  font-size: 0.625rem;
+  font-size: var(--label-md);
   text-transform: uppercase;
   color: var(--text-tertiary);
   font-weight: 700;
 }
 
 .eta-value {
-  font-size: 1.125rem;
+  font-size: var(--title-sm);
   font-weight: 800;
   color: var(--color-support-green);
 }
@@ -164,7 +164,7 @@
 .live-timer {
   color: var(--color-support-green);
   font-weight: 800;
-  font-size: 1.125rem;
+  font-size: var(--title-sm);
   animation: pulse 2s infinite;
 }
 
@@ -251,7 +251,7 @@
 
 .summary-title {
   font-family: 'Newsreader', serif;
-  font-size: 1.5rem;
+  font-size: var(--headline-sm);
   margin-bottom: 1.5rem;
 }
 
@@ -265,7 +265,7 @@
 .summary-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.9375rem;
+  font-size: var(--body-lg);
   color: var(--text-secondary);
 }
 
@@ -274,7 +274,7 @@
   padding-top: 1rem;
   border-top: 1px solid var(--surface-container-highest);
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: var(--title-sm);
   color: var(--text-primary);
 }
 
@@ -291,7 +291,7 @@
   border: none;
   border-radius: 1rem;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--body-lg);
   cursor: pointer;
   transition: all 0.3s ease;
   margin-bottom: 1rem;
@@ -367,14 +367,14 @@
 
 .confirmation-title {
   font-family: 'Newsreader', serif;
-  font-size: 3.5rem;
+  font-size: var(--display-lg);
   color: var(--text-primary);
   margin-bottom: 0.75rem;
 }
 
 .confirmation-subtitle {
   color: var(--text-secondary);
-  font-size: 1.125rem;
+  font-size: var(--title-sm);
 }
 
 .eta-card {
@@ -396,13 +396,13 @@
 
 .eta-time {
   font-family: 'Newsreader', serif;
-  font-size: 3.5rem;
+  font-size: var(--display-lg);
   color: var(--color-anchor);
   margin: 0.5rem 0;
 }
 
 .eta-countdown {
-  font-size: 0.9375rem;
+  font-size: var(--body-lg);
   color: var(--text-secondary);
 }
 
@@ -452,7 +452,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  font-size: 0.625rem;
+  font-size: var(--label-md);
   font-weight: 700;
   text-transform: uppercase;
   color: white;
@@ -472,7 +472,7 @@
 .item-name {
   font-weight: 600;
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: var(--body-lg);
 }
 
 .item-meta {
@@ -500,7 +500,7 @@
   padding: 1.125rem;
   border-radius: 1.125rem;
   font-weight: 700;
-  font-size: 0.9375rem;
+  font-size: var(--body-lg);
   cursor: pointer;
   transition: all 0.3s ease;
   border: none;
@@ -547,13 +547,13 @@
 }
 
 .promo-card h4 {
-  font-size: 1rem;
+  font-size: var(--body-lg);
   margin-bottom: 0.75rem;
   font-family: 'Newsreader', serif;
 }
 
 .promo-card p {
-  font-size: 0.8125rem;
+  font-size: var(--body-sm);
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 1.25rem;
@@ -565,7 +565,7 @@
   padding: 0;
   color: var(--color-brand-primary);
   font-weight: 700;
-  font-size: 0.8125rem;
+  font-size: var(--body-sm);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -590,10 +590,11 @@
   }
   
   .confirmation-title {
-    font-size: 2.5rem;
+    font-size: var(--headline-lg);
   }
   
   .tracking-actions, .secondary-promos {
     grid-template-columns: 1fr;
   }
 }
+

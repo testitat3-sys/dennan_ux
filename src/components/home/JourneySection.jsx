@@ -1,4 +1,5 @@
 import React from 'react';
+import './JourneySection.css';
 import StageTile from '../ui/StageTile';
 
 const stages = [
@@ -8,7 +9,7 @@ const stages = [
     eyebrow: 'Stage 1',
     copy: 'Hospital bag, postpartum recovery, feeding prep, and everything you need before baby arrives.',
     image: '/assets/stage_expectant.png',
-    href: '/journey/expectant'
+    href: '/category/mother'
   },
   {
     type: 'newborn',
@@ -16,7 +17,7 @@ const stages = [
     eyebrow: 'Stage 2',
     copy: 'Safe sleep, feeding essentials, skin care, and gentle gear for the tiniest stage of all.',
     image: '/assets/stage_newborn.webp',
-    href: '/journey/newborn'
+    href: '/category/newborn'
   },
   {
     type: 'toddler',
@@ -24,7 +25,7 @@ const stages = [
     eyebrow: 'Stage 3',
     copy: 'Weaning, movement, play, and independence. Everything for curious, growing little ones.',
     image: '/assets/stage_toddler.webp',
-    href: '/journey/toddler'
+    href: '/category/kid'
   }
 ];
 
@@ -47,3 +48,4 @@ const JourneySection = () => {
 };
 
 export default JourneySection;
+

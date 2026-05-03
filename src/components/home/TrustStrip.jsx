@@ -1,4 +1,5 @@
 import React from 'react';
+import './TrustStrip.css';
 
 const trustItems = [
   {
@@ -46,3 +47,4 @@ const TrustStrip = () => {
 };
 
 export default TrustStrip;
+

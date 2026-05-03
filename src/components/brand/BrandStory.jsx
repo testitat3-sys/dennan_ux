@@ -21,7 +21,7 @@ const BrandStory = ({ story }) => {
         </div>
         
         <div className="brand-story__text-column">
-          <span className="label-sm brand-story__eyebrow">Our Heritage</span>
+          <span className="label-md brand-story__eyebrow">Our Heritage</span>
           <h2 className="brand-story__title">{story.title}</h2>
           <p className="brand-story__content">{story.content}</p>
           
@@ -42,3 +42,4 @@ const BrandStory = ({ story }) => {
 };
 
 export default BrandStory;
+

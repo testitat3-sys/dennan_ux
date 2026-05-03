@@ -13,19 +13,19 @@ const RegistryHeader = ({ profile, viewMode, setViewMode }) => {
     <header className="registry-header">
       <div className="header-top">
         <div className="profile-info">
-          <span className="label-sm">Registry</span>
+          <span className="label-md">Registry</span>
           <h1>{profile.ownerName}'s Baby Registry</h1>
-          <p className="body-md text-secondary">{profile.message}</p>
+          <p className="body-sm text-secondary">{profile.message}</p>
         </div>
 
         <div className="countdown-container">
           <div className="countdown-card">
             <span className="countdown-number">{daysLeft}</span>
-            <span className="label-sm">Days</span>
+            <span className="label-md">Days</span>
           </div>
           <div className="event-info">
-            <p className="title-md">{profile.eventName}</p>
-            <p className="label-sm text-tertiary">{new Date(profile.eventDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <p className="title-sm">{profile.eventName}</p>
+            <p className="label-md text-tertiary">{new Date(profile.eventDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
           </div>
         </div>
       </div>
@@ -60,3 +60,4 @@ const RegistryHeader = ({ profile, viewMode, setViewMode }) => {
 };
 
 export default RegistryHeader;
+

@@ -130,3 +130,4 @@ const RiderTracking = ({ initialETA = 18, location = "Kampala" }) => {
 };
 
 export default RiderTracking;
+

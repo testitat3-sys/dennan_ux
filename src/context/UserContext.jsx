@@ -74,8 +74,18 @@ export const UserProvider = ({ children }) => {
     return null;
   };
 
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   return (
-    <UserContext.Provider value={{ user, login, logout, updateProfile, getStageInfo }}>
+    <UserContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      updateProfile, 
+      getStageInfo,
+      showOnboarding,
+      setShowOnboarding
+    }}>
       {children}
     </UserContext.Provider>
   );
@@ -88,3 +98,4 @@ export const useUser = () => {
   }
   return context;
 };
+

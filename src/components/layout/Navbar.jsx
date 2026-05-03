@@ -79,14 +79,30 @@ const navData = [
   }
 ];
 
+const SEARCH_SHORTCUTS = {
+  'design system': '/design-system',
+  'design-system': '/design-system',
+  'dashboard': '/dashboard',
+  'account': '/dashboard',
+  'profile': '/dashboard',
+  'registry': '/registry',
+  'wishlist': '/registry',
+  'checkout': '/checkout',
+  'pay': '/checkout',
+  'mother': '/category/mother',
+  'newborn': '/category/newborn',
+  'toddler': '/category/kid',
+  'brands': '/brands',
+  'about': '/about',
+};
+
 const Navbar = () => {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, setShowOnboarding } = useUser();
   const { setIsCartOpen, totalItems } = useCart();
   const [activeMenu, setActiveMenu] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeView, setActiveView] = useState('main');
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
@@ -121,6 +137,14 @@ const Navbar = () => {
 
   const handleMobileSearch = (e) => {
     e.preventDefault();
+    const query = mobileSearchQuery.toLowerCase().trim();
+
+    if (SEARCH_SHORTCUTS[query]) {
+      navigate(SEARCH_SHORTCUTS[query]);
+      setIsMenuOpen(false);
+      return;
+    }
+
     if (mobileSearchQuery.trim()) {
       navigate(`/category/all?q=${encodeURIComponent(mobileSearchQuery.trim())}`);
       setIsMenuOpen(false);
@@ -128,20 +152,35 @@ const Navbar = () => {
   };
 
   const handleSuggestionClick = (suggestion) => {
+    const query = suggestion.toLowerCase().trim();
+    
+    if (SEARCH_SHORTCUTS[query]) {
+      navigate(SEARCH_SHORTCUTS[query]);
+    } else {
+      navigate(`/category/all?q=${encodeURIComponent(suggestion)}`);
+    }
+    
     setMobileSearchQuery(suggestion);
     setShowMobileSuggestions(false);
-    navigate(`/category/all?q=${encodeURIComponent(suggestion)}`);
     setIsMenuOpen(false);
   };
 
   useEffect(() => {
     if (mobileSearchQuery.length > 1) {
+      const normalizedQuery = mobileSearchQuery.toLowerCase().trim();
+      
       const allLinks = navData.flatMap(item => 
         item.menu.columns.flatMap(col => col.links.map(l => l.text))
       );
-      const filtered = [...new Set(allLinks)].filter(text => 
-        text.toLowerCase().includes(mobileSearchQuery.toLowerCase())
+      
+      const shortcuts = Object.keys(SEARCH_SHORTCUTS)
+        .filter(key => key.includes(normalizedQuery))
+        .map(key => key.charAt(0).toUpperCase() + key.slice(1));
+
+      const filtered = [...new Set([...shortcuts, ...allLinks])].filter(text => 
+        text.toLowerCase().includes(normalizedQuery)
       ).slice(0, 5);
+      
       setSearchSuggestions(filtered);
       setShowMobileSuggestions(true);
     } else {
@@ -374,7 +413,7 @@ const Navbar = () => {
       </div>
 
       <OnboardingModal 
-        isOpen={showOnboarding} 
+        isOpen={useUser().showOnboarding} 
         onClose={() => setShowOnboarding(false)} 
       />
 
@@ -386,3 +425,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

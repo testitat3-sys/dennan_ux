@@ -47,3 +47,4 @@ const Toast = ({ message, isOpen, onClose, duration = 3000 }) => {
 };
 
 export default Toast;
+

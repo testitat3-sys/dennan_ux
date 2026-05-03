@@ -27,3 +27,4 @@ const StageNavRail = ({ activeStage, onStageChange }) => {
 };
 
 export default StageNavRail;
+

@@ -15,6 +15,13 @@ img { display: block; max-width: 100%; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 
 /* ─── Utilities ──────────────────────────────────────────────────── */
+.label-md {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .label-sm {
   font-family: var(--font-sans);
   font-size: var(--label-sm);
@@ -22,6 +29,12 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+.body-lg { font-family: var(--font-sans); font-size: var(--body-lg); line-height: 1.6; }
+.body-sm { font-family: var(--font-sans); font-size: var(--body-sm); line-height: 1.6; }
+
+.display-lg { font-family: var(--font-editorial); font-size: var(--display-lg); line-height: 1.1; letter-spacing: -0.02em; }
+.display-sm { font-family: var(--font-editorial); font-size: var(--display-sm); line-height: 1.1; letter-spacing: -0.02em; }
 .visually-hidden {
   position: absolute; width: 1px; height: 1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
@@ -40,3 +53,4 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 .stagger-target {
   opacity: 0;
 }
+

@@ -1,0 +1,95 @@
+.journey-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-5);
+}
+.stage-tile {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 3/4;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--space-6);
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.stage-tile:hover { transform: scale(1.015); }
+.stage-tile__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.stage-tile--expectant .stage-tile__bg,
+.stage-tile--newborn .stage-tile__bg,
+.stage-tile--toddler .stage-tile__bg {
+  background: transparent;
+}
+/* large decorative shape per tile */
+.stage-tile img.stage-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.stage-tile:hover img.stage-bg {
+  transform: scale(1.1);
+}
+.stage-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1;
+}
+.stage-tile__shape {
+  position: absolute;
+  top: var(--space-6);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 7rem; height: 7rem;
+  border-radius: 50%;
+  opacity: 0.22;
+  z-index: 0;
+}
+.stage-tile--expectant .stage-tile__shape { background: var(--color-brand-primary); }
+.stage-tile--newborn   .stage-tile__shape { background: var(--color-support-blue); }
+.stage-tile--toddler   .stage-tile__shape { background: var(--color-support-green); }
+.stage-tile__content { position: relative; z-index: 2; }
+.stage-tile__eyebrow {
+  font-size: var(--label-md);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: var(--space-2);
+}
+.stage-tile__title {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-sm);
+  font-weight: 400;
+  line-height: 1.15;
+  margin-bottom: var(--space-3);
+  color: #fff;
+}
+.stage-tile__copy {
+  font-size: var(--body-sm);
+  line-height: 1.6;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: var(--space-4);
+}
+.stage-tile__arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--label-md);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #fff;
+}
+

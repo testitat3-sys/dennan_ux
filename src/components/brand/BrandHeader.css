@@ -82,7 +82,7 @@
 
 .brand-header__mission {
   color: var(--surface-container-low);
-  font-size: var(--title-md);
+  font-size: var(--title-sm);
   max-width: 500px;
   margin-bottom: var(--space-4);
   font-weight: 400;
@@ -102,7 +102,7 @@
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-pill);
   color: var(--color-gallery-white);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
@@ -174,3 +174,4 @@
     color: var(--text-secondary);
   }
 }
+

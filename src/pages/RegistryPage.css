@@ -42,7 +42,7 @@
   position: relative;
   padding: var(--space-2) 0;
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -85,7 +85,7 @@
   border: none;
   background: transparent;
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   color: var(--text-primary);
   text-transform: uppercase;
@@ -120,7 +120,7 @@
   border: none;
   background: var(--surface-container);
   font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-size: var(--label-md);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -170,7 +170,7 @@
 
 .starter-kit .headline-md {
   font-family: var(--font-editorial);
-  font-size: 3.5rem; /* Display-LG scale */
+  font-size: var(--display-lg); /* Display-LG scale */
   line-height: 1;
   color: var(--text-primary);
   letter-spacing: -0.02em;
@@ -225,7 +225,7 @@
   grid-template-columns: 2.5fr 1.5fr 1fr 1.2fr;
   padding: var(--space-8) var(--space-10);
   background: var(--surface-container-low);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
@@ -279,7 +279,7 @@
 
 .footer-card h4 {
   font-family: var(--font-editorial);
-  font-size: 2rem;
+  font-size: var(--headline-md);
   margin-bottom: var(--space-4);
   color: var(--text-primary);
 }
@@ -315,6 +315,7 @@
   }
   
   .starter-kit .headline-md {
-    font-size: 2.5rem;
+    font-size: var(--headline-lg);
   }
 }
+

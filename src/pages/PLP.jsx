@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { stages, products } from '../data/productData';
+import { stages, collections, products } from '../data/productData';
 import ProductCard from '../components/ui/ProductCard';
 import SearchStrip from '../components/home/SearchStrip';
 import QuickViewModal from '../components/ui/QuickViewModal';
@@ -8,11 +8,16 @@ import Toast from '../components/ui/Toast';
 import './PLP.css';
 
 const PLP = () => {
-  const { stageId } = useParams();
+  const { stageId, collectionId } = useParams();
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   
-  const stage = stages[stageId] || stages.newborn;
+  // Resolve view data (either from stage or collection)
+  const viewData = collectionId 
+    ? (collections[collectionId] || collections['curated-picks'])
+    : (stages[stageId] || stages.newborn);
+    
+  const isCollectionView = !!collectionId;
   
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [activeFilters, setActiveFilters] = useState([]);
@@ -22,15 +27,26 @@ const PLP = () => {
   const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
-    // Filter by stage
     let results = products;
     
-    // Only filter by stage if it's not 'all'
-    if (stageId !== 'all') {
+    // 1. Filter by collection or stage
+    if (collectionId) {
+      if (collectionId === 'curated-picks') {
+        results = results.filter(p => p.isCurated);
+      } else if (collectionId === 'most-loved') {
+        results = results.filter(p => p.isMostLoved);
+      } else if (collectionId === 'essentials') {
+        results = results.filter(p => p.tier === 'Essentials');
+      } else if (collectionId === 'must-haves') {
+        results = results.filter(p => p.tier === 'Must-Haves');
+      } else if (collectionId === 'luxuries') {
+        results = results.filter(p => p.tier === 'Luxuries');
+      }
+    } else if (stageId && stageId !== 'all') {
       results = results.filter(p => p.stage === stageId);
     }
     
-    // Apply search query
+    // 2. Apply search query
     if (query) {
       const lowQuery = query.toLowerCase();
       results = results.filter(p => 
@@ -40,14 +56,14 @@ const PLP = () => {
       );
     }
     
-    // Apply additional filters if any
+    // 3. Apply sidebar filters
     if (activeFilters.length > 0) {
       results = results.filter(p => activeFilters.includes(p.category) || activeFilters.includes(p.tier));
     }
     
     setFilteredProducts(results);
     window.scrollTo(0, 0);
-  }, [stageId, activeFilters, query]);
+  }, [stageId, collectionId, activeFilters, query]);
 
   const toggleFilter = (filter) => {
     setActiveFilters(prev => 
@@ -65,19 +81,24 @@ const PLP = () => {
     setShowToast(true);
   };
 
-  const categories = [...new Set(products.filter(p => p.stage === stageId).map(p => p.category))];
+  // Derive categories for the sidebar based on the current results
+  const categories = [...new Set(products.filter(p => {
+    if (collectionId) return true; // Show all categories in collection view? Or just relevant ones?
+    return p.stage === stageId;
+  }).map(p => p.category))];
+  
   const tiers = ['Essentials', 'Must-Haves', 'Luxuries'];
 
   return (
     <main className="plp">
-      <header className="plp__hero">
+      <header className={`plp__hero ${isCollectionView ? 'plp__hero--banner' : ''}`}>
         <div className="plp__hero-bg">
-          <img src={stage.heroImage} alt={stage.title} />
+          <img src={viewData.heroImage} alt={viewData.title} />
         </div>
         <div className="plp__hero-content">
           <div className="plp__hero-shape" aria-hidden="true"></div>
-          <h1 className="plp__hero-title">{stage.title}</h1>
-          <p className="plp__hero-subtext">{stage.subtext}</p>
+          <h1 className="plp__hero-title">{viewData.title}</h1>
+          <p className="plp__hero-subtext">{viewData.subtext}</p>
         </div>
       </header>
 
@@ -136,7 +157,7 @@ const PLP = () => {
           <div className="plp__toolbar">
             <span className="plp__count">{filteredProducts.length} products found</span>
             <div className="plp__sort">
-              Sort by: <span className="plp__sort-val">Curated for you</span>
+              Sort by: <span className="plp__sort-val">{isCollectionView ? 'Curated' : 'Recommended'}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="m6 9 6 6 6-6"/>
               </svg>
@@ -181,3 +202,4 @@ const PLP = () => {
 };
 
 export default PLP;
+

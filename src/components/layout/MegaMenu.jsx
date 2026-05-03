@@ -12,7 +12,7 @@ const MegaMenu = ({ isOpen, data, categoryType }) => {
           <img src={featured.image} alt={featured.alt} />
         </div>
         <h4 className="mega-menu__featured-title">{featured.title}</h4>
-        <Link to={featured.link} className="label-sm">{featured.linkText}</Link>
+        <Link to={featured.link} className="label-md">{featured.linkText}</Link>
       </div>
       {columns.map((col, idx) => (
         <div key={idx}>
@@ -35,3 +35,4 @@ const MegaMenu = ({ isOpen, data, categoryType }) => {
 };
 
 export default MegaMenu;
+

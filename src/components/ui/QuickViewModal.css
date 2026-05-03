@@ -80,7 +80,7 @@
 
 .success-message {
   color: var(--text-secondary);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
   margin: 0;
 }
 
@@ -114,17 +114,17 @@
 .mini-cart-name {
   font-weight: 600;
   color: var(--text-primary);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
 }
 
 .mini-cart-meta {
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   color: var(--text-secondary);
 }
 
 .mini-cart-price {
   font-family: var(--font-editorial);
-  font-size: var(--title-md);
+  font-size: var(--title-sm);
   color: var(--text-primary);
 }
 
@@ -242,7 +242,7 @@
 
 .quick-view-tier {
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-brand-primary);
@@ -277,7 +277,7 @@
 
 .quick-view-price-was {
   font-family: var(--font-sans);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
   color: var(--text-tertiary);
   text-decoration: line-through;
 }
@@ -297,7 +297,7 @@
 
 .option-label {
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -317,7 +317,7 @@
   border: 1.5px solid rgba(17, 17, 17, 0.1);
   background: transparent;
   font-family: var(--font-sans);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -376,7 +376,7 @@
   border: none;
   padding: var(--space-4);
   font-family: var(--font-sans);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
   font-weight: 600;
   text-align: center;
   cursor: pointer;
@@ -389,7 +389,7 @@
 
 .quick-view-details-link {
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -421,3 +421,4 @@
     padding: var(--space-6);
   }
 }
+

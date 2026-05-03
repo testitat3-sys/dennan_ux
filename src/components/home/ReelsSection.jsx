@@ -1,4 +1,5 @@
 import React from 'react';
+import './ReelsSection.css';
 import ReelCard from '../ui/ReelCard';
 
 const reels = [
@@ -59,3 +60,4 @@ const ReelsSection = () => {
 };
 
 export default ReelsSection;
+

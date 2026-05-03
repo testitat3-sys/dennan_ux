@@ -229,3 +229,4 @@ const OnboardingModal = ({ isOpen, onClose }) => {
 };
 
 export default OnboardingModal;
+

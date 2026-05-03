@@ -17,7 +17,7 @@
   gap: var(--space-2);
   margin-bottom: var(--space-10);
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   color: var(--text-tertiary);
 }
 
@@ -97,7 +97,7 @@
   left: var(--space-4);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-sm);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -122,7 +122,7 @@
 
 .pdp__brand {
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   color: var(--color-brand-primary);
   text-transform: uppercase;
@@ -147,13 +147,13 @@
 
 .pdp__price {
   font-family: var(--font-editorial);
-  font-size: 2.25rem;
+  font-size: var(--headline-lg);
   color: var(--text-primary);
 }
 
 .pdp__was-price {
   font-family: var(--font-editorial);
-  font-size: 1.5rem;
+  font-size: var(--headline-sm);
   color: var(--text-tertiary);
   text-decoration: line-through;
 }
@@ -172,13 +172,13 @@
 }
 
 .age-scale__label {
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 600;
   color: var(--text-secondary);
 }
 
 .age-scale__status {
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   color: var(--color-brand-primary);
 }
@@ -213,7 +213,7 @@
 .age-scale__markers {
   display: flex;
   justify-content: space-between;
-  font-size: 0.65rem;
+  font-size: var(--label-md);
   font-weight: 600;
   text-transform: uppercase;
   color: var(--text-tertiary);
@@ -246,7 +246,7 @@
 
 .control-label {
   display: block;
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -266,7 +266,7 @@
   background: transparent;
   border-radius: var(--radius-sm);
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -295,7 +295,7 @@
 
 .pdp__add-btn {
   padding: var(--space-5);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   letter-spacing: 0.1em;
 }
 
@@ -316,7 +316,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   color: var(--text-tertiary);
   font-weight: 500;
 }
@@ -382,7 +382,7 @@
 
 .pdp__feature-list li {
   font-family: var(--font-sans);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
   color: var(--text-secondary);
   position: relative;
 }
@@ -446,14 +446,14 @@
 }
 
 .review-age {
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 600;
   color: var(--text-tertiary);
 }
 
 .review-text {
   font-family: var(--font-editorial);
-  font-size: var(--title-md);
+  font-size: var(--title-sm);
   line-height: 1.4;
   color: var(--text-primary);
   margin-bottom: var(--space-3);
@@ -461,7 +461,7 @@
 
 .review-author {
   font-family: var(--font-sans);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -477,6 +477,7 @@
   }
   
   .pdp__title {
-    font-size: 2.5rem;
+    font-size: var(--headline-lg);
   }
 }
+

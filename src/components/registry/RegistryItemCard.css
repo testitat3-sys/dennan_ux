@@ -43,7 +43,7 @@
   color: var(--color-on-primary);
   padding: 4px var(--space-4);
   border-radius: var(--radius-sm);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -67,7 +67,7 @@
   color: var(--color-on-primary);
   padding: var(--space-2) var(--space-5);
   border-radius: var(--radius-pill);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -129,7 +129,7 @@
 .card-actions button {
   flex: 1;
   padding: 0.75rem var(--space-3);
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   font-weight: 700;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -193,3 +193,4 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+

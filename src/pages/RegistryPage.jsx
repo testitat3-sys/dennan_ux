@@ -97,7 +97,7 @@ const RegistryPage = () => {
               </div>
               
               <div className="privacy-settings-pill">
-                <span className="label-sm">Privacy:</span>
+                <span className="label-md">Privacy:</span>
                 <select 
                   className="privacy-select"
                   value={privacy}
@@ -114,7 +114,7 @@ const RegistryPage = () => {
           {activeTab === 'registry' && (
             <div className="filters-row">
               <div className="filter-group">
-                <span className="label-sm uppercase tracking-wider">Curate by Price</span>
+                <span className="label-md uppercase tracking-wider">Curate by Price</span>
                 <div className="price-chips">
                   {['all', 'under25', '25to100', 'over100'].map(f => (
                     <button 
@@ -129,8 +129,8 @@ const RegistryPage = () => {
               </div>
               
               <div className="registry-stats desktop-only">
-                <span className="label-sm">Total Items: {items.length}</span>
-                <span className="label-sm">Purchased: {items.filter(i => i.status === 'purchased').length}</span>
+                <span className="label-md">Total Items: {items.length}</span>
+                <span className="label-md">Purchased: {items.filter(i => i.status === 'purchased').length}</span>
               </div>
             </div>
           )}
@@ -153,23 +153,23 @@ const RegistryPage = () => {
             ) : (
               <div className="empty-state">
                 <div className="starter-kit">
-                  <span className="label-sm text-brand">Getting Started</span>
+                  <span className="label-md text-brand">Getting Started</span>
                   <h3 className="headline-md">Your Registry is Empty</h3>
-                  <p className="body-md text-secondary">
+                  <p className="body-sm text-secondary">
                     Start your journey with our curated <strong>Starter Kit</strong> checklist.
                   </p>
                   <div className="starter-suggestions">
                     <div className="suggestion-card">
                       <img src="/new_assets/Tommee Tippee Closer to Nature Starter Set.jfif" alt="" />
-                      <span className="label-sm">Feeding</span>
+                      <span className="label-md">Feeding</span>
                     </div>
                     <div className="suggestion-card">
                       <img src="/new_assets/SnüzPod 4 Bedside Crib - White.jfif" alt="" />
-                      <span className="label-sm">Nursery</span>
+                      <span className="label-md">Nursery</span>
                     </div>
                     <div className="suggestion-card">
                       <img src="/new_assets/Organic Cotton Starter Set.jfif" alt="" />
-                      <span className="label-sm">Apparel</span>
+                      <span className="label-md">Apparel</span>
                     </div>
                   </div>
                   <button className="btn-primary">Browse Essentials</button>
@@ -181,7 +181,7 @@ const RegistryPage = () => {
           <div className="thank-you-section">
             <div className="section-header">
               <h2 className="headline-md">Thank You Note Tracker</h2>
-              <p className="body-md text-secondary">Keep track of gifts received and notes sent.</p>
+              <p className="body-sm text-secondary">Keep track of gifts received and notes sent.</p>
             </div>
             
             <div className="gift-log-table">
@@ -195,9 +195,9 @@ const RegistryPage = () => {
                 <div key={item.id} className="log-row">
                   <div className="gift-info">
                     <img src={item.image} alt="" className="mini-thumb" />
-                    <span className="title-md">{item.name}</span>
+                    <span className="title-sm">{item.name}</span>
                   </div>
-                  <span className="body-md">{item.purchasedBy?.name || item.contributions[0]?.name || 'Anonymous'}</span>
+                  <span className="body-sm">{item.purchasedBy?.name || item.contributions[0]?.name || 'Anonymous'}</span>
                   <div>
                     <span className="status-tag">Sent</span>
                   </div>
@@ -219,8 +219,8 @@ const RegistryPage = () => {
       {viewMode === 'guest' && (
         <div className="delivery-privacy-footer">
           <div className="footer-card">
-            <h4 className="title-md">Shipping & Privacy</h4>
-            <p className="body-md text-secondary">
+            <h4 className="title-sm">Shipping & Privacy</h4>
+            <p className="body-sm text-secondary">
               Gifts will be shipped directly to <strong>{registryProfile.ownerName}</strong> in {registryProfile.address.city}. 
               The full address is concealed to protect user privacy.
             </p>
@@ -232,3 +232,4 @@ const RegistryPage = () => {
 };
 
 export default RegistryPage;
+

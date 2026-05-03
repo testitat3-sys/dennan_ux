@@ -19,7 +19,7 @@
 .stage-nav__item {
   padding: var(--space-4) 0;
   font-family: var(--font-sans);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
   font-weight: 600;
   color: var(--text-tertiary);
   position: relative;
@@ -63,3 +63,4 @@
     white-space: nowrap;
   }
 }
+

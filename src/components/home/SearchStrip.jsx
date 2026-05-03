@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import './SearchStrip.css';
 import { useNavigate } from 'react-router-dom';
 
 const suggestions = [
@@ -17,9 +18,27 @@ const popularChips = [
   { text: 'Postpartum recovery' }
 ];
 
+const SEARCH_SHORTCUTS = {
+  'design system': '/design-system',
+  'design-system': '/design-system',
+  'dashboard': '/dashboard',
+  'account': '/dashboard',
+  'profile': '/dashboard',
+  'registry': '/registry',
+  'wishlist': '/registry',
+  'checkout': '/checkout',
+  'pay': '/checkout',
+  'mother': '/category/mother',
+  'newborn': '/category/newborn',
+  'toddler': '/category/kid',
+  'brands': '/brands',
+  'about': '/about',
+};
+
 const SearchStrip = ({ initialQuery = '' }) => {
   const [query, setQuery] = useState(initialQuery);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [localSuggestions, setLocalSuggestions] = useState(suggestions);
   const containerRef = useRef(null);
   const navigate = useNavigate();
 
@@ -40,7 +59,25 @@ const SearchStrip = ({ initialQuery = '' }) => {
   const handleInput = (e) => {
     const val = e.target.value;
     setQuery(val);
-    setIsDropdownOpen(val.trim().length > 1);
+    
+    // Dynamically add shortcuts to suggestions
+    const normalizedVal = val.toLowerCase().trim();
+    if (normalizedVal.length > 1) {
+      const matchedShortcuts = Object.keys(SEARCH_SHORTCUTS)
+        .filter(key => key.includes(normalizedVal))
+        .map(key => ({
+          text: key.charAt(0).toUpperCase() + key.slice(1),
+          sub: `Go to ${key} page`,
+          type: 'shortcut',
+          route: SEARCH_SHORTCUTS[key]
+        }));
+      
+      setLocalSuggestions([...matchedShortcuts, ...suggestions].slice(0, 5));
+      setIsDropdownOpen(true);
+    } else {
+      setLocalSuggestions(suggestions);
+      setIsDropdownOpen(false);
+    }
   };
 
   const handleChipClick = (text) => {
@@ -50,9 +87,29 @@ const SearchStrip = ({ initialQuery = '' }) => {
 
   const handleSearch = (e) => {
     e.preventDefault();
+    const normalizedQuery = query.toLowerCase().trim();
+    
+    if (SEARCH_SHORTCUTS[normalizedQuery]) {
+      navigate(SEARCH_SHORTCUTS[normalizedQuery]);
+      setIsDropdownOpen(false);
+      return;
+    }
+
     if (query.trim()) {
       navigate(`/category/all?q=${encodeURIComponent(query.trim())}`);
+      setIsDropdownOpen(false);
     }
+  };
+
+  const handleSuggestionClick = (item) => {
+    if (item.route) {
+      navigate(item.route);
+    } else {
+      setQuery(item.text);
+      // Optional: auto-trigger search on selection
+      navigate(`/category/all?q=${encodeURIComponent(item.text)}`);
+    }
+    setIsDropdownOpen(false);
   };
 
   return (
@@ -81,13 +138,18 @@ const SearchStrip = ({ initialQuery = '' }) => {
 
         {isDropdownOpen && (
           <div className="search-dropdown is-active" role="listbox" aria-label="Search suggestions">
-            {suggestions.map((item, i) => (
-              <div key={i} className="search-dropdown__item" role="option" onClick={() => { setQuery(item.text); setIsDropdownOpen(false); }}>
+            {localSuggestions.map((item, i) => (
+              <div key={i} className="search-dropdown__item" role="option" onClick={() => handleSuggestionClick(item)}>
                 <div className="search-dropdown__icon">
-                  {/* Dynamic icons based on type could go here */}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <circle cx="12" cy="12" r="10"/><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/>
-                  </svg>
+                  {item.type === 'shortcut' ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <circle cx="12" cy="12" r="10"/><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/>
+                    </svg>
+                  )}
                 </div>
                 <div>
                   <div className="search-dropdown__text">{item.text}</div>
@@ -120,3 +182,4 @@ const SearchStrip = ({ initialQuery = '' }) => {
 };
 
 export default SearchStrip;
+

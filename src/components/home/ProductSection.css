@@ -1,0 +1,95 @@
+/* ─── RECOMMENDATION RAIL ────────────────────────────────────────── */
+.rec-rail { background: var(--surface-container-low); }
+.rec-rail__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+}
+.rec-rail__header .section__header {
+  margin-bottom: 0;
+}
+.rec-rail__header .section__link-action {
+  white-space: nowrap;
+}
+
+/* ─── SECTION LINK ACTION ────────────────────────────────────────── */
+.section__link-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.2s, transform 0.2s;
+  padding: var(--space-2) 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.section__link-action:hover {
+  color: var(--color-brand-primary);
+}
+
+.section__link-action svg {
+  transition: transform 0.2s;
+}
+
+.section__link-action:hover svg {
+  transform: translateX(4px);
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-5);
+}
+
+/* ─── HORIZONTAL SCROLL ──────────────────────────────────────────── */
+.product-scroll-wrap {
+  position: relative;
+}
+.product-scroll {
+  display: flex;
+  gap: var(--space-5);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: var(--space-8);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Allow cards to bleed to edges but start aligned with container */
+  margin: 0 calc(-1 * var(--space-8));
+  padding: 0 var(--space-8);
+}
+.product-scroll::-webkit-scrollbar {
+  display: none;
+}
+.product-scroll .product-card {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+}
+
+@media (max-width: 1024px) {
+  .product-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .product-scroll {
+    margin: 0 calc(-1 * var(--space-4));
+    padding: 0 var(--space-4);
+    gap: var(--space-4);
+  }
+  .product-scroll .product-card {
+    flex: 0 0 240px;
+  }
+  .product-grid { grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+}
+
+@media (max-width: 480px) {
+  .product-grid { grid-template-columns: 1fr 1fr; }
+}
+

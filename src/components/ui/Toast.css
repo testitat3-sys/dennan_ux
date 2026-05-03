@@ -37,7 +37,7 @@
 
 .toast-message {
   font-family: var(--font-sans);
-  font-size: var(--body-md);
+  font-size: var(--body-sm);
   font-weight: 500;
   color: var(--color-anchor);
 }
@@ -59,3 +59,4 @@
     transform: translateY(0);
   }
 }
+

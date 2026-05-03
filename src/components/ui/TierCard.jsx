@@ -24,3 +24,4 @@ const TierCard = ({ tier }) => {
 };
 
 export default TierCard;
+

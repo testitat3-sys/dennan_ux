@@ -52,3 +52,4 @@ const ProductCard = ({ product, className = '', onAddToCart }) => {
 };
 
 export default ProductCard;
+

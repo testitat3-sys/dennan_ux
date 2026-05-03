@@ -14,7 +14,7 @@
 .dashboard__eyebrow {
   display: block;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--label-md);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -24,7 +24,7 @@
 
 .dashboard__title {
   font-family: 'Newsreader', serif;
-  font-size: 3.5rem;
+  font-size: var(--display-lg);
   color: var(--color-anchor);
   margin-bottom: 16px;
   font-weight: 400;
@@ -33,7 +33,7 @@
 
 .dashboard__subtitle {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.125rem;
+  font-size: var(--title-sm);
   color: var(--text-secondary);
   max-width: 600px;
   line-height: 1.6;
@@ -56,14 +56,14 @@
 
 .dashboard__section-title {
   font-family: 'Newsreader', serif;
-  font-size: 2rem;
+  font-size: var(--headline-md);
   color: var(--color-anchor);
   margin-bottom: 8px;
 }
 
 .dashboard__section-desc {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1rem;
+  font-size: var(--body-lg);
   color: var(--text-secondary);
   margin-bottom: 32px;
 }
@@ -87,13 +87,13 @@
 
 .dashboard__card-title {
   font-family: 'Newsreader', serif;
-  font-size: 1.5rem;
+  font-size: var(--headline-sm);
   margin-bottom: 12px;
 }
 
 .dashboard__card-text {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.9375rem;
+  font-size: var(--body-lg);
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 24px;
@@ -106,7 +106,7 @@
   border: none;
   border-radius: var(--radius-md);
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.875rem;
+  font-size: var(--body-sm);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -134,7 +134,7 @@
   padding: 6px 12px;
   background: color-mix(in srgb, var(--color-brand-accent), transparent 80%);
   color: var(--color-brand-secondary);
-  font-size: 0.75rem;
+  font-size: var(--label-md);
   font-weight: 700;
   border-radius: 20px;
 }
@@ -168,7 +168,7 @@
 
 .checklist-item label {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1rem;
+  font-size: var(--body-lg);
   color: var(--text-primary);
   cursor: pointer;
 }
@@ -183,6 +183,7 @@
   }
   
   .dashboard__title {
-    font-size: 2.5rem;
+    font-size: var(--headline-lg);
   }
 }
+

@@ -1,4 +1,5 @@
 import React from 'react';
+import './TierSection.css';
 import TierCard from '../ui/TierCard';
 
 const tiers = [
@@ -8,7 +9,7 @@ const tiers = [
     badge: 'Core needs',
     copy: 'The non-negotiables for safety, feeding, and sleep.',
     image: '/assets/newborn_apparel.png',
-    href: '/category?tier=essentials'
+    href: '/collection/essentials'
   },
   {
     type: 'musthaves',
@@ -16,7 +17,7 @@ const tiers = [
     badge: 'Quality of life',
     copy: 'Quality items that make an enormous difference to your daily life.',
     image: '/assets/feeding_nursing.png',
-    href: '/category?tier=must-haves'
+    href: '/collection/must-haves'
   },
   {
     type: 'luxuries',
@@ -24,7 +25,7 @@ const tiers = [
     badge: 'Premium picks',
     copy: 'Premium picks beautifully made for when only the best will do.',
     image: '/assets/hero.webp',
-    href: '/category?tier=luxuries'
+    href: '/collection/luxuries'
   }
 ];
 
@@ -47,3 +48,4 @@ const TierSection = () => {
 };
 
 export default TierSection;
+

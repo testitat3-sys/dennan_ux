@@ -19,6 +19,39 @@ export const stages = {
   }
 };
 
+export const collections = {
+  'curated-picks': {
+    id: 'curated-picks',
+    title: 'Curated Picks for You',
+    subtext: 'Hand-selected by our experts and tailored to your unique parenting style.',
+    heroImage: '/new_assets/Motherhood.webp',
+  },
+  'most-loved': {
+    id: 'most-loved',
+    title: 'Most Loved by Parents',
+    subtext: 'The highest-rated essentials as voted by our community of mothers and fathers.',
+    heroImage: '/new_assets/Newborn.webp',
+  },
+  'essentials': {
+    id: 'essentials',
+    title: 'The Essentials',
+    subtext: 'The non-negotiables for safety, feeding, and sleep. Every home needs these.',
+    heroImage: '/new_assets/Care.webp',
+  },
+  'must-haves': {
+    id: 'must-haves',
+    title: 'Must-Haves for Parents',
+    subtext: 'Quality items that make an enormous difference to your daily life.',
+    heroImage: '/assets/feeding_nursing.png',
+  },
+  'luxuries': {
+    id: 'luxuries',
+    title: 'The Luxury Edit',
+    subtext: 'Premium picks beautifully made for when only the best will do.',
+    heroImage: '/assets/hero.webp',
+  }
+};
+
 export const products = [
   {
     id: 1,
@@ -29,6 +62,8 @@ export const products = [
     image: '/new_assets/Tommee Tippee Closer to Nature Starter Set.jfif',
     tier: 'Essentials',
     stage: 'newborn',
+    isCurated: true,
+    isMostLoved: true,
     minMonth: 0,
     maxMonth: 6,
     category: 'Feeding',
@@ -57,6 +92,8 @@ export const products = [
     image: '/new_assets/SnüzPod 4 Bedside Crib - White.jfif',
     tier: 'Must-Haves',
     stage: 'newborn',
+    isCurated: true,
+    isMostLoved: true,
     minMonth: 0,
     maxMonth: 6,
     category: 'Sleep',
@@ -85,6 +122,7 @@ export const products = [
     image: '/new_assets/Organic Cotton Starter Set.jfif',
     tier: 'Essentials',
     stage: 'newborn',
+    isCurated: true,
     minMonth: 0,
     maxMonth: 3,
     category: 'Apparel',
@@ -112,6 +150,8 @@ export const products = [
     image: '/new_assets/maternity_essentials.webp',
     tier: 'Essentials',
     stage: 'mother',
+    isCurated: false,
+    isMostLoved: true,
     minWeek: 12,
     maxWeek: 40,
     category: 'Comfort',
@@ -138,6 +178,7 @@ export const products = [
     image: '/new_assets/Skip Hop Forma Backpack Nappy Bag.jfif',
     tier: 'Must-Haves',
     stage: 'mother',
+    isCurated: true,
     minWeek: 20,
     maxWeek: 40,
     category: 'On the Move',
@@ -164,6 +205,7 @@ export const products = [
     image: '/new_assets/BÉABA Babycook Neo Food Blender.jfif',
     tier: 'Luxuries',
     stage: 'kid',
+    isMostLoved: true,
     minMonth: 6,
     maxMonth: 24,
     category: 'Feeding',
@@ -216,6 +258,7 @@ export const products = [
     image: '/new_assets/pexels-chidy-31141041.webp',
     tier: 'Essentials',
     stage: 'kid',
+    isMostLoved: true,
     minMonth: 3,
     maxMonth: 12,
     category: 'Play',
@@ -235,3 +278,4 @@ export const products = [
     }
   }
 ];
+

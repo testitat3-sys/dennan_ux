@@ -24,3 +24,4 @@ const StageTile = ({ stage }) => {
 };
 
 export default StageTile;
+

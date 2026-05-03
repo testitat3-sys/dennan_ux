@@ -1,4 +1,5 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
+import './ProductSection.css';
 import ProductCard from '../ui/ProductCard';
 
 const ProductSection = ({ title, eyebrow, subtitle, products, viewAllLink, viewAllText = 'View all', isScroll = false, onAddToCart }) => {
@@ -11,12 +12,12 @@ const ProductSection = ({ title, eyebrow, subtitle, products, viewAllLink, viewA
           {subtitle && <p className="section__subtitle">{subtitle}</p>}
         </div>
         {viewAllLink && (
-          <a href={viewAllLink} className="btn-ghost">
+          <Link to={viewAllLink} className="section__link-action">
             {viewAllText}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
-          </a>
+          </Link>
         )}
       </div>
 
@@ -32,3 +33,4 @@ const ProductSection = ({ title, eyebrow, subtitle, products, viewAllLink, viewA
 };
 
 export default ProductSection;
+

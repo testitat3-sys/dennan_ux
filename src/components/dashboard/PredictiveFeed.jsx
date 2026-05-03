@@ -52,3 +52,4 @@ const PredictiveFeed = ({ type, stageInfo, onAddToCart }) => {
 };
 
 export default PredictiveFeed;
+

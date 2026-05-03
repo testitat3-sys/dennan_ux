@@ -18,7 +18,7 @@
 }
 
 .count-badge {
-  font-size: var(--label-sm);
+  font-size: var(--label-md);
   color: var(--text-tertiary);
   font-weight: 700;
   text-transform: uppercase;
@@ -37,3 +37,4 @@
     gap: var(--space-5);
   }
 }
+

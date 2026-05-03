@@ -43,3 +43,4 @@ export function getKampalaETA(zone) {
     formattedETA: `Arriving by ${timeString}`
   };
 }
+

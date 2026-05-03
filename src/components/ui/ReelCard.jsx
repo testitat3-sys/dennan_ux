@@ -40,7 +40,7 @@ const ReelCard = ({ reel }) => {
               <div className="mini-product-sheet__info">
                 <h4 className="mini-product-sheet__title">{products[0].title}</h4>
                 <p className="mini-product-sheet__price">{products[0].price}</p>
-                {products[0].options && <div className="mini-product-sheet__options"><span className="label-sm">{products[0].options}</span></div>}
+                {products[0].options && <div className="mini-product-sheet__options"><span className="label-md">{products[0].options}</span></div>}
                 <button className="btn-primary btn-sm">Add to cart</button>
               </div>
             </>
@@ -61,3 +61,4 @@ const ReelCard = ({ reel }) => {
 };
 
 export default ReelCard;
+

@@ -98,3 +98,4 @@ const NextMilestoneCard = ({ stageInfo }) => {
 };
 
 export default NextMilestoneCard;
+

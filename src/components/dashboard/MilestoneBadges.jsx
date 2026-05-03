@@ -199,3 +199,4 @@ const MilestoneBadges = ({ user, stageInfo }) => {
 };
 
 export default MilestoneBadges;
+

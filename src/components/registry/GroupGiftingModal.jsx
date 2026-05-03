@@ -23,9 +23,9 @@ const GroupGiftingModal = ({ item, isOpen, onClose, onConfirm }) => {
         <button className="close-btn" onClick={onClose}>&times;</button>
         
         <div className="modal-header">
-          <span className="label-sm">Group Gifting</span>
+          <span className="label-md">Group Gifting</span>
           <h2 className="headline-md">Contribute to {item.name}</h2>
-          <p className="body-md text-secondary">Help Sarah & Mike get this item by contributing any amount.</p>
+          <p className="body-sm text-secondary">Help Sarah & Mike get this item by contributing any amount.</p>
         </div>
 
         <div className="contribution-summary">
@@ -39,12 +39,12 @@ const GroupGiftingModal = ({ item, isOpen, onClose, onConfirm }) => {
           </div>
           <div className="summary-row remaining">
             <span>Remaining</span>
-            <span className="title-md">£{remaining.toFixed(2)}</span>
+            <span className="title-sm">£{remaining.toFixed(2)}</span>
           </div>
         </div>
 
         <div className="input-group">
-          <label className="label-sm">Your Name</label>
+          <label className="label-md">Your Name</label>
           <input 
             type="text" 
             placeholder="e.g. Grandma Betty" 
@@ -54,7 +54,7 @@ const GroupGiftingModal = ({ item, isOpen, onClose, onConfirm }) => {
         </div>
 
         <div className="input-group">
-          <label className="label-sm">Contribution Amount (£)</label>
+          <label className="label-md">Contribution Amount (£)</label>
           <input 
             type="number" 
             placeholder="0.00" 
@@ -72,7 +72,7 @@ const GroupGiftingModal = ({ item, isOpen, onClose, onConfirm }) => {
           Confirm Contribution
         </button>
 
-        <p className="label-sm text-tertiary text-center">
+        <p className="label-md text-tertiary text-center">
           Contributions are non-refundable and will be applied directly to this item.
         </p>
       </div>
@@ -81,3 +81,4 @@ const GroupGiftingModal = ({ item, isOpen, onClose, onConfirm }) => {
 };
 
 export default GroupGiftingModal;
+

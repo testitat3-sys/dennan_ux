@@ -50,3 +50,4 @@ const BrandHeader = ({ brand }) => {
 };
 
 export default BrandHeader;
+

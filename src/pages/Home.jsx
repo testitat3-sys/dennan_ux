@@ -9,88 +9,17 @@ import ReelsSection from '../components/home/ReelsSection';
 import TrustStrip from '../components/home/TrustStrip';
 import QuickViewModal from '../components/ui/QuickViewModal';
 import Toast from '../components/ui/Toast';
-
-const mostLovedProducts = [
-  {
-    image: '/new_assets/Tommee Tippee Closer to Nature Starter Set.jfif',
-    name: 'Closer to Nature Baby Bottles',
-    price: '£18.99',
-    wasPrice: '£24.99',
-    tier: 'Essentials',
-    tags: [{ type: 'primary', text: '1k + sold' }, { type: 'accent', text: '25% OFF' }]
-  },
-  {
-    image: '/new_assets/SnüzPod 4 Bedside Crib - White.jfif',
-    name: 'SnüzPod 4 Bedside Crib - White',
-    price: '£199.00',
-    tier: 'Must-Haves',
-    tags: [{ type: 'primary', text: 'Highly Rated' }]
-  },
-  {
-    image: '/assets/skip_hop_bath_set.jpg',
-    name: 'Skip Hop Moby Bath Set',
-    price: '£45.00',
-    tier: 'Essentials',
-    tags: [{ type: 'primary', text: '500+ sold' }, { type: 'accent', text: 'BUNDLE DEAL' }]
-  },
-  {
-    image: '/new_assets/BÉABA Babycook Solo.jfif',
-    name: 'BÉABA Babycook Solo',
-    price: '£120.00',
-    tier: 'Luxuries',
-    tags: [{ type: 'primary', text: 'Best of 2025' }]
-  },
-  {
-    image: '/new_assets/Organic Cotton Starter Set.jfif',
-    name: 'Organic Cotton Starter Set',
-    price: '£65.00',
-    tier: 'Essentials',
-    tags: [{ type: 'primary', text: 'Community Pick' }]
-  }
-];
-
-const curatedProducts = [
-  {
-    variant: 'p1',
-    image: '/new_assets/Tommee Tippee Closer to Nature Starter Set.jfif',
-    name: 'Tommee Tippee Closer to Nature Starter Set',
-    price: '£44.99',
-    wasPrice: '£59.99',
-    tier: 'Essentials',
-    badge: 'Essential'
-  },
-  {
-    variant: 'p2',
-    image: '/new_assets/SnüzPod 4 Bedside Crib - White.jfif',
-    name: 'SnüzPod 4 Bedside Crib',
-    price: '£229.00',
-    tier: 'Must-Have',
-    badge: 'Must-Have'
-  },
-  {
-    variant: 'p3',
-    image: '/new_assets/Skip Hop Forma Backpack Nappy Bag.jfif',
-    name: 'Skip Hop Forma Backpack Nappy Bag',
-    price: '£89.00',
-    tier: 'Essentials',
-    badge: 'Essential'
-  },
-  {
-    variant: 'p4',
-    image: '/new_assets/BÉABA Babycook Neo Food Blender.jfif',
-    name: 'BÉABA Babycook Neo Food Blender',
-    price: '£149.99',
-    wasPrice: '£179.99',
-    tier: 'Luxuries',
-    badge: 'Luxury'
-  }
-];
+import { products } from '../data/productData';
 
 const Home = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Get data from centralized source
+  const mostLovedProducts = products.filter(p => p.isMostLoved).slice(0, 5);
+  const curatedProducts = products.filter(p => p.isCurated).slice(0, 4);
 
   const handleAddToCart = (product) => {
     setSelectedProduct(product);
@@ -131,7 +60,7 @@ const Home = () => {
         title="Most Loved by Parents"
         eyebrow="Performance Picks"
         products={mostLovedProducts}
-        viewAllLink="/category"
+        viewAllLink="/collection/most-loved"
         viewAllText="View most loved"
         isScroll={true}
         onAddToCart={handleAddToCart}
@@ -144,7 +73,7 @@ const Home = () => {
         title="Curated picks for your journey"
         eyebrow="AI-curated picks"
         products={curatedProducts}
-        viewAllLink="/category"
+        viewAllLink="/collection/curated-picks"
         viewAllText="View all"
         onAddToCart={handleAddToCart}
       />
@@ -171,3 +100,4 @@ const Home = () => {
 };
 
 export default Home;
+

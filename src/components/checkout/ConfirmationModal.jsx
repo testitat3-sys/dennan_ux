@@ -105,3 +105,4 @@ const ConfirmationModal = ({ isOpen, onClose, location, orderItems = [] }) => {
 };
 
 export default ConfirmationModal;
+
