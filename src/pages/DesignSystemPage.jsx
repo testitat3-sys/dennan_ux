@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './DesignSystemPage.css';
 import Button from '../components/ui/Button';
 import ProductCard from '../components/ui/ProductCard';
+import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
 import TierCard from '../components/ui/TierCard';
 import StageTile from '../components/ui/StageTile';
 import QuickViewModal from '../components/ui/QuickViewModal';
@@ -208,6 +209,12 @@ const DesignSystemPage = () => {
             <h3 className="ds-label">Product Card</h3>
             <div className="ds-card-preview" style={{ maxWidth: '300px' }}>
               <ProductCard product={mockProduct} />
+            </div>
+          </div>
+          <div className="ds-component-item">
+            <h3 className="ds-label">Product Card Skeleton</h3>
+            <div className="ds-card-preview" style={{ maxWidth: '300px' }}>
+              <ProductCardSkeleton />
             </div>
           </div>
           <div className="ds-component-item">

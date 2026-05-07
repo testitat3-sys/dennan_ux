@@ -2,34 +2,9 @@ import React from 'react';
 import './TierSection.css';
 import TierCard from '../ui/TierCard';
 
-const tiers = [
-  {
-    type: 'essentials',
-    title: 'Essentials',
-    badge: 'Core needs',
-    copy: 'The non-negotiables for safety, feeding, and sleep.',
-    image: '/assets/newborn_apparel.png',
-    href: '/collection/essentials'
-  },
-  {
-    type: 'musthaves',
-    title: 'Must-Haves',
-    badge: 'Quality of life',
-    copy: 'Quality items that make an enormous difference to your daily life.',
-    image: '/assets/feeding_nursing.png',
-    href: '/collection/must-haves'
-  },
-  {
-    type: 'luxuries',
-    title: 'Luxuries',
-    badge: 'Premium picks',
-    copy: 'Premium picks beautifully made for when only the best will do.',
-    image: '/assets/hero.webp',
-    href: '/collection/luxuries'
-  }
-];
+const TierSection = ({ tiers }) => {
+  if (!tiers) return null;
 
-const TierSection = () => {
   return (
     <section className="section tier-strip" aria-labelledby="tier-heading">
       <div className="section__header">

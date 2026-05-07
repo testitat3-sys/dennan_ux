@@ -10,17 +10,21 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
+      console.log(`[UserContext.jsx] Local user session active:`, user.email || user);
       localStorage.setItem('dennan_user', JSON.stringify(user));
     } else {
+      console.log(`[UserContext.jsx] Local user session cleared.`);
       localStorage.removeItem('dennan_user');
     }
   }, [user]);
 
   const login = (userData) => {
+    console.log(`[UserContext.jsx] User logged in successfully:`, userData.email || userData);
     setUser(userData);
   };
 
   const logout = () => {
+    console.log(`[UserContext.jsx] User logged out locally.`);
     setUser(null);
   };
 

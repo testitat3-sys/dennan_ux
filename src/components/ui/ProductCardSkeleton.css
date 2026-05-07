@@ -1,0 +1,114 @@
+/* ─── ProductCardSkeleton Styles ────────────────────────────────── */
+
+:root {
+  --skeleton-base: var(--surface-container-high);
+  --skeleton-highlight: color-mix(in srgb, var(--color-brand-primary) 5%, var(--surface));
+}
+
+/* Skeleton Container Base */
+.product-card--skeleton {
+  pointer-events: none;
+  user-select: none;
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: var(--shadow-ambient);
+  height: 100%;
+}
+
+/* Hard reset to prevent zoom/hover scaling shifts */
+.product-card--skeleton:hover {
+  transform: none !important;
+  box-shadow: var(--shadow-ambient) !important;
+}
+
+/* Image skeleton block */
+.product-card__image--skeleton {
+  width: 100%;
+  aspect-ratio: 1; /* 1:1 matching exact ratio of product images */
+  background-color: var(--skeleton-base);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Text & Button padding box */
+.product-card__info--skeleton {
+  padding: var(--space-4) var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+/* Small category/tier tag skeleton */
+.skeleton-tier {
+  height: 12px;
+  width: 35%;
+  border-radius: var(--radius-sm);
+  background-color: var(--skeleton-base);
+  margin-bottom: var(--space-1);
+}
+
+/* Title / Name text skeletons */
+.skeleton-title {
+  height: 16px;
+  border-radius: var(--radius-sm);
+  background-color: var(--skeleton-base);
+}
+
+.skeleton-title--1 {
+  width: 90%;
+}
+
+.skeleton-title--2 {
+  width: 60%;
+  margin-bottom: var(--space-2);
+}
+
+/* Price block container */
+.product-card__price-row--skeleton {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  display: flex;
+  align-items: baseline;
+}
+
+.skeleton-price {
+  height: 20px;
+  width: 30%;
+  border-radius: var(--radius-sm);
+  background-color: var(--skeleton-base);
+}
+
+/* Button mockup representing the Add to Cart button */
+.skeleton-button {
+  width: 100%;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background-color: var(--skeleton-base);
+  margin-top: var(--space-3);
+}
+
+/* ─── Shimmer Animation Effect ────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s infinite linear;
+}

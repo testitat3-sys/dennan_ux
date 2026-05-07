@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { formatPrice } from '../../utils/priceUtils';
 import './QuickViewModal.css';
+
 
 const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
   const navigate = useNavigate();
@@ -78,8 +80,8 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
                 )}
                 <h2 className="quick-view-name">{product.name}</h2>
                 <div className="quick-view-price-row">
-                  <span className="quick-view-price">{product.price}</span>
-                  {product.wasPrice && <span className="quick-view-price-was">{product.wasPrice}</span>}
+                  <span className="quick-view-price">{formatPrice(product.price)}</span>
+                  {product.wasPrice && <span className="quick-view-price-was">{formatPrice(product.wasPrice)}</span>}
                 </div>
 
                 <div className="quick-view-options">
@@ -155,7 +157,7 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
                   <div className="mini-cart-info">
                     <span className="mini-cart-name">{product.name}</span>
                     <span className="mini-cart-meta">Size: {size} • Qty: {quantity}</span>
-                    <span className="mini-cart-price">{product.price}</span>
+                    <span className="mini-cart-price">{formatPrice(product.price)}</span>
                   </div>
                 </div>
               </div>

@@ -63,20 +63,16 @@ const BadgeIcons = {
   )
 };
 
-const MilestoneBadges = ({ user, stageInfo }) => {
-  const allBadges = stageInfo.type === 'expecting' 
-    ? [
-        { id: 'start', label: 'Journey Started', icon: BadgeIcons.start, unlocked: true },
-        { id: 'trim2', label: '2nd Trimester', icon: BadgeIcons.trim2, unlocked: stageInfo.week >= 12 },
-        { id: 'trim3', label: '3rd Trimester', icon: BadgeIcons.trim3, unlocked: stageInfo.week >= 27 },
-        { id: 'due', label: 'Due Date Reached', icon: BadgeIcons.due, unlocked: stageInfo.week >= 40 }
-      ]
-    : [
-        { id: 'birth', label: 'Newborn', icon: BadgeIcons.birth, unlocked: true },
-        { id: '6m', label: '6 Months', icon: BadgeIcons['6m'], unlocked: stageInfo.months >= 6 },
-        { id: '1y', label: 'First Birthday', icon: BadgeIcons['1y'], unlocked: stageInfo.months >= 12 },
-        { id: '2y', label: 'Toddler', icon: BadgeIcons['2y'], unlocked: stageInfo.months >= 24 }
-      ];
+const MilestoneBadges = ({ user, stageInfo, badgeData = [] }) => {
+  const allBadges = badgeData.map(badge => ({
+    ...badge,
+    icon: BadgeIcons[badge.id] || BadgeIcons.start,
+    unlocked: badge.unlocked || (
+      stageInfo.type === 'expecting' 
+        ? (badge.minWeek ? stageInfo.week >= badge.minWeek : false)
+        : (badge.minMonth ? stageInfo.months >= badge.minMonth : false)
+    )
+  }));
 
   return (
     <div className="milestone-badges">

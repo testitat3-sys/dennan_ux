@@ -1,25 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { kampalaLandmarks, userHistory } from '../../utils/deliveryUtils';
 import './SmartAddressSearch.css';
 
-const SmartAddressSearch = ({ onSelectAddress }) => {
-  const [query, setQuery] = useState('');
+const SmartAddressSearch = ({ onSelectAddress, landmarks = [], history = [] }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const [suggestions, setSuggestions] = useState([]);
   const [isLocating, setIsLocating] = useState(false);
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [status, setStatus] = useState('IDLE'); // IDLE, LOADING, OK, ZERO_RESULTS, ERROR
   const searchRef = useRef(null);
+  
+  const sessionTokenRef = useRef(null);
 
+  // Initialize Maps Library & Session Token
   useEffect(() => {
-    if (query.length > 1) {
-      const filtered = kampalaLandmarks.filter(item => 
-        item.name.toLowerCase().includes(query.toLowerCase()) ||
-        item.sub.toLowerCase().includes(query.toLowerCase())
-      );
-      setSuggestions(filtered);
-    } else {
-      setSuggestions([]);
+    // Make sure Google Maps is loaded
+    if (window.google && window.google.maps && window.google.maps.places) {
+      if (!sessionTokenRef.current) {
+        sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+      }
     }
-  }, [query]);
+  }, []);
 
   // Handle clicking outside to close suggestions
   useEffect(() => {
@@ -32,10 +32,91 @@ const SmartAddressSearch = ({ onSelectAddress }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelect = (item) => {
-    setQuery(item.name);
+  // Debounced Search Effect
+  useEffect(() => {
+    if (!query || query.length <= 1) {
+      setSuggestions([]);
+      setStatus('IDLE');
+      return;
+    }
+
+    const fetchSuggestions = async () => {
+      setStatus('LOADING');
+      if (!window.google || !window.google.maps || !window.google.maps.places) {
+        setStatus('ERROR');
+        return;
+      }
+      try {
+        if (!sessionTokenRef.current) {
+          sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+        }
+
+        const request = {
+          input: query,
+          sessionToken: sessionTokenRef.current,
+          region: 'ug',
+        };
+
+        const { suggestions } = await window.google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+        
+        if (suggestions && suggestions.length > 0) {
+          setSuggestions(suggestions);
+          setStatus('OK');
+        } else {
+          setSuggestions([]);
+          setStatus('ZERO_RESULTS');
+        }
+      } catch (error) {
+        console.error("Error fetching autocomplete suggestions:", error);
+        setSuggestions([]);
+        setStatus('ERROR');
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchSuggestions();
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [query]);
+
+  const handleSelect = async (suggestionObj) => {
+    // If it's from history/popular hubs (has name property)
+    if (suggestionObj.name && !suggestionObj.placePrediction) {
+      setQuery(suggestionObj.name);
+      setIsFocused(false);
+      setSuggestions([]);
+      onSelectAddress(suggestionObj);
+      return;
+    }
+
+    // It's an AutocompleteSuggestion
+    const prediction = suggestionObj.placePrediction;
+    setQuery(prediction.text.text);
     setIsFocused(false);
-    onSelectAddress(item);
+    setSuggestions([]);
+
+    try {
+      const place = prediction.toPlace();
+      await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
+      
+      const lat = place.location.lat();
+      const lng = place.location.lng();
+
+      onSelectAddress({
+        name: prediction.text.text.split(',')[0], // Approximation of main_text
+        sub: prediction.text.text.split(',').slice(1).join(',').trim() || 'Kampala', // Approximation of secondary_text
+        address: place.formattedAddress,
+        lat,
+        lng,
+        zone: 'Default' // Keep default for ETA logic
+      });
+
+      // Reset the session token after a successful selection
+      sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+    } catch (error) {
+      console.error("Error getting place details:", error);
+    }
   };
 
   const handleGetCurrentLocation = () => {
@@ -43,7 +124,6 @@ const SmartAddressSearch = ({ onSelectAddress }) => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((position) => {
         // In a real app, we'd reverse geocode here
-        // For demo, we'll mock finding "Current Location (Kololo)"
         const mockLocation = { name: "Current Location (Kololo)", zone: "Kololo" };
         setQuery(mockLocation.name);
         onSelectAddress(mockLocation);
@@ -59,7 +139,7 @@ const SmartAddressSearch = ({ onSelectAddress }) => {
     }
   };
 
-  const popularHubs = kampalaLandmarks.slice(2, 5); // Village, Acacia, Garden City
+  const popularHubs = landmarks.slice(2, 5); // Village, Acacia, Garden City
 
   return (
     <div className="smart-search-container" ref={searchRef}>
@@ -69,7 +149,10 @@ const SmartAddressSearch = ({ onSelectAddress }) => {
           className="smart-search-input"
           placeholder="Search delivery location (e.g. Kiruddu...)"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (!isFocused) setIsFocused(true);
+          }}
           onFocus={() => setIsFocused(true)}
         />
         <button 
@@ -90,7 +173,7 @@ const SmartAddressSearch = ({ onSelectAddress }) => {
             <div className="search-initial-state">
               <div className="suggestion-group">
                 <h4 className="group-label">Recent</h4>
-                {userHistory.map((item, idx) => (
+                {history.map((item, idx) => (
                   <div key={idx} className="suggestion-item" onClick={() => handleSelect(item)}>
                     <svg className="item-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="12 8 12 12 14 14" />
@@ -118,19 +201,29 @@ const SmartAddressSearch = ({ onSelectAddress }) => {
             </div>
           ) : (
             <div className="search-results">
-              {suggestions.length > 0 ? suggestions.map((item, idx) => (
-                <div key={idx} className="suggestion-item" onClick={() => handleSelect(item)}>
-                  <svg className="item-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  <div className="item-details">
-                    <span className="item-name">{item.name}</span>
-                    <span className="item-sub">{item.sub}</span>
+              {status === "OK" ? suggestions.map((suggestion) => {
+                const prediction = suggestion.placePrediction;
+                const placeId = prediction.placeId;
+                const mainText = prediction.text.text.split(',')[0];
+                const secondaryText = prediction.text.text.split(',').slice(1).join(',').trim() || '';
+
+                return (
+                  <div key={placeId} className="suggestion-item" onClick={() => handleSelect(suggestion)}>
+                    <svg className="item-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <div className="item-details">
+                      <span className="item-name">{mainText}</span>
+                      <span className="item-sub">{secondaryText}</span>
+                    </div>
                   </div>
+                );
+              }) : (
+                <div className="no-results">
+                  {status === "ZERO_RESULTS" ? "No locations found." : 
+                   status === "ERROR" ? "Error fetching results." : "Typing..."}
                 </div>
-              )) : (
-                <div className="no-results">No landmarks found nearby.</div>
               )}
             </div>
           )}
@@ -141,4 +234,5 @@ const SmartAddressSearch = ({ onSelectAddress }) => {
 };
 
 export default SmartAddressSearch;
+
 

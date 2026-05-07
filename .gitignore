@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Private Keys
+*.pem
+
+# AI Agent files & Scratch
+.agents/
+.claude/
+scratch/
+skills-lock.json
+

@@ -11,6 +11,57 @@
   text-align: left;
 }
 
+.dashboard__header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+.dashboard__signout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid color-mix(in srgb, var(--text-secondary), transparent 80%);
+  border-radius: var(--radius-md);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: var(--body-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.dashboard__signout-btn:hover {
+  background: color-mix(in srgb, var(--color-brand-primary), transparent 94%);
+  color: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
+  transform: translateY(-1px);
+}
+
+.dashboard__signout-btn:active {
+  transform: translateY(0);
+}
+
+.dashboard__signout-icon {
+  transition: transform 0.2s ease;
+}
+
+.dashboard__signout-btn:hover .dashboard__signout-icon {
+  transform: translateX(2px);
+}
+
+@media (max-width: 768px) {
+  .dashboard__header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+}
+
 .dashboard__eyebrow {
   display: block;
   font-family: 'Plus Jakarta Sans', sans-serif;

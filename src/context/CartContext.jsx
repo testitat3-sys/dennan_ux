@@ -1,6 +1,9 @@
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import { useConvexAuth, useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 const CartContext = createContext();
+const GUEST_CART_KEY = 'dennan_guest_cart';
 
 export const useCart = () => {
   const context = useContext(CartContext);
@@ -11,53 +14,171 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+  const { isAuthenticated } = useConvexAuth();
+
+  // --- Guest Cart State ---
+  const [guestCartItems, setGuestCartItems] = useState(() => {
+    try {
+      const item = localStorage.getItem(GUEST_CART_KEY);
+      return item ? JSON.parse(item) : [];
+    } catch (error) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(GUEST_CART_KEY, JSON.stringify(guestCartItems));
+  }, [guestCartItems]);
+
+  // --- Authenticated Cart State ---
+  const convexCartItemsRaw = useQuery(api.cart.getCartItems, isAuthenticated ? {} : "skip");
+  const convexAddToCart = useMutation(api.cart.addToCart);
+  const convexUpdateQuantity = useMutation(api.cart.updateQuantity);
+  const convexRemoveFromCart = useMutation(api.cart.removeFromCart);
+
+  const convexCartItems = useMemo(() => {
+    if (!convexCartItemsRaw) return [];
+    return convexCartItemsRaw.map(item => ({
+      ...item.product,
+      id: item.productId,
+      quantity: item.quantity,
+      size: item.size,
+      cartItemId: item._id
+    }));
+  }, [convexCartItemsRaw]);
+
+  // --- Guest Cart Price Hydration from DB ---
+  const simplifiedGuestCartItems = useMemo(() => {
+    if (isAuthenticated) return [];
+    return guestCartItems.map(item => ({
+      productId: item.id || item.productId,
+      quantity: item.quantity,
+      size: item.size || ""
+    }));
+  }, [guestCartItems, isAuthenticated]);
+
+  const guestCartHydratedRaw = useQuery(
+    api.cart.getGuestCartDetails,
+    !isAuthenticated && simplifiedGuestCartItems.length > 0 ? { items: simplifiedGuestCartItems } : "skip"
+  );
+
+  const guestCartItemsHydrated = useMemo(() => {
+    if (isAuthenticated) return [];
+    // Fallback to local storage cache if loading is in progress or query returns empty
+    if (!guestCartHydratedRaw || guestCartHydratedRaw.length === 0) {
+      return guestCartItems;
+    }
+    return guestCartHydratedRaw.map(item => ({
+      ...item.product,
+      id: item.productId,
+      quantity: item.quantity,
+      size: item.size,
+      isGuest: true
+    }));
+  }, [guestCartHydratedRaw, guestCartItems, isAuthenticated]);
+
+  // --- Hybrid Cart (DB-Backed for both Guest & Authenticated) ---
+  const cartItems = isAuthenticated ? convexCartItems : guestCartItemsHydrated;
+
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [lastRemovedItem, setLastRemovedItem] = useState(null);
   const [deliveryLocation, setDeliveryLocation] = useState('Kampala Central');
 
-  const addToCart = (product, quantity, size) => {
-    setCartItems(prevItems => {
-      const existingItemIndex = prevItems.findIndex(
-        item => item.id === product.id && item.size === size
-      );
-
-      if (existingItemIndex > -1) {
-        const newItems = [...prevItems];
-        newItems[existingItemIndex].quantity += quantity;
-        return newItems;
-      } else {
-        return [...prevItems, { ...product, quantity, size }];
+  const addToCart = async (product, quantity, size) => {
+    const id = product._id || product.id;
+    if (isAuthenticated) {
+      try {
+        await convexAddToCart({ productId: id, quantity, size });
+      } catch (err) {
+        console.error("Failed to add to cart:", err);
       }
-    });
-  };
+    } else {
+      setGuestCartItems(prevItems => {
+        const existingItemIndex = prevItems.findIndex(
+          item => item.id === id && item.size === size
+        );
 
-  const updateQuantity = (productId, size, delta) => {
-    setCartItems(prevItems => {
-      return prevItems.map(item => {
-        if (item.id === productId && item.size === size) {
-          const newQty = Math.max(1, item.quantity + delta);
-          return { ...item, quantity: newQty };
+        if (existingItemIndex > -1) {
+          const newItems = [...prevItems];
+          let newQty = newItems[existingItemIndex].quantity + quantity;
+          if (product.inventory !== undefined) {
+             newQty = Math.min(newQty, product.inventory);
+          }
+          newItems[existingItemIndex].quantity = newQty;
+          return newItems;
+        } else {
+          let qtyToAdd = quantity;
+          if (product.inventory !== undefined) {
+             qtyToAdd = Math.min(qtyToAdd, product.inventory);
+          }
+          return [...prevItems, { ...product, id, quantity: qtyToAdd, size }];
         }
-        return item;
       });
-    });
+    }
   };
 
-  const removeFromCart = (productId, size) => {
-    setCartItems(prevItems => {
-      const itemToRemove = prevItems.find(item => item.id === productId && item.size === size);
-      if (itemToRemove) {
-        setLastRemovedItem(itemToRemove);
+  const updateQuantity = async (productId, size, delta) => {
+    if (isAuthenticated) {
+      const item = convexCartItems.find(i => i.id === productId && i.size === size);
+      if (item && item.cartItemId) {
+        try {
+          await convexUpdateQuantity({ cartItemId: item.cartItemId, delta });
+        } catch (err) {
+           console.error("Failed to update quantity:", err);
+        }
       }
-      return prevItems.filter(item => !(item.id === productId && item.size === size));
-    });
+    } else {
+      setGuestCartItems(prevItems => {
+        return prevItems.map(item => {
+          if (item.id === productId && item.size === size) {
+            let newQty = Math.max(1, item.quantity + delta);
+            if (item.inventory !== undefined) {
+               newQty = Math.min(newQty, item.inventory);
+            }
+            return { ...item, quantity: newQty };
+          }
+          return item;
+        });
+      });
+    }
   };
 
-  const undoRemove = () => {
+  const removeFromCart = async (productId, size) => {
+    if (isAuthenticated) {
+       const item = convexCartItems.find(i => i.id === productId && i.size === size);
+       if (item) {
+          try {
+             await convexRemoveFromCart({ cartItemId: item.cartItemId });
+             setLastRemovedItem(item);
+          } catch(err) { console.error(err); }
+       }
+    } else {
+      setGuestCartItems(prevItems => {
+        const itemToRemove = prevItems.find(item => item.id === productId && item.size === size);
+        if (itemToRemove) {
+          setLastRemovedItem(itemToRemove);
+        }
+        return prevItems.filter(item => !(item.id === productId && item.size === size));
+      });
+    }
+  };
+
+  const undoRemove = async () => {
     if (lastRemovedItem) {
-      setCartItems(prev => [...prev, lastRemovedItem]);
-      setLastRemovedItem(null);
+      if (isAuthenticated) {
+         try {
+           await convexAddToCart({ 
+             productId: lastRemovedItem.id, 
+             quantity: lastRemovedItem.quantity, 
+             size: lastRemovedItem.size 
+           });
+           setLastRemovedItem(null);
+         } catch(err) { console.error(err); }
+      } else {
+         setGuestCartItems(prev => [...prev, lastRemovedItem]);
+         setLastRemovedItem(null);
+      }
     }
   };
 
@@ -69,7 +190,9 @@ export const CartProvider = ({ children }) => {
   };
 
   const clearCart = () => {
-    setCartItems([]);
+    if (!isAuthenticated) {
+      setGuestCartItems([]);
+    }
   };
 
   const subtotal = useMemo(() => {
@@ -77,7 +200,11 @@ export const CartProvider = ({ children }) => {
       const price = typeof item.price === 'string' 
         ? parseFloat(item.price.replace('£', '').replace('UGX', '').replace(/,/g, ''))
         : item.price;
-      return acc + (price * item.quantity);
+      // Convert legacy pounds to UGX if needed (using exchange rate 4800), otherwise use native UGX
+      const cleanPrice = typeof item.price === 'string' && item.price.includes('£') 
+        ? price * 4800 
+        : price;
+      return acc + ((cleanPrice || 0) * item.quantity);
     }, 0);
   }, [cartItems]);
 
@@ -107,4 +234,3 @@ export const CartProvider = ({ children }) => {
     </CartContext.Provider>
   );
 };
-

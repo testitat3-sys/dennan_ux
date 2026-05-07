@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCart } from '../../context/CartContext';
+import { formatPrice } from '../../utils/priceUtils';
 
 const CartItem = ({ item }) => {
   const { updateQuantity, removeFromCart, saveForLater } = useCart();
@@ -17,7 +18,7 @@ const CartItem = ({ item }) => {
             <span className="cart-item__stage-hint">{item.stage || 'Newborn'}</span>
           </div>
           <p className="cart-item__meta">Size: {item.size}</p>
-          <span className="cart-item__price">{item.price}</span>
+          <span className="cart-item__price">{formatPrice(item.price)}</span>
         </div>
 
         <div className="cart-item__controls">

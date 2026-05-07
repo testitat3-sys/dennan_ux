@@ -1,18 +1,35 @@
-import React, { useState, useMemo } from 'react';
-import { registryProfile, registryItems as initialItems } from '../data/registryData';
+import React, { useState, useMemo, useEffect } from 'react';
+import { getRegistryData } from '../services/api';
 import RegistryHeader from '../components/registry/RegistryHeader';
 import RegistryCategoryGroup from '../components/registry/RegistryCategoryGroup';
 import GroupGiftingModal from '../components/registry/GroupGiftingModal';
 import './RegistryPage.css';
 
 const RegistryPage = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('guest'); // Default to guest for demo
-  const [items, setItems] = useState(initialItems);
+  const [items, setItems] = useState([]);
   const [priceFilter, setPriceFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('registry'); // registry, thank-you
-  const [privacy, setPrivacy] = useState(registryProfile.privacy);
+  const [privacy, setPrivacy] = useState('public');
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const result = await getRegistryData();
+      setData(result);
+      setItems(result.items);
+      setPrivacy(result.profile.privacy);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
+  if (loading || !data) return <div className="registry-loading">Loading Registry...</div>;
+  
+  const registryProfile = data.profile;
 
   // Sorting: Must-Haves first
   const sortedItems = useMemo(() => {

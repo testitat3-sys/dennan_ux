@@ -11,6 +11,11 @@ import CheckoutPage from './pages/CheckoutPage';
 import PDP from './pages/PDP';
 import DesignSystemPage from './pages/DesignSystemPage';
 import ComingSoonPage from './pages/ComingSoonPage';
+import AuthPage from './pages/AuthPage';
+import AfterSignIn from './pages/AfterSignIn';
+import OnboardingPage from './pages/OnboardingPage';
+import ProfilePage from './pages/ProfilePage';
+import AdminDashboard from './pages/AdminDashboard';
 import NotFoundPage from './pages/NotFoundPage';
 
 import ScrollToTop from './utils/ScrollToTop';
@@ -22,6 +27,11 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/after-signin" element={<AfterSignIn />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/brand/:brandId" element={<BrandPage />} />
           <Route path="/category/:stageId" element={<PLP />} />
           <Route path="/collection/:collectionId" element={<PLP />} />

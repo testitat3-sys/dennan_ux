@@ -1,9 +1,34 @@
 import React from 'react';
 import './PredictiveFeed.css';
-import { products } from '../../data/productData';
+import { getProducts } from '../../services/api';
 import ProductCard from '../ui/ProductCard';
+import ProductCardSkeleton from '../ui/ProductCardSkeleton';
 
 const PredictiveFeed = ({ type, stageInfo, onAddToCart }) => {
+  const [products, setProducts] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const loadProducts = async () => {
+      const data = await getProducts();
+      setProducts(data || []);
+      setLoading(false);
+    };
+    loadProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="predictive-feed" aria-hidden="true">
+        <div className="predictive-feed__grid">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   const filteredProducts = products.filter(p => {
     if (stageInfo.type === 'expecting') {
       const week = type === 'now' ? stageInfo.week : stageInfo.week + 4;

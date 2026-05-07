@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { products } from '../data/productData';
+import { getProducts } from '../services/api';
 import { useCart } from '../context/CartContext';
 import Toast from '../components/ui/Toast';
 import './PDP.css';
@@ -9,20 +9,28 @@ const PDP = () => {
   const { productId } = useParams();
   const { addToCart } = useCart();
   const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('Newborn');
   const [showToast, setShowToast] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
 
   useEffect(() => {
-    const foundProduct = products.find(p => p.id === parseInt(productId));
-    if (foundProduct) {
-      setProduct(foundProduct);
-      window.scrollTo(0, 0);
-    }
+    const fetchProduct = async () => {
+      setLoading(true);
+      const products = await getProducts();
+      const foundProduct = products?.find(p => p.id === parseInt(productId));
+      if (foundProduct) {
+        setProduct(foundProduct);
+        window.scrollTo(0, 0);
+      }
+      setLoading(false);
+    };
+    fetchProduct();
   }, [productId]);
 
-  if (!product) return <div className="pdp-loading">Loading product details...</div>;
+  if (loading) return <div className="pdp-loading">Loading product details...</div>;
+  if (!product) return <div className="pdp-loading">Product not found.</div>;
 
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedSize);

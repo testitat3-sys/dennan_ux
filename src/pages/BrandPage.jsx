@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import BrandHeader from '../components/brand/BrandHeader';
 import StageNavRail from '../components/brand/StageNavRail';
 import BrandStory from '../components/brand/BrandStory';
@@ -7,12 +9,15 @@ import ProductSection from '../components/home/ProductSection';
 import SearchStrip from '../components/home/SearchStrip';
 import QuickViewModal from '../components/ui/QuickViewModal';
 import Toast from '../components/ui/Toast';
-import { brands } from '../data/brandData';
 import './BrandPage.css';
 
 const BrandPage = () => {
   const { brandId } = useParams();
-  const [brand, setBrand] = useState(null);
+  const navigate = useNavigate();
+  
+  // Fetch live brand metadata and associated products from Convex
+  const brand = useQuery(api.brands.getBrandBySlug, { slug: brandId || '' });
+
   const [activeStage, setActiveStage] = useState('all');
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -30,27 +35,73 @@ const BrandPage = () => {
     setShowToast(true);
   };
 
+  // Scroll to top on brand mount/change
   useEffect(() => {
-    // Scroll to top on mount
     window.scrollTo(0, 0);
-    
-    // Get brand data
-    const data = brands[brandId] || brands['tommee-tippee'];
-    setBrand(data);
-    setFilteredProducts(data.products);
   }, [brandId]);
 
+  // Handle product stage filtering when brand data or active stage changes
   useEffect(() => {
     if (!brand) return;
     
+    const products = brand.products || [];
+    
     if (activeStage === 'all') {
-      setFilteredProducts(brand.products);
+      setFilteredProducts(products);
     } else {
-      setFilteredProducts(brand.products.filter(p => p.stage === activeStage));
+      // Map frontend stages from StageNavRail.jsx to database stage fields
+      // StageNavRail has: all, newborn, toddler, maternity
+      // Database products has stage values: newborn, kid, mother
+      let targetStage = activeStage;
+      if (activeStage === 'toddler') {
+        targetStage = 'kid';
+      } else if (activeStage === 'maternity') {
+        targetStage = 'mother';
+      }
+      
+      setFilteredProducts(products.filter(p => p.stage === targetStage));
     }
   }, [activeStage, brand]);
 
-  if (!brand) return <div className="brand-loading">Loading Brand Experience...</div>;
+  // Loading skeleton state (when brand query is undefined)
+  if (brand === undefined) {
+    return (
+      <div className="brand-page brand-page--loading">
+        <div className="brand-loading-skeleton">
+          <div className="skeleton-banner"></div>
+          <div className="skeleton-header-content">
+            <div className="skeleton-logo"></div>
+            <div className="skeleton-text-block">
+              <div className="skeleton-line skeleton-line--title"></div>
+              <div className="skeleton-line skeleton-line--subtitle"></div>
+            </div>
+          </div>
+          <div className="brand-loading">Unveiling Brand Experience...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback state if brand doesn't exist in our database (null)
+  if (brand === null) {
+    return (
+      <div className="brand-page brand-page--error">
+        <div className="brand-error-container">
+          <span className="brand-error-icon">✨</span>
+          <h1 className="brand-error-title">Curating Soon</h1>
+          <p className="brand-error-text">
+            We are currently hand-selecting the finest essentials from <strong>{brandId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</strong>.
+          </p>
+          <p className="brand-error-subtext">
+            Our pediatric experts are verifying safety and comfort parameters to bring you a premium experience.
+          </p>
+          <button onClick={() => navigate('/')} className="brand-error-btn">
+            Explore Curated Stages
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="brand-page">
@@ -87,7 +138,7 @@ const BrandPage = () => {
             <div className="brand-page__bundle-info">
               <h3>The Newborn Starter Set</h3>
               <p>Includes: 6 Bottles, Sterilizer, Bottle Warmer, and Soothers.</p>
-              <button className="brand-page__bundle-btn">Add Bundle to Cart — £149.00</button>
+              <button className="brand-page__bundle-btn">Add Bundle to Cart — UGX 149,000</button>
             </div>
           </div>
         </section>

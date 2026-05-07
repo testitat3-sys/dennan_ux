@@ -12,8 +12,23 @@ const BrandHeader = ({ brand }) => {
       <div className="brand-header__content">
         <div className="brand-header__identity">
           <div className="brand-header__logo-container">
-            <div className="brand-header__logo-placeholder">
-              {/* Using text as logo placeholder if no img */}
+            {brand.logo ? (
+              <img 
+                src={brand.logo} 
+                alt={`${brand.name} logo`} 
+                className="brand-header__logo-img" 
+                onError={(e) => {
+                  // Fallback: hide image and show initials if image fails to load
+                  e.target.style.display = 'none';
+                  const placeholder = e.target.parentNode.querySelector('.brand-header__logo-placeholder');
+                  if (placeholder) placeholder.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className="brand-header__logo-placeholder"
+              style={{ display: brand.logo ? 'none' : 'flex' }}
+            >
               {brand.name.split(' ').map(n => n[0]).join('')}
             </div>
           </div>

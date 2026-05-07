@@ -2,34 +2,9 @@ import React from 'react';
 import './JourneySection.css';
 import StageTile from '../ui/StageTile';
 
-const stages = [
-  {
-    type: 'expectant',
-    title: 'Expectant<br>&amp; New Mom',
-    eyebrow: 'Stage 1',
-    copy: 'Hospital bag, postpartum recovery, feeding prep, and everything you need before baby arrives.',
-    image: '/assets/stage_expectant.png',
-    href: '/category/mother'
-  },
-  {
-    type: 'newborn',
-    title: 'Newborn<br>0–6 months',
-    eyebrow: 'Stage 2',
-    copy: 'Safe sleep, feeding essentials, skin care, and gentle gear for the tiniest stage of all.',
-    image: '/assets/stage_newborn.webp',
-    href: '/category/newborn'
-  },
-  {
-    type: 'toddler',
-    title: 'Baby<br>&amp; Toddler',
-    eyebrow: 'Stage 3',
-    copy: 'Weaning, movement, play, and independence. Everything for curious, growing little ones.',
-    image: '/assets/stage_toddler.webp',
-    href: '/category/kid'
-  }
-];
+const JourneySection = ({ stages }) => {
+  if (!stages) return null;
 
-const JourneySection = () => {
   return (
     <section className="section" aria-labelledby="journey-heading">
       <div className="section__header">

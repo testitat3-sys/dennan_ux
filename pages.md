@@ -31,7 +31,7 @@ This is where the "curated products" logic from your homepage is managed.
 This is where your client’s specific delivery feature takes center stage.
 
 * **Multi-Step Checkout:** * **Shipping Selection:** Where the timer adjusts in real-time based on the chosen carrier speed.
-    * **Confirmation Page:** A final "Success" page that reiterates the countdown to arrival.
+    c
 * **Order Tracking (Live):** A page featuring a visual progress bar (e.g., Processing -> Dispatched -> Out for Delivery) synced with the delivery timer.
 
 ---

@@ -1,16 +1,15 @@
 import './NextMilestoneCard.css';
 
-const NextMilestoneCard = ({ stageInfo }) => {
+const NextMilestoneCard = ({ stageInfo, nextMilestoneData = [] }) => {
   const getNextContent = () => {
-    if (stageInfo.type === 'expecting') {
-      if (stageInfo.week < 12) return { title: 'First Scan', desc: 'Preparing for your first look at your little one. Time to start the registry!', action: 'Start Registry' };
-      if (stageInfo.week < 27) return { title: 'Nursery Setup', desc: 'You’re entering the golden trimester. Perfect time to paint and prep.', action: 'Shop Decor' };
-      return { title: 'Hospital Bag', desc: 'The countdown is on. Let’s make sure you have everything for the big day.', action: 'Bag Checklist' };
-    } else {
-      if (stageInfo.months < 6) return { title: 'First Solids', desc: 'Ready for the big switch? High chairs and soft spoons await.', action: 'Explore Weaning' };
-      if (stageInfo.months < 12) return { title: 'First Steps', desc: 'Time for sturdy shoes and baby-proofing the living room.', action: 'Baby Proofing' };
-      return { title: 'Toddler Transition', desc: 'Moving to a big kid bed? We have the softest transition sets.', action: 'Shop Bedding' };
-    }
+    const current = nextMilestoneData.find(m => {
+      if (stageInfo.type === 'expecting') {
+        return stageInfo.week >= m.minWeek && stageInfo.week <= m.maxWeek;
+      } else {
+        return stageInfo.months >= m.minMonth && stageInfo.months <= m.maxMonth;
+      }
+    });
+    return current || { title: 'Next Step', desc: 'Stay tuned for your next milestone.', action: 'Explore' };
   };
 
   const content = getNextContent();

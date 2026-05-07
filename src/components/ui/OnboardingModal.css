@@ -349,6 +349,114 @@
   box-shadow: none;
 }
 
+.btn-secondary-full {
+  background: var(--surface-container-low);
+  color: var(--text-primary);
+  border: 1px solid var(--surface-container-highest);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.btn-secondary-full:hover {
+  background: var(--surface-container);
+  border-color: var(--text-tertiary);
+}
+
+.btn-secondary-full:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* Test Mode Styles */
+.test-mode-toggle {
+  margin: var(--space-2) 0;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-container input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-brand-primary);
+  cursor: pointer;
+}
+
+.checkbox-label {
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  color: var(--text-secondary);
+}
+
+.magic-link-captured {
+  margin-top: var(--space-6);
+  padding: var(--space-6);
+  background: var(--surface-container-low);
+  border: 1px solid #22c55e44;
+  border-radius: var(--radius-lg);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.magic-link-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: #22c55e;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--title-sm);
+  margin-bottom: var(--space-2);
+}
+
+.magic-link-info {
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-6);
+  line-height: 1.5;
+}
+
+.btn-magic-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-magic-link:hover {
+  background: var(--surface-container-low);
+  border-color: #22c55e;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-secondary);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 480px) {
   .onboarding-cards {
     grid-template-columns: 1fr;

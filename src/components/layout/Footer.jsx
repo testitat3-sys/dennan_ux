@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -18,19 +19,19 @@ const Footer = () => {
         <div>
           <p className="footer__col-title">Shop</p>
           <ul className="footer__links">
-            <li><a href="/category?tier=essentials">Essentials</a></li>
-            <li><a href="/category?tier=must-haves">Must-Haves</a></li>
-            <li><a href="/category?tier=luxuries">Luxuries</a></li>
-            <li><a href="/category">All products</a></li>
+            <li><Link to="/collection/essentials">Essentials</Link></li>
+            <li><Link to="/collection/must-haves">Must-Haves</Link></li>
+            <li><Link to="/collection/luxuries">Luxuries</Link></li>
+            <li><Link to="/category/all">All products</Link></li>
           </ul>
         </div>
 
         <div>
           <p className="footer__col-title">Stages</p>
           <ul className="footer__links">
-            <li><a href="/journey/expectant">Expectant &amp; New Mom</a></li>
-            <li><a href="/journey/newborn">Newborn 0–6 months</a></li>
-            <li><a href="/journey/toddler">Baby &amp; Toddler</a></li>
+            <li><Link to="/category/mother">Expectant &amp; New Mom</Link></li>
+            <li><Link to="/category/newborn">Newborn 0–6 months</Link></li>
+            <li><Link to="/category/kid">Baby &amp; Toddler</Link></li>
           </ul>
         </div>
 

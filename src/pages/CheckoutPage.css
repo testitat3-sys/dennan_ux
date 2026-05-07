@@ -599,3 +599,216 @@
   }
 }
 
+/* Ugandan Mobile Money Input Panel Styling */
+.payment-option.is-active.has-momo-container {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
+  box-shadow: none;
+}
+
+.momo-input-container {
+  background-color: var(--surface);
+  border: 1px solid var(--color-brand-primary-light);
+  border-top: none;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  padding: 0 var(--space-6) var(--space-6) var(--space-6);
+  margin-top: calc(-1 * var(--space-4));
+  margin-bottom: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-ambient);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.momo-label {
+  font-size: var(--label-md);
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: var(--space-2);
+}
+
+.momo-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: var(--surface-container-low);
+  transition: all 0.3s ease;
+}
+
+.momo-input-wrapper:focus-within {
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-primary), transparent 85%);
+  background-color: var(--surface);
+}
+
+.momo-prefix {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  background-color: var(--surface-container-high);
+  border-right: 1px solid var(--surface-container-highest);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--body-lg);
+  user-select: none;
+}
+
+.ug-flag {
+  font-size: 1.25rem;
+}
+
+.momo-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  outline: none;
+  letter-spacing: 0.05em;
+}
+
+.momo-input::placeholder {
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+.momo-input.is-valid {
+  color: var(--color-support-green);
+}
+
+.momo-input.is-invalid {
+  color: var(--color-support-red);
+}
+
+.momo-error-text {
+  font-size: var(--label-md);
+  color: #d32f2f;
+  font-weight: 500;
+  margin-top: var(--space-1);
+}
+
+.momo-helper-text {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+/* Coupon / Promo Box Styles */
+.coupon-card {
+  margin-top: var(--space-4);
+  padding: var(--space-5);
+  background-color: var(--surface-container-low);
+  border-radius: var(--radius-2xl);
+  border: 1px dashed var(--surface-container-highest);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: all 0.3s ease;
+}
+
+.coupon-card:focus-within {
+  border-color: var(--color-brand-primary-light);
+  background-color: var(--surface);
+}
+
+.coupon-title {
+  font-weight: 700;
+  font-size: var(--body-sm);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.coupon-input-group {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.coupon-input-group input {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-container-highest);
+  font-size: var(--body-md);
+  font-weight: 600;
+  text-transform: uppercase;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.coupon-input-group input:focus {
+  border-color: var(--color-brand-primary);
+}
+
+.coupon-input-group button {
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-lg);
+  border: none;
+  background-color: var(--color-anchor);
+  color: var(--color-on-primary);
+  font-weight: 700;
+  font-size: var(--body-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.coupon-input-group button:hover:not(:disabled) {
+  background-color: #000;
+}
+
+.coupon-input-group button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.coupon-input-group .btn-remove-coupon {
+  background-color: var(--surface-container-high);
+  color: var(--color-support-red);
+  border: 1px solid color-mix(in srgb, var(--color-support-red), transparent 90%);
+}
+
+.coupon-input-group .btn-remove-coupon:hover {
+  background-color: color-mix(in srgb, var(--color-support-red), transparent 95%);
+}
+
+.coupon-error-text {
+  font-size: var(--label-md);
+  color: var(--color-support-red);
+  font-weight: 500;
+  margin: 0;
+}
+
+.coupon-success-text {
+  font-size: var(--label-md);
+  color: var(--color-support-green);
+  font-weight: 600;
+  margin: 0;
+}
+
+.summary-row.discount-row {
+  color: var(--color-support-green);
+  font-weight: 600;
+}
+
+
+

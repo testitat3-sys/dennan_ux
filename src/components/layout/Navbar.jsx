@@ -57,9 +57,9 @@ const navData = [
     menu: {
       featured: { image: '/assets/hero.webp', alt: 'Most Loved Brands', title: 'Most Loved Brands', link: '#', linkText: 'View All' },
       columns: [
-        { title: 'Featured', links: [{ text: 'Tommee Tippee', href: '/brand/tommee-tippee' }, { text: 'Nuby', href: '#' }, { text: 'Philips Avent', href: '#' }, { text: 'Skip Hop', href: '#' }] },
-        { title: 'Nursery', links: [{ text: 'Snuz', href: '#' }, { text: 'Mamas & Papas', href: '#' }, { text: 'Silver Cross', href: '#' }, { text: 'Cybex', href: '#' }] },
-        { title: 'Feeding', links: [{ text: 'Beaba', href: '#' }, { text: 'Haakaa', href: '#' }, { text: 'Medela', href: '#' }, { text: 'Stokke', href: '#' }] },
+        { title: 'Featured', links: [{ text: 'Tommee Tippee', href: '/brand/tommee-tippee' }, { text: 'Nuby', href: '/brand/nuby' }, { text: 'Philips Avent', href: '/brand/philips-avent' }, { text: 'Skip Hop', href: '/brand/skip-hop' }] },
+        { title: 'Nursery', links: [{ text: 'Snuz', href: '/brand/snuz' }, { text: 'Mamas & Papas', href: '/brand/mamas-and-papas' }, { text: 'Silver Cross', href: '/brand/silver-cross' }, { text: 'Cybex', href: '/brand/cybex' }] },
+        { title: 'Feeding', links: [{ text: 'Beaba', href: '/brand/beaba' }, { text: 'Haakaa', href: '/brand/haakaa' }, { text: 'Medela', href: '/brand/medela' }, { text: 'Stokke', href: '/brand/stokke' }] },
         { title: 'Explore', links: [{ text: 'New Arrivals', href: '#' }, { text: 'Brand Directory', href: '#' }, { text: 'Sustainability', href: '#' }] }
       ]
     }
@@ -79,26 +79,9 @@ const navData = [
   }
 ];
 
-const SEARCH_SHORTCUTS = {
-  'design system': '/design-system',
-  'design-system': '/design-system',
-  'dashboard': '/dashboard',
-  'account': '/dashboard',
-  'profile': '/dashboard',
-  'registry': '/registry',
-  'wishlist': '/registry',
-  'checkout': '/checkout',
-  'pay': '/checkout',
-  'mother': '/category/mother',
-  'newborn': '/category/newborn',
-  'toddler': '/category/kid',
-  'brands': '/brands',
-  'about': '/about',
-};
-
 const Navbar = () => {
   const navigate = useNavigate();
-  const { user, setShowOnboarding } = useUser();
+  const { user, showOnboarding, setShowOnboarding } = useUser();
   const { setIsCartOpen, totalItems } = useCart();
   const [activeMenu, setActiveMenu] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -137,14 +120,6 @@ const Navbar = () => {
 
   const handleMobileSearch = (e) => {
     e.preventDefault();
-    const query = mobileSearchQuery.toLowerCase().trim();
-
-    if (SEARCH_SHORTCUTS[query]) {
-      navigate(SEARCH_SHORTCUTS[query]);
-      setIsMenuOpen(false);
-      return;
-    }
-
     if (mobileSearchQuery.trim()) {
       navigate(`/category/all?q=${encodeURIComponent(mobileSearchQuery.trim())}`);
       setIsMenuOpen(false);
@@ -152,35 +127,20 @@ const Navbar = () => {
   };
 
   const handleSuggestionClick = (suggestion) => {
-    const query = suggestion.toLowerCase().trim();
-    
-    if (SEARCH_SHORTCUTS[query]) {
-      navigate(SEARCH_SHORTCUTS[query]);
-    } else {
-      navigate(`/category/all?q=${encodeURIComponent(suggestion)}`);
-    }
-    
     setMobileSearchQuery(suggestion);
     setShowMobileSuggestions(false);
+    navigate(`/category/all?q=${encodeURIComponent(suggestion)}`);
     setIsMenuOpen(false);
   };
 
   useEffect(() => {
     if (mobileSearchQuery.length > 1) {
-      const normalizedQuery = mobileSearchQuery.toLowerCase().trim();
-      
       const allLinks = navData.flatMap(item => 
         item.menu.columns.flatMap(col => col.links.map(l => l.text))
       );
-      
-      const shortcuts = Object.keys(SEARCH_SHORTCUTS)
-        .filter(key => key.includes(normalizedQuery))
-        .map(key => key.charAt(0).toUpperCase() + key.slice(1));
-
-      const filtered = [...new Set([...shortcuts, ...allLinks])].filter(text => 
-        text.toLowerCase().includes(normalizedQuery)
+      const filtered = [...new Set(allLinks)].filter(text => 
+        text.toLowerCase().includes(mobileSearchQuery.toLowerCase())
       ).slice(0, 5);
-      
       setSearchSuggestions(filtered);
       setShowMobileSuggestions(true);
     } else {
@@ -413,7 +373,7 @@ const Navbar = () => {
       </div>
 
       <OnboardingModal 
-        isOpen={useUser().showOnboarding} 
+        isOpen={showOnboarding} 
         onClose={() => setShowOnboarding(false)} 
       />
 
@@ -425,4 +385,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

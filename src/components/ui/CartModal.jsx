@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { formatPrice } from '../../utils/priceUtils';
 import CartItem from './CartItem';
 import './CartModal.css';
+
 
 const CartModal = () => {
   const navigate = useNavigate();
@@ -123,7 +125,7 @@ const CartModal = () => {
           
           <div className="cart-modal__subtotal">
             <span className="subtotal-label">Subtotal</span>
-            <span className="subtotal-value">£{subtotal.toFixed(2)}</span>
+            <span className="subtotal-value">{formatPrice(subtotal)}</span>
           </div>
 
           <button 

@@ -1,21 +1,6 @@
 import './MilestoneTimeline.css';
 
-const MilestoneTimeline = ({ info }) => {
-  const milestones = info.type === 'expecting' 
-    ? [
-        { label: 'Conception', week: 0 },
-        { label: '1st Trimester', week: 12 },
-        { label: '2nd Trimester', week: 27 },
-        { label: '3rd Trimester', week: 36 },
-        { label: 'Due Date', week: 40 }
-      ]
-    : [
-        { label: 'Birth', month: 0 },
-        { label: '6 Months', month: 6 },
-        { label: '1 Year', month: 12 },
-        { label: '18 Months', month: 18 },
-        { label: '2 Years', month: 24 }
-      ];
+const MilestoneTimeline = ({ info, milestones = [] }) => {
 
   const currentVal = info.type === 'expecting' ? info.week : info.months;
   const maxVal = info.type === 'expecting' ? 40 : 24;

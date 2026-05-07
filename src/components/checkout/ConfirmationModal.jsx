@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getKampalaETA } from '../../utils/deliveryUtils';
+import { formatPrice } from '../../utils/priceUtils';
 import './ConfirmationModal.css';
 
 const ConfirmationModal = ({ isOpen, onClose, location, orderItems = [] }) => {
@@ -46,20 +47,24 @@ const ConfirmationModal = ({ isOpen, onClose, location, orderItems = [] }) => {
         <div className="order-summary-section">
           <h3 className="section-title">Order Summary</h3>
           <div className="summary-items">
-            {orderItems.map((item, index) => (
-              <div key={index} className="summary-item">
-                <div className="item-img-wrapper">
-                  <img src={item.image} alt={item.name} />
-                  <span className={`stage-badge stage--${item.stage?.toLowerCase()}`}>
-                    {item.stage}
-                  </span>
+            {orderItems.map((item, index) => {
+              const name = item.productName || item.name;
+              const price = item.unitPrice || item.price;
+              return (
+                <div key={index} className="summary-item">
+                  <div className="item-img-wrapper">
+                    <img src={item.image} alt={name} />
+                    <span className={`stage-badge stage--${(item.stage || 'newborn').toLowerCase()}`}>
+                      {item.stage || 'Newborn'}
+                    </span>
+                  </div>
+                  <div className="item-details">
+                    <span className="item-name">{name}</span>
+                    <span className="item-meta">Qty: {item.quantity} • {formatPrice(price)}</span>
+                  </div>
                 </div>
-                <div className="item-details">
-                  <span className="item-name">{item.name}</span>
-                  <span className="item-meta">Qty: {item.quantity} • {item.price}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

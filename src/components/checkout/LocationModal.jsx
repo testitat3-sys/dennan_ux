@@ -3,11 +3,15 @@ import SmartAddressSearch from './SmartAddressSearch';
 import { getKampalaETA } from '../../utils/deliveryUtils';
 import './LocationModal.css';
 
-const LocationModal = ({ isOpen, onClose, onConfirm }) => {
+const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null }) => {
   const [active, setActive] = useState(false);
   const [selection, setSelection] = useState(null);
   const [isEstimating, setIsEstimating] = useState(false);
   const [revealedETA, setRevealedETA] = useState(null);
+
+  const zones = deliveryData?.zones || {};
+  const landmarks = deliveryData?.landmarks || [];
+  const history = deliveryData?.history || [];
 
   useEffect(() => {
     if (isOpen) {
@@ -33,7 +37,7 @@ const LocationModal = ({ isOpen, onClose, onConfirm }) => {
 
     // Mock the "Instant Reveal" loading state (0.5s)
     setTimeout(() => {
-      const eta = getKampalaETA(item.zone);
+      const eta = getKampalaETA(item.zone, zones);
       setRevealedETA(eta);
       setIsEstimating(false);
     }, 600);
@@ -60,13 +64,16 @@ const LocationModal = ({ isOpen, onClose, onConfirm }) => {
 
         <div className="location-modal-header">
           <h2 className="modal-title">Delivery Location</h2>
-          <p className="modal-subtitle">Enter your suburb for an instant delivery estimate.</p>
         </div>
 
         <div className="location-modal-content">
           {!revealedETA && !isEstimating && (
             <div className="search-section">
-              <SmartAddressSearch onSelectAddress={handleSelectAddress} />
+              <SmartAddressSearch 
+                onSelectAddress={handleSelectAddress} 
+                landmarks={landmarks}
+                history={history}
+              />
               <div className="location-hint">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10"></circle>
@@ -105,7 +112,7 @@ const LocationModal = ({ isOpen, onClose, onConfirm }) => {
                   </div>
 
                   <button className="btn-confirm-location" onClick={handleConfirm}>
-                    Confirm & Update Summary
+                    Confirm
                   </button>
                   <button className="btn-change-selection" onClick={() => { setRevealedETA(null); setSelection(null); }}>
                     Change Location
