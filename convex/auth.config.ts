@@ -1,9 +1,9 @@
 export default {
   providers: [
     {
-      domain: "https://rightful-spaniel-723.convex.site",
-
+      domain: process.env.CONVEX_SITE_URL,
       applicationID: "convex",
     },
   ],
 };
+
