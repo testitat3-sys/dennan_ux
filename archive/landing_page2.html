@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Dennan Kids — A New Standard in Children's Wear. Join the waitlist for an exclusive, highly curated, stage-aware lookbook experience." />
+  <title>Dennan Kids — A New Standard in Children's Wear</title>
+  
+  <!-- Premium Fonts from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Reset & Base Styles ────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      /* Color Palette Definitions */
+      --color-gallery-white: #ffffff;
+      --surface: #ffffff;
+      
+      /* Surface Tiers (Tonal Paper Layers) */
+      --surface-container-low: #faf9f8;
+      --surface-container: #f4f2f0;
+      --surface-container-high: #ede9e5;
+      --surface-container-highest: #e5e0db;
+
+      /* Brand Botanical Triad */
+      --color-brand-primary: #d35097;          /* Orchid Bloom */
+      --color-brand-primary-dark: #a63e74;     /* Deep Orchid */
+      --color-brand-primary-light: #f07fb8;    /* Petal */
+      --color-brand-secondary: #832c7a;        /* Plum Reserve */
+      --color-brand-accent: #e1d328;           /* Saffron Signal */
+
+      /* Functional Black & White */
+      --color-anchor: #111111;                 /* Command Anchor */
+      --color-on-primary: #ffffff;
+
+      /* Text Hierarchy */
+      --text-primary: var(--color-anchor);
+      --text-secondary: #555555;
+      --text-tertiary: #888888;
+
+      /* Support Tones */
+      --color-support-blue: #4dbee3;
+      --color-support-green: #7fa93e;
+      --color-support-red: #e53e3e;
+
+      /* Organic Tinted Shadows */
+      --shadow-ambient: 0 4px 24px rgba(17, 17, 17, 0.04);
+      --shadow-deep: 0 12px 48px rgba(17, 17, 17, 0.08);
+      --shadow-primary: 0 0 0 4px color-mix(in srgb, var(--color-brand-primary), transparent 85%);
+      --shadow-secondary: 0 4px 16px rgba(131, 44, 122, 0.08);
+
+      /* Border Radii (Luxury Soft Curves) */
+      --radius-sm: 4px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+
+      /* Luxury Spacing Scale */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 40px;
+      --space-2xl: 72px;
+      --space-3xl: 112px;
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--color-gallery-white);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Typography Scale ───────────────────────────── */
+    
+    /* Editorial Serif Display */
+    .display-lg {
+      font-family: 'Newsreader', serif;
+      font-size: clamp(2.5rem, 6vw, 3.5rem);
+      font-weight: 300;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    /* Section Headers */
+    .headline-md {
+      font-family: 'Newsreader', serif;
+      font-size: clamp(1.5rem, 4vw, 1.75rem);
+      font-weight: 400;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+    }
+
+    /* Captions/Labels */
+    .title-sm {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.125rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    /* Workhorse body copy */
+    .body-md {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.9375rem;
+      font-weight: 400;
+      line-height: 1.65;
+      color: var(--text-secondary);
+    }
+
+    /* Small description/meta copy */
+    .body-sm {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 400;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* Premium Limited-Edition Badge Labels */
+    .label-sm {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.625rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      line-height: 1.4;
+    }
+
+    /* ── Global Layout & Structure ───────────────────── */
+    
+    /* Luxury vertical whitespace instead of borders */
+    section {
+      padding: var(--space-3xl) 0;
+      position: relative;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--space-xl);
+    }
+
+    /* ── Header Navigation (Minimalist Lookbook Nav) ── */
+    .site-header {
+      background-color: var(--color-gallery-white);
+      padding: var(--space-lg) 0;
+      position: absolute;
+      width: 100%;
+      top: 0;
+      left: 0;
+      z-index: 10;
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-logo {
+      font-family: 'Newsreader', serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      color: var(--color-anchor);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .logo-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--color-brand-primary-light); /* Petal flourish */
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .header-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-pulse {
+      width: 6px;
+      height: 6px;
+      background-color: var(--color-brand-primary);
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .status-pulse::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-color: var(--color-brand-primary);
+      border-radius: 50%;
+      animation: pulse 2s infinite ease-in-out;
+      top: 0;
+      left: 0;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.6; }
+      100% { transform: scale(3.5); opacity: 0; }
+    }
+
+    /* ── Hero Section (Asymmetric Canvas) ───────────── */
+    .hero-section {
+      background-color: var(--color-gallery-white);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: calc(var(--space-3xl) + 20px);
+      padding-bottom: var(--space-3xl);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: var(--space-2xl);
+      align-items: center;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 3;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-md);
+    }
+
+    .eyebrow-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--color-brand-primary-light); /* Petal flourish */
+      border-radius: 50%;
+    }
+
+    .hero-title {
+      color: var(--text-primary);
+      margin-bottom: var(--space-md);
+      max-width: 18ch;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      font-weight: 300;
+    }
+
+    .hero-subtitle {
+      max-width: 44ch;
+      margin-bottom: var(--space-xl);
+    }
+
+    /* Sign-Up Module (The Tactile Card) */
+    .signup-card {
+      background-color: var(--surface-container); /* Layer 2 #f4f2f0 */
+      border-radius: var(--radius-md);
+      padding: var(--space-xl);
+      box-shadow: var(--shadow-ambient); /* Ambient tinted soft shadow */
+      max-width: 480px;
+      position: relative;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+    }
+
+    .signup-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-deep);
+    }
+
+    /* Saffron Signal Badge inside Card */
+    .incentive-badge-container {
+      margin-bottom: var(--space-md);
+    }
+
+    .discount-badge {
+      background-color: var(--color-anchor); /* Saffron paired exclusively with black */
+      color: var(--color-brand-accent);     /* Saffron Signal #e1d328 */
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(17, 17, 17, 0.05);
+    }
+
+    .badge-dot {
+      width: 4px;
+      height: 4px;
+      background-color: var(--color-brand-accent);
+      border-radius: 50%;
+    }
+
+    .card-title {
+      font-family: 'Newsreader', serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      color: var(--text-primary);
+      margin-bottom: var(--space-sm);
+    }
+
+    .card-description {
+      margin-bottom: var(--space-lg);
+    }
+
+    /* Minimalist Form Elements */
+    .form-group {
+      margin-bottom: var(--space-lg);
+      position: relative;
+    }
+
+    .input-label {
+      display: block;
+      margin-bottom: var(--space-xs);
+      color: var(--text-tertiary);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .tactile-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid var(--surface-container-high);
+      padding: 12px 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1rem;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    }
+
+    /* Minimalist bottom-border focus animation with soft Plum glow */
+    .tactile-input:focus {
+      border-bottom-color: var(--color-brand-primary); /* Orchid Bloom */
+      box-shadow: var(--shadow-secondary);              /* Soft Plum Reserve glow */
+    }
+
+    .tactile-input::placeholder {
+      color: var(--text-tertiary);
+      opacity: 0.7;
+    }
+
+    .input-error-msg {
+      font-size: 0.75rem;
+      color: var(--color-support-red);
+      margin-top: 6px;
+      display: none;
+      font-weight: 500;
+    }
+
+    /* Primary CTA Button (High-Contrast Anchor) */
+    .cta-button {
+      width: 100%;
+      background-color: var(--color-anchor); /* Command Anchor #111111 */
+      color: var(--color-on-primary);        /* White text */
+      border: none;
+      padding: 16px 28px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background-color 0.3s, box-shadow 0.3s, transform 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* CTA hover interactions: low-opacity Orchid Bloom and Deep Shadow */
+    .cta-button:hover {
+      background-color: var(--color-anchor);
+      box-shadow: var(--shadow-deep), 0 0 0 4px color-mix(in srgb, var(--color-brand-primary), transparent 85%);
+      transform: translateY(-1px);
+    }
+
+    .cta-button:active {
+      transform: translateY(1px);
+    }
+
+    .btn-arrow {
+      transition: transform 0.25s ease;
+    }
+
+    .cta-button:hover .btn-arrow {
+      transform: translateX(4px);
+    }
+
+    /* Success Module */
+    .success-container {
+      display: none;
+      text-align: center;
+      padding: var(--space-md) 0;
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .success-icon-wrap {
+      width: 56px;
+      height: 56px;
+      background-color: color-mix(in srgb, var(--color-support-green), transparent 90%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--space-md) auto;
+    }
+
+    .success-icon {
+      color: var(--color-support-green);
+      width: 24px;
+      height: 24px;
+    }
+
+    .success-badge {
+      background-color: var(--color-brand-accent);
+      color: var(--color-anchor);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-top: var(--space-sm);
+    }
+
+    /* Micro-Copy Block */
+    .micro-copy {
+      margin-top: var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .micro-text {
+      color: var(--text-tertiary);
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+
+    /* Asymmetric Lookbook Imagery Collage */
+    .lookbook-collage {
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      padding-left: var(--space-xl);
+    }
+
+    .collage-container {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      aspect-ratio: 0.85 / 1;
+    }
+
+    /* Decorative background color block - Tonal Paper shift, no outlines */
+    .collage-bg-block {
+      position: absolute;
+      width: 90%;
+      height: 90%;
+      left: 0;
+      bottom: 0;
+      background-color: var(--surface-container); /* Subtle Layer 2 */
+      border-radius: var(--radius-lg);
+      z-index: 1;
+    }
+
+    .frame-primary {
+      position: absolute;
+      width: 78%;
+      aspect-ratio: 3/4;
+      right: 0;
+      top: 0;
+      z-index: 3;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-ambient);
+      transition: transform 0.5s ease;
+    }
+
+    .frame-secondary {
+      position: absolute;
+      width: 58%;
+      aspect-ratio: 1/1;
+      left: -10%;
+      bottom: 12%;
+      z-index: 4;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-deep);
+      transition: transform 0.5s ease;
+    }
+
+    .collage-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Gentle floating micro-animation for editorial lookbooks */
+    .collage-container:hover .collage-img {
+      transform: scale(1.04);
+    }
+
+    .collage-container:hover .frame-secondary {
+      transform: translate(-4px, -4px) rotate(-1deg);
+    }
+
+    .collage-container:hover .frame-primary {
+      transform: translate(2px, 2px) rotate(0.5deg);
+    }
+
+    /* Floating Accent Tag - Overlapping lookbook edges */
+    .floating-tag {
+      position: absolute;
+      top: 15%;
+      left: -15%;
+      z-index: 5;
+      background-color: var(--color-gallery-white);
+      box-shadow: var(--shadow-ambient);
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md);
+      transform: rotate(-3deg);
+      pointer-events: none;
+    }
+
+    .tag-label {
+      color: var(--color-brand-secondary); /* Plum depth tone */
+      font-weight: 600;
+    }
+
+    /* ── Section 2: The Philosophy (Tonal Transition) ── */
+    .philosophy-section {
+      background-color: var(--surface-container-low); /* Transitioning to Layer 1 */
+    }
+
+    .philosophy-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+
+    .section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-md);
+    }
+
+    .section-headline {
+      color: var(--text-primary);
+      margin-bottom: var(--space-lg);
+    }
+
+    .philosophy-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xl);
+    }
+
+    .pillar-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-xl);
+    }
+
+    .pillar-card {
+      background-color: var(--color-gallery-white);
+      padding: var(--space-lg);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-ambient);
+      transition: transform 0.3s ease;
+    }
+
+    .pillar-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .pillar-num {
+      font-family: 'Newsreader', serif;
+      font-size: 1.5rem;
+      font-style: italic;
+      color: var(--color-brand-primary-light); /* Petal flourish */
+      margin-bottom: var(--space-sm);
+    }
+
+    .pillar-title {
+      font-weight: 600;
+      margin-bottom: var(--space-xs);
+      color: var(--text-primary);
+    }
+
+    /* ── Section 3: The Tactile Journey (Lookbook Showcase) ── */
+    .lookbook-section {
+      background-color: var(--surface-container); /* Shift background tone */
+    }
+
+    .lookbook-intro {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto var(--space-2xl) auto;
+    }
+
+    .lookbook-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+    }
+
+    .showcase-card {
+      background-color: var(--color-gallery-white);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-ambient);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .showcase-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .showcase-img-wrap {
+      width: 100%;
+      aspect-ratio: 1.1 / 1;
+      background-color: var(--surface-container-high);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .showcase-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
+      font-family: 'Newsreader', serif;
+      font-style: italic;
+      font-size: 1.125rem;
+      background: linear-gradient(135deg, var(--surface-container-low) 0%, var(--surface-container-high) 100%);
+    }
+
+    .showcase-info {
+      padding: var(--space-lg);
+    }
+
+    .showcase-category {
+      color: var(--color-brand-primary);
+      margin-bottom: var(--space-xs);
+    }
+
+    .showcase-title {
+      font-family: 'Newsreader', serif;
+      font-size: 1.25rem;
+      font-weight: 400;
+      color: var(--text-primary);
+      margin-bottom: var(--space-sm);
+    }
+
+    /* Tier Badges using color-mix for elegant soft tints */
+    .tier-badge {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .tier-badge.essentials {
+      background-color: color-mix(in srgb, var(--color-support-green), transparent 90%);
+      color: var(--color-support-green);
+    }
+
+    .tier-badge.musthaves {
+      background-color: color-mix(in srgb, var(--color-brand-primary), transparent 90%);
+      color: var(--color-brand-primary);
+    }
+
+    .tier-badge.luxuries {
+      background-color: color-mix(in srgb, var(--color-support-blue), transparent 90%);
+      color: var(--color-support-blue);
+    }
+
+    /* ── Section 4: Premium Footer (Minimalist) ────── */
+    .site-footer {
+      background-color: var(--surface-container-high); /* Deep container */
+      padding: var(--space-2xl) 0 var(--space-xl) 0;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: var(--space-2xl);
+      margin-bottom: var(--space-2xl);
+    }
+
+    .footer-brand {
+      max-width: 320px;
+    }
+
+    .footer-description {
+      margin-top: var(--space-md);
+      font-size: 0.875rem;
+    }
+
+    .footer-links-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-xl);
+    }
+
+    .footer-list-title {
+      color: var(--color-brand-secondary); /* Plum Reserve for depth */
+      margin-bottom: var(--space-md);
+    }
+
+    .footer-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .footer-link {
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover {
+      color: var(--color-brand-secondary); /* Plum Reserve secondary links */
+    }
+
+    .footer-bottom {
+      padding-top: var(--space-lg);
+      border-top: 1px solid var(--surface-container-highest); /* Only permitted thin base line for semantic structure, wait, the prompt says "Borders: Prohibited for sectioning." and "Use subtle background transitions." Let's use a background shift instead of a line! */
+      background-color: var(--surface-container-highest);
+      margin: 0 calc(-1 * var(--space-xl));
+      padding: var(--space-md) var(--space-xl);
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+
+    .footer-bottom-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+    }
+
+    .copyright {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+
+    .footer-legal-links {
+      display: flex;
+      gap: var(--space-md);
+    }
+
+    .footer-legal-link {
+      font-size: 0.75rem;
+      text-decoration: none;
+      color: var(--text-tertiary);
+      transition: color 0.2s;
+    }
+
+    .footer-legal-link:hover {
+      color: var(--color-brand-secondary);
+    }
+
+    /* ── Responsive Styling (Up to 900px) ────────────── */
+    @media (max-width: 900px) {
+      section {
+        padding: var(--space-2xl) 0;
+      }
+
+      .hero-section {
+        padding-top: calc(var(--space-2xl) + 60px);
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+      }
+
+      .lookbook-collage {
+        justify-content: center;
+        padding-left: 0;
+        margin-top: var(--space-xl);
+      }
+
+      .collage-container {
+        max-width: 380px;
+      }
+
+      .philosophy-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+      }
+
+      .lookbook-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .lookbook-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .signup-card {
+        padding: var(--space-lg);
+      }
+
+      .floating-tag {
+        display: none; /* Hide extreme floaters on compact mobile */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Lookbook Navigation ── -->
+  <header class="site-header">
+    <div class="container">
+      <div class="nav-container">
+        <a href="#" class="brand-logo" id="headerLogo">
+          Dennan Kids<span class="logo-dot"></span>
+        </a>
+        <div class="header-status">
+          <span class="status-pulse"></span>
+          <span class="label-sm" style="color: var(--color-brand-secondary);">Curating Issue 01</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Hero Section (Asymmetric Lookbook Canvas) ── -->
+  <section class="hero-section" id="hero">
+    <div class="container">
+      <div class="hero-grid">
+        
+        <!-- Left Column: Editorial Headlines & Tactile Sign-Up Card -->
+        <div class="hero-content">
+          <div class="hero-eyebrow label-sm">
+            <span class="eyebrow-dot"></span>
+            A Prelaunch Lookbook Invitation
+          </div>
+          
+          <h1 class="display-lg hero-title">
+            Dennan Kids — A New Standard in <em>Children's Wear.</em>
+          </h1>
+          
+          <p class="body-md hero-subtitle">
+            Join the waitlist for early access and a curated launch experience. We reject standard e-commerce in favor of thoughtful, stage-aware curation.
+          </p>
+
+          <!-- The Sign-Up Module (The "Tactile" Card) -->
+          <div class="signup-card" id="signupCard">
+            
+            <div class="signup-form-flow" id="signupFormFlow">
+              <!-- Saffron Signal Badge (Paired exclusively with Command Anchor Black) -->
+              <div class="incentive-badge-container">
+                <span class="discount-badge label-sm">
+                  <span class="badge-dot"></span>
+                  Claim your 15% launch discount
+                </span>
+              </div>
+
+              <h2 class="card-title">Join the Curator List</h2>
+              <p class="body-sm card-description">
+                Sign up today to secure your 15% discount for our live launch and lock in early access.
+              </p>
+
+              <!-- Minimialist Email Input -->
+              <form id="waitlistForm" onsubmit="handleFormSubmit(event)" novalidate>
+                <div class="form-group">
+                  <label for="emailInput" class="label-sm input-label">Email Address</label>
+                  <div class="input-wrapper">
+                    <input 
+                      type="email" 
+                      id="emailInput" 
+                      class="tactile-input" 
+                      placeholder="Enter your email to secure access" 
+                      autocomplete="email"
+                      required
+                    />
+                  </div>
+                  <div class="input-error-msg" id="emailError">Please enter a valid editorial curator email.</div>
+                </div>
+
+                <!-- Primary CTA (Anchor Black background) -->
+                <button type="submit" class="cta-button" id="submitBtn">
+                  <span>Secure Early Access</span>
+                  <svg class="btn-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </form>
+            </div>
+
+            <!-- Custom Elegant Success State (Fades in dynamically) -->
+            <div class="success-container" id="successContainer">
+              <div class="success-icon-wrap">
+                <svg class="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <h2 class="card-title">You are on the list.</h2>
+              <p class="body-sm">We've reserved your spot for our live lookbook release. Your personal activation code has been locked in.</p>
+              <div class="success-badge label-sm">15% Launch Code Locked</div>
+            </div>
+
+            <!-- Micro-copy -->
+            <div class="micro-copy">
+              <p class="micro-text">By subscribing, you agree to receive limited editorial lookbooks. No high-volume newsletter spam.</p>
+              <p class="micro-text">Your privacy is curated carefully. We never trade or share contact listings.</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right Column: Asymmetric Lookbook Imagery Collage -->
+        <div class="lookbook-collage">
+          <div class="collage-container">
+            
+            <!-- Tonal shift backing block, no line border -->
+            <div class="collage-bg-block"></div>
+            
+            <!-- Tall Teaser Lookbook Photo (Generated lookbook romper image) -->
+            <div class="frame-primary">
+              <img src="assets/lookbook_romper.png" alt="Editorial lookbook linen baby romper garment hanging on a wooden hanger against plaster wall" class="collage-img" />
+            </div>
+
+            <!-- Square Accompanying Photo (Generated lookbook blanket image) -->
+            <div class="frame-secondary">
+              <img src="assets/lookbook_blanket.png" alt="Tactile folded knitted toddler baby blanket neatly styled on a rustic minimal wooden stool" class="collage-img" />
+            </div>
+
+            <!-- Floating Brand Depth Accent Tag (Plum secondary color theme) -->
+            <div class="floating-tag">
+              <span class="label-sm tag-label">Issue 01 — Tactile</span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 2: The Philosophy (Tonal Transition to Layer 1) ── -->
+  <section class="philosophy-section" id="philosophy">
+    <div class="container">
+      <div class="philosophy-grid">
+        
+        <div>
+          <div class="section-eyebrow label-sm">
+            <span class="eyebrow-dot"></span>
+            A Curator's Promise
+          </div>
+          <h2 class="display-lg section-headline">
+            The Philosophy of <em>Editorial Soft-Modernism.</em>
+          </h2>
+          <p class="body-md">
+            We operate outside the traditional e-commerce cycle. Our objects are selected based on physical weight, structural honesty, and aesthetic serenity. We treat wardrobes like gallery collections.
+          </p>
+        </div>
+
+        <div class="philosophy-content">
+          <div class="pillar-row">
+            <div class="pillar-card">
+              <p class="pillar-num">01</p>
+              <h3 class="body-md pillar-title">Minimal Silhouette</h3>
+              <p class="body-sm">Eliminating busy prints in favor of calm, solid, botanical coordinates that blend seamlessly.</p>
+            </div>
+            <div class="pillar-card">
+              <p class="pillar-num">02</p>
+              <h3 class="body-md pillar-title">Stage Aware</h3>
+              <p class="body-sm">Products designed to support development, moving away from generic size buckets.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 3: The Tactile Journey (Tonal Transition to Layer 2) ── -->
+  <section class="lookbook-section" id="lookbook">
+    <div class="container">
+      
+      <div class="lookbook-intro">
+        <div class="section-eyebrow label-sm">
+          <span class="eyebrow-dot"></span>
+          Collection Preview
+        </div>
+        <h2 class="display-lg" style="margin-bottom: var(--space-md);">
+          Curating by <em>Intention.</em>
+        </h2>
+        <p class="body-md">
+          A glimpse into the garments and textile layers anchoring our initial Lookbook release.
+        </p>
+      </div>
+
+      <div class="lookbook-grid">
+        
+        <!-- Showcase Card 1 (Essentials) -->
+        <div class="showcase-card">
+          <div class="showcase-img-wrap">
+            <div class="showcase-placeholder">Linen Play Romper</div>
+          </div>
+          <div class="showcase-info">
+            <div class="showcase-category label-sm">Layer 01</div>
+            <h3 class="showcase-title">Organic Romper</h3>
+            <span class="tier-badge essentials">Essentials</span>
+          </div>
+        </div>
+
+        <!-- Showcase Card 2 (Must-Haves) -->
+        <div class="showcase-card">
+          <div class="showcase-img-wrap">
+            <div class="showcase-placeholder">Knitted Blanket</div>
+          </div>
+          <div class="showcase-info">
+            <div class="showcase-category label-sm" style="color: var(--color-brand-primary);">Layer 02</div>
+            <h3 class="showcase-title">Plum Moss Blanket</h3>
+            <span class="tier-badge musthaves">Must-Haves</span>
+          </div>
+        </div>
+
+        <!-- Showcase Card 3 (Luxuries) -->
+        <div class="showcase-card">
+          <div class="showcase-img-wrap">
+            <div class="showcase-placeholder">Handmade Wood Blocks</div>
+          </div>
+          <div class="showcase-info">
+            <div class="showcase-category label-sm" style="color: var(--color-support-blue);">Layer 03</div>
+            <h3 class="showcase-title">Warm Clay Set</h3>
+            <span class="tier-badge luxuries">Luxuries</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Section 4: Premium Lookbook Footer (Plum Depth Text on Layer 3) ── -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        
+        <div class="footer-brand">
+          <a href="#" class="brand-logo" style="color: var(--color-brand-secondary);">
+            Dennan Kids<span class="logo-dot"></span>
+          </a>
+          <p class="body-sm footer-description" style="color: var(--color-brand-secondary);">
+            An editorial lookbook-style digital sanctuary for modern families. Curated thoughtfully, produced ethically.
+          </p>
+        </div>
+
+        <div class="footer-links-container">
+          <div>
+            <h4 class="label-sm footer-list-title">The Waitlist</h4>
+            <ul class="footer-links">
+              <li><a href="#hero" class="footer-link">Join List</a></li>
+              <li><a href="#philosophy" class="footer-link">Philosophy</a></li>
+              <li><a href="#lookbook" class="footer-link">Lookbook</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="label-sm footer-list-title">Inquiries</h4>
+            <ul class="footer-links">
+              <li><a href="mailto:hello@dennan.kids" class="footer-link">Curator Email</a></li>
+              <li><a href="#" class="footer-link">Press Kit</a></li>
+              <li><a href="#" class="footer-link">Brand Journal</a></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tonal block footer base, no border line -->
+      <div class="footer-bottom">
+        <div class="footer-bottom-inner">
+          <p class="copyright">&copy; 2026 Dennan Kids. All curation rights reserved.</p>
+          <div class="footer-legal-links">
+            <a href="#" class="footer-legal-link">Privacy Policy</a>
+            <a href="#" class="footer-legal-link">Terms of Access</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ── Interactive Logic ───────────────────────────── -->
+  <script>
+    // Handle Minimalist Email Input Client-side validation and flow
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      
+      const emailInput = document.getElementById('emailInput');
+      const emailError = document.getElementById('emailError');
+      const signupFormFlow = document.getElementById('signupFormFlow');
+      const successContainer = document.getElementById('successContainer');
+      const submitBtn = document.getElementById('submitBtn');
+
+      const emailVal = emailInput.value.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      // Reset states
+      emailInput.style.borderBottomColor = '';
+      emailError.style.display = 'none';
+
+      if (!emailVal || !emailRegex.test(emailVal)) {
+        // Validation Error state using support red
+        emailInput.style.borderBottomColor = 'var(--color-support-red)';
+        emailError.style.display = 'block';
+        return;
+      }
+
+      // Premium Form submission loading simulation
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.7';
+      submitBtn.querySelector('span').innerText = 'Securing...';
+
+      setTimeout(() => {
+        // Successfully submit waitlist subscriber
+        signupFormFlow.style.display = 'none';
+        successContainer.style.display = 'block';
+      }, 900);
+    }
+
+    // Input change listener to clear validation visual errors instantly
+    document.getElementById('emailInput').addEventListener('input', function() {
+      const emailError = document.getElementById('emailError');
+      this.style.borderBottomColor = '';
+      emailError.style.display = 'none';
+    });
+  </script>
+
+</body>
+</html>

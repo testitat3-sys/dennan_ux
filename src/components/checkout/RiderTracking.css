@@ -462,4 +462,59 @@
   100% { transform: scale(2); opacity: 0; }
 }
 
+/* ─── Responsive Media Queries ────────────────────────────────────────── */
+@media (max-width: 992px) {
+  .tracking-header {
+    margin-bottom: var(--space-8);
+  }
+}
 
+@media (max-width: 768px) {
+  .roadmap-section {
+    padding: var(--space-6);
+    border-radius: 1.5rem;
+  }
+
+  .rider-card {
+    padding: var(--space-6);
+    border-radius: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .countdown-display {
+    font-size: 2.75rem;
+  }
+
+  .countdown-display .unit {
+    font-size: var(--body-md);
+  }
+
+  .roadmap-title {
+    font-size: var(--title-lg);
+    margin-bottom: var(--space-6);
+  }
+
+  .step-item {
+    gap: var(--space-4);
+    padding-bottom: var(--space-8);
+  }
+
+  .rider-photo-wrapper {
+    width: var(--space-16);
+    height: var(--space-16);
+  }
+
+  .rider-name {
+    font-size: var(--title-lg);
+  }
+
+  .btn-call-rider {
+    padding: var(--space-4);
+    font-size: var(--body-md);
+  }
+
+  .safety-note {
+    padding: var(--space-4);
+  }
+}

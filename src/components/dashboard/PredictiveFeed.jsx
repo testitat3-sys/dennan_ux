@@ -1,21 +1,13 @@
 import React from 'react';
 import './PredictiveFeed.css';
-import { getProducts } from '../../services/api';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import ProductCard from '../ui/ProductCard';
 import ProductCardSkeleton from '../ui/ProductCardSkeleton';
 
 const PredictiveFeed = ({ type, stageInfo, onAddToCart }) => {
-  const [products, setProducts] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    const loadProducts = async () => {
-      const data = await getProducts();
-      setProducts(data || []);
-      setLoading(false);
-    };
-    loadProducts();
-  }, []);
+  const rawProducts = useQuery(api.data.getProducts);
+  const loading = rawProducts === undefined;
 
   if (loading) {
     return (
@@ -28,6 +20,12 @@ const PredictiveFeed = ({ type, stageInfo, onAddToCart }) => {
       </div>
     );
   }
+
+  // Normalize product ID from Convex _id to id for child component compatibility
+  const products = (rawProducts || []).map(p => ({
+    ...p,
+    id: p._id || p.id
+  }));
 
   const filteredProducts = products.filter(p => {
     if (stageInfo.type === 'expecting') {
@@ -65,4 +63,5 @@ const PredictiveFeed = ({ type, stageInfo, onAddToCart }) => {
 };
 
 export default PredictiveFeed;
+
 

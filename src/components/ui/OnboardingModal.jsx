@@ -2,55 +2,26 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useQuery, useMutation, useConvexAuth, useConvex } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Mail, ArrowRight, ArrowLeft, Loader2, Baby, Heart } from 'lucide-react';
 import './OnboardingModal.css';
 
-// ─── localStorage helpers ────────────────────────────────────────────────────
-const PROFILE_KEY = 'dennan_onboarding_profile';
-const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-
-function readLocalProfile() {
-  try {
-    const raw = localStorage.getItem(PROFILE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed._savedAt || Date.now() - parsed._savedAt > MAX_AGE_MS) {
-      localStorage.removeItem(PROFILE_KEY);
-      return null;
-    }
-    return parsed;
-  } catch {
-    localStorage.removeItem(PROFILE_KEY);
-    return null;
-  }
-}
-
-function writeLocalProfile(profile) {
-  localStorage.setItem(PROFILE_KEY, JSON.stringify({ ...profile, _savedAt: Date.now() }));
-}
-
-function clearLocalProfile() {
-  localStorage.removeItem(PROFILE_KEY);
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
 const OnboardingModal = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { login } = useUser();
+  const { login, updateProfile } = useUser();
   const { signIn } = useAuthActions();
-  const { isAuthenticated, isLoading } = useConvexAuth();
-  const convex = useConvex(); // for imperative query on email submit
+  const { isAuthenticated } = useConvexAuth();
+  const user = useQuery(api.users.viewer);
+  const saveJourney = useMutation(api.users.saveOnboardingJourney);
 
   // ── Step state ──────────────────────────────────────────────────────────────
-  // Steps: 1 = role, 2 = date, 3 = email (+ "check email" sub-state)
-  // If a valid local profile exists on mount, we jump straight to step 3.
+  // For Authenticated users: 1 = role selection, 2 = date details
+  // For Unauthenticated users: 1 = email screen
   const [step, setStep] = useState(1);
-  const [hasLocalProfile, setHasLocalProfile] = useState(false);
   const initialized = useRef(false);
 
-  // ── Profile state ───────────────────────────────────────────────────────────
+  // ── Profile/Journey state ───────────────────────────────────────────────────
   const [role, setRole] = useState(null);       // 'expecting' | 'parent'
   const [dueDate, setDueDate] = useState('');
   const [children, setChildren] = useState([{ id: Date.now(), dob: '' }]);
@@ -71,26 +42,55 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   // ── Polling for test link ───────────────────────────────────────────────────
   const link = useQuery(api.users.getTestLink, testMode && sent ? { email } : "skip");
 
-  // ── On open: read localStorage to determine starting step ──────────────────
+  // ── Date Boundary Calculations ─────────────────────────────────────────────
+  const today = new Date();
+
+  const formatDateString = (date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  // Expecting bounds: min = today, max = 10 months from now
+  const minDueDate = formatDateString(today);
+  const maxDueDateObj = new Date();
+  maxDueDateObj.setMonth(today.getMonth() + 10);
+  const maxDueDate = formatDateString(maxDueDateObj);
+
+  // Parent bounds: min = 12 years ago, max = today
+  const maxDobDate = formatDateString(today);
+  const minDobDateObj = new Date();
+  minDobDateObj.setFullYear(today.getFullYear() - 12);
+  const minDobDate = formatDateString(minDobDateObj);
+
+  // ── Initialize state on open ────────────────────────────────────────────────
   useEffect(() => {
     if (isOpen && !initialized.current) {
       initialized.current = true;
-      const local = readLocalProfile();
-      if (local) {
-        setHasLocalProfile(true);
-        setRole(local.role);
-        setDueDate(local.dueDate || '');
-        if (local.children) setChildren(local.children.map((c, i) => ({ id: i, dob: c.dob })));
-        setStep(3); // skip role + date
+      setSent(false);
+      setCapturedLink('');
+      setResendCooldown(0);
+      setEmailError('');
+
+      if (isAuthenticated && user) {
+        // Hydrate from existing profile data if we are already authenticated
+        setRole(user.role || null);
+        setDueDate(user.dueDate || '');
+        if (user.children) {
+          setChildren(user.children.map((c, i) => ({ id: i, dob: c.dob })));
+        } else {
+          setChildren([{ id: Date.now(), dob: '' }]);
+        }
+        setStep(1);
       } else {
-        setHasLocalProfile(false);
         setStep(1);
       }
     }
     if (!isOpen) {
       initialized.current = false;
     }
-  }, [isOpen]);
+  }, [isOpen, isAuthenticated, user]);
 
   // ── Modal animation ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -130,9 +130,8 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   if (!isMounted) return null;
 
   // ── Progress ────────────────────────────────────────────────────────────────
-  // If user came with a local profile we only show step 3 (total = 1 "step")
-  const totalSteps = hasLocalProfile ? 1 : 3;
-  const displayStep = hasLocalProfile ? 1 : step;
+  const totalSteps = isAuthenticated ? 2 : 1;
+  const displayStep = isAuthenticated ? step : 1;
   const progress = (displayStep / totalSteps) * 100;
 
   // ── Step 1: Role selection ──────────────────────────────────────────────────
@@ -141,16 +140,35 @@ const OnboardingModal = ({ isOpen, onClose }) => {
     setStep(2);
   };
 
-  // ── Step 2: Date details → save to localStorage ─────────────────────────────
-  const handleDateNext = () => {
-    const profileData = {
-      role,
-      dueDate: role === 'expecting' ? dueDate : undefined,
-      children: role === 'parent' ? children.map(c => ({ dob: c.dob })) : undefined,
-    };
-    writeLocalProfile(profileData);
-    setHasLocalProfile(true);
-    setStep(3);
+  // ── Step 2: Journey details submit (Authenticated only) ─────────────────────
+  const handleJourneySubmit = async () => {
+    setEmailError('');
+    setPending(true);
+
+    try {
+      const payload = {
+        role,
+        dueDate: role === 'expecting' ? dueDate : undefined,
+        children: role === 'parent' ? children.map(c => ({ dob: c.dob })) : undefined,
+      };
+      console.log(`[OnboardingModal] Calling saveOnboardingJourney:`, payload);
+      await saveJourney(payload);
+
+      // Update local profile state in UserContext
+      updateProfile({
+        role,
+        dueDate: payload.dueDate,
+        children: payload.children,
+      });
+
+      onClose();
+      navigate('/dashboard');
+    } catch (error) {
+      console.error("[OnboardingModal] saveOnboardingJourney error:", error);
+      setEmailError('Failed to save your journey profile. Please try again.');
+    } finally {
+      setPending(false);
+    }
   };
 
   const addChild = () => {
@@ -164,33 +182,24 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   };
 
   const isDateStepValid = () => {
-    if (role === 'expecting') return !!dueDate;
-    return children.length > 0 && children[0].dob !== '';
+    if (role === 'expecting') {
+      return !!dueDate && dueDate >= minDueDate && dueDate <= maxDueDate;
+    }
+    return (
+      children.length > 0 &&
+      children.every(
+        (c) => c.dob !== '' && c.dob >= minDobDate && c.dob <= maxDobDate
+      )
+    );
   };
 
-  // ── Step 3: Email submit ────────────────────────────────────────────────────
-  const handleSubmit = async (e) => {
+  // ── Email submit (Unauthenticated magic link request) ──────────────────────
+  const handleEmailSubmit = async (e) => {
     if (e) e.preventDefault();
     setEmailError('');
     setPending(true);
 
     try {
-      // 1. Check if account is already confirmed (cross-device skip)
-      const status = await convex.query(api.users.checkOnboardingStatus, { email });
-      console.log(`[OnboardingModal] checkOnboardingStatus for ${email}:`, status);
-
-      if (!status.isOnboarded && !hasLocalProfile) {
-        // Edge case: no local profile answers and no confirmed account.
-        // Can't reconcile later — send them back to collect role/date first.
-        setEmailError('Please complete your profile first.');
-        clearLocalProfile();
-        setHasLocalProfile(false);
-        setStep(1);
-        setPending(false);
-        return;
-      }
-
-      // 2. Send magic link (whether account is confirmed or not — AfterSignIn reconciles)
       console.log(`[OnboardingModal] Initiating signIn for ${email} (testMode: ${testMode})`);
       await signIn(testMode ? "test" : "resend", {
         email,
@@ -239,12 +248,11 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         </div>
 
         <div className="onboarding-header">
-          {/* Back button: show on step 2, or on step 3 if user came through steps (not local profile) */}
-          {(step === 2 || (step === 3 && !hasLocalProfile)) && !sent ? (
+          {isAuthenticated && step === 2 ? (
             <button
               className="onboarding-skip"
-              onClick={() => setStep(step - 1)}
-              style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+              onClick={() => setStep(1)}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <ArrowLeft size={14} /> Back
             </button>
@@ -260,110 +268,138 @@ const OnboardingModal = ({ isOpen, onClose }) => {
 
         <div className="onboarding-content">
 
-          {/* ── STEP 1: Role selection ── */}
-          {step === 1 && (
-            <div className="onboarding-step">
-              <h2 className="onboarding-step-title">Where are you in your journey?</h2>
-              <p className="onboarding-step-desc">We'll personalise your experience to show you exactly what you need.</p>
-              <div className="onboarding-cards">
-                <div
-                  className={`onboarding-card ${role === 'expecting' ? 'is-active' : ''}`}
-                  onClick={() => handleRoleSelect('expecting')}
-                >
-                  <div className="onboarding-card-icon">
-                    <Heart size={28} strokeWidth={1.2} />
+          {/* ── FLOW A: AUTHENTICATED USER WIZARD ── */}
+          {isAuthenticated ? (
+            <>
+              {/* Step 1: Role selection */}
+              {step === 1 && (
+                <div className="onboarding-step">
+                  <h2 className="onboarding-step-title">Where are you in your journey?</h2>
+                  <p className="onboarding-step-desc">We'll personalise your experience to show you exactly what you need.</p>
+                  <div className="onboarding-cards">
+                    <div
+                      className={`onboarding-card ${role === 'expecting' ? 'is-active' : ''}`}
+                      onClick={() => handleRoleSelect('expecting')}
+                    >
+                      <div className="onboarding-card-icon">
+                        <Heart size={28} strokeWidth={1.2} />
+                      </div>
+                      <span className="onboarding-card-label">I'm expecting</span>
+                      <span className="onboarding-card-sub">Pregnant & preparing</span>
+                    </div>
+                    <div
+                      className={`onboarding-card ${role === 'parent' ? 'is-active' : ''}`}
+                      onClick={() => handleRoleSelect('parent')}
+                    >
+                      <div className="onboarding-card-icon">
+                        <Baby size={28} strokeWidth={1.2} />
+                      </div>
+                      <span className="onboarding-card-label">I'm already a parent</span>
+                      <span className="onboarding-card-sub">My child is here</span>
+                    </div>
                   </div>
-                  <span className="onboarding-card-label">I'm expecting</span>
-                  <span className="onboarding-card-sub">Pregnant & preparing</span>
                 </div>
-                <div
-                  className={`onboarding-card ${role === 'parent' ? 'is-active' : ''}`}
-                  onClick={() => handleRoleSelect('parent')}
-                >
-                  <div className="onboarding-card-icon">
-                    <Baby size={28} strokeWidth={1.2} />
-                  </div>
-                  <span className="onboarding-card-label">I'm already a parent</span>
-                  <span className="onboarding-card-sub">My child is here</span>
-                </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* ── STEP 2: Date details ── */}
-          {step === 2 && (
-            <div className="onboarding-step">
-              <h2 className="onboarding-step-title">
-                {role === 'expecting' ? 'When is your due date?' : 'When is your child\'s birthday?'}
-              </h2>
-              <p className="onboarding-step-desc">
-                {role === 'expecting'
-                  ? "We'll help you time your nursery setup and hospital bag."
-                  : "We'll show you gear that fits their current milestones."}
-              </p>
+              {/* Step 2: Date details */}
+              {step === 2 && (
+                <div className="onboarding-step">
+                  <h2 className="onboarding-step-title">
+                    {role === 'expecting' ? 'When is your due date?' : 'When is your child\'s birthday?'}
+                  </h2>
+                  <p className="onboarding-step-desc">
+                    {role === 'expecting'
+                      ? "We'll help you time your nursery setup and hospital bag."
+                      : "We'll show you gear that fits their current milestones."}
+                  </p>
 
-              <div className="onboarding-date-section">
-                {role === 'expecting' ? (
-                  <div className="date-input-group">
-                    <label className="date-label">Expected Due Date</label>
-                    <input
-                      type="date"
-                      className="onboarding-input"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                    />
-                  </div>
-                ) : (
-                  <>
-                    {children.map((child, index) => (
-                      <div key={child.id} className="date-input-group">
-                        <label className="date-label">Child {index + 1} Birthday</label>
+                  <div className="onboarding-date-section">
+                    {role === 'expecting' ? (
+                      <div className="date-input-group">
+                        <label className="date-label">Expected Due Date</label>
                         <input
                           type="date"
                           className="onboarding-input"
-                          value={child.dob}
-                          onChange={(e) => updateChildDob(child.id, e.target.value)}
+                          value={dueDate}
+                          min={minDueDate}
+                          max={maxDueDate}
+                          onChange={(e) => setDueDate(e.target.value)}
                         />
+                        {dueDate && (dueDate < minDueDate || dueDate > maxDueDate) && (
+                          <p className="date-error-msg">
+                            {dueDate < minDueDate
+                              ? "Due date cannot be in the past."
+                              : `Due date must be within 10 months (by ${new Date(maxDueDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}).`}
+                          </p>
+                        )}
                       </div>
-                    ))}
-                    {children.length < 5 && (
-                      <button className="add-another-btn" onClick={addChild}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                        Add another child
-                      </button>
+                    ) : (
+                      <>
+                        {children.map((child, index) => (
+                          <div key={child.id} className="date-input-group">
+                            <label className="date-label">Child {index + 1} Birthday</label>
+                            <input
+                              type="date"
+                              className="onboarding-input"
+                              value={child.dob}
+                              min={minDobDate}
+                              max={maxDobDate}
+                              onChange={(e) => updateChildDob(child.id, e.target.value)}
+                            />
+                            {child.dob && (child.dob < minDobDate || child.dob > maxDobDate) && (
+                              <p className="date-error-msg">
+                                {child.dob > maxDobDate
+                                  ? "Birthday cannot be in the future."
+                                  : `Age limit is 12 years (born after ${new Date(minDobDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}).`}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                        {children.length < 5 && (
+                          <button className="add-another-btn" onClick={addChild}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Add another child
+                          </button>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </div>
+                  </div>
 
-              <div className="onboarding-actions">
-                <button
-                  className="btn-primary-full"
-                  onClick={handleDateNext}
-                  disabled={!isDateStepValid()}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                  Continue <ArrowRight size={18} />
-                </button>
-              </div>
-            </div>
-          )}
+                  {emailError && (
+                    <p style={{ color: 'var(--error, #ef4444)', fontSize: '0.8125rem', marginTop: '12px', textAlign: 'center' }}>
+                      {emailError}
+                    </p>
+                  )}
 
-          {/* ── STEP 3: Email ── */}
-          {step === 3 && (
+                  <div className="onboarding-actions">
+                    <button
+                      className="btn-primary-full"
+                      onClick={handleJourneySubmit}
+                      disabled={!isDateStepValid() || pending}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    >
+                      {pending ? (
+                        <>Saving… <Loader2 className="animate-spin" size={18} /></>
+                      ) : (
+                        <>Complete Setup <ArrowRight size={18} /></>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            /* ── FLOW B: UNAUTHENTICATED EMAIL ENTRY ── */
             <div className="onboarding-step">
-              <h2 className="onboarding-step-title">
-                {hasLocalProfile ? 'Save your profile' : 'Almost there'}
-              </h2>
-
               {!sent ? (
                 <>
+                  <h2 className="onboarding-step-title">Welcome to Dennan</h2>
                   <p className="onboarding-step-desc">
-                    Enter your email to save your profile and receive your personalised guide.
+                    Enter your email to receive a magic sign-in link and start your personal journey guide.
                   </p>
-                  <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+                  <form onSubmit={handleEmailSubmit} style={{ width: '100%' }}>
                     <div className="date-input-group">
                       <label className="date-label">Email Address</label>
                       <div style={{ position: 'relative' }}>
@@ -408,9 +444,9 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                       style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
                       {pending ? (
-                        <>Checking… <Loader2 className="animate-spin" size={18} /></>
+                        <>Sending Link… <Loader2 className="animate-spin" size={18} /></>
                       ) : (
-                        <>Continue <ArrowRight size={18} /></>
+                        <>Send Magic Link <ArrowRight size={18} /></>
                       )}
                     </button>
                   </form>
@@ -498,6 +534,16 @@ const OnboardingModal = ({ isOpen, onClose }) => {
           font-size: 0.75rem;
           color: var(--text-muted);
           margin-top: 4px;
+        }
+        .date-error-msg {
+          color: var(--error, #ef4444);
+          font-size: 0.75rem;
+          margin-top: 4px;
+          animation: fadeIn 0.2s ease-in-out;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-2px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

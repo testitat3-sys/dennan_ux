@@ -1,40 +1,72 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getProducts } from '../services/api';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
+import { formatPrice } from '../utils/priceUtils';
 import Toast from '../components/ui/Toast';
 import './PDP.css';
 
 const PDP = () => {
   const { productId } = useParams();
   const { addToCart } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('Newborn');
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const [activeTab, setActiveTab] = useState('details');
+  const [notifyBackInStock, setNotifyBackInStock] = useState(false);
+
+  // Live fetch from Convex
+  const allProducts = useQuery(api.data.getProducts);
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      setLoading(true);
-      const products = await getProducts();
-      const foundProduct = products?.find(p => p.id === parseInt(productId));
+    if (allProducts && productId) {
+      const foundProduct = allProducts.find(p => p.id === parseInt(productId) || p._id === productId);
       if (foundProduct) {
         setProduct(foundProduct);
-        window.scrollTo(0, 0);
+        setLoading(false);
       }
-      setLoading(false);
-    };
-    fetchProduct();
-  }, [productId]);
+    }
+  }, [allProducts, productId]);
 
-  if (loading) return <div className="pdp-loading">Loading product details...</div>;
-  if (!product) return <div className="pdp-loading">Product not found.</div>;
+  if (loading || !product) {
+    return <div className="pdp-loading">Loading product details...</div>;
+  }
+
+  const id = product.id || product._id;
+  const isSaved = isInWishlist(id);
+  const isOutOfStock = product.inventory !== undefined && product.inventory <= 0;
 
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedSize);
+    setToastMessage(`${product.name} added to cart!`);
     setShowToast(true);
+  };
+
+  const handleToggleWishlist = () => {
+    toggleWishlist(product, notifyBackInStock);
+    if (!isSaved) {
+      setToastMessage(`${product.name} saved to wishlist!`);
+    } else {
+      setToastMessage(`Removed ${product.name} from wishlist.`);
+    }
+    setShowToast(true);
+  };
+
+  const handleNotifyToggle = () => {
+    const nextState = !notifyBackInStock;
+    setNotifyBackInStock(nextState);
+    if (nextState) {
+      toggleWishlist(product, true);
+      setToastMessage(`Back-in-stock notifications activated!`);
+      setShowToast(true);
+    }
   };
 
   const sizes = ['Newborn', '0-3m', '3-6m', '6-9m'];
@@ -60,11 +92,18 @@ const PDP = () => {
           <div className="pdp__gallery">
             <div className="pdp__main-image">
               <img src={product.image} alt={product.name} />
-              {product.tags && product.tags.map((tag, idx) => (
-                <span key={idx} className={`pdp__badge pdp__badge--${tag.type}`}>
-                  {tag.text}
-                </span>
-              ))}
+              <div className="pdp__badges-overlay">
+                {isOutOfStock && (
+                  <span className="pdp__badge pdp__badge--out-of-stock" style={{ backgroundColor: 'var(--surface-container-highest)', color: 'var(--text-secondary)' }}>
+                    Out of Stock
+                  </span>
+                )}
+                {product.tags && product.tags.map((tag, idx) => (
+                  <span key={idx} className={`pdp__badge pdp__badge--${tag.type}`}>
+                    {tag.text}
+                  </span>
+                ))}
+              </div>
             </div>
             <div className="pdp__thumbnails">
               {[1, 2, 3].map(i => (
@@ -78,11 +117,29 @@ const PDP = () => {
           {/* Right: Product Info */}
           <div className="pdp__info">
             <div className="pdp__header">
-              <span className="pdp__brand">{product.brand}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="pdp__brand">{product.brand}</span>
+                {product.unitsSold !== undefined && product.unitsSold > 0 && (
+                  <span className="pdp__units-sold" style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    color: '#d97706',
+                    padding: '4px 12px',
+                    borderRadius: '100px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: '0 2px 4px rgba(245, 158, 11, 0.05)'
+                  }}>
+                    🔥 {product.unitsSold} sold
+                  </span>
+                )}
+              </div>
               <h1 className="pdp__title">{product.name}</h1>
               <div className="pdp__price-wrap">
-                <span className="pdp__price">{product.price}</span>
-                {product.wasPrice && <span className="pdp__was-price">{product.wasPrice}</span>}
+                <span className="pdp__price">{formatPrice(product.price)}</span>
+                {product.wasPrice && <span className="pdp__was-price">{formatPrice(product.wasPrice)}</span>}
               </div>
             </div>
 
@@ -128,6 +185,7 @@ const PDP = () => {
                         key={size}
                         className={`size-btn ${selectedSize === size ? 'is-active' : ''}`}
                         onClick={() => setSelectedSize(size)}
+                        disabled={isOutOfStock}
                       >
                         {size}
                       </button>
@@ -139,24 +197,61 @@ const PDP = () => {
               <div className="pdp__quantity">
                 <span className="control-label">Quantity</span>
                 <div className="stepping-component pdp__stepping">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>—</button>
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={isOutOfStock}>—</button>
                   <span>{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)}>+</button>
+                  <button onClick={() => setQuantity(quantity + 1)} disabled={isOutOfStock}>+</button>
                 </div>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="pdp__actions">
-              <button className="btn-primary pdp__add-btn" onClick={handleAddToCart}>
-                Add to Cart — {product.price}
-              </button>
-              <button className="btn-secondary pdp__wishlist-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                </svg>
-                Add to Registry
-              </button>
+            <div className="pdp__actions" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                {isOutOfStock ? (
+                  <button className="btn-primary pdp__add-btn" onClick={handleToggleWishlist}>
+                    {isSaved ? 'In Wishlist' : 'Add to Wishlist'}
+                  </button>
+                ) : (
+                  <button className="btn-primary pdp__add-btn" onClick={handleAddToCart}>
+                    Add to Cart — {formatPrice(product.price)}
+                  </button>
+                )}
+                <button className="btn-secondary pdp__wishlist-btn" onClick={handleToggleWishlist}>
+                  <svg 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill={isSaved ? "var(--color-brand-primary)" : "none"} 
+                    stroke={isSaved ? "var(--color-brand-primary)" : "currentColor"} 
+                    strokeWidth="2"
+                  >
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                  </svg>
+                  {isSaved ? 'In Wishlist' : 'Save to Wishlist'}
+                </button>
+              </div>
+
+              {isOutOfStock && (
+                <div className="pdp__notify-block" style={{
+                  backgroundColor: 'var(--surface-container-low)',
+                  padding: '16px',
+                  borderRadius: 'var(--radius-md)',
+                  width: '100%',
+                  marginTop: '4px'
+                }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={notifyBackInStock} 
+                      onChange={handleNotifyToggle}
+                      style={{ transform: 'scale(1.15)', accentColor: 'var(--color-brand-primary)' }}
+                    />
+                    <span style={{ fontSize: 'var(--body-sm)', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                      Notify me when back in stock
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
 
             {/* Trust Badges */}
@@ -253,7 +348,7 @@ const PDP = () => {
 
       <Toast 
         isOpen={showToast} 
-        message={`${product.name} added to cart`} 
+        message={toastMessage} 
         onClose={() => setShowToast(false)} 
       />
     </main>

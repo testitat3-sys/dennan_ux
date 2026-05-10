@@ -285,8 +285,8 @@ const PLP = () => {
     setIsModalOpen(true);
   };
 
-  const handleModalSuccess = (product) => {
-    setToastMessage(`${product.name} added to cart`);
+  const handleModalSuccess = (product, isWishlist = false) => {
+    setToastMessage(isWishlist ? `${product.name} bookmarked to wishlist` : `${product.name} added to cart`);
     setShowToast(true);
   };
 

@@ -4,6 +4,8 @@ import { ConvexReactClient } from "convex/react";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { UserProvider } from './context/UserContext';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
+import { RegistryProvider } from './context/RegistryContext';
 import './index.css'
 import App from './App.jsx'
 
@@ -21,7 +23,11 @@ createRoot(document.getElementById('root')).render(
     <ConvexAuthProvider client={convex}>
       <UserProvider>
         <CartProvider>
-          <App />
+          <WishlistProvider>
+            <RegistryProvider>
+              <App />
+            </RegistryProvider>
+          </WishlistProvider>
         </CartProvider>
       </UserProvider>
     </ConvexAuthProvider>

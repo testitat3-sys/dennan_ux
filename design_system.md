@@ -16,11 +16,11 @@ These three colors define the brand's visual personality. They appear in hero mo
 
 | Role | Variable | Hex | Creative Name | Usage |
 | :--- | :--- | :--- | :--- | :--- |
-| **Brand Primary** | `--color-brand-primary` | `#D35097` | *Orchid Bloom* | Hero highlights, key interactive accents, brand moments |
-| **Brand Primary Dark** | `--color-brand-primary-dark` | `#A63E74` | *Deep Orchid* | Hover/pressed states, high-emphasis text on light backgrounds |
-| **Brand Primary Light** | `--color-brand-primary-light` | `#F07FB8` | *Petal* | Soft washes, badge backgrounds, eyebrow dots, decorative accents |
-| **Brand Secondary** | `--color-brand-secondary` | `#832C7A` | *Plum Reserve* | Depth accents, footer tones, premium secondary CTAs |
-| **Brand Accent** | `--color-brand-accent` | `#E1D328` | *Saffron Signal* | Sale tags, limited-edition markers, notification dots, progress indicators |
+| **Brand Primary** | `--color-brand-primary` | `#d35097` | *Orchid Bloom* | Hero highlights, key interactive accents, brand moments |
+| **Brand Primary Dark** | `--color-brand-primary-dark` | `#a63e74` | *Deep Orchid* | Hover/pressed states, high-emphasis text on light backgrounds |
+| **Brand Primary Light** | `--color-brand-primary-light` | `#f07fb8` | *Petal* | Soft washes, badge backgrounds, eyebrow dots, decorative accents |
+| **Brand Secondary** | `--color-brand-secondary` | `#832c7a` | *Plum Reserve* | Depth accents, footer tones, premium secondary CTAs |
+| **Brand Accent** | `--color-brand-accent` | `#e1d328` | *Saffron Signal* | Sale tags, limited-edition markers, notification dots, progress indicators |
 
 #### Accent Color Rules
 The Saffron Signal accent is high-energy and should be used with restraint to preserve impact:
@@ -49,9 +49,9 @@ Functional colors for states, feedback, and thematic coding. These are not brand
 
 | Role | Variable | Hex | Usage |
 | :--- | :--- | :--- | :--- |
-| **Support Blue** | `--color-support-blue` | `#4DBEE3` | Informational states, "Newborn" journey-stage theming |
-| **Support Green** | `--color-support-green` | `#7FA93E` | Success states, "Essentials" tier theming, stock indicators |
-| **Support Red** | `--color-support-red` | `#E53E3E` | Error states, destructive actions, urgency badges |
+| **Support Blue** | `--color-support-blue` | `#4dbee3` | Informational states, "Newborn" journey-stage theming |
+| **Support Green** | `--color-support-green` | `#7fa93e` | Success states, "Essentials" tier theming, stock indicators |
+| **Support Red** | `--color-support-red` | `#e53e3e` | Error states, destructive actions, urgency badges |
 
 ### 2.5 — Legacy Colors ("The Archive")
 
@@ -59,8 +59,8 @@ These colors are retained for backward compatibility. They remain valid for soft
 
 | Legacy Variable | Hex | Preferred Replacement |
 | :--- | :--- | :--- |
-| `--color-legacy-rose` | `#FE9EC7` | `--color-brand-primary-light` (`#F07FB8`) |
-| `--color-atmospheric-blue` | `#78B3D4` | `--color-support-blue` (`#4DBEE3`) |
+| `--color-legacy-rose` | `#fe9ec7` | `--color-brand-primary-light` (`#f07fb8`) |
+| `--color-atmospheric-blue` | `#78b3d4` | `--color-support-blue` (`#4dbee3`) |
 
 ### 2.6 — Text Colors
 
@@ -99,13 +99,14 @@ We use a high-contrast pairing to balance heritage with modernity, featuring sop
     - *Usage:* Product descriptions, labels, and functional text.
     - *Styling:* `body-md` is our workhorse. Ensure line-height is generous (1.6) to maintain an airy, premium feel.
  
-| Role | Font | Size | Weight |
-| :--- | :--- | :--- | :--- |
-| **Display-LG** | Newsreader | 3.5rem | Regular |
-| **Headline-MD** | Newsreader | 1.75rem | Regular |
-| **Title-MD** | Plus Jakarta Sans | 1.125rem | Medium |
-| **Body-MD** | Plus Jakarta Sans | 0.875rem | Regular |
-| **Label-SM** | Plus Jakarta Sans | 0.6875rem | Bold (All Caps) |
+| Role | Font | Size | CSS Variable | Weight |
+| :--- | :--- | :--- | :--- | :--- |
+| **Display-LG** | Newsreader | 3.5rem | `--display-lg` | Regular |
+| **Headline-MD** | Newsreader | 1.75rem | `--headline-md` | Regular |
+| **Title-SM** | Plus Jakarta Sans | 1.125rem | `--title-sm` | Medium |
+| **Body-MD** | Plus Jakarta Sans | 0.9375rem | `--body-md` | Regular |
+| **Body-SM** | Plus Jakarta Sans | 0.875rem | `--body-sm` | Regular |
+| **Label-SM** | Plus Jakarta Sans | 0.625rem | `--label-sm` | Bold (All Caps) |
  
 ---
  

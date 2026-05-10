@@ -166,3 +166,75 @@ export const completeOnboarding = mutation({
     return userId;
   },
 });
+
+/**
+ * Save onboarding journey details (role, dueDate, children) and mark as onboarded.
+ */
+export const saveOnboardingJourney = mutation({
+  args: {
+    role: v.union(v.literal("expecting"), v.literal("parent")),
+    dueDate: v.optional(v.string()),
+    children: v.optional(v.array(v.object({ dob: v.string() }))),
+  },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    await ctx.db.patch(userId, {
+      role: args.role,
+      dueDate: args.dueDate,
+      children: args.children,
+      isOnboarded: true,
+    });
+    console.log(`[convex/users.ts] saveOnboardingJourney - journey saved for user ID: ${userId}`);
+    return userId;
+  },
+});
+
+/**
+ * Update the user profile details.
+ */
+export const updateProfile = mutation({
+  args: {
+    name: v.optional(v.string()),
+    username: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("expecting"), v.literal("parent"))),
+    dueDate: v.optional(v.union(v.string(), v.null())),
+    children: v.optional(v.array(v.object({ dob: v.string() }))),
+    interests: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const patch: any = {};
+    if (args.name !== undefined) patch.name = args.name;
+    if (args.username !== undefined) patch.username = args.username;
+    if (args.role !== undefined) patch.role = args.role;
+    if (args.interests !== undefined) patch.interests = args.interests;
+
+    // Handle conditional fields based on active stage
+    const activeRole = args.role !== undefined ? args.role : (await ctx.db.get(userId))?.role;
+    
+    if (activeRole === "expecting") {
+      patch.dueDate = args.dueDate === null ? undefined : args.dueDate;
+      patch.children = undefined;
+    } else if (activeRole === "parent") {
+      patch.children = args.children;
+      patch.dueDate = undefined;
+    } else {
+      if (args.dueDate !== undefined) patch.dueDate = args.dueDate === null ? undefined : args.dueDate;
+      if (args.children !== undefined) patch.children = args.children;
+    }
+
+    await ctx.db.patch(userId, patch);
+    console.log(`[convex/users.ts] updateProfile - profile updated successfully for user ID: ${userId}`);
+    return userId;
+  },
+});
+
+

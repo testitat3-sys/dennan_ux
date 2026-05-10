@@ -18,8 +18,10 @@ import type * as emails from "../emails.js";
 import type * as http from "../http.js";
 import type * as inspect from "../inspect.js";
 import type * as orders from "../orders.js";
+import type * as registry from "../registry.js";
 import type * as seed from "../seed.js";
 import type * as users from "../users.js";
+import type * as wishlist from "../wishlist.js";
 
 import type {
   ApiFromModules,
@@ -38,8 +40,10 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   inspect: typeof inspect;
   orders: typeof orders;
+  registry: typeof registry;
   seed: typeof seed;
   users: typeof users;
+  wishlist: typeof wishlist;
 }>;
 
 /**

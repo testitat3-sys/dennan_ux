@@ -14,6 +14,7 @@ import Toast from '../components/ui/Toast';
 import { getHomepageData } from '../services/api';
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import HomeSkeleton from '../components/home/HomeSkeleton';
 import { useAuthActions } from "@convex-dev/auth/react";
 
 const Home = () => {
@@ -80,7 +81,7 @@ const Home = () => {
   }, [loading]);
 
   if (loading) {
-    return <div className="loading-state">Loading...</div>; // Add a basic loading state
+    return <HomeSkeleton />;
   }
 
   const mostLovedProducts = liveProducts.filter(p => p.isMostLoved).slice(0, 5);

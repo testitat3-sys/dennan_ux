@@ -74,6 +74,8 @@ export default defineSchema({
     isActive: v.boolean(),
     /** Current available stock quantity */
     inventory: v.optional(v.number()),
+    /** Number of units sold */
+    unitsSold: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_stage", ["stage"])
@@ -192,6 +194,18 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_and_product", ["userId", "productId"]),
 
+  wishlistItems: defineTable({
+    userId: v.id("users"),
+    productId: v.id("products"),
+    /** True if user bookmarked when item was out of stock or explicitly subscribed to alerts */
+    notifyBackInStock: v.optional(v.boolean()),
+    /** Unix timestamp (ms) when the item was added */
+    addedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_product", ["userId", "productId"])
+    .index("by_product", ["productId"]),
+
   // ─── Dashboard next-milestone cards ──────────────────────────────────────────
 
   /**
@@ -289,6 +303,145 @@ export default defineSchema({
     quantity: v.number(),
     unitPrice: v.number(), // Locked price at checkout
   }).index("by_order", ["orderId"]),
+
+  registries: defineTable({
+    userId: v.id("users"),
+    ownerName: v.string(),
+    eventName: v.string(),
+    eventDate: v.string(),
+    message: v.string(),
+    privacy: v.union(v.literal("public"), v.literal("hidden"), v.literal("private")),
+  }).index("by_user", ["userId"]),
+
+  registryItems: defineTable({
+    registryId: v.id("registries"),
+    productId: v.id("products"),
+    isMustHave: v.boolean(),
+    isGroupGifting: v.boolean(),
+    status: v.union(v.literal("available"), v.literal("purchased")),
+    contributions: v.array(
+      v.object({
+        name: v.string(),
+        amount: v.number(),
+        date: v.string(),
+      })
+    ),
+    purchasedBy: v.optional(
+      v.object({
+        name: v.string(),
+        date: v.string(),
+      })
+    ),
+  })
+    .index("by_registry", ["registryId"])
+    .index("by_registry_and_product", ["registryId", "productId"]),
+
+  // ─── Homepage static elements ────────────────────────────────────────────────
+  hero: defineTable({
+    headline: v.string(),
+    subcopy: v.string(),
+    backgroundImage: v.string(),
+    trending: v.object({
+      label: v.string(),
+      value: v.string(),
+    }),
+    heritageCards: v.array(
+      v.object({
+        id: v.number(),
+        icon: v.string(),
+        stat: v.string(),
+        statClass: v.string(),
+        label: v.string(),
+        desc: v.string(),
+      })
+    ),
+  }),
+
+  trustItems: defineTable({
+    icon: v.string(),
+    type: v.string(),
+    title: v.string(),
+    sub: v.string(),
+    order: v.number(),
+  }),
+
+  collections: defineTable({
+    collectionId: v.string(),
+    title: v.string(),
+    subtext: v.string(),
+    heroImage: v.string(),
+  }).index("by_collectionId", ["collectionId"]),
+
+  // ─── Dashboard Configuration ─────────────────────────────────────────────────
+  dashboardMilestones: defineTable({
+    stage: v.union(v.literal("expecting"), v.literal("newborn")),
+    label: v.string(),
+    week: v.optional(v.number()),
+    month: v.optional(v.number()),
+    order: v.number(),
+  }).index("by_stage_and_order", ["stage", "order"]),
+
+  dashboardBadges: defineTable({
+    stage: v.union(v.literal("expecting"), v.literal("newborn")),
+    badgeId: v.string(),
+    label: v.string(),
+    minWeek: v.optional(v.number()),
+    minMonth: v.optional(v.number()),
+    order: v.number(),
+  }).index("by_stage_and_order", ["stage", "order"]),
+
+  dashboardChecklists: defineTable({
+    stage: v.union(v.literal("expecting"), v.literal("newborn")),
+    checklistId: v.string(),
+    label: v.string(),
+    order: v.number(),
+  }).index("by_stage_and_order", ["stage", "order"]),
+
+  dashboardEditorial: defineTable({
+    title: v.string(),
+    text: v.string(),
+    btnText: v.string(),
+  }),
+
+  // ─── Checkout Configuration ──────────────────────────────────────────────────
+  checkoutSteps: defineTable({
+    stepId: v.string(),
+    label: v.string(),
+    order: v.number(),
+  }).index("by_order", ["order"]),
+
+  checkoutConfirmationPromos: defineTable({
+    promoId: v.string(),
+    title: v.string(),
+    desc: v.string(),
+    action: v.string(),
+    order: v.number(),
+  }).index("by_order", ["order"]),
+
+  checkoutTrackingStages: defineTable({
+    stageId: v.number(),
+    title: v.string(),
+    subtitle: v.string(),
+  }).index("by_stageId", ["stageId"]),
+
+  checkoutTrackingRider: defineTable({
+    name: v.string(),
+    photo: v.string(),
+    bike: v.string(),
+    rating: v.number(),
+    phone: v.string(),
+  }),
+
+  deliveryZones: defineTable({
+    name: v.string(),
+    timeMinutes: v.number(),
+  }).index("by_name", ["name"]),
+
+  deliveryLandmarks: defineTable({
+    name: v.string(),
+    sub: v.string(),
+    zone: v.string(),
+  }),
 });
 
 

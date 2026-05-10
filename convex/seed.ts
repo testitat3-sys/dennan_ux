@@ -74,6 +74,7 @@ export const seedData = mutation({
               { label: "Color", value: faker.color.human() }
             ],
             isActive: true,
+            unitsSold: faker.number.int({ min: 10, max: 500 }),
           });
 
           productsCreated++;
@@ -509,6 +510,21 @@ export const seedReels = mutation({
     }
     return { success: true, count: args.reels.length };
   },
+});
+
+export const backfillUnitsSold = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    let updatedCount = 0;
+    for (const p of products) {
+      if (p.unitsSold === undefined) {
+        await ctx.db.patch(p._id, { unitsSold: 0 });
+        updatedCount++;
+      }
+    }
+    return { success: true, updatedCount };
+  }
 });
 
 

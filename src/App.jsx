@@ -7,6 +7,7 @@ import BrandPage from './pages/BrandPage';
 import PLP from './pages/PLP';
 import Dashboard from './pages/Dashboard';
 import RegistryPage from './pages/RegistryPage';
+import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
 import PDP from './pages/PDP';
 import DesignSystemPage from './pages/DesignSystemPage';
@@ -38,6 +39,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/registry" element={<RegistryPage />} />
           <Route path="/registry/:registryId" element={<RegistryPage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/product/:productId" element={<PDP />} />
           <Route path="/design-system" element={<DesignSystemPage />} />

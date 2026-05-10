@@ -1,0 +1,424 @@
+/* ─── HomeSkeleton Styles ────────────────────────────────── */
+
+:root {
+  --skeleton-base: var(--surface-container-high);
+  --skeleton-highlight: color-mix(in srgb, var(--color-brand-primary) 5%, var(--surface));
+}
+
+/* ─── Shimmer Animation ────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s infinite linear;
+}
+
+/* ─── Generic Placeholders ──────────────────────────────── */
+.skeleton-block {
+  background-color: var(--skeleton-base);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.skeleton-text {
+  height: 14px;
+  background-color: var(--skeleton-base);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+}
+
+.skeleton-text--title {
+  height: 28px;
+  width: 60%;
+  border-radius: var(--radius-md);
+}
+
+.skeleton-text--eyebrow {
+  height: 12px;
+  width: 120px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+}
+
+.skeleton-text--subtitle {
+  height: 16px;
+  width: 45%;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-btn-mock {
+  height: 48px;
+  width: 160px;
+  border-radius: var(--radius-pill);
+  background-color: var(--skeleton-base);
+}
+
+/* ─── Hero Skeleton ────────────────────────────────────── */
+.skeleton-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 82vh;
+  align-items: center;
+  padding: var(--space-12) var(--space-8) 0;
+  gap: var(--space-12);
+  margin-bottom: var(--space-12);
+}
+
+.skeleton-hero__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-top: var(--space-8);
+}
+
+.skeleton-hero__eyebrow {
+  height: 28px;
+  width: 160px;
+  border-radius: var(--radius-pill);
+  background-color: var(--skeleton-base);
+}
+
+.skeleton-hero__headline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.skeleton-hero__headline-line {
+  height: 48px;
+  background-color: var(--skeleton-base);
+  border-radius: var(--radius-md);
+}
+
+.skeleton-hero__headline-line:nth-child(1) { width: 90%; }
+.skeleton-hero__headline-line:nth-child(2) { width: 75%; }
+
+.skeleton-hero__subcopy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  max-width: 38ch;
+}
+
+.skeleton-hero__subcopy-line {
+  height: 14px;
+  background-color: var(--skeleton-base);
+  border-radius: var(--radius-sm);
+}
+.skeleton-hero__subcopy-line:nth-child(1) { width: 100%; }
+.skeleton-hero__subcopy-line:nth-child(2) { width: 85%; }
+
+.skeleton-hero__actions {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.skeleton-hero__heritage {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+  max-width: 600px;
+}
+
+.skeleton-heritage-card {
+  background: var(--surface);
+  border: 1px solid var(--surface-container);
+  padding: var(--space-5) var(--space-4);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  height: 160px;
+}
+
+.skeleton-heritage-card__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--skeleton-base);
+}
+
+.skeleton-heritage-card__stat {
+  height: 24px;
+  width: 60px;
+  border-radius: var(--radius-sm);
+  background-color: var(--skeleton-base);
+}
+
+.skeleton-heritage-card__label {
+  height: 10px;
+  width: 80px;
+  border-radius: var(--radius-sm);
+  background-color: var(--skeleton-base);
+}
+
+.skeleton-hero__image-wrap {
+  position: relative;
+  margin-right: calc(-1 * var(--space-8));
+  margin-bottom: calc(-1 * var(--space-8));
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: var(--skeleton-base);
+}
+
+/* ─── Brands Banner Skeleton ───────────────────────────── */
+.skeleton-brands-banner {
+  padding: var(--space-16) 0;
+  background: var(--surface);
+  position: relative;
+  margin-bottom: var(--space-12);
+}
+
+.skeleton-brands-banner::before {
+  content: '';
+  position: absolute;
+  top: var(--space-20);
+  bottom: var(--space-8);
+  left: 0; right: 0;
+  background: var(--surface-container-low);
+  z-index: 0;
+}
+
+.skeleton-brands-banner__header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.skeleton-brands-track-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 0 var(--space-8);
+  margin-top: var(--space-10);
+  overflow: hidden;
+}
+
+.skeleton-brands-track {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-4) 0;
+}
+
+.skeleton-brand-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 140px;
+}
+
+.skeleton-brand-logo {
+  height: 90px;
+  width: 180px;
+  background-color: var(--skeleton-base);
+  border-radius: var(--radius-md);
+}
+
+.skeleton-brand-name {
+  height: 14px;
+  width: 80px;
+  background-color: var(--skeleton-base);
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Journey Stage Skeleton ───────────────────────────── */
+.skeleton-stage-tile {
+  position: relative;
+  border-radius: var(--radius-lg);
+  background-color: var(--skeleton-base);
+  height: 380px;
+  overflow: hidden;
+}
+
+/* ─── Tier Card Skeleton ───────────────────────────────── */
+.skeleton-tier-card {
+  background: var(--surface);
+  border: 1px solid var(--surface-container);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 480px;
+}
+
+.skeleton-tier-card__image {
+  width: 100%;
+  height: 240px;
+  background-color: var(--skeleton-base);
+}
+
+.skeleton-tier-card__content {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+}
+
+.skeleton-tier-card__badge {
+  height: 18px;
+  width: 70px;
+  border-radius: var(--radius-pill);
+  background-color: var(--skeleton-base);
+}
+
+.skeleton-tier-card__title {
+  height: 24px;
+  width: 130px;
+  border-radius: var(--radius-sm);
+  background-color: var(--skeleton-base);
+}
+
+.skeleton-tier-card__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-4);
+}
+
+.skeleton-tier-card__copy-line {
+  height: 14px;
+  background-color: var(--skeleton-base);
+  border-radius: var(--radius-sm);
+}
+.skeleton-tier-card__copy-line:nth-child(1) { width: 100%; }
+.skeleton-tier-card__copy-line:nth-child(2) { width: 85%; }
+
+.skeleton-tier-card__cta {
+  margin-top: auto;
+  height: 16px;
+  width: 100px;
+  border-radius: var(--radius-sm);
+  background-color: var(--skeleton-base);
+}
+
+/* ─── Reels Skeleton ───────────────────────────────────── */
+.skeleton-reel-card {
+  aspect-ratio: 9 / 16;
+  width: 320px;
+  min-width: 320px;
+  border-radius: var(--radius-lg);
+  background-color: var(--skeleton-base);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── Trust Strip Skeleton ─────────────────────────────── */
+.skeleton-trust-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-8);
+  background-color: var(--surface-container-low);
+  margin-top: var(--space-12);
+}
+
+.skeleton-trust-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.skeleton-trust-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background-color: var(--skeleton-base);
+  flex-shrink: 0;
+}
+
+.skeleton-trust-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.skeleton-trust-title {
+  height: 14px;
+  width: 80px;
+  border-radius: var(--radius-sm);
+  background-color: var(--skeleton-base);
+}
+
+.skeleton-trust-sub {
+  height: 10px;
+  width: 120px;
+  border-radius: var(--radius-sm);
+  background-color: var(--skeleton-base);
+}
+
+/* ─── Responsive Media Queries ──────────────────────────── */
+@media (max-width: 1024px) {
+  .skeleton-hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-top: var(--space-6);
+  }
+  .skeleton-hero__image-wrap {
+    margin-right: 0;
+    margin-bottom: 0;
+    border-radius: var(--radius-lg);
+    max-height: 450px;
+  }
+  .skeleton-brands-track {
+    gap: var(--space-8);
+  }
+  .skeleton-brand-item {
+    min-width: 120px;
+  }
+  .skeleton-trust-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+  }
+}
+
+@media (max-width: 768px) {
+  .skeleton-hero {
+    padding: var(--space-8) var(--space-4) 0;
+    gap: var(--space-8);
+  }
+  .skeleton-brands-banner {
+    padding: var(--space-12) 0;
+  }
+  .skeleton-brands-track-wrap {
+    padding: 0 var(--space-4);
+  }
+  .skeleton-brands-track {
+    gap: var(--space-4);
+  }
+  .skeleton-brand-item {
+    min-width: 140px;
+  }
+  .skeleton-brand-logo {
+    width: 140px;
+    height: 70px;
+  }
+  .skeleton-trust-strip {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+    padding: var(--space-8) var(--space-4);
+  }
+}

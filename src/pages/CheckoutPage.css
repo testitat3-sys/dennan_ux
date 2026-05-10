@@ -49,104 +49,107 @@
   text-underline-offset: var(--space-1);
 }
 
-/* Location Trigger Card */
-.location-trigger-card {
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-  padding: var(--space-6);
+/* Delivery Location Card Section */
+.delivery-card {
   background-color: var(--surface-container-low);
-  border-radius: 1.25rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px dashed var(--surface-container-highest);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-6);
+  transition: all 0.25s ease;
 }
 
-.location-trigger-card:hover {
+.delivery-card:hover {
   background-color: var(--surface);
-  box-shadow: var(--shadow-ambient);
-  transform: translateY(-2px);
-  border-style: solid;
   border-color: var(--color-brand-primary-light);
+  box-shadow: var(--shadow-ambient);
 }
 
-.trigger-icon {
-  width: 48px;
-  height: 48px;
-  background-color: var(--surface-container);
-  color: var(--color-brand-primary);
-  border-radius: 50%;
+.delivery-empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
 }
 
-.trigger-text {
-  flex: 1;
+.delivery-empty p {
+  color: var(--text-secondary);
+  font-size: var(--body-lg);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Secondary Button for Add Location */
+.btn-add-location {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--surface-container);
+  color: var(--text-primary);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: var(--body-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-location:hover {
+  background-color: var(--surface-container-high);
+  border-color: var(--text-secondary);
+}
+
+/* Selected Address Info */
+.delivery-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.delivery-details {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
-.trigger-title {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.trigger-desc {
-  font-size: var(--label-md);
-  color: var(--text-secondary);
-}
-
-.trigger-arrow {
-  color: var(--text-tertiary);
+.delivery-name {
+  font-weight: 700;
   font-size: var(--title-lg);
-}
-
-/* Selected Address Badge */
-.selected-address-badge {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-6);
-  background: var(--surface-container-low);
-  border-radius: var(--radius-xl);
-  animation: fadeIn 0.4s ease-out;
-}
-
-.address-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.address-name {
-  font-weight: 700;
   color: var(--text-primary);
+  margin: 0;
 }
 
-.address-zone {
-  font-size: var(--label-md);
+.delivery-zone {
+  font-size: var(--body-md);
   color: var(--text-secondary);
+  margin: 0;
 }
 
-.address-eta {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-}
-
-.eta-label {
-  font-size: var(--label-md);
-  text-transform: uppercase;
+.delivery-eta-hint {
+  font-size: var(--body-sm);
   color: var(--text-tertiary);
-  font-weight: 700;
+  margin-top: var(--space-1);
 }
 
-.eta-value {
-  font-size: var(--title-sm);
-  font-weight: 800;
-  color: var(--color-support-green);
+.btn-change-location {
+  padding: var(--space-2-5) var(--space-5);
+  background-color: transparent;
+  color: var(--color-brand-primary);
+  border: 1px solid var(--color-brand-primary-light);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: var(--body-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-change-location:hover {
+  background-color: var(--color-brand-primary-light);
+  color: var(--color-on-primary);
 }
 
 /* Timer Rows in Sidebar */
@@ -810,5 +813,104 @@
   font-weight: 600;
 }
 
+/* Brand Badges for Payment Option */
+.option-brand-icons {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
 
+.brand-badge {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--label-md);
+  font-weight: 700;
+  text-transform: uppercase;
+}
 
+.brand-badge--mtn {
+  background-color: #ffcc00;
+  color: #000000;
+}
+
+.brand-badge--airtel {
+  background-color: #ff0000;
+  color: #ffffff;
+}
+
+/* ─── Responsive Media Queries ────────────────────────────────────────── */
+@media (max-width: 992px) {
+  .checkout-page {
+    padding: 0 var(--space-4) var(--space-12);
+  }
+}
+
+@media (max-width: 768px) {
+  .section-title {
+    font-size: var(--headline-sm);
+  }
+  
+  .order-summary-card {
+    padding: var(--space-6);
+  }
+}
+
+@media (max-width: 576px) {
+  .delivery-info {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-4);
+  }
+
+  .btn-change-location {
+    width: 100%;
+    text-align: center;
+  }
+
+  .payment-option {
+    padding: var(--space-4);
+    gap: var(--space-3);
+  }
+
+  .option-radio {
+    flex-shrink: 0;
+  }
+
+  .option-brand-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    justify-content: flex-end;
+  }
+
+  .brand-badge {
+    padding: var(--space-0-5) var(--space-2) !important;
+    font-size: var(--label-sm) !important;
+  }
+
+  .momo-input-container {
+    padding: 0 var(--space-4) var(--space-4) var(--space-4);
+  }
+
+  .momo-prefix {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--body-md);
+  }
+
+  .momo-input {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--body-md);
+  }
+}
+
+@media (max-width: 400px) {
+  .coupon-input-group {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .coupon-input-group input,
+  .coupon-input-group button {
+    width: 100%;
+  }
+}

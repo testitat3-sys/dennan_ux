@@ -4,13 +4,22 @@ import { useUser } from '../context/UserContext';
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import DashboardSidebar from '../components/dashboard/DashboardSidebar';
+
+// Import Existing UI Components
+import Button from '../components/ui/Button';
+import TierCard from '../components/ui/TierCard';
+import StageTile from '../components/ui/StageTile';
+
 import MilestoneTimeline from '../components/dashboard/MilestoneTimeline';
 import NextMilestoneCard from '../components/dashboard/NextMilestoneCard';
 import PredictiveFeed from '../components/dashboard/PredictiveFeed';
 import MilestoneBadges from '../components/dashboard/MilestoneBadges';
 import QuickViewModal from '../components/ui/QuickViewModal';
 import Toast from '../components/ui/Toast';
+
 import { getDashboardData } from '../services/api';
+import { useRegistry } from '../context/RegistryContext';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -19,19 +28,7 @@ const Dashboard = () => {
   const { signOut } = useAuthActions();
   const navigate = useNavigate();
 
-  const handleSignOut = async () => {
-    try {
-      console.log("[Dashboard.jsx] Initiating sign out...");
-      logout();
-      await signOut();
-    } catch (error) {
-      console.error("Failed to sign out from Convex:", error);
-    } finally {
-      navigate('/');
-    }
-  };
-  const stageInfo = getStageInfo();
-
+  const { registryItems, loading: registryLoading } = useRegistry();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -39,13 +36,20 @@ const Dashboard = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  const stageInfo = getStageInfo();
+
   useEffect(() => {
-    const loadData = async () => {
-      const data = await getDashboardData();
-      setDashboardData(data);
-      setLoading(false);
+    const loadAllData = async () => {
+      try {
+        const dash = await getDashboardData();
+        setDashboardData(dash);
+      } catch (err) {
+        console.error("Error loading dashboard data:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    loadData();
+    loadAllData();
   }, []);
 
   const handleAddToCart = (product) => {
@@ -69,102 +73,298 @@ const Dashboard = () => {
 
   const displayName = convexUser?.name || convexUser?.username || user?.email || 'User';
 
+  // Extract communal gift contributions
+  const contributionsList = [];
+  if (registryItems) {
+    registryItems.forEach(item => {
+      const itemId = item._id || item.id || item.productId;
+      if (item.contributions && item.contributions.length > 0) {
+        item.contributions.forEach(contrib => {
+          contributionsList.push({
+            id: `${itemId}-${contrib.name}`,
+            contributor: contrib.name,
+            amount: contrib.amount,
+            itemName: item.name,
+            itemImage: item.image,
+            status: `Contributed UGX ${contrib.amount.toLocaleString()} towards ${item.name}`,
+            saffronDot: true
+          });
+        });
+      } else if (item.status === 'purchased' && item.purchasedBy) {
+        contributionsList.push({
+          id: `${itemId}-purchased`,
+          contributor: item.purchasedBy.name,
+          itemName: item.name,
+          itemImage: item.image,
+          status: `Fully gifted: ${item.name}`,
+          saffronDot: false
+        });
+      }
+    });
+  }
+
+  const displayContributions = contributionsList.length > 0 ? contributionsList.slice(0, 3) : [
+    {
+      id: "mock-1",
+      contributor: "Aunt Jane",
+      itemName: "SnüzPod 4 Bedside Crib",
+      itemImage: "/new_assets/SnüzPod 4 Bedside Crib - White.jfif",
+      status: "Contributed UGX 250,000 to SnüzPod 4 Bedside Crib",
+      saffronDot: true
+    },
+    {
+      id: "mock-2",
+      contributor: "Emma Wilson",
+      itemName: "Skip Hop Forma Backpack",
+      itemImage: "/new_assets/Skip Hop Forma Backpack Nappy Bag.jfif",
+      status: "Fully gifted: Skip Hop Forma Backpack",
+      saffronDot: false
+    },
+    {
+      id: "mock-3",
+      contributor: "Mike & Sarah",
+      itemName: "Closer to Nature Baby Bottles",
+      itemImage: "/new_assets/Tommee Tippee Closer to Nature Starter Set.jfif",
+      status: "Contributed UGX 100,000 to Closer to Nature Bottles",
+      saffronDot: true
+    }
+  ];
+
+  // StageTile mock structure matching user stage parameters
+  const activeStageTileData = stageInfo ? {
+    title: stageInfo.type === 'expecting' ? "Expectant Motherhood" : "Newborn Journey",
+    eyebrow: stageInfo.type === 'expecting' ? `Week ${stageInfo.week} of 40` : `${stageInfo.months || 0} Months Old`,
+    copy: stageInfo.type === 'expecting' 
+      ? "Nurturing postpartum recovery and nursery setups before baby's big day." 
+      : "Milestones in movement, sensory exploration, and soft organic essentials.",
+    image: stageInfo.type === 'expecting' ? "/assets/stage_expectant.png" : "/assets/stage_newborn.webp",
+    type: stageInfo.type === 'expecting' ? "expectant" : "newborn",
+    href: stageInfo.type === 'expecting' ? "/collection/curated-picks" : "/collection/essentials"
+  } : null;
+
+  const essentialsTier = {
+    title: "The Essentials",
+    badge: "Daily Staples",
+    copy: "Curated everyday staples designed for comfort and quality throughout every journey stage.",
+    image: "/assets/newborn_apparel.png",
+    href: "/collection/essentials",
+    type: "essentials"
+  };
+
   return (
-    <div className="dashboard">
-      <header className="dashboard__header">
-        <div className="dashboard__header-row">
-          <div className="dashboard__header-content">
-            <span className="dashboard__eyebrow">Your Journey</span>
-            <h1 className="dashboard__title">Growing with You</h1>
-            <p className="dashboard__subtitle">
-              Welcome back, {displayName}.
-              {stageInfo ? ` You are currently in the ${stageInfo.display} stage.` : ''}
-              {stageInfo ? ` Here is what we’ve curated for you today.` : ''}
-            </p>
-          </div>
-          <button className="dashboard__signout-btn" onClick={handleSignOut}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dashboard__signout-icon">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            Sign Out
-          </button>
-        </div>
-      </header>
+    <div className="dashboard-container">
+      {/* 5. Navigation & Utility Side-Panel */}
+      <DashboardSidebar />
 
-      {!stageInfo ? (
-        <div className="dashboard__grid" style={{ padding: 'var(--space-xl) 5%', maxWidth: '800px', margin: '0 auto' }}>
-          <div className="card glass">
-            <h2 style={{ marginBottom: 'var(--space-md)' }}>Your Profile Details</h2>
-            <div style={{ display: 'grid', gap: 'var(--space-sm)' }}>
-              <p><strong>Name:</strong> {convexUser?.name || 'N/A'}</p>
-              <p><strong>Username:</strong> {convexUser?.username || 'N/A'}</p>
-              <p><strong>Email:</strong> {convexUser?.email || user?.email}</p>
-              {convexUser?.interests && convexUser.interests.length > 0 && (
-                <p><strong>Interests:</strong> {convexUser.interests.join(', ')}</p>
-              )}
+      {/* Main Content Scroll Canvas */}
+      <main className="dashboard-main">
+        
+        {/* 1. The Welcome Canvas (Hero Section) */}
+        <header className="welcome-canvas">
+          <h1 className="welcome-canvas__greeting">
+            The {displayName} Collection.
+          </h1>
+          
+          <div className="welcome-canvas__overview">
+            <div className="overview-stat">
+              <span className="overview-stat__label">Parent profile</span>
+              <span className="overview-stat__value">{displayName}</span>
+              <span className="overview-stat__desc">{convexUser?.email || user?.email}</span>
             </div>
-            <div style={{ marginTop: 'var(--space-xl)', padding: 'var(--space-md)', background: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                Your personalized journey and milestones will appear here once you add more stage information (like pregnancy due date or child's birthday).
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
-          <section className="dashboard__timeline-section">
-            <MilestoneTimeline info={stageInfo} milestones={stageInfo.type === 'expecting' ? dashboardData.milestones.expecting : dashboardData.milestones.newborn} />
-          </section>
-
-          <div className="dashboard__grid">
-            <div className="dashboard__main">
-              <section className="dashboard__section">
-                <h2 className="dashboard__section-title">The Now Feed</h2>
-                <p className="dashboard__section-desc">Products specifically for your current week.</p>
-                <PredictiveFeed type="now" stageInfo={stageInfo} onAddToCart={handleAddToCart} />
-              </section>
-
-              <section className="dashboard__section">
-                <h2 className="dashboard__section-title">Next Up Sneak Peek</h2>
-                <p className="dashboard__section-desc">Get a head start on what’s coming next.</p>
-                <PredictiveFeed type="next" stageInfo={stageInfo} onAddToCart={handleAddToCart} />
-              </section>
-            </div>
-
-            <aside className="dashboard__sidebar">
-              <NextMilestoneCard stageInfo={stageInfo} nextMilestoneData={stageInfo.type === 'expecting' ? dashboardData.nextMilestone.expecting : dashboardData.nextMilestone.newborn} />
-              <MilestoneBadges user={user} stageInfo={stageInfo} badgeData={stageInfo.type === 'expecting' ? dashboardData.badges.expecting : dashboardData.badges.newborn} />
-              
-              <div className="dashboard__content-card">
-                <h3 className="dashboard__card-title">Editorial: {dashboardData.editorial.title}</h3>
-                <p className="dashboard__card-text">
-                  {dashboardData.editorial.text}
-                </p>
-                <button className="dashboard__card-btn">{dashboardData.editorial.btnText}</button>
-              </div>
-            </aside>
-          </div>
-
-          <section className="dashboard__checklist">
-            <div className="dashboard__checklist-header">
-              <h2 className="dashboard__section-title">Stage Checklist</h2>
-              <span className="dashboard__checklist-badge">
-                {(stageInfo.type === 'expecting' ? dashboardData.checklists.expecting : dashboardData.checklists.newborn).length} items remaining
+            
+            <div className="overview-stat">
+              <span className="overview-stat__label">Current path</span>
+              <span className="overview-stat__value">
+                {stageInfo ? stageInfo.display : 'Not Onboarded'}
+              </span>
+              <span className="overview-stat__desc">
+                {stageInfo ? `Tailored items based on your child's age.` : 'Personalize your feed by completing onboarding.'}
               </span>
             </div>
-            <div className="dashboard__checklist-items">
-              {(stageInfo.type === 'expecting' ? dashboardData.checklists.expecting : dashboardData.checklists.newborn).map(item => (
-                <div className="checklist-item" key={item.id}>
-                  <input type="checkbox" id={item.id} />
-                  <label htmlFor={item.id}>{item.label}</label>
-                </div>
-              ))}
+
+            {convexUser?.interests && convexUser.interests.length > 0 && (
+              <div className="overview-stat">
+                <span className="overview-stat__label">Interests</span>
+                <span className="overview-stat__value">Curated Fit</span>
+                <span className="overview-stat__desc">{convexUser.interests.join(', ')}</span>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {!stageInfo ? (
+          <div style={{ padding: 'var(--space-8) 0' }}>
+            <div className="wildcard-discovery-card" style={{ background: 'var(--surface-container-low)', textAlign: 'center', padding: 'var(--space-12)' }}>
+              <h2 className="welcome-canvas__greeting" style={{ fontSize: 'var(--headline-lg)', marginBottom: 'var(--space-4)', margin: '0 auto' }}>
+                Start Your Journey
+              </h2>
+              <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--text-secondary)', marginBottom: 'var(--space-8)', maxWidth: '500px', margin: 'var(--space-4) auto var(--space-8)' }}>
+                Completing your parenting profile details lets us personalize your dashboard, recommend size-appropriate gear, and track important developmental milestones.
+              </p>
+              <Button onClick={() => navigate('/profile')}>Complete Profile Setup</Button>
             </div>
-          </section>
-        </>
-      )}
+          </div>
+        ) : (
+          <>
+            {/* 2. The Journey Profile (Dynamic Module) */}
+            <section className="journey-profile">
+              <div className="journey-tracker">
+                <h2 className="journey-tracker__title">Timeline of Growth</h2>
+                
+                <div className="progress-bar-container">
+                  <div className="progress-bar__labels">
+                    <span>{stageInfo.type === 'expecting' ? 'Conception' : 'Birth'}</span>
+                    <span>{stageInfo.type === 'expecting' ? 'Week 40' : '2 Years'}</span>
+                  </div>
+                  <div className="progress-bar__track">
+                    <div 
+                      className="progress-bar__fill" 
+                      style={{ width: `${stageInfo.progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="journey-milestones">
+                  <div className="milestone-highlight">
+                    <span className="milestone-highlight__title">Current Status</span>
+                    <span className="milestone-highlight__date">{stageInfo.display}</span>
+                  </div>
+                  {stageInfo.type === 'expecting' && user.dueDate && (
+                    <div className="milestone-highlight">
+                      <span className="milestone-highlight__title">Expected Due Date</span>
+                      <span className="milestone-highlight__date">
+                        {new Date(user.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="journey-profile__cta-group">
+                  <Button variant="secondary" onClick={() => navigate('/profile')}>
+                    Edit Journey Info
+                  </Button>
+                </div>
+              </div>
+
+              {/* Dynamic StageTile Component from Design System */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+                {activeStageTileData && <StageTile stage={activeStageTileData} />}
+              </div>
+            </section>
+
+            {/* Timeline Details & Badges */}
+            <section style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-10)' }}>
+              <div>
+                <MilestoneTimeline 
+                  info={stageInfo} 
+                  milestones={stageInfo.type === 'expecting' ? dashboardData.milestones.expecting : dashboardData.milestones.newborn} 
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+                <NextMilestoneCard 
+                  stageInfo={stageInfo} 
+                  nextMilestoneData={stageInfo.type === 'expecting' ? dashboardData.nextMilestone.expecting : dashboardData.nextMilestone.newborn} 
+                />
+                <MilestoneBadges 
+                  user={user} 
+                  stageInfo={stageInfo} 
+                  badgeData={stageInfo.type === 'expecting' ? dashboardData.badges.expecting : dashboardData.badges.newborn} 
+                />
+              </div>
+            </section>
+
+            {/* 3. Curated Recommendations & Discovery (Asymmetric Grid) */}
+            <section className="discovery-section">
+              <div className="discovery-header">
+                <span className="discovery-header__eyebrow">AI-curated essentials</span>
+                <h2 className="discovery-header__title">The Now Feed</h2>
+              </div>
+              
+              <div className="asymmetric-discovery-grid">
+                {/* Now / Next Product Feeds displaying ProductCard components */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-10)' }}>
+                  <div>
+                    <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: 'var(--title-sm)', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', fontWeight: '400' }}>
+                      Specially for your current stage
+                    </h3>
+                    <PredictiveFeed type="now" stageInfo={stageInfo} onAddToCart={handleAddToCart} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: 'var(--title-sm)', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', fontWeight: '400' }}>
+                      Get a head start on next milestones
+                    </h3>
+                    <PredictiveFeed type="next" stageInfo={stageInfo} onAddToCart={handleAddToCart} />
+                  </div>
+                </div>
+
+                <div className="discovery-sidebar-stack">
+                  {/* Reuse TierCard with support green lookbook */}
+                  <div className="essentials-wash-card">
+                    <span className="essentials-wash-card__badge">Featured Tier</span>
+                    <h3 className="essentials-wash-card__title">The Essentials</h3>
+                    <p className="essentials-wash-card__copy">
+                      Daily comfort staples designed with clinical precision and botanical warmth. 
+                    </p>
+                    <div style={{ marginTop: 'var(--space-2)' }}>
+                      <TierCard tier={essentialsTier} />
+                    </div>
+                  </div>
+
+                  {/* Discovery Wildcard Card */}
+                  <div className="wildcard-discovery-card">
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--label-sm)', color: 'var(--color-brand-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700' }}>
+                      Beyond the Basics
+                    </span>
+                    <h3 className="wildcard-discovery-card__title">Nursery Aesthetics</h3>
+                    <p className="wildcard-discovery-card__text">
+                      Editorial: {dashboardData.editorial.title}. {dashboardData.editorial.text}
+                    </p>
+                    <div style={{ marginTop: 'var(--space-4)' }}>
+                      <Button onClick={() => navigate('/collection/luxuries')} style={{ width: '100%' }}>
+                        {dashboardData.editorial.btnText}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* 4. Contribution & Gift Activity (Layer 2 Container) */}
+            <section className="gift-activity-module">
+              <div className="gift-activity-header">
+                <h2 className="gift-activity-header__title">Registry Contribution Tracker</h2>
+                <span className="gift-activity-header__stat">Active Communal Gifting</span>
+              </div>
+              
+              <div className="gift-activity-grid">
+                {displayContributions.map(contrib => (
+                  <div key={contrib.id} className="gift-activity-card">
+                    {contrib.saffronDot && <div className="gift-activity-card__saffron-dot"></div>}
+                    <img src={contrib.itemImage} alt={contrib.itemName} className="gift-activity-card__image" />
+                    <div className="gift-activity-card__content">
+                      <span className="gift-activity-card__contributor">{contrib.contributor}</span>
+                      <span className="gift-activity-card__status">{contrib.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Stage Checklist Section */}
+            <section className="checklist-module">
+              <h2 className="checklist-module__title">Stage Checklist</h2>
+              <div className="checklist-list">
+                {(stageInfo.type === 'expecting' ? dashboardData.checklists.expecting : dashboardData.checklists.newborn).map(item => (
+                  <div className="checklist-row" key={item.id}>
+                    <input type="checkbox" id={item.id} className="checklist-row__checkbox" />
+                    <label htmlFor={item.id} className="checklist-row__label">{item.label}</label>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+      </main>
 
       {selectedProduct && (
         <QuickViewModal 
@@ -185,4 +385,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

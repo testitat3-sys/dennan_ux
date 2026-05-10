@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dennan Kids — Coming Soon</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --surface: #ffffff;
+      --surface-container-low: #faf9f8;
+      --surface-container: #f4f2f0;
+      --surface-container-high: #ede9e5;
+      --surface-container-highest: #e5e0db;
+
+      --color-brand-primary: #d35097;
+      --color-brand-primary-dark: #a63e74;
+      --color-brand-primary-light: #f07fb8;
+      --color-brand-secondary: #832c7a;
+      --color-brand-accent: #e1d328;
+
+      --color-anchor: #111111;
+      --color-on-primary: #ffffff;
+
+      --text-primary: #111111;
+      --text-secondary: #555555;
+      --text-tertiary: #888888;
+
+      --color-support-green: #7fa93e;
+      --color-support-red: #e53e3e;
+
+      --shadow-ambient: 0 2px 18px rgba(0, 0, 0, 0.06);
+      --shadow-deep: 0 10px 44px rgba(0, 0, 0, 0.13);
+      --shadow-primary: 0 0 0 3px color-mix(in srgb, var(--color-brand-primary) 22%, transparent);
+      --shadow-secondary: 0 2px 0 0 color-mix(in srgb, var(--color-brand-primary) 25%, transparent);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 18px;
+      --radius-full: 9999px;
+
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 40px;
+      --space-2xl: 72px;
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--surface);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* ── Typography ──────────────────────────────── */
+
+    .display-lg {
+      font-family: 'Newsreader', serif;
+      font-size: clamp(38px, 5.2vw, 62px);
+      font-weight: 300;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+
+    .headline-md {
+      font-family: 'Newsreader', serif;
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 300;
+      line-height: 1.22;
+      letter-spacing: -0.015em;
+    }
+
+    .title-md {
+      font-size: 17px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .body-md {
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.65;
+    }
+
+    .label-sm {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      line-height: 1.4;
+    }
+
+    /* ── Layout ──────────────────────────────────── */
+
+    .container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 var(--space-xl);
+    }
+
+    /* ══════════════════════════════════════════════
+       1. ANNOUNCEMENT STRIP
+    ══════════════════════════════════════════════ */
+
+    .announcement-strip {
+      background: var(--surface-container-low);
+      padding: 11px 0;
+    }
+
+    .strip-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .pill-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: color-mix(in srgb, var(--color-brand-primary-light) 28%, transparent);
+      color: var(--color-anchor);
+      padding: 3px 11px;
+      border-radius: var(--radius-full);
+      flex-shrink: 0;
+    }
+
+    .pill-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--color-brand-primary);
+      flex-shrink: 0;
+    }
+
+    .strip-copy {
+      color: var(--text-secondary);
+    }
+
+    /* ══════════════════════════════════════════════
+       2. HERO
+    ══════════════════════════════════════════════ */
+
+    .hero {
+      padding: var(--space-2xl) 0 80px;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 55fr 45fr;
+      gap: 60px;
+      align-items: start;
+    }
+
+    /* Left */
+    .hero-left { padding-top: 8px; }
+
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-tertiary);
+      margin-bottom: 20px;
+    }
+
+    .petal-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-brand-primary-light);
+      flex-shrink: 0;
+    }
+
+    .hero-headline {
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      max-width: 17ch;
+    }
+
+    .hero-headline em {
+      font-style: italic;
+      color: var(--text-secondary);
+    }
+
+    .hero-sub {
+      color: var(--text-secondary);
+      max-width: 44ch;
+      margin-bottom: 36px;
+    }
+
+    /* Signup card */
+    .signup-card {
+      background: var(--surface-container-low);
+      border-radius: var(--radius-md);
+      padding: var(--space-xl);
+      box-shadow: var(--shadow-ambient);
+    }
+
+    .card-eyebrow {
+      color: var(--text-tertiary);
+      margin-bottom: 5px;
+    }
+
+    .card-title {
+      color: var(--text-primary);
+      margin-bottom: 24px;
+    }
+
+    /* Stage chips */
+    .journey-block { margin-bottom: 22px; }
+
+    .journey-prompt {
+      display: block;
+      color: var(--text-tertiary);
+      margin-bottom: 10px;
+    }
+
+    .stage-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stage-chip {
+      padding: 6px 15px;
+      border-radius: var(--radius-full);
+      background: var(--surface-container);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer;
+      border: none;
+      transition: background 0.18s, color 0.18s;
+    }
+
+    .stage-chip:hover { background: var(--surface-container-high); }
+
+    .stage-chip.active {
+      background: color-mix(in srgb, var(--color-brand-primary) 13%, var(--surface-container));
+      color: var(--color-brand-primary);
+    }
+
+    /* Email input */
+    .email-wrap { margin-bottom: 14px; }
+
+    .field-label {
+      display: block;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+    }
+
+    .email-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid var(--surface-container-high);
+      padding: 10px 0;
+      font-size: 16px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .email-input::placeholder { color: var(--text-tertiary); }
+
+    .email-input:focus {
+      border-bottom-color: var(--color-brand-primary);
+      box-shadow: var(--shadow-secondary);
+    }
+
+    .email-input.error { border-bottom-color: var(--color-support-red); }
+
+    .field-error {
+      color: var(--color-support-red);
+      font-size: 12px;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .field-error.show { display: block; }
+
+    /* CTA */
+    .cta-btn {
+      width: 100%;
+      padding: 14px 24px;
+      background: var(--color-anchor);
+      color: var(--color-on-primary);
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+
+    .cta-btn:hover {
+      background: color-mix(in srgb, var(--color-anchor) 84%, var(--color-brand-primary) 16%);
+      box-shadow: var(--shadow-deep), 0 0 0 3px color-mix(in srgb, var(--color-brand-primary) 16%, transparent);
+    }
+
+    /* Success */
+    .signup-success {
+      display: none;
+      padding: 6px 0 2px;
+    }
+
+    .signup-success.show { display: flex; align-items: flex-start; gap: 10px; }
+
+    .success-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-support-green);
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    .signup-form.hidden { display: none; }
+
+    /* Micro-copy */
+    .form-micro {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .form-micro p {
+      color: var(--text-tertiary);
+      font-size: 12.5px;
+    }
+
+    /* Right: imagery */
+    .hero-right { padding-top: 54px; }
+
+    .imagery-block {
+      background: var(--surface-container);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 480px;
+      height: 100%;
+      position: relative;
+      box-shadow: var(--shadow-ambient);
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .imagery-block:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: var(--shadow-deep), var(--shadow-primary);
+    }
+
+    .hero-img {
+      width: 100%;
+      height: 100%;
+      min-height: 480px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .imagery-block:hover .hero-img {
+      transform: scale(1.04);
+    }
+
+    /* ── Heritage Mini Cards ─────────────────────── */
+    .hero-heritage {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-md);
+      margin-top: 28px;
+      margin-bottom: var(--space-md);
+      max-width: 100%;
+    }
+
+    .heritage-mini-card {
+      background: var(--surface);
+      padding: 22px 14px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-ambient);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .heritage-mini-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-deep);
+    }
+
+    .heritage-mini-card-icon {
+      margin-bottom: 12px;
+      color: var(--text-tertiary);
+      opacity: 0.7;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .heritage-mini-card-stat {
+      font-family: 'Newsreader', serif;
+      font-size: 26px;
+      line-height: 1.1;
+      font-weight: 300;
+      margin-bottom: 4px;
+    }
+
+    .heritage-mini-card-stat.orchid { color: var(--color-brand-primary); }
+    .heritage-mini-card-stat.plum   { color: var(--color-brand-secondary); }
+    .heritage-mini-card-stat.green  { color: var(--color-support-green); }
+
+    .heritage-mini-card-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .heritage-mini-card-desc {
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--text-secondary);
+      opacity: 0.9;
+    }
+
+    /* ── Hero Trigger CTA Button Sizing ──────────────────────── */
+    .hero-cta-btn {
+      max-width: 440px;
+      margin-top: var(--space-md);
+    }
+
+    /* ── Modal Overlay ──────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(17, 17, 17, 0.3);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-deep);
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+      transform: scale(0.95);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-overlay.active .modal-content {
+      transform: scale(1);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 28px;
+      line-height: 1;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: color 0.2s ease, transform 0.2s ease;
+      z-index: 10;
+    }
+
+    .modal-close-btn:hover {
+      color: var(--text-primary);
+      transform: scale(1.1);
+    }
+
+    /* Reset signup-card styles inside modal */
+    .modal-content .signup-card {
+      box-shadow: none;
+      padding: 12px 8px;
+      margin-top: 0;
+    }
+
+    /* ══════════════════════════════════════════════
+       3. DISCOUNT STRIP
+    ══════════════════════════════════════════════ */
+
+    .discount-strip {
+      background: var(--surface-container-low);
+      padding: var(--space-2xl) 0;
+    }
+
+    .discount-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+
+    .discount-title { color: var(--text-primary); }
+    .discount-title em { font-style: italic; color: var(--text-secondary); }
+
+    .discount-sub {
+      color: var(--text-secondary);
+      margin-top: var(--space-sm);
+      max-width: 26ch;
+    }
+
+    .steps-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+    }
+
+    .step { display: flex; flex-direction: column; gap: 10px; }
+
+    .step-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .step-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--color-brand-primary) 45%, transparent);
+      flex-shrink: 0;
+    }
+
+    .step-dot.faded {
+      background: var(--surface-container-high);
+    }
+
+    .step-when { color: var(--text-tertiary); }
+
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 600;
+      align-self: flex-start;
+    }
+
+    .step-badge.orchid {
+      background: color-mix(in srgb, var(--color-brand-primary) 14%, var(--surface-container));
+      color: var(--color-brand-primary);
+    }
+
+    .step-badge.neutral {
+      background: var(--surface-container-high);
+      color: var(--text-secondary);
+    }
+
+    .step-desc { color: var(--text-secondary); font-size: 14px; }
+
+    /* ══════════════════════════════════════════════
+       4. SOCIAL PROOF
+    ══════════════════════════════════════════════ */
+
+    .proof-section {
+      background: var(--surface);
+      padding: var(--space-2xl) 0;
+    }
+
+    .proof-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-xl);
+    }
+
+    .proof-item { display: flex; flex-direction: column; gap: 12px; }
+
+    .proof-icon {
+      width: 34px;
+      height: 34px;
+      color: var(--color-brand-primary);
+    }
+
+    .proof-icon svg { width: 100%; height: 100%; }
+
+    .proof-title { color: var(--text-primary); }
+    .proof-body { color: var(--text-secondary); }
+
+    /* ══════════════════════════════════════════════
+       5. FAQ
+    ══════════════════════════════════════════════ */
+
+    .faq-section {
+      background: var(--surface-container);
+      padding: var(--space-2xl) 0;
+    }
+
+    .faq-heading {
+      color: var(--text-primary);
+      margin-bottom: 52px;
+    }
+
+    .faq-heading em { font-style: italic; color: var(--text-secondary); }
+
+    .faq-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-xl) 72px;
+    }
+
+    .faq-item { display: flex; flex-direction: column; gap: 10px; }
+
+    .faq-item:nth-child(even) { margin-top: 36px; }
+
+    .faq-q { color: var(--text-primary); }
+
+    .faq-a { color: var(--text-secondary); max-width: 40ch; }
+
+    /* ══════════════════════════════════════════════
+       6. FOOTER
+    ══════════════════════════════════════════════ */
+
+    .footer {
+      background: var(--color-brand-secondary);
+      padding: 32px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-lg);
+      flex-wrap: wrap;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .footer-logo {
+      height: 22px;
+      width: auto;
+      display: block;
+      filter: brightness(0) invert(1);
+      opacity: 0.85;
+      transition: opacity 0.18s;
+    }
+
+    .footer-logo:hover {
+      opacity: 1;
+    }
+
+    .footer-copyright {
+      font-size: 13px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.6);
+      letter-spacing: 0.01em;
+      line-height: 1.4;
+    }
+
+    .footer-center {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-link {
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.18s, transform 0.18s;
+    }
+
+    .footer-link:hover {
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .footer-separator {
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 13px;
+      user-select: none;
+    }
+
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .social-icon-link {
+      color: rgba(255, 255, 255, 0.6);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.04);
+      transition: color 0.18s, background-color 0.18s, transform 0.18s;
+    }
+
+    .social-icon-link:hover {
+      color: var(--color-brand-accent);
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .social-icon-link svg {
+      transition: transform 0.18s;
+    }
+
+    /* ══════════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════════ */
+
+    @media (max-width: 800px) {
+      :root {
+        --space-2xl: 52px;
+        --space-xl: 28px;
+      }
+
+      .container { padding: 0 20px; }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+
+      .hero-right { padding-top: 0; order: -1; }
+
+      .imagery-block { min-height: 320px; height: 320px; }
+      .hero-img { min-height: 320px; }
+
+      .discount-grid { grid-template-columns: 1fr; gap: 32px; }
+
+      .steps-row { grid-template-columns: 1fr; gap: 28px; }
+
+      .proof-grid { grid-template-columns: 1fr; gap: 28px; }
+
+      .faq-grid { grid-template-columns: 1fr; gap: 28px; }
+
+      .faq-item:nth-child(even) { margin-top: 0; }
+      .faq-a { max-width: none; }
+
+      .footer-inner {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+
+      .footer-left {
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .footer-center {
+        justify-content: center;
+      }
+
+      .footer-right {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .hero-heritage {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .strip-row { gap: 8px; }
+      .signup-card { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════════════
+       1. ANNOUNCEMENT STRIP
+  ════════════════════════════ -->
+  <div class="announcement-strip">
+    <div class="container">
+      <div class="strip-row">
+        <span class="pill-label label-sm">
+          <span class="pill-dot"></span>
+          Founding Families
+        </span>
+        <span class="body-md strip-copy">Sign up now to lock in your launch discount.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       2. HERO
+  ════════════════════════════ -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-grid">
+
+        <!-- Left: text + form -->
+        <div class="hero-left">
+          <div class="hero-eyebrow label-sm">
+            <span class="petal-dot"></span>
+            Dennan Kids · Coming Soon
+          </div>
+
+          <h1 class="display-lg hero-headline">
+            Soft essentials for small humans, <em>curated by stage.</em>
+          </h1>
+
+          <p class="body-md hero-sub">
+            We're launching a different kind of baby-to-kids store—editorial, stage-aware, and obsessively curated. Reserve your spot and unlock a launch-only discount.
+          </p>
+
+          <!-- Heritage Mini Cards -->
+          <div class="hero-heritage">
+            <!-- 12+ Years -->
+            <article class="heritage-mini-card">
+              <div class="heritage-mini-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <div class="heritage-mini-card-stat orchid">12+</div>
+              <div class="heritage-mini-card-label">years</div>
+              <p class="heritage-mini-card-desc">Supporting parents since 2013.</p>
+            </article>
+
+            <!-- 1M+ TikTok -->
+            <article class="heritage-mini-card">
+              <div class="heritage-mini-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.9A8.38 8.38 0 0 1 4 11.3a8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                </svg>
+              </div>
+              <div class="heritage-mini-card-stat plum">1M+</div>
+              <div class="heritage-mini-card-label">likes on tiktok</div>
+              <p class="heritage-mini-card-desc">Sharing moments with parents.</p>
+            </article>
+
+            <!-- 267k+ Parents (Instagram) -->
+            <article class="heritage-mini-card">
+              <div class="heritage-mini-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+              </div>
+              <div class="heritage-mini-card-stat green">267k+</div>
+              <div class="heritage-mini-card-label">Parents</div>
+              <p class="heritage-mini-card-desc">Growing daily community.</p>
+            </article>
+          </div>
+
+          <button id="openModalBtn" class="cta-btn hero-cta-btn">Claim my launch discount</button>
+        </div>
+
+        <!-- Right: Editorial Stage-Aware Imagery -->
+        <div class="hero-right">
+          <div class="imagery-block">
+            <img src="assets/hero.webp" alt="Dennan Kids Stage-Aware Curation" class="hero-img" />
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════
+       3. DISCOUNT STRIP
+  ════════════════════════════ -->
+  <section class="discount-strip">
+    <div class="container">
+      <div class="discount-grid">
+
+        <div>
+          <h2 class="headline-md discount-title">
+            A launch discount that rewards <em>early birds.</em>
+          </h2>
+          <p class="body-md discount-sub">
+            The sooner you sign up, the bigger your discount when we go live.
+          </p>
+        </div>
+
+        <div class="steps-row">
+          <div class="step">
+            <div class="step-meta">
+              <span class="step-dot"></span>
+              <span class="label-sm step-when">Today</span>
+            </div>
+            <span class="step-badge orchid">Up to 20% off</span>
+            <p class="step-desc">Join the list now to lock in our highest planned launch discount.</p>
+          </div>
+
+          <div class="step">
+            <div class="step-meta">
+              <span class="step-dot" style="background: color-mix(in srgb, var(--color-brand-secondary) 38%, transparent);"></span>
+              <span class="label-sm step-when">Prelaunch</span>
+            </div>
+            <span class="step-badge neutral">Discount adjusts</span>
+            <p class="step-desc">As we get closer to launch, the discount offered to new signups gradually decreases.</p>
+          </div>
+
+          <div class="step">
+            <div class="step-meta">
+              <span class="step-dot faded"></span>
+              <span class="label-sm step-when">Launch day</span>
+            </div>
+            <span class="step-badge neutral">Your code arrives</span>
+            <p class="step-desc">We email your personal code and early access link before we open the doors.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════
+       4. SOCIAL PROOF
+  ════════════════════════════ -->
+  <section class="proof-section">
+    <div class="container">
+      <div class="proof-grid">
+
+        <div class="proof-item">
+          <div class="proof-icon" aria-hidden="true">
+            <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 28C10 28 8 13 20 8C32 4 30 20 18 26C14 28 10 28 10 28Z"/>
+              <path d="M10 28L18 20"/>
+            </svg>
+          </div>
+          <p class="title-md proof-title">Built for every stage</p>
+          <p class="body-md proof-body">From bump to big kid, every product is mapped to a developmental moment—not a generic age bracket.</p>
+        </div>
+
+        <div class="proof-item">
+          <div class="proof-icon" aria-hidden="true">
+            <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 29C18 29 6 21 6 14a6 6 0 0 1 12-2.4A6 6 0 0 1 30 14c0 7-12 15-12 15z"/>
+            </svg>
+          </div>
+          <p class="title-md proof-title">Curated by real parents</p>
+          <p class="body-md proof-body">Not by an algorithm. Every item is chosen by people who have navigated the same moments you're facing right now.</p>
+        </div>
+
+        <div class="proof-item">
+          <div class="proof-icon" aria-hidden="true">
+            <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="8" width="26" height="22" rx="3"/>
+              <path d="M5 14h26M12 6v4M24 6v4M11 21h2M17 21h2M23 21h2M11 26h2M17 26h2"/>
+            </svg>
+          </div>
+          <p class="title-md proof-title">Guest checkout from day one</p>
+          <p class="body-md proof-body">Accounts are optional, always. You shouldn't have to create a profile just to buy a onesie.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════
+       5. FAQ
+  ════════════════════════════ -->
+  <section class="faq-section">
+    <div class="container">
+      <h2 class="headline-md faq-heading">You might be <em>wondering…</em></h2>
+      <div class="faq-grid">
+
+        <div class="faq-item">
+          <p class="title-md faq-q">When are you launching?</p>
+          <p class="body-md faq-a">We're aiming to open the doors later this year. Sign up to get the exact date as soon as we confirm it—you'll know before anyone else.</p>
+        </div>
+
+        <div class="faq-item">
+          <p class="title-md faq-q">How will I receive my discount?</p>
+          <p class="body-md faq-a">We'll email your personal discount code before we go live, along with early access so you can shop before the public launch.</p>
+        </div>
+
+        <div class="faq-item">
+          <p class="title-md faq-q">Is this only for new parents?</p>
+          <p class="body-md faq-a">Not at all. Dennan Kids covers the full journey—from pregnancy essentials to gear for kids up to age 8. Whatever stage you're at, there's a place for you here.</p>
+        </div>
+
+        <div class="faq-item">
+          <p class="title-md faq-q">Will you spam my inbox?</p>
+          <p class="body-md faq-a">Never. You'll hear from us when it actually matters: launch updates, your discount code, and the occasional genuinely useful checklist. That's it.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════
+       6. FOOTER
+  ════════════════════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        
+        <!-- Left: Logo & Legal Ownership -->
+        <div class="footer-left">
+          <img src="public/dennan_logo_2.svg" alt="Dennan Kids" class="footer-logo" />
+          <span class="footer-copyright">© 2026 Dennan Kids. All rights reserved.</span>
+        </div>
+        
+        <!-- Center: Standard Legal Documentation -->
+        <div class="footer-center">
+          <a href="#" class="footer-link">Privacy Policy</a>
+          <span class="footer-separator">·</span>
+          <a href="#" class="footer-link">Terms of Use</a>
+        </div>
+        
+        <!-- Right: Elegant Social Links -->
+        <div class="footer-right">
+          <!-- Instagram -->
+          <a href="https://instagram.com" class="social-icon-link" aria-label="Instagram" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+            </svg>
+          </a>
+          <!-- TikTok -->
+          <a href="https://tiktok.com" class="social-icon-link" aria-label="TikTok" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+            </svg>
+          </a>
+          <!-- Gmail -->
+          <a href="mailto:dennankids@gmail.com" class="social-icon-link" aria-label="Gmail" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </a>
+        </div>
+        
+      </div>
+    </div>
+  </footer>
+
+  <!-- Interactive Registration Modal -->
+  <div id="signupModal" class="modal-overlay" aria-hidden="true" role="dialog">
+    <div class="modal-content">
+      <button id="closeModalBtn" class="modal-close-btn" aria-label="Close registration form">&times;</button>
+      
+      <!-- Signup Card Form inside Modal -->
+      <div class="signup-card">
+        <p class="label-sm card-eyebrow">Early access</p>
+        <p class="title-md card-title">Claim your launch discount</p>
+
+        <div class="journey-block">
+          <span class="label-sm journey-prompt">Where are you in the journey?</span>
+          <div class="stage-options">
+            <button class="stage-chip" onclick="selectChip(this)">Pregnant</button>
+            <button class="stage-chip" onclick="selectChip(this)">Newborn</button>
+            <button class="stage-chip active" onclick="selectChip(this)">Toddler+</button>
+          </div>
+        </div>
+
+        <form id="signupForm" class="signup-form" onsubmit="handleSubmit(event)" novalidate>
+          <div class="email-wrap">
+            <label for="emailInput" class="label-sm field-label">Email address</label>
+            <input
+              type="email"
+              id="emailInput"
+              class="email-input"
+              placeholder="your@email.com"
+              autocomplete="email"
+            />
+            <p class="field-error" id="emailError">Please enter a valid email address.</p>
+          </div>
+          <button type="submit" class="cta-btn">Claim my launch discount</button>
+        </form>
+
+        <div class="signup-success" id="signupSuccess" role="alert">
+          <span class="success-dot"></span>
+          <p class="body-md"><strong>You're in.</strong> We'll email your discount before launch.</p>
+        </div>
+
+        <div class="form-micro">
+          <p>Be the first to shop. Early subscribers get the highest discount at launch.</p>
+          <p>No spam, ever. Just launch details and gently useful checklists.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectChip(el) {
+      const siblings = el.closest('.stage-options').querySelectorAll('.stage-chip');
+      siblings.forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('emailInput');
+      const error = document.getElementById('emailError');
+      const form = document.getElementById('signupForm');
+      const success = document.getElementById('signupSuccess');
+
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim());
+
+      if (!valid) {
+        input.classList.add('error');
+        error.classList.add('show');
+        input.focus();
+        return;
+      }
+
+      input.classList.remove('error');
+      error.classList.remove('show');
+      form.classList.add('hidden');
+      success.classList.add('show');
+    }
+
+    document.getElementById('emailInput').addEventListener('input', function () {
+      this.classList.remove('error');
+      document.getElementById('emailError').classList.remove('show');
+    });
+
+    // Modal Interaction JS Logic
+    const modal = document.getElementById('signupModal');
+    const openBtn = document.getElementById('openModalBtn');
+    const closeBtn = document.getElementById('closeModalBtn');
+
+    openBtn.addEventListener('click', () => {
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => {
+        document.getElementById('emailInput').focus();
+      }, 100);
+    });
+
+    function closeModal() {
+      modal.classList.remove('active');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    closeBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        closeModal();
+      }
+    });
+  </script>
+
+</body>
+</html>

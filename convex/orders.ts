@@ -39,16 +39,17 @@ export const placeOrder = mutation({
         throw new Error(`Product ${item.productId} is no longer available.`);
       }
 
-      // Verify and decrement inventory
+      // Deduct inventory atomically (if applicable) and increment units sold
+      const patches: { inventory?: number; unitsSold?: number } = {
+        unitsSold: (product.unitsSold || 0) + item.quantity,
+      };
       if (product.inventory !== undefined) {
         if (product.inventory < item.quantity) {
           throw new Error(`Inadequate inventory for ${product.name}. Only ${product.inventory} left.`);
         }
-        // Deduct inventory atomically
-        await ctx.db.patch(product._id, {
-          inventory: product.inventory - item.quantity,
-        });
+        patches.inventory = product.inventory - item.quantity;
       }
+      await ctx.db.patch(product._id, patches);
 
       computedSubtotal += product.price * item.quantity;
       itemsToOrder.push({

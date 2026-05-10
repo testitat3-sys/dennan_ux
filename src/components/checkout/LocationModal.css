@@ -225,3 +225,64 @@
   to { opacity: 1; }
 }
 
+/* ─── Responsive Media Queries ────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .location-overlay {
+    align-items: flex-end;
+  }
+
+  .location-modal {
+    max-width: 100%;
+    border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+    padding: var(--space-6) var(--space-5) var(--space-8);
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .location-modal.is-active {
+    transform: translateY(0);
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+  }
+
+  .location-modal-header {
+    margin-bottom: var(--space-5);
+  }
+
+  .close-modal-btn {
+    top: var(--space-4);
+    right: var(--space-4);
+  }
+
+  .success-icon-wrapper {
+    width: var(--space-12);
+    height: var(--space-12);
+    margin-bottom: var(--space-4);
+  }
+
+  .reveal-message {
+    font-size: var(--title-lg);
+    margin-bottom: var(--space-2);
+  }
+
+  .timer-value {
+    font-size: 2.75rem;
+  }
+
+  .reveal-subtext {
+    font-size: var(--body-sm);
+    margin-bottom: var(--space-6);
+  }
+
+  .selection-preview {
+    margin-bottom: var(--space-6);
+  }
+
+  .btn-confirm-location {
+    padding: var(--space-4);
+    font-size: var(--body-md);
+  }
+}
+

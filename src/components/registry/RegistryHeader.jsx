@@ -1,13 +1,24 @@
 import React from 'react';
 import './RegistryHeader.css';
 
-const RegistryHeader = ({ profile, viewMode, setViewMode }) => {
+const RegistryHeader = ({ profile, viewMode, setViewMode, onShowToast }) => {
   const calculateDaysLeft = (date) => {
     const diff = new Date(date) - new Date();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
   const daysLeft = calculateDaysLeft(profile.eventDate);
+
+  const handleCopyLink = () => {
+    const shareUrl = `${window.location.origin}/registry/${profile.id}`;
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => {
+        onShowToast && onShowToast('Registry link copied to clipboard!');
+      })
+      .catch(() => {
+        onShowToast && onShowToast('Failed to copy link.');
+      });
+  };
 
   return (
     <header className="registry-header">
@@ -32,10 +43,10 @@ const RegistryHeader = ({ profile, viewMode, setViewMode }) => {
 
       <div className="header-actions">
         <div className="share-controls">
-          <button className="btn-secondary btn-sm">
+          <button className="btn-secondary btn-sm" onClick={handleCopyLink}>
             <span>Copy Link</span>
           </button>
-          <button className="btn-secondary btn-sm">
+          <button className="btn-secondary btn-sm" onClick={handleCopyLink}>
             <span>Share</span>
           </button>
         </div>

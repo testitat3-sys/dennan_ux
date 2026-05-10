@@ -42,6 +42,7 @@ export default function AfterSignIn() {
   const ensureFields = useMutation(api.users.ensureUserFields);
   const completeOnboarding = useMutation(api.users.completeOnboarding);
   const mergeGuestCart = useMutation(api.cart.mergeGuestCart);
+  const mergeGuestWishlist = useMutation(api.wishlist.mergeGuestWishlist);
   const { setShowOnboarding, login } = useUser();
   const navigate = useNavigate();
   const { search, hash, pathname } = useLocation();
@@ -103,16 +104,32 @@ export default function AfterSignIn() {
         console.error(`[AfterSignIn.jsx] Failed to merge guest cart:`, err);
       }
 
+      // ── Merge Guest Wishlist ─────────────────────────────────────────────
+      try {
+        const rawWishlist = localStorage.getItem('dennan_guest_wishlist');
+        if (rawWishlist) {
+          const productIds = JSON.parse(rawWishlist);
+          if (productIds.length > 0) {
+            await mergeGuestWishlist({ guestProductIds: productIds });
+            console.log(`[AfterSignIn.jsx] Guest wishlist merged successfully`);
+          }
+          localStorage.removeItem('dennan_guest_wishlist');
+        }
+      } catch (err) {
+        console.error(`[AfterSignIn.jsx] Failed to merge guest wishlist:`, err);
+      }
+
       if (user.isAdmin) {
         console.log(`[AfterSignIn.jsx] Admin user — redirecting to /admin`);
         navigate("/admin", { replace: true });
         return;
       }
 
-      if (user.isOnboarded) {
-        // ── Already fully onboarded ──────────────────────────────────────────
-        console.log(`[AfterSignIn.jsx] Already onboarded — redirecting to /dashboard`);
-        // Hydrate UserContext from the Convex record so dashboard works immediately
+      // ── Check if they already have journey data ──────────────────────────
+      const hasJourneyData = user.role && (user.dueDate || (user.children && user.children.length > 0));
+
+      if (hasJourneyData) {
+        console.log(`[AfterSignIn.jsx] Already has journey data — redirecting to /profile`);
         login({
           email: user.email,
           role: user.role,
@@ -120,53 +137,22 @@ export default function AfterSignIn() {
           children: user.children,
         });
         clearLocalProfile(); // clean up any stale local data
-        navigate("/dashboard", { replace: true });
+        navigate("/profile", { replace: true });
+        return;
+      } else {
+        // ── Missing journey data — take them through the rest of onboarding ────
+        console.log(`[AfterSignIn.jsx] Missing journey data — opening onboarding modal`);
+        login({
+          email: user.email,
+          role: user.role,
+          dueDate: user.dueDate,
+          children: user.children,
+        });
+        setShowOnboarding(true);
+        navigate("/", { replace: true });
         return;
       }
 
-      // ── Not yet onboarded: attempt reconciliation ────────────────────────────
-      const localProfile = readLocalProfile();
-
-      if (localProfile) {
-        console.log(`[AfterSignIn.jsx] Local profile found, reconciling with Convex...`, localProfile);
-        try {
-          const defaultName = user.email ? user.email.split('@')[0] : 'User';
-          await completeOnboarding({
-            name: defaultName,
-            username: defaultName,
-            interests: [],
-            role: localProfile.role,
-            dueDate: localProfile.dueDate,
-            children: localProfile.children
-              ? localProfile.children.map(c => ({ dob: c.dob }))
-              : undefined,
-          });
-          console.log(`[AfterSignIn.jsx] completeOnboarding succeeded`);
-
-          // Hydrate UserContext so /dashboard getStageInfo() works immediately
-          login({
-            email: user.email,
-            role: localProfile.role,
-            dueDate: localProfile.dueDate,
-            children: localProfile.children,
-          });
-
-          // Data now lives in Convex — clean up localStorage
-          clearLocalProfile();
-
-          navigate("/dashboard", { replace: true });
-        } catch (error) {
-          console.error(`[AfterSignIn.jsx] completeOnboarding failed:`, error);
-          // Even on failure, don't leave user stuck — re-open onboarding
-          setShowOnboarding(true);
-          navigate("/", { replace: true });
-        }
-      } else {
-        // ── No local profile available — re-open onboarding at role step ──────
-        console.log(`[AfterSignIn.jsx] No local profile — re-opening onboarding modal`);
-        setShowOnboarding(true);
-        navigate("/", { replace: true });
-      }
     };
 
     run();
