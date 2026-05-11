@@ -236,3 +236,188 @@
   .plp__hero-title { font-size: var(--headline-lg); }
 }
 
+/* ─── MOBILE FILTER TRIGGER ──────────────────────────────────────── */
+.plp__mobile-filter-btn {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .plp__mobile-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--surface-container-low);
+    border: 1px solid var(--surface-container-high);
+    border-radius: var(--radius-pill);
+    padding: var(--space-2-5) var(--space-5);
+    font-size: var(--body-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  }
+  
+  .plp__mobile-filter-btn:hover {
+    background: var(--surface-container);
+    border-color: var(--text-tertiary);
+  }
+  
+  .plp__mobile-filter-btn:active {
+    transform: scale(0.95);
+  }
+  
+  .plp__toolbar {
+    gap: var(--space-4);
+  }
+}
+
+/* ─── MOBILE SEARCH WRAP SPACING ──────────────────────────────────── */
+@media (max-width: 768px) {
+  .plp__search-wrap {
+    padding: 0 var(--space-4);
+    margin-top: calc(-1 * var(--space-8));
+  }
+}
+
+/* ─── BOTTOM-SHEET SLIDING FILTER DRAWER ─────────────────────────── */
+.plp__filter-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+  visibility: hidden;
+  transition: visibility 0.3s;
+}
+
+.plp__filter-drawer.is-open {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.plp__filter-drawer-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.4);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.plp__filter-drawer.is-open .plp__filter-drawer-overlay {
+  opacity: 1;
+}
+
+.plp__filter-drawer-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 85vh;
+  background: var(--surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 -8px 32px var(--shadow-deep);
+  overflow: hidden;
+}
+
+.plp__filter-drawer.is-open .plp__filter-drawer-content {
+  transform: translateY(0);
+}
+
+.plp__filter-drawer-header {
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--surface-container-high);
+}
+
+.plp__filter-drawer-header h3 {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-sm);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.plp__filter-drawer-close {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+}
+
+.plp__filter-drawer-close:hover {
+  background: var(--surface-container);
+  color: var(--text-primary);
+}
+
+.plp__filter-drawer-body {
+  padding: var(--space-6) var(--space-6) var(--space-10);
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  -webkit-overflow-scrolling: touch;
+}
+
+.plp__filter-drawer-body .filter-group {
+  margin-bottom: 0;
+}
+
+.plp__filter-drawer-footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--surface-container-high);
+  display: flex;
+  gap: var(--space-4);
+  background: var(--surface-container-low);
+}
+
+.plp__filter-drawer-footer button {
+  flex: 1;
+  padding: var(--space-3) var(--space-6);
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  font-size: var(--body-sm);
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.plp__filter-drawer-footer button:active {
+  transform: scale(0.97);
+}
+
+.plp__filter-drawer-footer .btn-ghost {
+  background: transparent;
+  border: 1px solid var(--surface-container-highest);
+  color: var(--text-secondary);
+}
+
+.plp__filter-drawer-footer .btn-ghost:hover {
+  background: var(--surface-container);
+  color: var(--text-primary);
+}
+
+.plp__filter-drawer-footer .btn-primary {
+  background: var(--color-brand-primary);
+  border: none;
+  color: var(--color-on-primary);
+}
+
+.plp__filter-drawer-footer .btn-primary:hover {
+  background: var(--color-brand-primary-dark);
+  box-shadow: 0 4px 12px var(--shadow-primary);
+}
+
+

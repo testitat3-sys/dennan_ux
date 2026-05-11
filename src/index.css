@@ -54,3 +54,145 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   opacity: 0;
 }
 
+/* ─── Skeletons & Shimmers ─────────────────────────────────── */
+:root {
+  --skeleton-base: var(--surface-container-high);
+  --skeleton-highlight: color-mix(in srgb, var(--color-brand-primary) 5%, var(--surface));
+}
+
+@keyframes global-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.global-skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: global-shimmer 1.6s infinite linear;
+}
+
+/* Generic skeleton blocks */
+.skeleton-block {
+  background-color: var(--skeleton-base);
+  border-radius: var(--radius-sm);
+  width: 100%;
+  height: 16px;
+}
+
+/* ─── Curated Error Placards (Fail States) ─────────────────────── */
+.curated-fail-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-12) var(--layout-inset);
+  max-width: var(--width-compact);
+  margin: var(--space-8) auto;
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-ambient);
+  box-sizing: border-box;
+}
+
+.curated-fail-state__eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--label-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-support-red);
+  background: color-mix(in srgb, var(--color-support-red) 10%, transparent);
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-pill);
+  margin-bottom: var(--space-4);
+}
+
+.curated-fail-state__title {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-md);
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+  line-height: 1.2;
+}
+
+.curated-fail-state__message {
+  font-family: var(--font-sans);
+  font-size: var(--body-md);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-6);
+  max-width: 90%;
+}
+
+.curated-fail-state__action {
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 600;
+  background-color: var(--color-anchor);
+  color: var(--color-on-primary);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-ambient);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.curated-fail-state__action:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-deep);
+  background-color: var(--color-brand-primary-dark);
+}
+
+/* ─── Mobile Layout Safeguards (Scroll Prevention) ──────────────── */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden; /* Protect viewport layout leakage */
+  position: relative;
+}
+
+/* Fluid Horizontal Scroll Container (For Swipeable Lists like tags/categories on mobile) */
+.touch-scroll-row {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  width: 100%;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  scrollbar-width: none; /* Hide standard Firefox scrollbar */
+}
+
+.touch-scroll-row::-webkit-scrollbar {
+  display: none; /* Hide Chrome/Safari scrollbar */
+}
+
+.touch-scroll-item {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+/* Text wrap safety */
+.wrap-safety {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Prevent flexbox container blowouts */
+.flex-shrink-safety {
+  min-width: 0;
+}

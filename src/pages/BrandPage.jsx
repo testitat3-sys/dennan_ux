@@ -9,6 +9,7 @@ import ProductSection from '../components/home/ProductSection';
 import SearchStrip from '../components/home/SearchStrip';
 import QuickViewModal from '../components/ui/QuickViewModal';
 import Toast from '../components/ui/Toast';
+import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
 import './BrandPage.css';
 
 const BrandPage = () => {
@@ -66,18 +67,59 @@ const BrandPage = () => {
   // Loading skeleton state (when brand query is undefined)
   if (brand === undefined) {
     return (
-      <div className="brand-page brand-page--loading">
-        <div className="brand-loading-skeleton">
-          <div className="skeleton-banner"></div>
-          <div className="skeleton-header-content">
-            <div className="skeleton-logo"></div>
-            <div className="skeleton-text-block">
-              <div className="skeleton-line skeleton-line--title"></div>
-              <div className="skeleton-line skeleton-line--subtitle"></div>
+      <div className="brand-page brand-page--loading" aria-hidden="true">
+        {/* 1. Header Skeleton */}
+        <div className="brand-header brand-header--skeleton">
+          <div className="brand-header__banner skeleton-shimmer" style={{ height: '400px' }}></div>
+          <div className="brand-header__content">
+            <div className="brand-header__identity">
+              <div className="brand-header__logo-container skeleton-shimmer"></div>
+              <div className="brand-header__info">
+                <div className="skeleton-shimmer" style={{ width: '220px', height: '36px', borderRadius: 'var(--radius-md)', marginBottom: '12px' }}></div>
+                <div className="skeleton-shimmer" style={{ width: '80%', maxWidth: '380px', height: '18px', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}></div>
+                <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                  <div className="skeleton-shimmer" style={{ width: '110px', height: '26px', borderRadius: 'var(--radius-pill)' }}></div>
+                  <div className="skeleton-shimmer" style={{ width: '130px', height: '26px', borderRadius: 'var(--radius-pill)' }}></div>
+                </div>
+              </div>
+            </div>
+            <div className="brand-header__actions">
+              <div className="skeleton-shimmer" style={{ width: '130px', height: '42px', borderRadius: 'var(--radius-md)' }}></div>
+              <div className="skeleton-shimmer" style={{ width: '160px', height: '42px', borderRadius: 'var(--radius-md)' }}></div>
             </div>
           </div>
-          <div className="brand-loading">Unveiling Brand Experience...</div>
         </div>
+
+        {/* 2. Overlapping Search Strip Skeleton */}
+        <div className="search-strip search-strip--skeleton" style={{ paddingTop: 'var(--space-4)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div className="skeleton-shimmer" style={{ width: '200px', height: '14px', margin: '0 auto var(--space-4)', borderRadius: 'var(--radius-sm)' }}></div>
+          <div className="skeleton-shimmer" style={{ height: '56px', width: '100%', maxWidth: '680px', margin: '0 auto var(--space-5)', borderRadius: 'var(--radius-pill)', background: 'var(--surface-container-low)' }}></div>
+          <div className="search-suggestions" style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center', width: '100%' }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="skeleton-shimmer" style={{ width: '120px', height: '32px', borderRadius: 'var(--radius-pill)', background: 'var(--surface-container-low)' }}></div>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. Main content area skeleton */}
+        <main className="brand-page__main" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 var(--space-6)' }}>
+          {/* Nav Rail tabs skeleton */}
+          <div className="skeleton-tabs" style={{ display: 'flex', gap: 'var(--space-6)', borderBottom: '2px solid var(--surface-container)', padding: 'var(--space-4) 0', marginBottom: 'var(--space-10)' }}>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="skeleton-shimmer" style={{ width: '80px', height: '18px', borderRadius: 'var(--radius-sm)' }}></div>
+            ))}
+          </div>
+
+          {/* Product Grid Skeleton */}
+          <div className="skeleton-products" style={{ marginBottom: 'var(--space-16)' }}>
+            <div className="skeleton-shimmer" style={{ width: '180px', height: '24px', borderRadius: 'var(--radius-sm)', marginBottom: '24px' }}></div>
+            <div className="plp__grid">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

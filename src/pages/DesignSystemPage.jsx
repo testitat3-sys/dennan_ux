@@ -17,16 +17,48 @@ const DesignSystemPage = () => {
   const { setIsCartOpen } = useCart();
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
-  const colors = [
+  const paletteA = [
     { name: 'Brand Primary', var: '--color-brand-primary', hex: '#D35097', desc: 'Hero highlights, key interactive accents.' },
-    { name: 'Brand Primary Dark', var: '--color-brand-primary-dark', hex: '#A63E74', desc: 'Hover/pressed states.' },
-    { name: 'Brand Primary Light', var: '--color-brand-primary-light', hex: '#F07FB8', desc: 'Badge backgrounds, decorative accents.' },
-    { name: 'Brand Secondary', var: '--color-brand-secondary', hex: '#832C7A', desc: 'Depth accents, footer tones.' },
-    { name: 'Brand Accent', var: '--color-brand-accent', hex: '#E1D328', desc: 'Sale tags, limited-edition markers.' },
-    { name: 'Anchor', var: '--color-anchor', hex: '#111111', desc: 'CTA button backgrounds, primary text.' },
-    { name: 'Support Blue', var: '--color-support-blue', hex: '#4DBEE3', desc: 'Informational states, Newborn theming.' },
-    { name: 'Support Green', var: '--color-support-green', hex: '#7FA93E', desc: 'Success states, Essentials tier.' },
-    { name: 'Support Red', var: '--color-support-red', hex: '#E53E3E', desc: 'Error states, destructive actions.' },
+    { name: 'Brand Primary Dark', var: '--color-brand-primary-dark', hex: '#A63E74', desc: 'Hover and active pressed states.' },
+    { name: 'Brand Primary Light', var: '--color-brand-primary-light', hex: '#F07FB8', desc: 'Badge background shades.' },
+    { name: 'Brand Secondary', var: '--color-brand-secondary', hex: '#832C7A', desc: 'Footer background tones.' },
+    { name: 'Brand Accent', var: '--color-brand-accent', hex: '#E1D328', desc: 'Alert badges and sale listings.' },
+    { name: 'Anchor', var: '--color-anchor', hex: '#111111', desc: 'Active high contrast titles.' },
+    { name: 'On Primary', var: '--color-on-primary', hex: '#FFFFFF', desc: 'Icon and text overlays.' },
+    { name: 'Gallery White', var: '--color-gallery-white', hex: '#FFFFFF', desc: 'Backdrop base canvas.' },
+    { name: 'Text Primary', var: '--text-primary', hex: 'var(--color-anchor)', desc: 'Primary reading body text (Variable).' },
+    { name: 'Text Secondary', var: '--text-secondary', hex: '#555555', desc: 'Muted body descriptions.' },
+    { name: 'Text Tertiary', var: '--text-tertiary', hex: '#888888', desc: 'Subtle caption labels.' },
+    { name: 'Support Blue', var: '--color-support-blue', hex: '#4DBEE3', desc: 'Informational states, Newborn stage theming.' },
+    { name: 'Support Green', var: '--color-support-green', hex: '#7FA93E', desc: 'Success states, Essentials tier theming.' },
+    { name: 'Support Red', var: '--color-support-red', hex: '#E53E3E', desc: 'Error panels and alerts.' },
+    { name: 'Surface Base', var: '--surface', hex: '#FFFFFF', desc: 'Primary paper container level.' },
+    { name: 'Surface Container Low', var: '--surface-container-low', hex: '#FAF9F8', desc: 'Underlying drawer elevations.' },
+    { name: 'Surface Container', var: '--surface-container', hex: '#F4F2F0', desc: 'Default content frame wrapper.' },
+    { name: 'Surface Container High', var: '--surface-container-high', hex: '#EDE9E5', desc: 'Dividers and border offsets.' },
+    { name: 'Surface Container Highest', var: '--surface-container-highest', hex: '#E5E0DB', desc: 'Deep border contrast lines.' }
+  ];
+
+  const paletteB = [
+    { name: 'Brand Primary', var: '--color-brand-primary', hex: '#d35097', desc: 'Hero highlights, key interactive accents.' },
+    { name: 'Brand Primary Dark', var: '--color-brand-primary-dark', hex: '#a63e74', desc: 'Hover and active pressed states.' },
+    { name: 'Brand Primary Light', var: '--color-brand-primary-light', hex: '#f07fb8', desc: 'Badge background shades.' },
+    { name: 'Brand Secondary', var: '--color-brand-secondary', hex: '#832c7a', desc: 'Footer background tones.' },
+    { name: 'Brand Accent', var: '--color-brand-accent', hex: '#e1d328', desc: 'Alert badges and sale listings.' },
+    { name: 'Anchor', var: '--color-anchor', hex: '#111111', desc: 'Active high contrast titles.' },
+    { name: 'On Primary', var: '--color-on-primary', hex: '#ffffff', desc: 'Icon and text overlays.' },
+    { name: 'Gallery White', var: null, hex: null, desc: 'Not specified in this palette configuration.' },
+    { name: 'Text Primary', var: '--text-primary', hex: '#111111', desc: 'Primary reading body text (Direct Hex).' },
+    { name: 'Text Secondary', var: '--text-secondary', hex: '#555555', desc: 'Muted body descriptions.' },
+    { name: 'Text Tertiary', var: '--text-tertiary', hex: '#888888', desc: 'Subtle caption labels.' },
+    { name: 'Support Blue', var: null, hex: null, desc: 'Not specified in this palette configuration.' },
+    { name: 'Support Green', var: '--color-support-green', hex: '#7fa93e', desc: 'Success states, Essentials tier theming.' },
+    { name: 'Support Red', var: '--color-support-red', hex: '#e53e3e', desc: 'Error panels and alerts.' },
+    { name: 'Surface Base', var: '--surface', hex: '#ffffff', desc: 'Primary paper container level.' },
+    { name: 'Surface Container Low', var: '--surface-container-low', hex: '#faf9f8', desc: 'Underlying drawer elevations.' },
+    { name: 'Surface Container', var: '--surface-container', hex: '#f4f2f0', desc: 'Default content frame wrapper.' },
+    { name: 'Surface Container High', var: '--surface-container-high', hex: '#ede9e5', desc: 'Dividers and border offsets.' },
+    { name: 'Surface Container Highest', var: '--surface-container-highest', hex: '#e5e0db', desc: 'Deep border contrast lines.' }
   ];
 
   const typography = [
@@ -71,6 +103,58 @@ const DesignSystemPage = () => {
     type: 'newborn'
   };
 
+  const productTags = [
+    {
+      name: 'Sales Velocity Tag (Special)',
+      className: 'tag tag--sales',
+      varName: 'var(--color-brand-primary-dark)',
+      desc: 'Builds quick social proof showing items sold to inspire buyer trust and immediate interest. Features a premium deep brand hue.',
+      exampleText: '1k+ sold'
+    },
+    {
+      name: 'Brand Primary Tag',
+      className: 'tag tag--primary',
+      varName: 'var(--color-brand-primary)',
+      desc: 'For top-priority community accolades or product tier labels such as active best sellers.',
+      exampleText: 'Best Seller'
+    },
+    {
+      name: 'Brand Secondary Tag',
+      className: 'tag tag--secondary',
+      varName: 'var(--color-brand-secondary)',
+      desc: 'Used for secondary awards or alternative status badges.',
+      exampleText: 'Top Rated'
+    },
+    {
+      name: 'Support Green Tag',
+      className: 'tag tag--support-green',
+      varName: 'var(--color-support-green)',
+      desc: 'Suggests pure organic origins, natural material properties, eco-certifications, or sustainability.',
+      exampleText: 'Organic'
+    },
+    {
+      name: 'Support Blue Tag',
+      className: 'tag tag--support-blue',
+      varName: 'var(--color-support-blue)',
+      desc: 'Used for clinical or soft technical attributes such as dermatological testing or anatomical shape.',
+      exampleText: 'Natural'
+    },
+    {
+      name: 'Support Red Tag',
+      className: 'tag tag--support-red',
+      varName: 'var(--color-support-red)',
+      desc: 'Denotes out-of-stock items, immediate urgency warnings, low stock pressure, or limited edition drops.',
+      exampleText: 'Out of Stock'
+    },
+    {
+      name: 'Value & Promo Tag',
+      className: 'tag tag--accent',
+      varName: 'var(--color-brand-accent)',
+      desc: 'Highlights active customer savings, specific discounts, percent reductions, or limited promo deals.',
+      exampleText: '25% OFF'
+    }
+  ];
+
   return (
     <div className="ds-page">
       <header className="ds-header">
@@ -85,21 +169,54 @@ const DesignSystemPage = () => {
       {/* 1. COLORS */}
       <section className="ds-section">
         <div className="ds-section__header">
-          <h2 className="ds-section__title">Color Palette</h2>
-          <p className="ds-section__desc">Botanical color moments against a gallery-white canvas.</p>
+          <h2 className="ds-section__title">Color Palette Showcase</h2>
+          <p className="ds-section__desc">Compare the active production theme with the minimalist alternative layout side-by-side.</p>
         </div>
-        <div className="ds-color-grid">
-          {colors.map((color) => (
-            <div key={color.var} className="ds-color-card">
-              <div className="ds-color-swatch" style={{ backgroundColor: `var(${color.var})` }}></div>
-              <div className="ds-color-info">
-                <span className="ds-color-name">{color.name}</span>
-                <code className="ds-color-var">{color.var}</code>
-                <span className="ds-color-hex">{color.hex}</span>
-                <p className="ds-color-desc">{color.desc}</p>
-              </div>
+
+        <div className="ds-palette-compare">
+          {/* Palette A Column */}
+          <div className="ds-palette-column">
+            <h3 className="ds-palette-col-title">Palette A: Current Production</h3>
+            <p className="ds-palette-col-desc">Active application configuration featuring Blue theme accents and dynamic variables fallback.</p>
+            <div className="ds-color-grid" style={{ display: 'grid' }}>
+              {paletteA.map((color) => (
+                <div key={color.name} className="ds-color-card">
+                  <div className="ds-color-swatch" style={{ backgroundColor: `var(${color.var})` }}></div>
+                  <div className="ds-color-info">
+                    <span className="ds-color-name">{color.name}</span>
+                    <code className="ds-color-var">{color.var}</code>
+                    <span className="ds-color-hex">{color.hex}</span>
+                    <p className="ds-color-desc">{color.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Palette B Column */}
+          <div className="ds-palette-column">
+            <h3 className="ds-palette-col-title">Palette B: Minimalist Alternative</h3>
+            <p className="ds-palette-col-desc">Streamlined configuration omitting Gallery White and Support Blue, with Text Primary mapped directly to Hex.</p>
+            <div className="ds-color-grid" style={{ display: 'grid' }}>
+              {paletteB.map((color) => (
+                <div key={color.name} className="ds-color-card">
+                  {color.hex ? (
+                    <div className="ds-color-swatch" style={{ backgroundColor: color.hex }}></div>
+                  ) : (
+                    <div className="ds-color-swatch ds-color-swatch--empty"></div>
+                  )}
+                  <div className="ds-color-info">
+                    <span className="ds-color-name">{color.name}</span>
+                    <code className="ds-color-var" style={{ color: color.var ? 'var(--color-brand-primary)' : 'var(--text-tertiary)' }}>
+                      {color.var || 'N/A'}
+                    </code>
+                    <span className="ds-color-hex">{color.hex || 'Omitted'}</span>
+                    <p className="ds-color-desc">{color.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -198,7 +315,33 @@ const DesignSystemPage = () => {
         </div>
       </section>
 
-      {/* 6. COMPONENTS */}
+      {/* 6. PRODUCT TAGS & BADGES SHOWCASE */}
+      <section className="ds-section">
+        <div className="ds-section__header">
+          <h2 className="ds-section__title">Product Tags & Badges</h2>
+          <p className="ds-section__desc">
+            Clean, high-contrast, rounded label markers with solid colored backgrounds and absolutely no icons. Each tag is mapped directly to a CSS variable name.
+          </p>
+        </div>
+
+        <div className="ds-tags-grid">
+          {productTags.map((tag) => (
+            <div key={tag.name} className="ds-tag-card">
+              <div className="ds-tag-preview-wrap">
+                <span className={tag.className}>{tag.exampleText}</span>
+              </div>
+              <div className="ds-tag-meta-info">
+                <span className="ds-tag-title">{tag.name}</span>
+                <code className="ds-tag-class-label">.{tag.className.split(' ').join('.')}</code>
+                <span className="ds-tag-variable-label">{tag.varName}</span>
+                <p className="ds-tag-desc">{tag.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 7. COMPONENTS */}
       <section className="ds-section">
         <div className="ds-section__header">
           <h2 className="ds-section__title">UI Components</h2>

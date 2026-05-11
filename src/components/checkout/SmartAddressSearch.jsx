@@ -221,8 +221,15 @@ const SmartAddressSearch = ({ onSelectAddress, landmarks = [], history = [] }) =
                 );
               }) : (
                 <div className="no-results">
-                  {status === "ZERO_RESULTS" ? "No locations found." : 
-                   status === "ERROR" ? "Error fetching results." : "Typing..."}
+                  {status === "ZERO_RESULTS" && "No locations found."}
+                  {status === "ERROR" && "Error fetching results."}
+                  {status === "LOADING" && (
+                    <div className="search-loading-container">
+                      <div className="search-loading-spinner"></div>
+                      <span>Searching Google Maps...</span>
+                    </div>
+                  )}
+                  {status === "IDLE" && "Typing..."}
                 </div>
               )}
             </div>

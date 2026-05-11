@@ -48,6 +48,14 @@ export const seedData = mutation({
           // Image via Picsum
           const imageId = faker.number.int({ min: 1, max: 1000 });
           const image = `https://picsum.photos/400/400?random=${imageId}`;
+          
+          const images = [
+            image,
+            `https://picsum.photos/400/400?random=${faker.number.int({ min: 1, max: 1000 })}`,
+            `https://picsum.photos/400/400?random=${faker.number.int({ min: 1, max: 1000 })}`,
+            `https://picsum.photos/400/400?random=${faker.number.int({ min: 1, max: 1000 })}`,
+            `https://picsum.photos/400/400?random=${faker.number.int({ min: 1, max: 1000 })}`,
+          ];
 
           const isCurated = faker.datatype.boolean();
           const isMostLoved = faker.datatype.boolean();
@@ -59,6 +67,7 @@ export const seedData = mutation({
             price,
             wasPrice,
             image,
+            images,
             stage,
             tier,
             category,

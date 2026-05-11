@@ -6,7 +6,20 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { formatPrice } from '../utils/priceUtils';
 import Toast from '../components/ui/Toast';
+import Button from '../components/ui/Button';
+import PDPSkeleton from '../components/ui/PDPSkeleton';
 import './PDP.css';
+
+const formatUnitsSold = (units) => {
+  if (units >= 1000) {
+    return `${(units / 1000).toFixed(1).replace(/\.0$/, '')}k+ sold`;
+  }
+  if (units > 20) {
+    const rounded = Math.floor(units / 5) * 5;
+    return `${rounded}+ sold`;
+  }
+  return `${units} sold`;
+};
 
 const PDP = () => {
   const { productId } = useParams();
@@ -15,12 +28,14 @@ const PDP = () => {
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadedImages, setLoadedImages] = useState({});
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('Newborn');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [activeTab, setActiveTab] = useState('details');
   const [notifyBackInStock, setNotifyBackInStock] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   // Live fetch from Convex
   const allProducts = useQuery(api.data.getProducts);
@@ -30,13 +45,73 @@ const PDP = () => {
       const foundProduct = allProducts.find(p => p.id === parseInt(productId) || p._id === productId);
       if (foundProduct) {
         setProduct(foundProduct);
+        setActiveImageIndex(0); // Reset to first image on product switch
+        setLoading(false);
+      } else {
+        // Fetch complete but no matching product found (slug/ID not matched)
         setLoading(false);
       }
     }
   }, [allProducts, productId]);
 
-  if (loading || !product) {
-    return <div className="pdp-loading">Loading product details...</div>;
+  // Scroll animations observer
+  useEffect(() => {
+    if (loading || !product) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.stagger-target').forEach((el, i) => {
+            el.style.animationDelay = (i * 0.05) + 's';
+            el.classList.add('stagger-in');
+          });
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
+
+    // Stagger parent containers on scroll
+    const animSections = document.querySelectorAll(
+      '.pdp__gallery, .pdp__info, .pdp__details, .pdp__tab-content'
+    );
+
+    animSections.forEach((section) => {
+      Array.from(section.children).forEach((child) => {
+        child.classList.add('stagger-target');
+      });
+      observer.observe(section);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [loading, product, activeTab]);
+
+  if (loading) {
+    return <PDPSkeleton />;
+  }
+
+  if (!loading && !product) {
+    return (
+      <main className="pdp pdp--not-found">
+        <div className="pdp__container" style={{ textAlign: 'center', padding: 'var(--space-20) var(--space-4)' }}>
+          <h1 className="display-sm" style={{ marginBottom: 'var(--space-4)', color: 'var(--color-brand-primary)' }}>
+            Product Not Found
+          </h1>
+          <p className="body-lg" style={{ color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto var(--space-8)' }}>
+            We couldn't find the product details you were looking for. It may have been discontinued or moved to a new category.
+          </p>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+            <Link to="/" className="btn btn-primary" style={{ padding: '12px 24px', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
+              Back to Home
+            </Link>
+            <Link to="/category/all" className="btn btn-secondary" style={{ padding: '12px 24px', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
+              Browse Store
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   const id = product.id || product._id;
@@ -70,6 +145,7 @@ const PDP = () => {
   };
 
   const sizes = ['Newborn', '0-3m', '3-6m', '6-9m'];
+  const imagesList = product.images || [product.image];
 
   return (
     <main className="pdp">
@@ -91,24 +167,76 @@ const PDP = () => {
           {/* Left: Image Gallery */}
           <div className="pdp__gallery">
             <div className="pdp__main-image">
-              <img src={product.image} alt={product.name} />
-              <div className="pdp__badges-overlay">
-                {isOutOfStock && (
-                  <span className="pdp__badge pdp__badge--out-of-stock" style={{ backgroundColor: 'var(--surface-container-highest)', color: 'var(--text-secondary)' }}>
-                    Out of Stock
-                  </span>
-                )}
-                {product.tags && product.tags.map((tag, idx) => (
-                  <span key={idx} className={`pdp__badge pdp__badge--${tag.type}`}>
-                    {tag.text}
-                  </span>
+              {/* Localized Shimmer Overlay */}
+              {!loadedImages[activeImageIndex] && (
+                <div className="skeleton-shimmer" style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  zIndex: 2,
+                  backgroundColor: 'var(--skeleton-base)',
+                  borderRadius: 'var(--radius-lg)'
+                }} />
+              )}
+
+              {imagesList.length > 1 && activeImageIndex > 0 && (
+                <button 
+                  className="pdp__carousel-arrow pdp__carousel-arrow--left" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex(prev => Math.max(0, prev - 1));
+                  }}
+                  aria-label="Previous image"
+                  style={{ zIndex: 3 }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                  </svg>
+                </button>
+              )}
+
+              <div 
+                className="pdp__carousel-track" 
+                style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
+              >
+                {imagesList.map((imgUrl, idx) => (
+                  <div className="pdp__carousel-slide" key={idx}>
+                    <img 
+                      src={imgUrl} 
+                      alt={`${product.name} view ${idx + 1}`} 
+                      onLoad={() => setLoadedImages(prev => ({ ...prev, [idx]: true }))}
+                    />
+                  </div>
                 ))}
               </div>
+
+              {imagesList.length > 1 && activeImageIndex < imagesList.length - 1 && (
+                <button 
+                  className="pdp__carousel-arrow pdp__carousel-arrow--right" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex(prev => Math.min(imagesList.length - 1, prev + 1));
+                  }}
+                  aria-label="Next image"
+                  style={{ zIndex: 3 }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </button>
+              )}
             </div>
+            
             <div className="pdp__thumbnails">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="pdp__thumbnail">
-                  <img src={product.image} alt={`${product.name} view ${i}`} />
+              {imagesList.map((imgUrl, idx) => (
+                <div 
+                  key={idx} 
+                  className={`pdp__thumbnail ${activeImageIndex === idx ? 'is-active' : ''}`}
+                  onClick={() => setActiveImageIndex(idx)}
+                >
+                  <img src={imgUrl} alt={`${product.name} view ${idx + 1}`} />
                 </div>
               ))}
             </div>
@@ -120,19 +248,8 @@ const PDP = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="pdp__brand">{product.brand}</span>
                 {product.unitsSold !== undefined && product.unitsSold > 0 && (
-                  <span className="pdp__units-sold" style={{
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    background: 'rgba(245, 158, 11, 0.12)',
-                    color: '#d97706',
-                    padding: '4px 12px',
-                    borderRadius: '100px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    boxShadow: '0 2px 4px rgba(245, 158, 11, 0.05)'
-                  }}>
-                    🔥 {product.unitsSold} sold
+                  <span className="tag tag--sales">
+                    {formatUnitsSold(product.unitsSold)}
                   </span>
                 )}
               </div>
@@ -164,6 +281,26 @@ const PDP = () => {
               </div>
             </div>
 
+            {/* Product Badges & Tags (DesignSystem) */}
+            <div className="pdp__tags-list">
+              {isOutOfStock && (
+                <span className="tag tag--support-red">
+                  Out of Stock
+                </span>
+              )}
+              {product.tags && product.tags
+                .filter(tag => tag && tag.text && tag.text.toLowerCase() !== 'in stock')
+                .map((tag, idx) => {
+                  const tagClass = `tag tag--${tag.type || 'primary'}`;
+                  return (
+                    <span key={idx} className={tagClass}>
+                      {tag.text}
+                    </span>
+                  );
+                })
+              }
+            </div>
+
             {/* Delivery Urgency */}
             <div className="pdp__urgency">
               <div className="urgency__icon">
@@ -174,8 +311,8 @@ const PDP = () => {
               <p>Order in <strong>4h 25m</strong> for delivery by <strong>Tomorrow, 4:00 PM</strong></p>
             </div>
 
-            {/* Selection Controls */}
-            <div className="pdp__controls">
+            {/* Selection Controls Row */}
+            <div className="pdp__controls-row">
               {product.category === 'Apparel' && (
                 <div className="pdp__sizes">
                   <span className="control-label">Select Size</span>
@@ -204,18 +341,17 @@ const PDP = () => {
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Actions Row */}
             <div className="pdp__actions" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                {isOutOfStock ? (
-                  <button className="btn-primary pdp__add-btn" onClick={handleToggleWishlist}>
-                    {isSaved ? 'In Wishlist' : 'Add to Wishlist'}
-                  </button>
-                ) : (
-                  <button className="btn-primary pdp__add-btn" onClick={handleAddToCart}>
-                    Add to Cart — {formatPrice(product.price)}
-                  </button>
-                )}
+              <div className="pdp__actions-row">
+                <Button 
+                  className="pdp__add-btn" 
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock}
+                >
+                  Add to cart
+                </Button>
+                
                 <button className="btn-secondary pdp__wishlist-btn" onClick={handleToggleWishlist}>
                   <svg 
                     width="20" 
@@ -256,12 +392,6 @@ const PDP = () => {
 
             {/* Trust Badges */}
             <div className="pdp__trust">
-              <div className="trust-item">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-                <span>Authentic Brand</span>
-              </div>
               <div className="trust-item">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 10H3M21 6H3M21 14H3M21 18H3"/>

@@ -160,25 +160,69 @@
     align-items: center;
     margin-top: -80px;
     text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 var(--space-4);
+    gap: var(--space-6);
   }
   
   .brand-header__identity {
     flex-direction: column;
     align-items: center;
+    gap: var(--space-4);
+    width: 100%;
+  }
+
+  .brand-header__logo-container {
+    width: 100px;
+    height: 100px;
+    padding: var(--space-2);
+  }
+
+  .brand-header__info {
+    width: 100%;
+    padding-bottom: 0;
   }
   
   .brand-header__title {
     color: var(--text-primary);
     text-shadow: none;
+    font-size: var(--headline-lg);
   }
   
   .brand-header__mission {
     color: var(--text-secondary);
+    font-size: var(--body-md);
+    margin-bottom: var(--space-4);
   }
   
+  .brand-header__badges {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+  }
+
   .brand-header__badge {
     background: var(--surface-container);
     color: var(--text-secondary);
+  }
+
+  .brand-header__actions {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    padding-bottom: var(--space-2);
+  }
+
+  .brand-header__btn {
+    flex: 1;
+    min-width: 120px;
+    max-width: 200px;
+    justify-content: center;
+    padding: var(--space-2-5) var(--space-4);
+    font-size: var(--body-sm);
   }
 }
 

@@ -51,6 +51,8 @@ export default defineSchema({
     wasPrice: v.optional(v.number()),
     /** Asset path or absolute URL */
     image: v.string(),
+    /** Optional secondary product images array */
+    images: v.optional(v.array(v.string())),
     /** "mother" | "newborn" | "kid" */
     stage: v.union(v.literal("mother"), v.literal("newborn"), v.literal("kid")),
     /** "essentials" | "musthaves" | "luxuries" */

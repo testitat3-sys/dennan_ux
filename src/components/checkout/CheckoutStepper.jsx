@@ -26,10 +26,25 @@ const StepIcons = {
   )
 };
 
-const CheckoutStepper = ({ currentStepId, steps = [] }) => {
-  const currentStepIndex = steps.findIndex(s => s.id === currentStepId);
+const DEFAULT_STEPS = [
+  { id: 'cart', label: 'Bag' },
+  { id: 'payment', label: 'Details' },
+  { id: 'confirmation', label: 'Complete' }
+];
+
+const CheckoutStepper = ({ currentStepId, steps = [], currentStep }) => {
+  // Use provided steps, fallback to DEFAULT_STEPS if empty
+  const activeSteps = steps && steps.length > 0 ? steps : DEFAULT_STEPS;
   
-  const displaySteps = steps.map(step => ({
+  // Resolve index based on currentStep (number) or currentStepId (string ID)
+  let currentStepIndex = 0;
+  if (currentStep !== undefined) {
+    currentStepIndex = typeof currentStep === 'number' ? currentStep - 1 : activeSteps.findIndex(s => s.id === currentStep);
+  } else if (currentStepId !== undefined) {
+    currentStepIndex = activeSteps.findIndex(s => s.id === currentStepId);
+  }
+
+  const displaySteps = activeSteps.map(step => ({
     ...step,
     icon: StepIcons[step.id] || StepIcons.cart
   }));

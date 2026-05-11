@@ -4,6 +4,17 @@ import ProductCardSkeleton from './ProductCardSkeleton';
 import { formatPrice } from '../../utils/priceUtils';
 import { useWishlist } from '../../context/WishlistContext';
 
+const formatUnitsSold = (units) => {
+  if (units >= 1000) {
+    return `${(units / 1000).toFixed(1).replace(/\.0$/, '')}k+ sold`;
+  }
+  if (units > 20) {
+    const rounded = Math.floor(units / 5) * 5;
+    return `${rounded}+ sold`;
+  }
+  return `${units} sold`;
+};
+
 const ProductCard = ({ 
   product, 
   className = '', 
@@ -58,13 +69,21 @@ const ProductCard = ({
           {badge && <span className="product-card__badge">{badge}</span>}
           <div className="product-card__tags">
             {isOutOfStock && (
-              <span className="tag" style={{ backgroundColor: 'var(--surface-container-highest)', color: 'var(--text-secondary)' }}>
+              <span className="tag tag--support-red">
                 Out of Stock
               </span>
             )}
-            {tags && tags.map((tag, i) => (
-              <span key={i} className={`tag tag--${tag.type}`}>{tag.text}</span>
-            ))}
+            {unitsSold !== undefined && unitsSold > 0 && (
+              <span className="tag tag--sales">
+                {formatUnitsSold(unitsSold)}
+              </span>
+            )}
+            {tags && tags
+              .filter(tag => tag && tag.text && tag.text.toLowerCase() !== 'in stock')
+              .map((tag, i) => (
+                <span key={i} className={`tag tag--${tag.type}`}>{tag.text}</span>
+              ))
+            }
           </div>
           {showWishlistIcon && (
             <button 
@@ -101,21 +120,6 @@ const ProductCard = ({
       <div className="product-card__info">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
           <span className="product-card__tier">{tier}</span>
-          {unitsSold !== undefined && unitsSold > 0 && (
-            <span className="product-card__sales" style={{ 
-              fontSize: '0.75rem', 
-              color: '#d97706', 
-              fontWeight: 600,
-              background: 'rgba(245, 158, 11, 0.08)',
-              padding: '2px 8px',
-              borderRadius: '20px',
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '4px' 
-            }}>
-              🔥 {unitsSold} sold
-            </span>
-          )}
         </div>
         <Link to={`/product/${id}`} className="product-card__name-link">
           <h3 className="product-card__name">{name}</h3>

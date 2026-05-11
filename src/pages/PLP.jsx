@@ -125,6 +125,7 @@ const PLP = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -379,11 +380,19 @@ const PLP = () => {
         <section className="plp__content">
           <div className="plp__toolbar">
             <span className="plp__count">{filteredProducts.length} products found</span>
-            <div className="plp__sort">
-              Sort by: <span className="plp__sort-val">{isCollectionView ? 'Curated' : 'Recommended'}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="m6 9 6 6 6-6"/>
-              </svg>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+              <button className="plp__mobile-filter-btn" onClick={() => setIsMobileFilterOpen(true)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '6px' }}>
+                  <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
+                </svg>
+                Filter {activeFilters.length > 0 && `(${activeFilters.length})`}
+              </button>
+              <div className="plp__sort">
+                Sort by: <span className="plp__sort-val">{isCollectionView ? 'Curated' : 'Recommended'}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </div>
             </div>
           </div>
 
@@ -420,6 +429,81 @@ const PLP = () => {
         message={toastMessage} 
         onClose={() => setShowToast(false)} 
       />
+
+      {/* Mobile Bottom Sheet Filter Drawer */}
+      <div className={`plp__filter-drawer ${isMobileFilterOpen ? 'is-open' : ''}`} role="dialog" aria-modal="true">
+        <div className="plp__filter-drawer-overlay" onClick={() => setIsMobileFilterOpen(false)} />
+        <div className="plp__filter-drawer-content">
+          <div className="plp__filter-drawer-header">
+            <h3>Filter Products</h3>
+            <button className="plp__filter-drawer-close" aria-label="Close filters" onClick={() => setIsMobileFilterOpen(false)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M18 6 6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          
+          <div className="plp__filter-drawer-body">
+            {categories.length > 0 && (
+              <div className="filter-group">
+                <span className="filter-group__title">Categories</span>
+                <ul className="filter-list">
+                  {categories.map(cat => (
+                    <li 
+                      key={cat} 
+                      className={`filter-item ${activeFilters.includes(cat) ? 'is-active' : ''}`}
+                      onClick={() => toggleFilter(cat)}
+                    >
+                      <div className="filter-item__checkbox">
+                        {activeFilters.includes(cat) && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        )}
+                      </div>
+                      <span className="filter-item__label">{cat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="filter-group">
+              <span className="filter-group__title">Tiers</span>
+              <ul className="filter-list">
+                {tiers.map(tier => {
+                  const isActive = activeFilters.some(f => f.toLowerCase() === tier.toLowerCase() || (f.toLowerCase() === 'must-haves' && tier.toLowerCase() === 'must-haves'));
+                  return (
+                    <li 
+                      key={tier} 
+                      className={`filter-item ${isActive ? 'is-active' : ''}`}
+                      onClick={() => toggleFilter(tier)}
+                    >
+                      <div className="filter-item__checkbox">
+                        {isActive && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        )}
+                      </div>
+                      <span className="filter-item__label">{tier}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+
+          <div className="plp__filter-drawer-footer">
+            <button className="btn-ghost" onClick={() => { setActiveFilters([]); setIsMobileFilterOpen(false); }}>
+              Clear All
+            </button>
+            <button className="btn-primary" onClick={() => setIsMobileFilterOpen(false)}>
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   );
 };

@@ -360,7 +360,7 @@
 
 @media (max-width: 768px) {
   .cart-modal-overlay {
-    padding: var(--layout-inset);
+    padding: 0;
     align-items: flex-end;
   }
 
@@ -368,13 +368,15 @@
     height: auto;
     max-height: 92vh;
     width: 100%;
+    max-width: 100%;
     margin-bottom: 0;
     border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+    background: var(--surface);
   }
-  
-  .cart-modal__urgency {
-    padding-left: var(--space-8);
-    padding-right: var(--space-8);
+
+  .cart-modal__header,
+  .cart-modal__footer {
+    background: var(--surface);
   }
 
   .cart-modal__header,
@@ -389,16 +391,18 @@
   }
 }
 
-/* For very small devices, ensure it still feels centered */
+/* For very small devices, ensure it still fills out the horizontal screen width nicely with no overflow */
 @media (max-width: 480px) {
   .cart-modal-overlay {
-    padding: var(--space-4);
+    padding: 0;
   }
 
   .cart-modal {
-    width: calc(100% - var(--space-4));
-    margin-bottom: var(--space-4);
-    border-radius: var(--radius-3xl);
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 0;
+    border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+    background: var(--surface);
   }
 
   .cart-modal__header,

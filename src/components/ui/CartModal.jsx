@@ -14,13 +14,11 @@ const CartModal = () => {
     setIsCartOpen, 
     subtotal, 
     totalItems, 
-    deliveryLocation,
     undoRemove 
   } = useCart();
   
   const [isMounted, setIsMounted] = useState(false);
   const [active, setActive] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(720); // 12 minutes in seconds
   const [showUndo, setShowUndo] = useState(false);
   const prevItemsLength = useRef(cartItems.length);
 
@@ -45,17 +43,7 @@ const CartModal = () => {
     }
   }, [isCartOpen]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
-    }, 60000); // Update every minute for simplicity
-    return () => clearInterval(timer);
-  }, []);
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    return `${mins}m`;
-  };
 
   const handleClose = () => {
     setIsCartOpen(false);
@@ -84,12 +72,7 @@ const CartModal = () => {
         className={`cart-modal ${active ? 'is-open' : ''}`} 
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Urgency Banner */}
-        <div className="cart-modal__urgency">
-          <p>
-            Order in <span className="urgency-highlight">{formatTime(timeLeft)}</span> for arrival by <span className="urgency-highlight">4:00 PM today.</span>
-          </p>
-        </div>
+
 
         {/* Header */}
         <div className="cart-modal__header">
@@ -119,9 +102,7 @@ const CartModal = () => {
 
         {/* Sticky Footer */}
         <div className="cart-modal__footer">
-          <div className="cart-modal__location">
-            Delivering to <button className="location-link">{deliveryLocation}</button> for exact time.
-          </div>
+
           
           <div className="cart-modal__subtotal">
             <span className="subtotal-label">Subtotal</span>

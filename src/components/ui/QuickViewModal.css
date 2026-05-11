@@ -419,6 +419,7 @@
   
   .quick-view-modal {
     padding: var(--space-6);
+    background: var(--surface);
   }
 }
 

@@ -88,13 +88,16 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
                 <span className="quick-view-tier">{product.tier}</span>
                 <div className="quick-view-tags">
                   {isOutOfStock && (
-                    <span className="tag" style={{ backgroundColor: 'var(--surface-container-highest)', color: 'var(--text-secondary)' }}>
+                    <span className="tag tag--support-red">
                       Out of Stock
                     </span>
                   )}
-                  {product.tags && product.tags.map((tag, i) => (
-                    <span key={i} className={`tag tag--${tag.type}`}>{tag.text}</span>
-                  ))}
+                  {product.tags && product.tags
+                    .filter(tag => tag && tag.text && tag.text.toLowerCase() !== 'in stock')
+                    .map((tag, i) => (
+                      <span key={i} className={`tag tag--${tag.type}`}>{tag.text}</span>
+                    ))
+                  }
                 </div>
                 <h2 className="quick-view-name">{product.name}</h2>
                 <div className="quick-view-price-row">
