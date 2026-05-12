@@ -3,7 +3,7 @@ import SmartAddressSearch from './SmartAddressSearch';
 import { getKampalaETA } from '../../utils/deliveryUtils';
 import './LocationModal.css';
 
-const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null }) => {
+const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipConfirmation = false }) => {
   const [active, setActive] = useState(false);
   const [selection, setSelection] = useState(null);
   const [isEstimating, setIsEstimating] = useState(false);
@@ -32,6 +32,13 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null }) => {
 
   const handleSelectAddress = (item) => {
     setSelection(item);
+
+    if (skipConfirmation) {
+      onConfirm(item, null);
+      onClose();
+      return;
+    }
+
     setIsEstimating(true);
     setRevealedETA(null);
 

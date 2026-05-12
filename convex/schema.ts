@@ -21,6 +21,8 @@ export default defineSchema({
     role: v.optional(v.union(v.literal("expecting"), v.literal("parent"))),
     dueDate: v.optional(v.string()),
     children: v.optional(v.array(v.object({ dob: v.string() }))),
+    momoPhone: v.optional(v.string()),
+    deliveryLocations: v.optional(v.array(v.object({ name: v.string(), zone: v.string() }))),
   }).index("email", ["email"]),
 
   testLinks: defineTable({

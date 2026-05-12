@@ -267,3 +267,109 @@
     text-align: center;
   }
 }
+
+/* ─── Profile Saved Payment & Delivery Styles ────────────────────────────── */
+
+.delivery-card {
+  background-color: var(--surface-container-low);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-6);
+  transition: all 0.25s ease;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.delivery-card:hover {
+  background-color: var(--surface);
+  border-color: var(--color-brand-primary-light);
+  box-shadow: var(--shadow-ambient);
+}
+
+.delivery-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+}
+
+.delivery-empty p {
+  color: var(--text-secondary);
+  font-size: var(--body-lg);
+  font-weight: 500;
+  margin: 0;
+}
+
+.btn-add-location {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--surface-container);
+  color: var(--text-primary);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: var(--body-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-location:hover {
+  background-color: var(--surface-container-high);
+  border-color: var(--text-secondary);
+}
+
+.delivery-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.delivery-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.delivery-name {
+  font-weight: 700;
+  font-size: var(--title-lg);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.delivery-zone {
+  font-size: var(--body-md);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.btn-change-location {
+  padding: var(--space-2-5) var(--space-5);
+  background-color: transparent;
+  color: var(--color-brand-primary);
+  border: 1px solid var(--color-brand-primary-light);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: var(--body-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-change-location:hover {
+  background-color: var(--color-brand-primary-light);
+  color: var(--color-on-primary);
+}
+
+.profile-delivery-locations-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}

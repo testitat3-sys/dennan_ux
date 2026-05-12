@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useConvex, useMutation, useConvexAuth } from 'convex/react';
+import { useConvex, useQuery, useMutation, useConvexAuth } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import CheckoutStepper from '../components/checkout/CheckoutStepper';
 import LocationModal from '../components/checkout/LocationModal';
@@ -14,6 +14,7 @@ import './CheckoutPage.css';
 const CheckoutPage = () => {
   const convex = useConvex();
   const { isAuthenticated } = useConvexAuth();
+  const user = useQuery(api.users.viewer);
   const convexPlaceOrder = useMutation(api.orders.placeOrder);
 
   const { cartItems, subtotal, clearCart } = useCart();
@@ -51,8 +52,8 @@ const CheckoutPage = () => {
       try {
         const data = await getCheckoutData();
         setCheckoutData(data);
-        // Default address suggestion if available
-        if (data.delivery && data.delivery.suggestions.length > 0) {
+        // If not logged in, default to standard suggestion
+        if (!isAuthenticated && data.delivery && data.delivery.suggestions.length > 0) {
           handleConfirmLocation(data.delivery.suggestions[0]);
         }
       } catch (error) {
@@ -62,7 +63,24 @@ const CheckoutPage = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [isAuthenticated]);
+
+  // Auto-fill from user profile details
+  useEffect(() => {
+    if (user) {
+      if (user.momoPhone && !momoPhone) {
+        setMomoPhone(user.momoPhone);
+      }
+      if (user.deliveryLocations && user.deliveryLocations.length > 0) {
+        if (!selectedAddress) {
+          handleConfirmLocation(user.deliveryLocations[0]);
+        }
+      } else if (isAuthenticated && checkoutData?.delivery?.suggestions?.length > 0 && !selectedAddress) {
+        // Fallback for logged-in users with no saved locations
+        handleConfirmLocation(checkoutData.delivery.suggestions[0]);
+      }
+    }
+  }, [user, checkoutData, isAuthenticated, selectedAddress]);
 
   // 2. Setup delivery countdown once location is confirmed
   useEffect(() => {

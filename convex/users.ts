@@ -210,6 +210,8 @@ export const updateProfile = mutation({
     dueDate: v.optional(v.union(v.string(), v.null())),
     children: v.optional(v.array(v.object({ dob: v.string() }))),
     interests: v.optional(v.array(v.string())),
+    momoPhone: v.optional(v.union(v.string(), v.null())),
+    deliveryLocations: v.optional(v.array(v.object({ name: v.string(), zone: v.string() }))),
   },
   handler: async (ctx, args) => {
     const userId = await auth.getUserId(ctx);
@@ -222,6 +224,8 @@ export const updateProfile = mutation({
     if (args.username !== undefined) patch.username = args.username;
     if (args.role !== undefined) patch.role = args.role;
     if (args.interests !== undefined) patch.interests = args.interests;
+    if (args.momoPhone !== undefined) patch.momoPhone = args.momoPhone === null ? undefined : args.momoPhone;
+    if (args.deliveryLocations !== undefined) patch.deliveryLocations = args.deliveryLocations;
 
     // Handle conditional fields based on active stage
     const activeRole = args.role !== undefined ? args.role : (await ctx.db.get(userId))?.role;

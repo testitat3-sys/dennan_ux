@@ -7,6 +7,8 @@ import { Loader2, Calendar, Baby, User, Sparkles, AlertCircle, Plus, Trash2 } fr
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import Button from '../components/ui/Button';
 import Toast from '../components/ui/Toast';
+import LocationModal from '../components/checkout/LocationModal';
+import { getCheckoutData } from '../services/api';
 import './ProfilePage.css';
 
 export default function ProfilePage() {
@@ -23,11 +25,43 @@ export default function ProfilePage() {
   const [dueDate, setDueDate] = useState('');
   const [children, setChildren] = useState([{ id: Date.now(), dob: '' }]);
 
+  // Payment and Delivery States
+  const [momoPhone, setMomoPhone] = useState('');
+  const [deliveryLocations, setDeliveryLocations] = useState([]);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [editingLocationIndex, setEditingLocationIndex] = useState(null);
+  const [checkoutConfig, setCheckoutConfig] = useState(null);
+
   const [pending, setPending] = useState(false);
   const [formError, setFormError] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Fetch Delivery Zones and Landmarks for modal on mount
+  useEffect(() => {
+    const fetchCheckoutConfig = async () => {
+      try {
+        const config = await getCheckoutData();
+        setCheckoutConfig(config);
+      } catch (err) {
+        console.error("Failed to load checkout/delivery data:", err);
+      }
+    };
+    fetchCheckoutConfig();
+  }, []);
+
+  const normalizeUGPhone = (num) => {
+    let clean = num.replace(/[^0-9+]/g, ''); // keep numbers and +
+    if (clean.startsWith('+256')) {
+      clean = clean.slice(4);
+    } else if (clean.startsWith('256')) {
+      clean = clean.slice(3);
+    } else if (clean.startsWith('0')) {
+      clean = clean.slice(1);
+    }
+    return clean;
+  };
 
   // ── Date Boundary Calculations ─────────────────────────────────────────────
   const today = new Date();
@@ -71,6 +105,8 @@ export default function ProfilePage() {
       } else {
         setChildren([{ id: Date.now(), dob: '' }]);
       }
+      setMomoPhone(user.momoPhone || '');
+      setDeliveryLocations(user.deliveryLocations || []);
       setFormInitialized(true);
     }
   }, [user, formInitialized]);
@@ -114,12 +150,46 @@ export default function ProfilePage() {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  // ── Delivery Location Handlers ─────────────────────────────────────────────
+  const handleAddNewLocation = () => {
+    setEditingLocationIndex(-1);
+    setShowLocationModal(true);
+  };
+
+  const handleEditLocation = (idx) => {
+    setEditingLocationIndex(idx);
+    setShowLocationModal(true);
+  };
+
+  const handleRemoveLocation = (idx) => {
+    setDeliveryLocations(deliveryLocations.filter((_, i) => i !== idx));
+  };
+
+  const handleConfirmLocation = (address) => {
+    const newLoc = { name: address.name, zone: address.zone };
+    if (editingLocationIndex === -1) {
+      setDeliveryLocations([...deliveryLocations, newLoc]);
+    } else {
+      setDeliveryLocations(deliveryLocations.map((loc, idx) => idx === editingLocationIndex ? newLoc : loc));
+    }
+    setEditingLocationIndex(null);
+    setShowLocationModal(false);
+  };
+
   // ── Constraint Validation ──────────────────────────────────────────────────
   const validateForm = () => {
     const errors = {};
 
     if (!name.trim()) {
       errors.name = "Full name is required.";
+    }
+
+    if (momoPhone.trim()) {
+      const cleanNum = normalizeUGPhone(momoPhone);
+      const isValidUG = /^(77|78|76|70|75|74)\d{7}$/.test(cleanNum);
+      if (!isValidUG) {
+        errors.momoPhone = "Must start with 77, 78, 76 (MTN) or 70, 75, 74 (Airtel), followed by 7 digits.";
+      }
     }
 
     if (role === 'expecting') {
@@ -158,12 +228,15 @@ export default function ProfilePage() {
 
     setPending(true);
     try {
+      const cleanPhone = momoPhone.trim() ? normalizeUGPhone(momoPhone) : null;
       const payload = {
         name: name.trim(),
         username: username.trim() || undefined,
         role,
         dueDate: role === 'expecting' ? dueDate : undefined,
         children: role === 'parent' ? children.map(c => ({ dob: c.dob })) : undefined,
+        momoPhone: cleanPhone,
+        deliveryLocations,
       };
 
       console.log("[ProfilePage] Submitting update mutation:", payload);
@@ -176,6 +249,8 @@ export default function ProfilePage() {
         role: payload.role,
         dueDate: payload.dueDate,
         children: payload.children,
+        momoPhone: payload.momoPhone,
+        deliveryLocations: payload.deliveryLocations,
       });
 
       setToastMessage("Your profile changes have been successfully saved.");
@@ -192,6 +267,17 @@ export default function ProfilePage() {
     const isNameDiff = name.trim() !== (user.name || '');
     const isUsernameDiff = username.trim() !== (user.username || '');
     const isRoleDiff = role !== (user.role || 'expecting');
+    const isMomoDiff = (momoPhone.trim() ? normalizeUGPhone(momoPhone) : '') !== (user.momoPhone || '');
+
+    let isLocationsDiff = false;
+    const origLocations = user.deliveryLocations || [];
+    if (deliveryLocations.length !== origLocations.length) {
+      isLocationsDiff = true;
+    } else {
+      isLocationsDiff = deliveryLocations.some((loc, idx) => 
+        loc.name !== origLocations[idx]?.name || loc.zone !== origLocations[idx]?.zone
+      );
+    }
     
     let isJourneyDiff = false;
     if (role === 'expecting') {
@@ -205,7 +291,7 @@ export default function ProfilePage() {
       }
     }
 
-    return isNameDiff || isUsernameDiff || isRoleDiff || isJourneyDiff;
+    return isNameDiff || isUsernameDiff || isRoleDiff || isJourneyDiff || isMomoDiff || isLocationsDiff;
   };
 
   return (
@@ -398,6 +484,96 @@ export default function ProfilePage() {
             </section>
           )}
 
+          {/* Section 3: Saved Payment & Shipping Details */}
+          {!user.isAdmin && (
+            <section className="profile-card">
+              <h2 className="profile-card-title">Saved Payment & Shipping</h2>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
+                {/* Ugandan Mobile Money Number */}
+                <div className="profile-field-group">
+                  <label className="profile-field-label">Mobile Money Number</label>
+                  <div className="profile-field-input-wrap">
+                    <input 
+                      type="tel" 
+                      value={momoPhone} 
+                      onChange={(e) => { setMomoPhone(e.target.value.replace(/[^0-9\s]/g, '')); setValidationErrors(prev => ({ ...prev, momoPhone: null })); }} 
+                      placeholder="e.g. 772 123456"
+                      className="profile-field-input"
+                    />
+                  </div>
+                  {validationErrors.momoPhone ? (
+                    <span className="profile-validation-error">{validationErrors.momoPhone}</span>
+                  ) : (
+                    <span className="profile-field-input-disabled-text">Ugandan format (starts with 77, 78, 76 or 70, 75, 74).</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Delivery Locations */}
+              <div className="profile-field-group">
+                <label className="profile-field-label" style={{ marginBottom: '8px' }}>Saved Delivery Locations</label>
+                
+                <div className="profile-delivery-locations-list">
+                  {deliveryLocations.length > 0 ? (
+                    deliveryLocations.map((loc, idx) => (
+                      <div className="delivery-card" key={idx}>
+                        <div className="delivery-info">
+                          <div className="delivery-details">
+                            <h3 className="delivery-name">{loc.name}</h3>
+                            <p className="delivery-zone">Zone: {loc.zone}</p>
+                          </div>
+                          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                            <button 
+                              type="button" 
+                              className="btn-change-location" 
+                              onClick={() => handleEditLocation(idx)}
+                            >
+                              Change
+                            </button>
+                            <button 
+                              type="button" 
+                              className="profile-child-remove-btn" 
+                              onClick={() => handleRemoveLocation(idx)}
+                              title="Remove location"
+                              style={{ padding: '8px', margin: 0 }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="delivery-card">
+                      <div className="delivery-empty">
+                        <p>Where should we deliver your orders?</p>
+                        <button 
+                          type="button" 
+                          className="btn-add-location" 
+                          onClick={handleAddNewLocation}
+                        >
+                          Select Delivery Address
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {deliveryLocations.length > 0 && deliveryLocations.length < 5 && (
+                  <button 
+                    type="button" 
+                    onClick={handleAddNewLocation}
+                    className="profile-child-add-btn"
+                    style={{ width: 'fit-content' }}
+                  >
+                    <Plus size={16} /> Add another location
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
+
           {/* Form Actions Section */}
           <div className="profile-action-bar">
             <Button 
@@ -416,6 +592,14 @@ export default function ProfilePage() {
           </div>
         </form>
       </main>
+
+      <LocationModal 
+        isOpen={showLocationModal} 
+        onClose={() => { setShowLocationModal(false); setEditingLocationIndex(null); }}
+        onConfirm={handleConfirmLocation}
+        deliveryData={checkoutConfig?.delivery}
+        skipConfirmation={true}
+      />
 
       {/* Success Notification */}
       <Toast 
