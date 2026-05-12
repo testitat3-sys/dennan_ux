@@ -109,13 +109,7 @@ const RegistryPage = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  // Redirect guest/unauthenticated users to auth page
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      console.log("[RegistryPage] User is unauthenticated, redirecting to /auth");
-      navigate('/auth');
-    }
-  }, [isAuthenticated, authLoading, navigate]);
+
 
   // Loading state checks (handles authentication, user details, and registry collection)
   const onboardingLoading = isAuthenticated && convexUser === undefined;

@@ -59,12 +59,7 @@ const Dashboard = () => {
     setShowToast(true);
   };
 
-  useEffect(() => {
-    if (!user) {
-      setShowOnboarding(true);
-      navigate('/');
-    }
-  }, [user, navigate, setShowOnboarding]);
+
 
   if (!user || loading || !dashboardData) return null;
 

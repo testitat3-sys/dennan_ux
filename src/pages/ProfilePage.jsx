@@ -85,13 +85,7 @@ export default function ProfilePage() {
   minDobDateObj.setFullYear(today.getFullYear() - 12);
   const minDobDate = formatDateString(minDobDateObj);
 
-  // ── Redirect Unauthenticated ────────────────────────────────────────────────
-  useEffect(() => {
-    if (user === null) {
-      console.log("[ProfilePage] User is not authenticated. Redirecting to /auth...");
-      navigate('/auth');
-    }
-  }, [user, navigate]);
+
 
   // ── Hydrate Form Data from Convex User ──────────────────────────────────────
   useEffect(() => {

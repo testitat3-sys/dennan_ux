@@ -18,6 +18,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
 import NotFoundPage from './pages/NotFoundPage';
+import ProtectedRoute from './components/layout/ProtectedRoute';
 
 import ScrollToTop from './utils/ScrollToTop';
 
@@ -31,13 +32,31 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/after-signin" element={<AfterSignIn />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          
+          {/* Protected Private Routes */}
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
+          
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/brand/:brandId" element={<BrandPage />} />
           <Route path="/category/:stageId" element={<PLP />} />
           <Route path="/collection/:collectionId" element={<PLP />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/registry" element={<RegistryPage />} />
+          
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/registry" element={
+            <ProtectedRoute>
+              <RegistryPage />
+            </ProtectedRoute>
+          } />
+          
           <Route path="/registry/:registryId" element={<RegistryPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
