@@ -1,15 +1,22 @@
 import React from 'react';
 import { useCart } from '../../context/CartContext';
 import { useRegistry } from '../../context/RegistryContext';
+import { useWishlist } from '../../context/WishlistContext';
 import { formatPrice } from '../../utils/priceUtils';
 
 const CartItem = ({ item }) => {
   const cartContext = useCart();
-  const { updateQuantity, removeFromCart, saveForLater } = cartContext;
+  const { updateQuantity, removeFromCart } = cartContext;
   const { moveFromCartToRegistry } = useRegistry();
+  const { addToWishlist } = useWishlist();
 
   const handleMoveToRegistry = async () => {
     await moveFromCartToRegistry(item, cartContext);
+  };
+
+  const handleSaveToWishlist = async () => {
+    await addToWishlist(item);
+    await removeFromCart(item.id, item.size, 'wishlist');
   };
 
   return (
@@ -32,7 +39,7 @@ const CartItem = ({ item }) => {
           <div className="cart-item__actions">
             <button 
               className="cart-item__action-btn" 
-              onClick={() => saveForLater(item.id, item.size)}
+              onClick={handleSaveToWishlist}
               aria-label="Save for later"
               title="Save for later"
             >

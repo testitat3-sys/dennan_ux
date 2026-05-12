@@ -543,6 +543,11 @@
 }
 
 @media (max-width: 768px) {
+  .dashboard-container {
+    padding: var(--space-6) var(--space-5) !important; /* Lock horizontal padding to a balanced 20px */
+    gap: var(--space-6);
+  }
+
   .journey-profile {
     grid-template-columns: 1fr;
     gap: var(--space-8);
@@ -550,5 +555,25 @@
   
   .welcome-canvas__greeting {
     font-size: var(--headline-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: var(--space-5) var(--space-4) !important; /* Balanced 16px horizontal side gutters on tight screens */
+  }
+
+  .welcome-canvas__overview {
+    grid-template-columns: 1fr !important;
+    padding: var(--space-5) !important;
+    gap: var(--space-5) !important;
+  }
+
+  .gift-activity-module {
+    padding: var(--space-5) !important;
+  }
+
+  .gift-activity-grid {
+    grid-template-columns: 1fr !important;
   }
 }

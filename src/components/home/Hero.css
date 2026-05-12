@@ -65,6 +65,8 @@
   gap: var(--space-4);
   margin-top: var(--space-8);
   max-width: 600px; /* fit comfortably in the left column */
+  grid-column: 1;
+  grid-row: 2;
 }
 
 .heritage-mini-card {
@@ -117,6 +119,11 @@
   opacity: 0.8;
 }
 
+.heritage-mini-card__left,
+.heritage-mini-card__right {
+  display: contents;
+}
+
 /* hero image panel */
 .hero__image-wrap {
   position: relative;
@@ -133,6 +140,8 @@
   transform: translateY(var(--space-8)) scale(0.98);
   animation: fadeUp 0.8s ease forwards;
   animation-delay: 0.25s;
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 .hero__image-inner {
   width: 100%; height: 100%;
@@ -178,4 +187,66 @@
   opacity: 0.35;
   pointer-events: none;
 }
+
+/* Responsive Heritage Overrides */
+@media (max-width: 768px) {
+  /*
+    MANDATE: Hide the Hero Image on mobile devices to optimize layout space.
+    To restore the hero image on mobile in the future:
+    1. Change "display: none !important" to "display: block" or "display: flex" below.
+    2. Remove or adjust the "grid-template-columns: 1fr" override on ".hero" in App.css (if you want columns side-by-side on mobile again).
+    3. Remove or adjust the skeleton hide rule in HomeSkeleton.css.
+  */
+  .hero__image-wrap {
+    display: none !important;
+  }
+
+  .hero__heritage {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+    margin-top: var(--space-6);
+  }
+
+  .heritage-mini-card {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    text-align: left;
+    align-items: center;
+    padding: var(--space-4) var(--space-5);
+    gap: var(--space-5);
+  }
+
+  .heritage-mini-card__left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+
+  .heritage-mini-card__right {
+    display: flex;
+    align-items: center;
+  }
+
+  .heritage-mini-card__icon {
+    margin-bottom: var(--space-1);
+  }
+
+  .heritage-mini-card__stat {
+    margin-bottom: 0;
+    font-size: var(--headline-sm);
+  }
+
+  .heritage-mini-card__label {
+    margin-bottom: 0;
+    font-size: var(--label-sm);
+  }
+
+  .heritage-mini-card__desc {
+    font-size: var(--body-sm);
+    max-width: none;
+    line-height: 1.5;
+  }
+}
+
 

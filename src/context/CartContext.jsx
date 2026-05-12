@@ -83,6 +83,7 @@ export const CartProvider = ({ children }) => {
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [lastRemovedItem, setLastRemovedItem] = useState(null);
+  const [lastActionType, setLastActionType] = useState('delete'); // 'delete' | 'wishlist' | 'registry'
   const [deliveryLocation, setDeliveryLocation] = useState('Kampala Central');
 
   const addToCart = async (product, quantity, size) => {
@@ -144,7 +145,8 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const removeFromCart = async (productId, size) => {
+  const removeFromCart = async (productId, size, actionType = 'delete') => {
+    setLastActionType(actionType);
     if (isAuthenticated) {
        const item = convexCartItems.find(i => i.id === productId && i.size === size);
        if (item) {
@@ -225,7 +227,9 @@ export const CartProvider = ({ children }) => {
     saveForLater,
     clearCart,
     subtotal,
-    totalItems
+    totalItems,
+    lastRemovedItem,
+    lastActionType
   };
 
   return (

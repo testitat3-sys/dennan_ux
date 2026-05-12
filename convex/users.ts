@@ -175,6 +175,7 @@ export const saveOnboardingJourney = mutation({
     role: v.union(v.literal("expecting"), v.literal("parent")),
     dueDate: v.optional(v.string()),
     children: v.optional(v.array(v.object({ dob: v.string() }))),
+    username: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await auth.getUserId(ctx);
@@ -182,12 +183,17 @@ export const saveOnboardingJourney = mutation({
       throw new Error("Unauthorized");
     }
 
-    await ctx.db.patch(userId, {
+    const patch: any = {
       role: args.role,
       dueDate: args.dueDate,
       children: args.children,
       isOnboarded: true,
-    });
+    };
+    if (args.username !== undefined) {
+      patch.username = args.username;
+    }
+
+    await ctx.db.patch(userId, patch);
     console.log(`[convex/users.ts] saveOnboardingJourney - journey saved for user ID: ${userId}`);
     return userId;
   },

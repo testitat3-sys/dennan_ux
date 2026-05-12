@@ -93,3 +93,17 @@
   color: #fff;
 }
 
+/* Responsive Journey Section Overrides */
+@media (max-width: 768px) {
+  .journey-section .journey-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .stage-tile {
+    width: 100%;
+    aspect-ratio: 16 / 9 !important;
+  }
+}
+
+

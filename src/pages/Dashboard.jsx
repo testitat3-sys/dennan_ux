@@ -11,10 +11,7 @@ import Button from '../components/ui/Button';
 import TierCard from '../components/ui/TierCard';
 import StageTile from '../components/ui/StageTile';
 
-import MilestoneTimeline from '../components/dashboard/MilestoneTimeline';
-import NextMilestoneCard from '../components/dashboard/NextMilestoneCard';
 import PredictiveFeed from '../components/dashboard/PredictiveFeed';
-import MilestoneBadges from '../components/dashboard/MilestoneBadges';
 import QuickViewModal from '../components/ui/QuickViewModal';
 import Toast from '../components/ui/Toast';
 
@@ -72,6 +69,9 @@ const Dashboard = () => {
   if (!user || loading || !dashboardData) return null;
 
   const displayName = convexUser?.name || convexUser?.username || user?.email || 'User';
+
+  const hasName = convexUser?.name || convexUser?.username;
+  const collectionTitle = hasName ? `The ${hasName} Collection.` : "Your Collection.";
 
   // Extract communal gift contributions
   const contributionsList = [];
@@ -162,7 +162,7 @@ const Dashboard = () => {
         {/* 1. The Welcome Canvas (Hero Section) */}
         <header className="welcome-canvas">
           <h1 className="welcome-canvas__greeting">
-            The {displayName} Collection.
+            {collectionTitle}
           </h1>
           
           <div className="welcome-canvas__overview">
@@ -252,26 +252,7 @@ const Dashboard = () => {
               </div>
             </section>
 
-            {/* Timeline Details & Badges */}
-            <section style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-10)' }}>
-              <div>
-                <MilestoneTimeline 
-                  info={stageInfo} 
-                  milestones={stageInfo.type === 'expecting' ? dashboardData.milestones.expecting : dashboardData.milestones.newborn} 
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-                <NextMilestoneCard 
-                  stageInfo={stageInfo} 
-                  nextMilestoneData={stageInfo.type === 'expecting' ? dashboardData.nextMilestone.expecting : dashboardData.nextMilestone.newborn} 
-                />
-                <MilestoneBadges 
-                  user={user} 
-                  stageInfo={stageInfo} 
-                  badgeData={stageInfo.type === 'expecting' ? dashboardData.badges.expecting : dashboardData.badges.newborn} 
-                />
-              </div>
-            </section>
+            {/* Timeline Details, NextMilestoneCard & MilestoneBadges removed for streamlined overview */}
 
             {/* 3. Curated Recommendations & Discovery (Asymmetric Grid) */}
             <section className="discovery-section">
@@ -350,18 +331,7 @@ const Dashboard = () => {
               </div>
             </section>
 
-            {/* Stage Checklist Section */}
-            <section className="checklist-module">
-              <h2 className="checklist-module__title">Stage Checklist</h2>
-              <div className="checklist-list">
-                {(stageInfo.type === 'expecting' ? dashboardData.checklists.expecting : dashboardData.checklists.newborn).map(item => (
-                  <div className="checklist-row" key={item.id}>
-                    <input type="checkbox" id={item.id} className="checklist-row__checkbox" />
-                    <label htmlFor={item.id} className="checklist-row__label">{item.label}</label>
-                  </div>
-                ))}
-              </div>
-            </section>
+            {/* Stage Checklist Section removed for streamlined overview */}
           </>
         )}
       </main>

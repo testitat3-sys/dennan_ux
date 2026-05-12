@@ -6,7 +6,7 @@ const JourneySection = ({ stages }) => {
   if (!stages) return null;
 
   return (
-    <section className="section" aria-labelledby="journey-heading">
+    <section className="section journey-section" aria-labelledby="journey-heading">
       <div className="section__header">
         <p className="section__eyebrow">Personalised for you</p>
         <h2 className="section__title" id="journey-heading">Shop by journey stage</h2>

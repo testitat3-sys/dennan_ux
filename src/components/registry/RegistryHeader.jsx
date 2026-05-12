@@ -1,15 +1,9 @@
 import React from 'react';
 import './RegistryHeader.css';
 
-const RegistryHeader = ({ profile, viewMode, setViewMode, onShowToast }) => {
-  const calculateDaysLeft = (date) => {
-    const diff = new Date(date) - new Date();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  };
-
-  const daysLeft = calculateDaysLeft(profile.eventDate);
-
+const RegistryHeader = ({ profile, onShowToast }) => {
   const handleCopyLink = () => {
+    if (!profile) return;
     const shareUrl = `${window.location.origin}/registry/${profile.id}`;
     navigator.clipboard.writeText(shareUrl)
       .then(() => {
@@ -25,23 +19,8 @@ const RegistryHeader = ({ profile, viewMode, setViewMode, onShowToast }) => {
       <div className="header-top">
         <div className="profile-info">
           <span className="label-md">Registry</span>
-          <h1>{profile.ownerName}'s Baby Registry</h1>
-          <p className="body-sm text-secondary">{profile.message}</p>
+          <h1>Baby Registry</h1>
         </div>
-
-        <div className="countdown-container">
-          <div className="countdown-card">
-            <span className="countdown-number">{daysLeft}</span>
-            <span className="label-md">Days</span>
-          </div>
-          <div className="event-info">
-            <p className="title-sm">{profile.eventName}</p>
-            <p className="label-md text-tertiary">{new Date(profile.eventDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="header-actions">
         <div className="share-controls">
           <button className="btn-secondary btn-sm" onClick={handleCopyLink}>
             <span>Copy Link</span>
@@ -50,25 +29,9 @@ const RegistryHeader = ({ profile, viewMode, setViewMode, onShowToast }) => {
             <span>Share</span>
           </button>
         </div>
-
-        <div className="view-switcher">
-          <button 
-            className={`switch-btn ${viewMode === 'parent' ? 'active' : ''}`}
-            onClick={() => setViewMode('parent')}
-          >
-            Manage
-          </button>
-          <button 
-            className={`switch-btn ${viewMode === 'guest' ? 'active' : ''}`}
-            onClick={() => setViewMode('guest')}
-          >
-            Guest View
-          </button>
-        </div>
       </div>
     </header>
   );
 };
 
 export default RegistryHeader;
-

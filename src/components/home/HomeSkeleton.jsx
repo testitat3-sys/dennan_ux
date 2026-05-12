@@ -80,13 +80,13 @@ const HomeSkeleton = () => {
       </section>
 
       {/* 5. Journey Section (3-column grid) */}
-      <section className="section" style={{ marginTop: 'var(--space-12)' }}>
-        <div className="section__header" style={{ padding: '0 var(--space-8)' }}>
+      <section className="section journey-section" style={{ marginTop: 'var(--space-12)' }}>
+        <div className="section__header">
           <div className="skeleton-text skeleton-text--eyebrow skeleton-shimmer" />
           <div className="skeleton-text skeleton-text--title skeleton-shimmer" />
           <div className="skeleton-text skeleton-text--subtitle skeleton-shimmer" style={{ marginTop: 'var(--space-2)' }} />
         </div>
-        <div className="journey-grid" style={{ padding: '0 var(--space-8)', marginTop: 'var(--space-8)' }}>
+        <div className="journey-grid" style={{ marginTop: 'var(--space-8)' }}>
           {[1, 2, 3].map((i) => (
             <div key={i} className="skeleton-stage-tile skeleton-shimmer" />
           ))}

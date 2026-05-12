@@ -2,21 +2,13 @@ import React from 'react';
 import { formatPrice } from '../../utils/priceUtils';
 import './RegistryItemCard.css';
 
-const RegistryItemCard = ({ item, viewMode, onToggleMustHave, onBuy, onContribute, onRemove }) => {
+const RegistryItemCard = ({ item, viewMode, onBuy, onContribute, onRemove }) => {
   const isPurchased = item.status === 'purchased';
-  const progress = item.isGroupGifting 
-    ? (item.contributions.reduce((acc, curr) => acc + curr.amount, 0) / item.price) * 100 
-    : 0;
 
   return (
     <article className={`product-card product-card--loaded ${isPurchased ? 'purchased' : ''} registry-item-card`}>
       <div className="product-card__image" style={{ position: 'relative' }}>
         <img src={item.image} alt={item.name} className="item-image" />
-        {item.isMustHave && (
-          <span className="product-card__badge" style={{ backgroundColor: 'var(--color-brand-primary)' }}>
-            Most Wanted
-          </span>
-        )}
         {isPurchased && (
           <div className="purchased-overlay">
             <span className="label-md">Gifted</span>
@@ -50,49 +42,26 @@ const RegistryItemCard = ({ item, viewMode, onToggleMustHave, onBuy, onContribut
           <span className="product-card__price">{formatPrice(item.price)}</span>
         </div>
 
-        {item.isGroupGifting && !isPurchased && (
-          <div className="group-gifting-progress" style={{ margin: 'var(--space-3) 0 var(--space-4)' }}>
-            <div className="progress-bar-bg" style={{ height: '5px', background: 'var(--surface-container-high)', borderRadius: 'var(--radius-pill)', overflow: 'hidden' }}>
-              <div className="progress-bar-fill" style={{ height: '100%', background: 'var(--color-support-blue)', width: `${Math.min(progress, 100)}%` }}></div>
-            </div>
-            <p className="label-sm text-secondary" style={{ marginTop: 'var(--space-1)', fontSize: '0.75rem', fontWeight: '600' }}>
-              {Math.round(progress)}% contributed
-            </p>
+        {viewMode !== 'parent' && (
+          <div className="card-actions" style={{ marginTop: 'var(--space-4)', display: 'flex', gap: 'var(--space-2)' }}>
+            {!isPurchased ? (
+              <>
+                <button className="btn-primary product-card__add" onClick={() => onBuy(item.id)} style={{ flex: 1 }}>
+                  Buy Now
+                </button>
+                {item.isGroupGifting && (
+                  <button className="btn-secondary" onClick={() => onContribute(item.id)} style={{ flex: 1 }}>
+                    Contribute
+                  </button>
+                )}
+              </>
+            ) : (
+              <button className="btn-secondary disabled" disabled style={{ flex: 1 }}>
+                Gifted
+              </button>
+            )}
           </div>
         )}
-
-        <div className="card-actions" style={{ marginTop: 'var(--space-4)', display: 'flex', gap: 'var(--space-2)' }}>
-          {viewMode === 'parent' ? (
-            <>
-              <button 
-                className={`btn-action ${item.isMustHave ? 'active' : ''}`}
-                onClick={() => onToggleMustHave(item.id)}
-                style={{ flex: 1 }}
-              >
-                {item.isMustHave ? 'Unmark' : 'Most Wanted'}
-              </button>
-            </>
-          ) : (
-            <>
-              {!isPurchased ? (
-                <>
-                  <button className="btn-primary product-card__add" onClick={() => onBuy(item.id)} style={{ flex: 1 }}>
-                    Buy Now
-                  </button>
-                  {item.isGroupGifting && (
-                    <button className="btn-secondary" onClick={() => onContribute(item.id)} style={{ flex: 1 }}>
-                      Contribute
-                    </button>
-                  )}
-                </>
-              ) : (
-                <button className="btn-secondary disabled" disabled style={{ flex: 1 }}>
-                  Gifted
-                </button>
-              )}
-            </>
-          )}
-        </div>
       </div>
     </article>
   );

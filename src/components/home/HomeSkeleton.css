@@ -400,6 +400,13 @@
     padding: var(--space-8) var(--space-4) 0;
     gap: var(--space-8);
   }
+  /*
+    MANDATE: Hide the Skeleton Hero Image on mobile to match the live hidden Hero Image.
+    To restore the hero image skeleton in the future, remove this display override.
+  */
+  .skeleton-hero__image-wrap {
+    display: none !important;
+  }
   .skeleton-brands-banner {
     padding: var(--space-12) 0;
   }
@@ -420,5 +427,9 @@
     grid-template-columns: 1fr;
     gap: var(--space-6);
     padding: var(--space-8) var(--space-4);
+  }
+  .skeleton-stage-tile {
+    height: auto !important;
+    aspect-ratio: 16 / 9 !important;
   }
 }

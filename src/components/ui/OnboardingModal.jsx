@@ -25,6 +25,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   const [role, setRole] = useState(null);       // 'expecting' | 'parent'
   const [dueDate, setDueDate] = useState('');
   const [children, setChildren] = useState([{ id: Date.now(), dob: '' }]);
+  const [username, setUsername] = useState('');
 
   // ── Email / auth state ──────────────────────────────────────────────────────
   const [email, setEmail] = useState('');
@@ -130,7 +131,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   if (!isMounted) return null;
 
   // ── Progress ────────────────────────────────────────────────────────────────
-  const totalSteps = isAuthenticated ? 2 : 1;
+  const totalSteps = isAuthenticated ? 3 : 1;
   const displayStep = isAuthenticated ? step : 1;
   const progress = (displayStep / totalSteps) * 100;
 
@@ -140,7 +141,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
     setStep(2);
   };
 
-  // ── Step 2: Journey details submit (Authenticated only) ─────────────────────
+  // ── Step 3: Journey details submit (Authenticated only) ─────────────────────
   const handleJourneySubmit = async () => {
     setEmailError('');
     setPending(true);
@@ -150,6 +151,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         role,
         dueDate: role === 'expecting' ? dueDate : undefined,
         children: role === 'parent' ? children.map(c => ({ dob: c.dob })) : undefined,
+        username: username.trim() || undefined,
       };
       console.log(`[OnboardingModal] Calling saveOnboardingJourney:`, payload);
       await saveJourney(payload);
@@ -159,6 +161,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         role,
         dueDate: payload.dueDate,
         children: payload.children,
+        username: payload.username,
       });
 
       onClose();
@@ -248,10 +251,10 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         </div>
 
         <div className="onboarding-header">
-          {isAuthenticated && step === 2 ? (
+          {isAuthenticated && step > 1 ? (
             <button
               className="onboarding-skip"
-              onClick={() => setStep(1)}
+              onClick={() => setStep(prev => prev - 1)}
               style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <ArrowLeft size={14} /> Back
@@ -376,12 +379,53 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                   <div className="onboarding-actions">
                     <button
                       className="btn-primary-full"
-                      onClick={handleJourneySubmit}
+                      onClick={() => setStep(3)}
                       disabled={!isDateStepValid() || pending}
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
+                      Continue <ArrowRight size={18} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Choose Username */}
+              {step === 3 && (
+                <div className="onboarding-step">
+                  <h2 className="onboarding-step-title">Choose your username</h2>
+                  <p className="onboarding-step-desc">
+                    This will be your unique identity on Dennan, visible on your registry and shared collections.
+                  </p>
+
+                  <div className="onboarding-date-section">
+                    <div className="date-input-group">
+                      <label className="date-label">Username</label>
+                      <input
+                        type="text"
+                        className="onboarding-input"
+                        placeholder="e.g. mommy_care"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {emailError && (
+                    <p style={{ color: 'var(--error, #ef4444)', fontSize: '0.8125rem', marginTop: '12px', textAlign: 'center' }}>
+                      {emailError}
+                    </p>
+                  )}
+
+                  <div className="onboarding-actions">
+                    <button
+                      className="btn-primary-full"
+                      onClick={handleJourneySubmit}
+                      disabled={!username.trim() || pending}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    >
                       {pending ? (
-                        <>Saving… <Loader2 className="animate-spin" size={18} /></>
+                        <>Saving Setup… <Loader2 className="animate-spin" size={18} /></>
                       ) : (
                         <>Complete Setup <ArrowRight size={18} /></>
                       )}

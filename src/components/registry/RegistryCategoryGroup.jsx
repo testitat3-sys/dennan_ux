@@ -2,7 +2,7 @@ import React from 'react';
 import RegistryItemCard from './RegistryItemCard';
 import './RegistryCategoryGroup.css';
 
-const RegistryCategoryGroup = ({ category, items, viewMode, onToggleMustHave, onBuy, onContribute, onRemove }) => {
+const RegistryCategoryGroup = ({ category, items, viewMode, onBuy, onContribute, onRemove }) => {
   if (items.length === 0) return null;
 
   return (
@@ -18,7 +18,6 @@ const RegistryCategoryGroup = ({ category, items, viewMode, onToggleMustHave, on
             key={item.id} 
             item={item} 
             viewMode={viewMode}
-            onToggleMustHave={onToggleMustHave}
             onBuy={onBuy}
             onContribute={onContribute}
             onRemove={onRemove}
@@ -30,4 +29,3 @@ const RegistryCategoryGroup = ({ category, items, viewMode, onToggleMustHave, on
 };
 
 export default RegistryCategoryGroup;
-

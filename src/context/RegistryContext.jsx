@@ -294,7 +294,7 @@ export const RegistryProvider = ({ children }) => {
   const moveFromCartToRegistry = async (cartItem, cartContext) => {
     const success = await addToRegistry(cartItem);
     if (success) {
-      await cartContext.removeFromCart(cartItem.id, cartItem.size);
+      await cartContext.removeFromCart(cartItem.id, cartItem.size, 'registry');
     }
     return success;
   };

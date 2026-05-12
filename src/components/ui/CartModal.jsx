@@ -14,7 +14,9 @@ const CartModal = () => {
     setIsCartOpen, 
     subtotal, 
     totalItems, 
-    undoRemove 
+    undoRemove,
+    lastRemovedItem,
+    lastActionType
   } = useCart();
   
   const [isMounted, setIsMounted] = useState(false);
@@ -121,16 +123,26 @@ const CartModal = () => {
         {/* Undo Toast - Floating above the footer */}
         {showUndo && (
           <div className="cart-modal__undo-toast">
-            <span className="undo-message">Item removed from cart</span>
-            <button 
-              className="undo-action" 
-              onClick={() => {
-                undoRemove();
-                setShowUndo(false);
-              }}
-            >
-              Undo
-            </button>
+            {lastActionType === 'delete' && (
+              <>
+                <span className="undo-message">Item removed from cart</span>
+                <button 
+                  className="undo-action" 
+                  onClick={() => {
+                    undoRemove();
+                    setShowUndo(false);
+                  }}
+                >
+                  Undo
+                </button>
+              </>
+            )}
+            {lastActionType === 'wishlist' && (
+              <span className="undo-message">"{lastRemovedItem?.name || 'Item'}" saved to wishlist!</span>
+            )}
+            {lastActionType === 'registry' && (
+              <span className="undo-message">"{lastRemovedItem?.name || 'Item'}" moved to baby registry!</span>
+            )}
           </div>
         )}
       </div>

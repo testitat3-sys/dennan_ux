@@ -56,21 +56,6 @@ const Hero = ({ content }) => {
             </svg>
           </Button>
         </div>
-        
-        <div className="hero__heritage">
-          {heritageCards.map((card, i) => (
-            <article key={i} className="heritage-mini-card">
-              <div className="heritage-mini-card__icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-                  {getIcon(card.icon)}
-                </svg>
-              </div>
-              <div className={`heritage-mini-card__stat heritage-mini-card__stat--${card.statClass}`}>{card.stat}</div>
-              <div className="heritage-mini-card__label">{card.label}</div>
-              <p className="heritage-mini-card__desc">{card.desc}</p>
-            </article>
-          ))}
-        </div>
       </div>
 
       <div className="hero__image-wrap" aria-hidden="true">
@@ -80,6 +65,25 @@ const Hero = ({ content }) => {
           <span className="hero__image-tag-label">{trending.label}</span>
           <span className="hero__image-tag-value">{trending.value}</span>
         </div>
+      </div>
+
+      <div className="hero__heritage">
+        {heritageCards.map((card, i) => (
+          <article key={i} className="heritage-mini-card">
+            <div className="heritage-mini-card__left">
+              <div className="heritage-mini-card__icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                  {getIcon(card.icon)}
+                </svg>
+              </div>
+              <div className={`heritage-mini-card__stat heritage-mini-card__stat--${card.statClass}`}>{card.stat}</div>
+              <div className="heritage-mini-card__label">{card.label}</div>
+            </div>
+            <div className="heritage-mini-card__right">
+              <p className="heritage-mini-card__desc">{card.desc}</p>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   );

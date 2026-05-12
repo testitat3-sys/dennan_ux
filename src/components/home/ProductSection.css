@@ -78,6 +78,21 @@
 }
 
 @media (max-width: 768px) {
+  .rec-rail__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+    text-align: left;
+  }
+  .rec-rail__header .section__header {
+    text-align: left;
+  }
+  .section__title {
+    text-align: left;
+  }
+  .section__eyebrow {
+    text-align: left;
+  }
   .product-scroll {
     margin: 0 calc(-1 * var(--space-4));
     padding: 0 var(--space-4);

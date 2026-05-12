@@ -1,9 +1,9 @@
 .registry-header {
-  padding: var(--space-15) 0;
+  padding: var(--space-6) 0 var(--space-2);
   display: flex;
   flex-direction: column;
-  gap: var(--space-10);
-  margin-bottom: var(--space-10);
+  gap: var(--space-4);
+  margin-bottom: var(--space-1);
   position: relative;
 }
 
@@ -23,8 +23,9 @@
 .header-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: var(--space-12);
+  width: 100%;
 }
 
 .profile-info {
@@ -127,10 +128,16 @@
 }
 
 @media (max-width: 768px) {
+  .registry-header {
+    padding: var(--space-4) 0 var(--space-2) !important;
+    gap: var(--space-2) !important;
+    margin-bottom: var(--space-2) !important;
+  }
+
   .header-top {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-8);
+    gap: var(--space-2) !important;
   }
   
   .countdown-container {
@@ -140,7 +147,8 @@
   .header-actions {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-8);
+    gap: var(--space-4) !important;
+    margin-top: var(--space-2) !important;
   }
 
   .share-controls {

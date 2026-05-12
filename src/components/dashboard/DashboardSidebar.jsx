@@ -29,7 +29,6 @@ const DashboardSidebar = () => {
 
   return (
     <nav className="dashboard-nav" aria-label="Dashboard navigation">
-      <div className="dashboard-nav__brand">Dennan</div>
       <ul className="dashboard-nav__list">
         <li>
           <span 

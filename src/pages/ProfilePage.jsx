@@ -218,16 +218,22 @@ export default function ProfilePage() {
         {/* Profile Header Block */}
         <header className="profile-header-card">
           <div className="profile-avatar-circle">
-            {getInitials(user.name || user.email?.split('@')[0])}
+            {getInitials(user.username || user.name || user.email?.split('@')[0])}
           </div>
-          <div className="profile-header-text">
-            <h1 className="profile-header-name">
-              {user.name || 'Anonymous User'}
-            </h1>
-            <span className="profile-header-role">
-              {user.isAdmin ? 'Administrator' : 'Member'}
-            </span>
-          </div>
+          {(user.username || user.name || user.isAdmin) && (
+            <div className="profile-header-text">
+              {(user.username || user.name) && (
+                <h1 className="profile-header-name">
+                  {user.username || user.name}
+                </h1>
+              )}
+              {user.isAdmin && (
+                <span className="profile-header-role">
+                  Administrator
+                </span>
+              )}
+            </div>
+          )}
         </header>
 
         {formError && (
@@ -305,14 +311,14 @@ export default function ProfilePage() {
                     onClick={() => { setRole('expecting'); setValidationErrors({}); }}
                     className={`profile-segment-btn ${role === 'expecting' ? 'profile-segment-btn--active' : ''}`}
                   >
-                    🤰 Expecting Parent
+                    Expecting Parent
                   </button>
                   <button
                     type="button"
                     onClick={() => { setRole('parent'); setValidationErrors({}); }}
                     className={`profile-segment-btn ${role === 'parent' ? 'profile-segment-btn--active' : ''}`}
                   >
-                    👶 Parent
+                    Parent
                   </button>
                 </div>
               </div>
