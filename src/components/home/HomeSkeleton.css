@@ -243,6 +243,19 @@
   border-radius: var(--radius-sm);
 }
 
+.rec-rail__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+}
+
+.skeleton-link {
+  background-color: var(--skeleton-base);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+}
+
 /* ─── Journey Stage Skeleton ───────────────────────────── */
 .skeleton-stage-tile {
   position: relative;
@@ -407,6 +420,72 @@
   .skeleton-hero__image-wrap {
     display: none !important;
   }
+
+  .skeleton-hero__heritage {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+    box-sizing: border-box;
+  }
+
+  .skeleton-heritage-card {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    align-items: center;
+    padding: var(--space-4) var(--space-5);
+    gap: var(--space-5);
+    width: 100%;
+    height: auto;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--surface-container);
+    border-radius: var(--radius-lg);
+  }
+
+  .skeleton-heritage-card__icon {
+    grid-column: 1;
+    grid-row: 1;
+    margin-bottom: 0;
+  }
+
+  .skeleton-heritage-card__stat {
+    grid-column: 1;
+    grid-row: 2;
+    height: 18px;
+    width: 50px;
+    margin-top: var(--space-1);
+  }
+
+  .skeleton-heritage-card__label {
+    grid-column: 1;
+    grid-row: 3;
+    height: 10px;
+    width: 70px;
+    margin-top: var(--space-1);
+  }
+
+  .skeleton-heritage-card::after {
+    content: '';
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    height: 40px;
+    width: 100%;
+    border-radius: var(--radius-sm);
+    align-self: center;
+    /* Use skeleton shimmer gradient variables defined in :root */
+    background: linear-gradient(
+      90deg,
+      var(--skeleton-base) 25%,
+      var(--skeleton-highlight) 50%,
+      var(--skeleton-base) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.6s infinite linear;
+  }
+
   .skeleton-brands-banner {
     padding: var(--space-12) 0;
   }

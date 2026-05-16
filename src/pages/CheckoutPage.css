@@ -1,8 +1,11 @@
 .checkout-page {
   max-width: var(--width-container);
   margin: 0 auto;
-  padding: 0 var(--space-6) var(--space-16);
+  padding: 0 var(--layout-inset) var(--space-16);
+  width: 100%;
+  box-sizing: border-box;
   overflow-x: hidden;
+  position: relative;
 }
 
 .checkout-header .checkout-stepper {
@@ -262,6 +265,8 @@
 .option-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0; /* Safety for flex children */
 }
 
 .option-name {
@@ -875,7 +880,7 @@
 /* ─── Responsive Media Queries ────────────────────────────────────────── */
 @media (max-width: 992px) {
   .checkout-page {
-    padding: 0 var(--space-4) var(--space-12);
+    padding-bottom: var(--space-12);
   }
 }
 
@@ -926,8 +931,8 @@
   }
 
   .brand-badge {
-    padding: var(--space-0-5) var(--space-2) !important;
-    font-size: var(--label-sm) !important;
+    padding: var(--space-0-5) var(--space-2);
+    font-size: var(--label-sm);
   }
 
   .momo-input-container {

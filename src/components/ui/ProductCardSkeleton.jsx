@@ -5,7 +5,9 @@ const ProductCardSkeleton = ({ className = '' }) => {
   return (
     <article className={`product-card product-card--skeleton ${className}`} aria-hidden="true">
       {/* 1:1 Image Placeholder */}
-      <div className="product-card__image product-card__image--skeleton skeleton-shimmer" />
+      <div className="product-card__image product-card__image--skeleton skeleton-shimmer">
+        <div className="skeleton-badge-mini skeleton-shimmer" />
+      </div>
       
       {/* Card Details Padding Container */}
       <div className="product-card__info product-card__info--skeleton">

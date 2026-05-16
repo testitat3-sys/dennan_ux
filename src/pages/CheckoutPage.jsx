@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useConvex, useQuery, useMutation, useConvexAuth } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import CheckoutStepper from '../components/checkout/CheckoutStepper';
+import CheckoutSkeleton from '../components/checkout/CheckoutSkeleton';
 import LocationModal from '../components/checkout/LocationModal';
 import RiderTracking from '../components/checkout/RiderTracking';
 import Toast from '../components/ui/Toast';
@@ -240,12 +241,7 @@ const CheckoutPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="checkout-loading">
-        <div className="spinner"></div>
-        <p>Loading secure checkout...</p>
-      </div>
-    );
+    return <CheckoutSkeleton />;
   }
 
   // Choose which item lists to display

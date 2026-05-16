@@ -1,6 +1,6 @@
 .checkout-stepper-container {
   width: 100%;
-  padding: var(--space-8) 0;
+  padding: var(--space-8) 0 var(--space-4);
   display: flex;
   justify-content: center;
   background-color: var(--surface);
@@ -12,7 +12,7 @@
   gap: var(--space-4);
   max-width: var(--width-modal);
   width: 100%;
-  padding: 0 var(--space-4);
+  padding: 0;
 }
 
 .stepper-item {

@@ -203,8 +203,10 @@
 
   .hero__heritage {
     grid-template-columns: 1fr;
+    width: 100%;
     max-width: 100%;
     margin-top: var(--space-6);
+    box-sizing: border-box;
   }
 
   .heritage-mini-card {
@@ -214,6 +216,8 @@
     align-items: center;
     padding: var(--space-4) var(--space-5);
     gap: var(--space-5);
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .heritage-mini-card__left {

@@ -34,6 +34,18 @@
   overflow: hidden;
 }
 
+.skeleton-badge-mini {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  width: 50px;
+  height: 18px;
+  border-radius: var(--radius-pill);
+  background-color: var(--surface);
+  opacity: 0.8;
+  z-index: 1;
+}
+
 /* Text & Button padding box */
 .product-card__info--skeleton {
   padding: var(--space-4) var(--space-4) var(--space-5);

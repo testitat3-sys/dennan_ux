@@ -69,6 +69,7 @@ const HomeSkeleton = () => {
             <div className="skeleton-text skeleton-text--eyebrow skeleton-shimmer" />
             <div className="skeleton-text skeleton-text--title skeleton-shimmer" />
           </div>
+          <div className="skeleton-link skeleton-shimmer" style={{ width: '120px', height: '14px', borderRadius: '4px' }} />
         </div>
         <div className="product-scroll-wrap">
           <div className="product-scroll">
@@ -125,6 +126,7 @@ const HomeSkeleton = () => {
             <div className="skeleton-text skeleton-text--eyebrow skeleton-shimmer" />
             <div className="skeleton-text skeleton-text--title skeleton-shimmer" />
           </div>
+          <div className="skeleton-link skeleton-shimmer" style={{ width: '120px', height: '14px', borderRadius: '4px' }} />
         </div>
         <div style={{ padding: '0 var(--space-8)', marginTop: 'var(--space-4)' }}>
           <div className="product-grid">
