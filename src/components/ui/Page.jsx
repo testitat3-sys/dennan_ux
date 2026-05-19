@@ -21,6 +21,9 @@ import './Page.css';
 export const Page = ({
   as: Tag = 'div',
   noPaddingTop = false,
+  padding = 'default', // 'default' | 'inset' | 'none'
+  bottomSpacing = 'default', // 'default' | 'loose' | 'none'
+  maxWidth = 'full', // 'full' | 'container'
   className = '',
   children,
   ...props
@@ -28,6 +31,9 @@ export const Page = ({
   const classes = [
     'page',
     noPaddingTop ? 'page--no-padding-top' : '',
+    padding !== 'default' ? `page--padding-${padding}` : '',
+    bottomSpacing !== 'default' ? `page--bottom-${bottomSpacing}` : '',
+    maxWidth !== 'full' ? `page--max-width-${maxWidth}` : '',
     className
   ].filter(Boolean).join(' ');
 

@@ -175,6 +175,7 @@
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--grid-gap-default);
   width: 100%;
+  margin: 0;
   box-sizing: border-box;
 }
 
@@ -236,4 +237,33 @@
 .page-section--full-bleed.page-section--no-padding {
   padding-inline: 0 !important;
 }
+
+/* ─── Page Props Spacing & Centering Modifiers ──────────────────── */
+
+.page--padding-inset {
+  --current-page-padding-x: var(--layout-inset);
+  padding-inline: var(--current-page-padding-x);
+  padding-block: var(--page-padding-y);
+}
+
+.page--padding-none {
+  --current-page-padding-x: 0px;
+  padding-inline: 0;
+  padding-block: 0;
+}
+
+.page--bottom-loose {
+  padding-bottom: var(--space-16);
+}
+
+.page--bottom-none {
+  padding-bottom: 0;
+}
+
+.page--max-width-container {
+  max-width: var(--width-container);
+  margin-inline: auto;
+  position: relative;
+}
+
 

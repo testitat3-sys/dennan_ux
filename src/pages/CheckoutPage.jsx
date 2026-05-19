@@ -275,7 +275,7 @@ const CheckoutPage = () => {
     : cartItems;
 
   return (
-    <Page className="checkout-page">
+    <Page noPaddingTop={true} padding="inset" bottomSpacing="loose" maxWidth="container">
       <Page.Section spacing="tight" className="checkout-header-section">
         <CheckoutStepper currentStep={isOrderConfirmed ? 3 : 2} />
       </Page.Section>

@@ -34,7 +34,7 @@ const CardGrid = ({
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={classes} {...props}>
+    <div className={classes} style={{ margin: 0, ...props.style }} {...props}>
       {children}
     </div>
   );
