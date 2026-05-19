@@ -35,6 +35,10 @@
   flex-shrink: 0;
 }
 
+.toast-icon.is-danger {
+  background: var(--color-support-red);
+}
+
 .toast-message {
   font-family: var(--font-sans);
   font-size: var(--body-sm);

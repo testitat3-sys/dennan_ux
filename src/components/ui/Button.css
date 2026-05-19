@@ -1,84 +1,512 @@
-.btn-primary {
+/* ─── BASE BUTTON ────────────────────────────────────────────────── */
+.btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ─── VARIANTS ───────────────────────────────────────────────────── */
+
+/* Primary: Solid High Contrast */
+.btn--primary {
   background: var(--color-anchor);
   color: var(--color-on-primary);
-  padding: var(--space-3-5) var(--space-6);
-  border-radius: var(--radius-md);
-  font-family: var(--font-sans);
-  font-size: var(--label-md);
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  transition: background 0.25s, transform 0.2s, box-shadow 0.25s;
-  position: relative;
-  overflow: hidden;
 }
 
-.btn-primary::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--color-brand-primary);
-  opacity: 0;
-  transition: opacity 0.3s;
-  border-radius: inherit;
+.btn--primary:hover {
+  background: var(--color-brand-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--shadow-deep);
 }
 
-.btn-primary:hover::after { 
-  opacity: 0.18; 
-}
-
-.btn-primary:hover { 
-  transform: translateY(-1px); 
-  box-shadow: 0 6px 20px var(--shadow-deep); 
-}
-
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--text-secondary);
-  padding: var(--space-3-5) var(--space-6);
-  border-radius: var(--radius-md);
-  font-family: var(--font-sans);
-  font-size: var(--label-md);
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  transition: background 0.25s, color 0.25s, transform 0.2s, box-shadow 0.25s;
-  position: relative;
-  overflow: hidden;
+/* Secondary: Subtle Surface Contrast */
+.btn--secondary {
   background: var(--surface-container-low);
+  color: var(--text-primary);
   border: 1px solid var(--surface-container-high);
 }
 
-.btn-ghost:hover { 
-  color: var(--text-primary); 
-  transform: translateY(-1px); 
-  box-shadow: 0 6px 20px var(--shadow-deep); 
+.btn--secondary:hover {
+  background: var(--surface-container);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-ambient);
 }
 
-.btn-ghost::after {
-  content: '';
-  position: absolute;
-  inset: 0;
+/* Outline: Branded Border */
+.btn--outline {
+  background: transparent;
+  color: var(--color-brand-primary);
+  border: 2px solid var(--color-brand-primary);
+}
+
+.btn--outline:hover {
   background: var(--color-brand-primary);
+  color: var(--color-on-primary);
+  transform: translateY(-1px);
+}
+
+/* Ghost: No background until hover */
+.btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.btn--ghost:hover {
+  background: var(--surface-container-low);
+  color: var(--text-primary);
+}
+
+/* Link: Text only with underline on hover */
+.btn--link {
+  background: transparent;
+  color: var(--color-brand-primary);
+  padding: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
+}
+
+.btn--link:hover {
+  text-decoration: underline;
+  background: transparent;
+}
+
+/* Danger: Destructive Actions */
+.btn--danger {
+  background: var(--color-support-red);
+  color: var(--color-on-primary);
+}
+
+.btn--danger:hover {
+  background: #c53030;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.25);
+}
+
+/* Hero: Large, High Contrast (Empty States) */
+.btn--hero {
+  background: var(--color-anchor);
+  color: var(--color-on-primary);
+  padding: var(--space-3-5) var(--space-8);
+  font-size: var(--body-sm);
+}
+
+.btn--hero:hover {
+  background: var(--color-brand-primary-dark);
+}
+
+/* Soft: Subdued with Large Radius */
+.btn--soft {
+  background: var(--surface-container);
+  color: var(--text-primary);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-lg);
+}
+
+.btn--soft:hover {
+  background: var(--surface-container-high);
+  border-color: var(--text-secondary);
+}
+
+/* Outline Brand: Branded Border with Large Radius */
+.btn--outline-brand {
+  background: transparent;
+  color: var(--color-brand-primary);
+  border: 1px solid var(--color-brand-primary-light);
+  border-radius: var(--radius-lg);
+}
+
+.btn--outline-brand:hover {
+  background: var(--color-brand-primary-light);
+  color: var(--color-on-primary);
+}
+
+/* Action: Large Solid, Deep Shadow (Primary CTA) */
+.btn--action {
+  background: var(--color-anchor);
+  color: var(--color-on-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  font-size: var(--body-lg);
+  font-weight: 700;
+}
+
+.btn--action:hover {
+  background: #000;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-deep);
+}
+
+/* Pill: Large Rounded Pill */
+.btn--pill {
+  background: var(--color-anchor);
+  color: var(--color-on-primary);
+  padding: var(--space-4-5);
+  border-radius: var(--radius-pill);
+  font-size: var(--body-lg);
+}
+
+.btn--pill:hover {
+  background: #000;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-deep);
+}
+
+/* Skip: Minimal Grey Link */
+.btn--skip {
+  background: none;
+  color: var(--text-tertiary);
+  text-decoration: underline;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: var(--space-2);
+}
+
+.btn--skip:hover {
+  color: var(--text-secondary);
+  background: none;
+}
+
+/* Text Link: Branded Underlined Link */
+.btn--text-link {
+  background: none;
+  color: var(--color-brand-primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 700;
+  padding: 0;
+}
+
+.btn--text-link:hover {
+  color: var(--color-brand-primary-dark);
+  background: none;
+}
+
+/* Card Add: Hover-revealed button on Product Cards */
+.btn--card-add {
+  margin-top: var(--space-3);
+  width: 100%;
+  background: var(--color-anchor);
+  color: white;
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  font-size: var(--label-md);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   opacity: 0;
-  transition: opacity 0.3s;
-  border-radius: inherit;
+  transform: translateY(var(--space-1-5));
+  transition: opacity 0.2s, transform 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
-.btn-ghost:hover::after { 
-  opacity: 0; 
+.product-card:hover .btn--card-add {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.btn-ghost svg { transition: transform 0.2s; }
-.btn-ghost:hover svg { transform: translateX(3px); }
+.btn--card-add:hover {
+  background: var(--color-anchor);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-primary), transparent 85%);
+}
 
-.btn-sm {
+/* Nav Icon: Circular icon buttons for Navbar */
+.btn--nav-icon {
+  width: var(--space-9);
+  height: var(--space-9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  transition: background 0.2s;
+  color: var(--color-brand-primary);
+  background: transparent;
+}
+
+.btn--nav-icon:hover {
+  background: var(--surface-container-low);
+}
+
+/* Search Submit: Rounded submit button for search bars */
+.btn--search-submit {
+  flex-shrink: 0;
+  background: var(--color-anchor);
+  color: white;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--label-md);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn--search-submit:hover {
+  background: var(--text-primary);
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px var(--shadow-ambient);
+}
+
+/* White: Solid white button with anchor text */
+.btn--white {
+  width: 100%;
+  padding: var(--space-3-5);
+  background: white;
+  color: var(--color-anchor);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn--white:hover {
+  background: var(--color-brand-primary);
+  color: white;
+  transform: translateY(calc(-1 * var(--space-0-5)));
+}
+
+/* Segment: Segmented control buttons (Selector Tabs) */
+.btn--segment {
+  border: none;
+  background: none;
+  padding: var(--space-3) var(--space-6);
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.btn--segment:hover {
+  color: var(--text-primary);
+}
+
+/* Add active state for segment */
+.btn--segment-active {
+  background-color: var(--surface);
+  color: var(--color-brand-primary);
+  box-shadow: 0 2px 8px rgba(17, 17, 17, 0.05);
+}
+
+/* Remove: Destructive icon buttons with soft red bg on hover */
+.btn--remove {
+  background: none;
+  border: none;
+  color: var(--color-support-red);
+  border-radius: var(--radius-sm);
+  transition: background 0.25s;
+}
+
+.btn--remove:hover {
+  background-color: color-mix(in srgb, var(--color-support-red), transparent 92%);
+}
+
+/* Icon Action: Circular fixed-size icon-only button (wishlist, registry, close modal) */
+.btn--icon-action {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  touch-action: manipulation;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.btn--icon-action:hover {
+  color: var(--color-brand-primary);
+  background: color-mix(in srgb, var(--color-brand-primary), transparent 95%);
+}
+
+.btn--icon-action:active {
+  transform: scale(0.9);
+}
+
+/* Icon Action Delete: Circular icon-only button, red hover (destructive actions) */
+.btn--icon-action-delete {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  touch-action: manipulation;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.btn--icon-action-delete:hover {
+  color: var(--color-support-red);
+  background: color-mix(in srgb, var(--color-support-red), transparent 95%);
+}
+
+.btn--icon-action-delete:active {
+  transform: scale(0.9);
+}
+
+/* Stepper: Minimal transparent stepper control for quantity +/- */
+.btn--stepper {
+  background: transparent;
+  color: var(--text-primary);
+  width: var(--space-6);
+  height: var(--space-6);
+  min-width: var(--space-6);
+  padding: 0;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  font-size: 1rem;
+  transition: opacity 0.2s ease;
+}
+
+.btn--stepper:hover {
+  opacity: 0.6;
+  background: transparent;
+}
+
+/* Nav Logout: Sidebar destructive nav action — red text, left-aligned, no uppercase */
+.btn--nav-logout {
+  background: transparent;
+  color: var(--color-support-red);
+  font-size: var(--body-sm);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  justify-content: flex-start;
+  padding: var(--space-2) 0;
+  width: 100%;
+  transition: opacity 0.25s ease;
+}
+
+.btn--nav-logout:hover {
+  opacity: 0.8;
+  background: transparent;
+}
+
+/* Add Dashed: Branded dashed border for "Add another" actions */
+.btn--add-dashed {
+  background: none;
+  border: 1px dashed var(--color-brand-primary-light);
+  color: var(--color-brand-primary);
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  transition: all 0.25s;
+}
+
+.btn--add-dashed:hover {
+  background-color: color-mix(in srgb, var(--color-brand-primary), transparent 95%);
+  border-color: var(--color-brand-primary);
+}
+
+/* ─── SIZES ──────────────────────────────────────────────────────── */
+
+.btn--sm {
   padding: var(--space-2) var(--space-4);
-  font-size: 0.65rem;
+  font-size: var(--label-sm);
 }
+
+.btn--md {
+  padding: var(--space-3-5) var(--space-6);
+  font-size: var(--label-md);
+}
+
+.btn--lg {
+  padding: var(--space-4-5) var(--space-9);
+  font-size: var(--title-sm);
+}
+
+/* ─── UTILITIES ──────────────────────────────────────────────────── */
+
+.btn--full-width {
+  width: 100%;
+}
+
+/* ─── LOADING STATE ──────────────────────────────────────────────── */
+.is-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn-spinner {
+  position: absolute;
+  width: 1.25em;
+  height: 1.25em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: btn-spin 0.75s linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes btn-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── ICONS ──────────────────────────────────────────────────────── */
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn--sm .btn-icon svg { width: 14px; height: 14px; }
+.btn--md .btn-icon svg { width: 18px; height: 18px; }
+.btn--lg .btn-icon svg { width: 22px; height: 22px; }
+
+.btn-icon--left { margin-right: var(--space-1); }
+.btn-icon--right { margin-left: var(--space-1); }
 

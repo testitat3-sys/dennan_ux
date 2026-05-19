@@ -1,0 +1,274 @@
+:root {
+  /* Card Padding Scale */
+  --card-padding-xs: var(--space-2); /* 8px */
+  --card-padding-s: var(--space-3); /* 12px */
+  --card-padding-m: var(--space-4); /* 16px */
+  --card-padding-lg: var(--space-6); /* 24px */
+
+  /* Card Gap Scale */
+  --card-gap-xs: var(--space-1); /* 4px */
+  --card-gap-s: var(--space-2); /* 8px */
+  --card-gap-m: var(--space-3); /* 12px */
+  --card-gap-lg: var(--space-4); /* 16px */
+
+  /* Card Radius Scale */
+  --card-radius-xs: var(--radius-sm); /* 4px */
+  --card-radius-s: var(--radius-md); /* 8px */
+  --card-radius-m: 12px;
+  --card-radius-lg: var(--radius-lg); /* 16px */
+
+  /* Card Shadow Scale */
+  --card-shadow-xs: none;
+  --card-shadow-s: 0 1px 3px rgba(17, 17, 17, 0.04), 0 1px 2px rgba(17, 17, 17, 0.02);
+  --card-shadow-m: var(--shadow-ambient);
+  --card-shadow-lg: var(--shadow-deep);
+
+  /* Card Typography Defaults (Responsive) */
+  --type-body-size-s: var(--body-sm);
+  --type-body-size-m: var(--body-md);
+  --type-body-line-height-s: 1.4;
+  --type-body-line-height-m: 1.5;
+}
+
+/* --- Base Card Component --- */
+
+.card {
+  /* Fluid width, no hardcoded dimensions */
+  width: 100%;
+  box-sizing: border-box;
+
+  /* Structural Layout */
+  display: flex;
+  flex-direction: column;
+  
+  /* Strictly DO NOT ADD MARGIN */
+  margin: 0 !important;
+
+  /* Internal Tokens Configuration - Default */
+  --current-card-padding: var(--card-padding-s);
+  --current-card-gap: var(--card-gap-s);
+  --current-card-radius: var(--card-radius-s);
+  --current-card-shadow: var(--card-shadow-xs);
+  --current-font-size: var(--type-body-size-s);
+  --current-line-height: var(--type-body-line-height-s);
+
+  padding: var(--current-card-padding);
+  gap: var(--current-card-gap);
+  border-radius: var(--current-card-radius);
+  box-shadow: var(--current-card-shadow);
+  
+  font-size: var(--current-font-size);
+  line-height: var(--current-line-height);
+
+  background-color: var(--surface);
+  border: 1px solid var(--surface-container-highest);
+  overflow: hidden;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card--hoverable:hover {
+  border-color: var(--color-brand-primary-light);
+  box-shadow: var(--current-card-shadow), 0 4px 12px var(--shadow-ambient);
+}
+
+/* Tablet & Desktop Layouts */
+@media (min-width: 768px) {
+  .card {
+    --current-card-padding: var(--card-padding-m);
+    --current-card-gap: var(--card-gap-m);
+    --current-card-radius: var(--card-radius-m);
+    --current-card-shadow: var(--card-shadow-s);
+    --current-font-size: var(--type-body-size-m);
+    --current-line-height: var(--type-body-line-height-m);
+  }
+}
+
+/* --- Card Variants --- */
+
+.card--variant-compact {
+  --current-card-padding: var(--card-padding-xs);
+  --current-card-gap: var(--card-gap-xs);
+  --current-card-radius: var(--card-radius-xs);
+}
+@media (min-width: 768px) {
+  .card--variant-compact {
+    --current-card-padding: var(--card-padding-s);
+    --current-card-gap: var(--card-gap-s);
+    --current-card-radius: var(--card-radius-s);
+  }
+}
+
+.card--variant-feature {
+  --current-card-padding: var(--card-padding-m);
+  --current-card-gap: var(--card-gap-m);
+  --current-card-radius: var(--card-radius-m);
+  --current-card-shadow: var(--card-shadow-s);
+  border-color: transparent;
+}
+@media (min-width: 768px) {
+  .card--variant-feature {
+    --current-card-padding: var(--card-padding-lg);
+    --current-card-gap: var(--card-gap-lg);
+    --current-card-radius: var(--card-radius-lg);
+    --current-card-shadow: var(--card-shadow-m);
+  }
+}
+
+.card--variant-section {
+  --current-card-padding: var(--card-padding-m);
+  --current-card-gap: var(--card-gap-m);
+}
+@media (min-width: 768px) {
+  .card--variant-section {
+    --current-card-padding: var(--space-8); /* 32px - Legacy Match */
+    --current-card-gap: var(--space-6);
+  }
+}
+
+.card--no-border {
+  border-color: transparent;
+}
+
+.card--no-shadow {
+  box-shadow: none !important;
+}
+
+.card--no-background {
+  background-color: transparent !important;
+}
+
+.card--no-radius {
+  border-radius: 0 !important;
+}
+
+.card--no-padding {
+  padding: 0 !important;
+}
+
+.card--no-padding-horizontal {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.card--no-padding-vertical {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Automatic border reset for nested cards */
+.card .card {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* --- Card Slots & Children Enforcement --- */
+
+.card > * {
+  /* Enforce strict gap-based layout by zeroing all direct child margins */
+  margin: 0 !important;
+}
+
+.card-header,
+.card-body,
+.card-meta,
+.card-actions {
+  /* Reset padding and ensure slots are flex containers */
+  padding: 0;
+  display: flex;
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  /* Related elements in header use tighter gap */
+  gap: var(--card-gap-xs);
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap-s);
+  color: var(--text-secondary);
+  flex-grow: 1; /* Pushes meta/actions to bottom if card height is fixed by parent */
+}
+
+.card-meta {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--card-gap-s);
+  font-size: var(--label-md);
+  color: var(--text-tertiary);
+}
+
+.card-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--card-gap-m);
+}
+
+/* --- Alignment Utilities --- */
+
+/* Vertical Slots (Header, Body) */
+.card-header.card--align-left,
+.card-body.card--align-left {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.card-header.card--align-center,
+.card-body.card--align-center {
+  align-items: center;
+  text-align: center;
+}
+
+.card-header.card--align-right,
+.card-body.card--align-right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* Horizontal Slots (Actions, Meta) */
+.card-actions.card--align-left,
+.card-meta.card--align-left {
+  justify-content: flex-start;
+}
+
+.card-actions.card--align-center,
+.card-meta.card--align-center {
+  justify-content: center;
+}
+
+.card-actions.card--align-right,
+.card-meta.card--align-right {
+  justify-content: flex-end;
+}
+
+/* Allow horizontal layout on large screens for feature cards if needed */
+.card--layout-horizontal {
+  flex-direction: column;
+}
+@media (min-width: 768px) {
+  .card--layout-horizontal {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+/* --- Multi-Column Card Layout (Opt-in) --- */
+.card--columns-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .card--columns-2 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+    align-items: center;
+  }
+}

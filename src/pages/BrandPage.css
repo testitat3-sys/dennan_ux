@@ -7,44 +7,16 @@
   position: relative;
 }
 
-.brand-page__products {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.brand-page__bundles {
-  max-width: 1200px;
-  margin: var(--space-20) auto;
-  padding: 0 var(--space-6);
-}
-
-.brand-page__bundles-header {
-  margin-bottom: var(--space-10);
-  text-align: center;
-}
-
-.brand-page__bundles-title {
-  font-family: var(--font-editorial);
-  font-size: var(--headline-md);
-  margin-bottom: var(--space-2);
-}
-
 .brand-page__bundles-subtitle {
   color: var(--text-secondary);
 }
 
 .brand-page__bundle-card {
-  display: flex;
-  background: var(--surface-container-low);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-ambient);
   transition: transform 0.3s ease;
 }
 
 .brand-page__bundle-card:hover {
   transform: translateY(-5px);
-  box-shadow: var(--shadow-deep);
 }
 
 .brand-page__bundle-img {
@@ -53,37 +25,13 @@
 }
 
 .brand-page__bundle-info {
-  padding: var(--space-10);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: var(--space-4);
 }
 
-.brand-page__bundle-info h3 {
-  font-family: var(--font-editorial);
-  font-size: var(--headline-md);
-}
+/* Bundle text styles are centrally governed by <Text> component */
 
-.brand-page__bundle-info p {
-  color: var(--text-secondary);
-}
-
-.brand-page__bundle-btn {
-  background: var(--color-anchor);
-  color: var(--color-on-primary);
-  padding: var(--space-4) var(--space-8);
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  margin-top: var(--space-4);
-  align-self: flex-start;
-  transition: all 0.3s ease;
-}
-
-.brand-page__bundle-btn:hover {
-  background: var(--color-brand-primary);
-  box-shadow: var(--shadow-primary);
-}
 
 .brand-loading {
   height: 100vh;
@@ -106,10 +54,6 @@
 }
 
 /* ─── GAP REMOVAL ───────────────────────────────────────────────── */
-.brand-page .brand-header {
-  margin-bottom: 0 !important;
-}
-
 .brand-page .search-strip {
   padding-top: var(--space-4) !important;
   padding-bottom: var(--space-6) !important;
@@ -164,12 +108,8 @@
 
 .brand-error-container {
   max-width: 500px;
-  background: var(--surface-container-low);
-  border: 1px solid var(--surface-container-high);
-  padding: var(--space-10) var(--space-8);
-  border-radius: var(--radius-xl);
+  margin: 0 auto;
   text-align: center;
-  box-shadow: var(--shadow-ambient);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -183,41 +123,21 @@
 }
 
 .brand-error-title {
-  font-family: var(--font-editorial);
-  font-size: var(--headline-lg);
   color: var(--color-brand-primary);
-  margin-top: var(--space-2);
 }
 
 .brand-error-text {
-  font-size: var(--body-lg);
   color: var(--text-primary);
   line-height: var(--lh-relaxed);
 }
 
 .brand-error-subtext {
-  font-size: var(--body-md);
   color: var(--text-secondary);
   line-height: var(--lh-relaxed);
 }
 
 .brand-error-btn {
-  background: var(--color-anchor);
-  color: var(--color-on-primary);
-  border: none;
-  border-radius: var(--radius-full);
-  padding: var(--space-4) var(--space-10);
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: var(--space-4);
-  box-shadow: var(--shadow-primary);
-  transition: all 0.3s var(--ease-out);
-}
-
-.brand-error-btn:hover {
-  background: var(--color-brand-primary);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-deep);
+  /* Margin-top purged in favor of parent flex gap */
 }
 
 @keyframes brand-fade-in {

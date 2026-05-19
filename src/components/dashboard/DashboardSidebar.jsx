@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { useAuthActions } from "@convex-dev/auth/react";
 import { LayoutDashboard, User, Gift, LogOut } from 'lucide-react';
+import Button from '../ui/Button';
 import '../../pages/Dashboard.css';
 
 const DashboardSidebar = () => {
@@ -60,10 +61,14 @@ const DashboardSidebar = () => {
       </ul>
       
       <div className="dashboard-nav__logout">
-        <button onClick={handleSignOut} className="dashboard-nav__logout-btn" style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left' }}>
-          <LogOut className="dashboard-nav__link-icon" />
+        <Button 
+          variant="nav-logout"
+          onClick={handleSignOut}
+          icon={<LogOut className="dashboard-nav__link-icon" />}
+          iconPosition="left"
+        >
           Sign Out
-        </button>
+        </Button>
       </div>
     </nav>
   );

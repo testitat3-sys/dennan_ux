@@ -8,6 +8,9 @@ import { formatPrice } from '../utils/priceUtils';
 import Toast from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import PDPSkeleton from '../components/ui/PDPSkeleton';
+import Page from '../components/ui/Page';
+import Card from '../components/ui/Card';
+import CardGrid from '../components/ui/CardGrid';
 import './PDP.css';
 
 const formatUnitsSold = (units) => {
@@ -93,8 +96,8 @@ const PDP = () => {
 
   if (!loading && !product) {
     return (
-      <main className="pdp pdp--not-found">
-        <div className="pdp__container" style={{ textAlign: 'center', padding: 'var(--space-20) var(--space-4)' }}>
+      <Page className="pdp pdp--not-found">
+        <Page.Section className="pdp__container" style={{ textAlign: 'center', padding: 'var(--space-20) var(--space-4)' }}>
           <h1 className="display-sm" style={{ marginBottom: 'var(--space-4)', color: 'var(--color-brand-primary)' }}>
             Product Not Found
           </h1>
@@ -102,15 +105,15 @@ const PDP = () => {
             We couldn't find the product details you were looking for. It may have been discontinued or moved to a new category.
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-            <Link to="/" className="btn btn-primary" style={{ padding: '12px 24px', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
+            <Button to="/" variant="primary">
               Back to Home
-            </Link>
-            <Link to="/category/all" className="btn btn-secondary" style={{ padding: '12px 24px', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
+            </Button>
+            <Button to="/category/all" variant="secondary">
               Browse Store
-            </Link>
+            </Button>
           </div>
-        </div>
-      </main>
+        </Page.Section>
+      </Page>
     );
   }
 
@@ -148,8 +151,8 @@ const PDP = () => {
   const imagesList = product.images || [product.image];
 
   return (
-    <main className="pdp">
-      <div className="pdp__container">
+    <Page className="pdp">
+      <Page.Section className="pdp__container">
         {/* Breadcrumbs */}
         <nav className="pdp__breadcrumbs">
           <Link to="/">Home</Link>
@@ -182,7 +185,8 @@ const PDP = () => {
               )}
 
               {imagesList.length > 1 && activeImageIndex > 0 && (
-                <button 
+                <Button 
+                  variant="ghost"
                   className="pdp__carousel-arrow pdp__carousel-arrow--left" 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -190,11 +194,8 @@ const PDP = () => {
                   }}
                   aria-label="Previous image"
                   style={{ zIndex: 3 }}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="15 18 9 12 15 6"/>
-                  </svg>
-                </button>
+                  icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>}
+                />
               )}
 
               <div 
@@ -213,7 +214,8 @@ const PDP = () => {
               </div>
 
               {imagesList.length > 1 && activeImageIndex < imagesList.length - 1 && (
-                <button 
+                <Button 
+                  variant="ghost"
                   className="pdp__carousel-arrow pdp__carousel-arrow--right" 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -221,11 +223,8 @@ const PDP = () => {
                   }}
                   aria-label="Next image"
                   style={{ zIndex: 3 }}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                </button>
+                  icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>}
+                />
               )}
             </div>
             
@@ -318,14 +317,16 @@ const PDP = () => {
                   <span className="control-label">Select Size</span>
                   <div className="size-grid">
                     {sizes.map(size => (
-                      <button 
+                      <Button 
                         key={size}
+                        variant={selectedSize === size ? "primary" : "secondary"}
+                        size="sm"
                         className={`size-btn ${selectedSize === size ? 'is-active' : ''}`}
                         onClick={() => setSelectedSize(size)}
                         disabled={isOutOfStock}
                       >
                         {size}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -334,9 +335,9 @@ const PDP = () => {
               <div className="pdp__quantity">
                 <span className="control-label">Quantity</span>
                 <div className="stepping-component pdp__stepping">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={isOutOfStock}>—</button>
+                  <Button variant="ghost" size="sm" onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={isOutOfStock}>—</Button>
                   <span>{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} disabled={isOutOfStock}>+</button>
+                  <Button variant="ghost" size="sm" onClick={() => setQuantity(quantity + 1)} disabled={isOutOfStock}>+</Button>
                 </div>
               </div>
             </div>
@@ -352,23 +353,29 @@ const PDP = () => {
                   Add to cart
                 </Button>
                 
-                <button className="btn-secondary pdp__wishlist-btn" onClick={handleToggleWishlist}>
-                  <svg 
-                    width="20" 
-                    height="20" 
-                    viewBox="0 0 24 24" 
-                    fill={isSaved ? "var(--color-brand-primary)" : "none"} 
-                    stroke={isSaved ? "var(--color-brand-primary)" : "currentColor"} 
-                    strokeWidth="2"
-                  >
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                  </svg>
+                <Button 
+                  variant="secondary" 
+                  className="pdp__wishlist-btn" 
+                  onClick={handleToggleWishlist}
+                  icon={
+                    <svg 
+                      width="20" 
+                      height="20" 
+                      viewBox="0 0 24 24" 
+                      fill={isSaved ? "var(--color-brand-primary)" : "none"} 
+                      stroke={isSaved ? "var(--color-brand-primary)" : "currentColor"} 
+                      strokeWidth="2"
+                    >
+                      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                    </svg>
+                  }
+                >
                   {isSaved ? 'In Wishlist' : 'Save to Wishlist'}
-                </button>
+                </Button>
               </div>
 
               {isOutOfStock && (
-                <div className="pdp__notify-block" style={{
+                <Card variant="compact" hasShadow={false} className="pdp__notify-block" style={{
                   backgroundColor: 'var(--surface-container-low)',
                   padding: '16px',
                   borderRadius: 'var(--radius-md)',
@@ -386,7 +393,7 @@ const PDP = () => {
                       Notify me when back in stock
                     </span>
                   </label>
-                </div>
+                </Card>
               )}
             </div>
 
@@ -401,28 +408,32 @@ const PDP = () => {
             </div>
           </div>
         </div>
+      </Page.Section>
 
         {/* Product Details Tabs */}
-        <section className="pdp__details">
+        <Page.Section className="pdp__details">
           <div className="pdp__tabs">
-            <button 
+            <Button 
+              variant={activeTab === 'details' ? 'primary' : 'ghost'}
               className={`pdp__tab ${activeTab === 'details' ? 'is-active' : ''}`}
               onClick={() => setActiveTab('details')}
             >
               Description
-            </button>
-            <button 
+            </Button>
+            <Button 
+              variant={activeTab === 'specs' ? 'primary' : 'ghost'}
               className={`pdp__tab ${activeTab === 'specs' ? 'is-active' : ''}`}
               onClick={() => setActiveTab('specs')}
             >
               Specifications
-            </button>
-            <button 
+            </Button>
+            <Button 
+              variant={activeTab === 'reviews' ? 'primary' : 'ghost'}
               className={`pdp__tab ${activeTab === 'reviews' ? 'is-active' : ''}`}
               onClick={() => setActiveTab('reviews')}
             >
               Reviews ({product.reviews?.length || 0})
-            </button>
+            </Button>
           </div>
 
           <div className="pdp__tab-content">
@@ -455,8 +466,8 @@ const PDP = () => {
             {activeTab === 'reviews' && (
               <div className="pdp__reviews">
                 {product.reviews?.map((review, idx) => (
-                  <div key={idx} className="review-card">
-                    <div className="review-header">
+                  <Card key={idx} variant="default" hasShadow={false} className="review-card">
+                    <Card.Header className="review-header">
                       <div className="review-rating">
                         {[...Array(5)].map((_, i) => (
                           <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill={i < review.rating ? "currentColor" : "none"} stroke="currentColor">
@@ -465,23 +476,24 @@ const PDP = () => {
                         ))}
                       </div>
                       <span className="review-age">Child: {review.childAge}</span>
-                    </div>
-                    <p className="review-text">"{review.text}"</p>
-                    <span className="review-author">— {review.author}</span>
-                  </div>
+                    </Card.Header>
+                    <Card.Body>
+                      <p className="review-text">"{review.text}"</p>
+                      <span className="review-author">— {review.author}</span>
+                    </Card.Body>
+                  </Card>
                 ))}
               </div>
             )}
           </div>
-        </section>
-      </div>
+        </Page.Section>
 
       <Toast 
         isOpen={showToast} 
         message={toastMessage} 
         onClose={() => setShowToast(false)} 
       />
-    </main>
+    </Page>
   );
 };
 

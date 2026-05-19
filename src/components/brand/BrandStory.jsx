@@ -1,9 +1,21 @@
 import React from 'react';
+import Text from '../ui/Text';
+import Card from '../ui/Card';
 import './BrandStory.css';
 
-const BrandStory = ({ story }) => {
+const BrandStory = ({ story = {}, banner }) => {
+  if (!story || !story.title) return null;
+
+  const imageUrl = banner || "https://images.unsplash.com/photo-1544126592-807daa215a05?auto=format&fit=crop&q=80&w=1200";
+
   return (
-    <section className="brand-story">
+    <Card 
+      variant="section"
+      hasBorder={false}
+      hasShadow={false}
+      hasBackground={true}
+      className="brand-story"
+    >
       <div className="brand-story__container">
         <div className="brand-story__image-column">
           <div className="brand-story__video-placeholder">
@@ -13,31 +25,31 @@ const BrandStory = ({ story }) => {
               </svg>
             </div>
             <img 
-              src="https://images.unsplash.com/photo-1544126592-807daa215a05?auto=format&fit=crop&q=80&w=1200" 
-              alt="Brand Story" 
+              src={imageUrl} 
+              alt={story.title || "Brand Story"} 
               className="brand-story__img" 
             />
           </div>
         </div>
         
         <div className="brand-story__text-column">
-          <span className="label-md brand-story__eyebrow">Our Heritage</span>
-          <h2 className="brand-story__title">{story.title}</h2>
-          <p className="brand-story__content">{story.content}</p>
+          <Text variant="label-md" className="brand-story__eyebrow">Our Heritage</Text>
+          <Text variant="display-lg" as="h2" className="brand-story__title">{story.title}</Text>
+          <Text variant="title-sm" as="p" className="brand-story__content">{story.content}</Text>
           
           <div className="brand-story__stats">
             <div className="brand-story__stat">
-              <span className="brand-story__stat-value">50+</span>
-              <span className="brand-story__stat-label">Years of Care</span>
+              <Text variant="headline-md" as="span" className="brand-story__stat-value">50+</Text>
+              <Text variant="label-md" className="brand-story__stat-label">Years of Care</Text>
             </div>
             <div className="brand-story__stat">
-              <span className="brand-story__stat-value">100%</span>
-              <span className="brand-story__stat-label">Safety Tested</span>
+              <Text variant="headline-md" as="span" className="brand-story__stat-value">100%</Text>
+              <Text variant="label-md" className="brand-story__stat-label">Safety Tested</Text>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </Card>
   );
 };
 

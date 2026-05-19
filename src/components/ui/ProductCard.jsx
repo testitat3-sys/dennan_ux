@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ProductCardSkeleton from './ProductCardSkeleton';
 import { formatPrice } from '../../utils/priceUtils';
 import { useWishlist } from '../../context/WishlistContext';
+import Button from './Button';
 
 const formatUnitsSold = (units) => {
   if (units >= 1000) {
@@ -86,7 +87,8 @@ const ProductCard = ({
             }
           </div>
           {showWishlistIcon && (
-            <button 
+            <Button 
+              variant="ghost"
               className="product-card__wishlist" 
               aria-label={wishlistMode ? "Remove from wishlist" : (isSaved ? "Remove from wishlist" : "Save to wishlist")}
               onClick={wishlistMode ? (e) => {
@@ -95,8 +97,7 @@ const ProductCard = ({
                 onRemove && onRemove(product);
               } : handleWishlistClick}
               style={(!wishlistMode && isSaved) ? { backgroundColor: 'var(--surface-container-low)' } : {}}
-            >
-              {wishlistMode ? (
+              icon={wishlistMode ? (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
@@ -113,7 +114,7 @@ const ProductCard = ({
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
               )}
-            </button>
+            />
           )}
         </div>
       </Link>
@@ -152,80 +153,60 @@ const ProductCard = ({
         {isOutOfStock ? (
           wishlistMode ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              <button 
-                className="product-card__add product-card__add--disabled"
+              <Button 
+                variant="card-add"
                 disabled
-                style={{
-                  backgroundColor: 'var(--surface-container-high)',
-                  color: 'var(--text-secondary)',
-                  border: 'none',
-                  cursor: 'not-allowed'
-                }}
+                fullWidth
               >
                 Currently Out of Stock
-              </button>
+              </Button>
               {onMoveToRegistry && (
-                <button 
-                  className="product-card__add" 
+                <Button 
+                  variant="card-add" 
+                  size="sm"
+                  fullWidth
                   onClick={(e) => {
                     e.preventDefault();
                     onMoveToRegistry(product);
                   }}
-                  style={{
-                    backgroundColor: 'var(--surface-container-low)',
-                    color: 'var(--color-brand-primary-dark)',
-                    border: '1px solid var(--color-brand-primary-light)',
-                    marginTop: 0
-                  }}
                 >
                   Move to Registry
-                </button>
+                </Button>
               )}
             </div>
           ) : (
-            <button 
-              className={`product-card__add ${isSaved ? 'product-card__add--saved' : ''}`}
+            <Button 
+              variant="card-add"
+              fullWidth
               onClick={handleWishlistClick}
-              style={isSaved ? {
-                backgroundColor: 'color-mix(in srgb, var(--color-brand-primary-light), transparent 85%)',
-                color: 'var(--color-brand-primary-dark)',
-                border: 'none'
-              } : {
-                backgroundColor: 'var(--surface-container-high)',
-                color: 'var(--color-anchor)',
-                border: 'none'
-              }}
             >
               {isSaved ? 'In Wishlist' : 'Add to Wishlist'}
-            </button>
+            </Button>
           )
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            <button 
-              className="product-card__add" 
+            <Button 
+              variant="card-add"
+              fullWidth
               onClick={(e) => {
                 e.preventDefault();
                 onAddToCart && onAddToCart(product);
               }}
             >
               {wishlistMode ? 'Move to cart' : 'Add to cart'}
-            </button>
+            </Button>
             {wishlistMode && onMoveToRegistry && (
-              <button 
-                className="product-card__add" 
+              <Button 
+                variant="card-add" 
+                size="sm"
+                fullWidth
                 onClick={(e) => {
                   e.preventDefault();
                   onMoveToRegistry(product);
                 }}
-                style={{
-                  backgroundColor: 'var(--surface-container-low)',
-                  color: 'var(--color-brand-primary-dark)',
-                  border: '1px solid var(--color-brand-primary-light)',
-                  marginTop: 0
-                }}
               >
                 Move to Registry
-              </button>
+              </Button>
             )}
           </div>
         )}

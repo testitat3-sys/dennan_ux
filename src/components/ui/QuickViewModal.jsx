@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { formatPrice } from '../../utils/priceUtils';
+import Button from './Button';
 import './QuickViewModal.css';
 
 
@@ -69,11 +70,13 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
         className={`quick-view-modal ${active ? 'is-open' : ''} ${isSuccess ? 'is-success-view' : ''}`} 
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="quick-view-close" onClick={onClose} aria-label="Close">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M18 6L6 18M6 6l12 12"/>
-          </svg>
-        </button>
+        <Button 
+          variant="ghost" 
+          className="quick-view-close" 
+          onClick={onClose} 
+          aria-label="Close"
+          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg>}
+        />
 
         <div className="quick-view-content">
           {!isSuccess ? (
@@ -110,14 +113,16 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
                     <span className="option-label">Size</span>
                     <div className="size-selector">
                       {sizes.map((s) => (
-                        <button
+                        <Button
                           key={s}
+                          variant={size === s ? 'primary' : 'ghost'}
+                          size="sm"
                           className={`size-btn ${size === s ? 'is-active' : ''}`}
                           onClick={() => setSize(s)}
                           disabled={isOutOfStock}
                         >
                           {s}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
@@ -125,44 +130,49 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
                   <div className="option-group">
                     <span className="option-label">Quantity</span>
                     <div className="quantity-selector">
-                      <button 
+                      <Button 
+                        variant="ghost"
+                        size="sm"
                         className="qty-btn" 
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
                         disabled={quantity <= 1 || isOutOfStock}
                       >
                         —
-                      </button>
+                      </Button>
                       <span className="qty-val">{quantity}</span>
-                      <button 
+                      <Button 
+                        variant="ghost"
+                        size="sm"
                         className="qty-btn" 
                         onClick={() => setQuantity(quantity + 1)}
                         disabled={isOutOfStock}
                       >
                         +
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
 
                 <div className="quick-view-actions">
                   {isOutOfStock ? (
-                    <button className="btn-primary" onClick={handleAddToWishlist}>
+                    <Button variant="primary" onClick={handleAddToWishlist}>
                       {isSaved ? 'In Wishlist' : 'Add to Wishlist'}
-                    </button>
+                    </Button>
                   ) : (
-                    <button className="btn-primary" onClick={handleAddToCart}>
+                    <Button variant="primary" onClick={handleAddToCart}>
                       Add to Cart
-                    </button>
+                    </Button>
                   )}
-                  <button 
-                    className="btn-link quick-view-details-link"
+                  <Button 
+                    variant="link" 
+                    className="quick-view-details-link"
                     onClick={() => {
                       onClose();
                       navigate(`/product/${product.id || product._id}`);
                     }}
                   >
                     View Full Details
-                  </button>
+                  </Button>
                 </div>
               </div>
             </>
@@ -199,17 +209,17 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
 
               <div className="success-actions">
                 {isAddedToWishlist ? (
-                  <button className="btn-primary full-width" onClick={() => { onClose(); navigate('/wishlist'); }}>
+                  <Button variant="primary" fullWidth onClick={() => { onClose(); navigate('/wishlist'); }}>
                     View Wishlist
-                  </button>
+                  </Button>
                 ) : (
-                  <button className="btn-primary full-width" onClick={() => navigate('/checkout')}>
+                  <Button variant="primary" fullWidth onClick={() => navigate('/checkout')}>
                     Proceed to Checkout
-                  </button>
+                  </Button>
                 )}
-                <button className="btn-secondary full-width" onClick={onClose}>
+                <Button variant="secondary" fullWidth onClick={onClose}>
                   Continue Shopping
-                </button>
+                </Button>
               </div>
             </div>
           )}

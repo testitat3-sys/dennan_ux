@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Button from '../ui/Button';
 import './GroupGiftingModal.css';
 
 const GroupGiftingModal = ({ item, isOpen, onClose, onConfirm }) => {
@@ -20,7 +21,12 @@ const GroupGiftingModal = ({ item, isOpen, onClose, onConfirm }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <button className="close-btn" onClick={onClose}>&times;</button>
+        <Button 
+          variant="ghost"
+          className="close-btn" 
+          onClick={onClose}
+          icon={<span>&times;</span>}
+        />
         
         <div className="modal-header">
           <span className="label-md">Group Gifting</span>
@@ -64,13 +70,14 @@ const GroupGiftingModal = ({ item, isOpen, onClose, onConfirm }) => {
           />
         </div>
 
-        <button 
-          className="btn-primary full-width" 
+        <Button 
+          variant="primary"
+          fullWidth 
           disabled={!amount || !name}
           onClick={handleConfirm}
         >
           Confirm Contribution
-        </button>
+        </Button>
 
         <p className="label-md text-tertiary text-center">
           Contributions are non-refundable and will be applied directly to this item.

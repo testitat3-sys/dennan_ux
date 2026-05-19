@@ -1,7 +1,12 @@
 .brand-story {
-  padding: var(--space-20) 0;
-  background: var(--surface-container-low);
-  margin-top: var(--space-16);
+  background: var(--surface-container-low) !important;
+}
+
+/* Explicitly disable hover effects on our card wrapper */
+.brand-story.card:hover {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .brand-story__container {
@@ -63,13 +68,10 @@
 }
 
 .brand-story__title {
-  font-family: var(--font-editorial);
-  font-size: var(--display-lg);
   margin-bottom: var(--space-6);
 }
 
 .brand-story__content {
-  font-size: var(--title-sm);
   line-height: 1.8;
   color: var(--text-secondary);
   margin-bottom: var(--space-8);
@@ -82,16 +84,11 @@
 
 .brand-story__stat-value {
   display: block;
-  font-family: var(--font-editorial);
-  font-size: var(--headline-md);
   color: var(--color-anchor);
 }
 
 .brand-story__stat-label {
-  font-size: var(--label-md);
   color: var(--text-tertiary);
-  text-transform: uppercase;
-  font-weight: 700;
 }
 
 @media (max-width: 992px) {

@@ -150,14 +150,6 @@
   gap: var(--space-4);
   flex-shrink: 0;
 }
-.nav__icon-btn {
-  width: var(--space-9); height: var(--space-9);
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-pill);
-  transition: background 0.2s;
-  color: var(--color-brand-primary);
-}
-.nav__icon-btn:hover { background: var(--surface-container-low); }
 .nav__cart-badge { position: relative; }
 .cart-count-dot {
   position: absolute;
@@ -337,26 +329,6 @@
 .product-card--loaded {
   animation: productCardFadeIn 0.35s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
 }
-.product-card__add {
-  margin-top: var(--space-3);
-  width: 100%;
-  background: var(--color-anchor);
-  color: white;
-  border-radius: var(--radius-sm);
-  padding: var(--space-3);
-  font-size: var(--label-md);
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  opacity: 0;
-  transform: translateY(var(--space-1-5));
-  transition: opacity 0.2s, transform 0.2s, background 0.2s, box-shadow 0.2s;
-}
-.product-card:hover .product-card__add { opacity: 1; transform: translateY(0); }
-.product-card__add:hover { 
-  background: var(--color-anchor);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-primary), transparent 85%);
-}
 
 /* ─── PRODUCT TAGS ───────────────────────────────────────────────── */
 .product-card__tags {
@@ -529,7 +501,7 @@
   .footer__grid { grid-template-columns: 1fr 1fr; gap: var(--space-8); }
 
   /* Make Add to Cart persistent on touch/smaller screens */
-  .product-card__add {
+  .btn--card-add {
     opacity: 1;
     transform: translateY(0);
   }
@@ -588,8 +560,13 @@
     order: 3;
     gap: var(--space-2);
   }
-  .nav__actions .nav__icon-btn:not(.nav__cart-badge) {
-    display: none;
+  .nav__actions .nav__action-search,
+  .nav__actions .nav__action-account {
+    display: none !important;
+  }
+  .nav__actions .nav__action-wishlist,
+  .nav__actions .nav__action-cart {
+    display: flex !important;
   }
   .nav__mobile-menu-trigger {
     display: flex;
@@ -622,10 +599,14 @@
 
 .mobile-menu__header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--surface-container-low);
+}
+
+.mobile-menu__account {
+  display: none !important;
 }
 
 .mobile-menu__pane-container {
@@ -730,6 +711,7 @@
 
 /* Mobile Search Bar */
 .mobile-menu__search {
+  display: none !important;
   padding: var(--space-4) var(--space-6);
   background: var(--surface);
   border-bottom: 1px solid var(--surface-container-low);

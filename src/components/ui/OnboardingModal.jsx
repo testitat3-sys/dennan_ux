@@ -4,7 +4,8 @@ import { useUser } from '../../context/UserContext';
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { Mail, ArrowRight, ArrowLeft, Loader2, Baby, Heart } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft, Loader2, Baby, Heart, Plus } from 'lucide-react';
+import Button from './Button';
 import './OnboardingModal.css';
 
 const OnboardingModal = ({ isOpen, onClose }) => {
@@ -252,21 +253,26 @@ const OnboardingModal = ({ isOpen, onClose }) => {
 
         <div className="onboarding-header">
           {isAuthenticated && step > 1 ? (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               className="onboarding-skip"
               onClick={() => setStep(prev => prev - 1)}
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer' }}
+              icon={<ArrowLeft size={14} />}
+              iconPosition="left"
             >
-              <ArrowLeft size={14} /> Back
-            </button>
+              Back
+            </Button>
           ) : (
-            <button className="onboarding-skip" onClick={onClose}>Skip for now</button>
+            <Button variant="skip" size="sm" onClick={onClose}>Skip for now</Button>
           )}
-          <button className="onboarding-close" onClick={onClose} aria-label="Close">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-          </button>
+          <Button 
+            variant="ghost" 
+            className="onboarding-close" 
+            onClick={onClose} 
+            aria-label="Close"
+            icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg>}
+          />
         </div>
 
         <div className="onboarding-content">
@@ -280,26 +286,30 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                   <h2 className="onboarding-step-title">Where are you in your journey?</h2>
                   <p className="onboarding-step-desc">We'll personalise your experience to show you exactly what you need.</p>
                   <div className="onboarding-cards">
-                    <div
+                    <Button
+                      variant={role === 'expecting' ? 'primary' : 'ghost'}
                       className={`onboarding-card ${role === 'expecting' ? 'is-active' : ''}`}
                       onClick={() => handleRoleSelect('expecting')}
+                      style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: 'var(--space-6)' }}
                     >
                       <div className="onboarding-card-icon">
                         <Heart size={28} strokeWidth={1.2} />
                       </div>
                       <span className="onboarding-card-label">I'm expecting</span>
                       <span className="onboarding-card-sub">Pregnant & preparing</span>
-                    </div>
-                    <div
+                    </Button>
+                    <Button
+                      variant={role === 'parent' ? 'primary' : 'ghost'}
                       className={`onboarding-card ${role === 'parent' ? 'is-active' : ''}`}
                       onClick={() => handleRoleSelect('parent')}
+                      style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: 'var(--space-6)' }}
                     >
                       <div className="onboarding-card-icon">
                         <Baby size={28} strokeWidth={1.2} />
                       </div>
                       <span className="onboarding-card-label">I'm already a parent</span>
                       <span className="onboarding-card-sub">My child is here</span>
-                    </div>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -359,12 +369,16 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                           </div>
                         ))}
                         {children.length < 5 && (
-                          <button className="add-another-btn" onClick={addChild}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
+                          <Button 
+                            variant="ghost"
+                            size="sm"
+                            className="add-another-btn" 
+                            onClick={addChild}
+                            icon={<Plus size={18} />}
+                            iconPosition="left"
+                          >
                             Add another child
-                          </button>
+                          </Button>
                         )}
                       </>
                     )}
@@ -377,14 +391,16 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                   )}
 
                   <div className="onboarding-actions">
-                    <button
-                      className="btn-primary-full"
+                    <Button
+                      variant="primary"
+                      fullWidth
                       onClick={() => setStep(3)}
                       disabled={!isDateStepValid() || pending}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      icon={<ArrowRight size={18} />}
+                      iconPosition="right"
                     >
-                      Continue <ArrowRight size={18} />
-                    </button>
+                      Continue
+                    </Button>
                   </div>
                 </div>
               )}
@@ -418,18 +434,17 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                   )}
 
                   <div className="onboarding-actions">
-                    <button
-                      className="btn-primary-full"
+                    <Button
+                      variant="primary"
+                      fullWidth
                       onClick={handleJourneySubmit}
                       disabled={!username.trim() || pending}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      loading={pending}
+                      icon={<ArrowRight size={18} />}
+                      iconPosition="right"
                     >
-                      {pending ? (
-                        <>Saving Setup… <Loader2 className="animate-spin" size={18} /></>
-                      ) : (
-                        <>Complete Setup <ArrowRight size={18} /></>
-                      )}
-                    </button>
+                      Complete Setup
+                    </Button>
                   </div>
                 </div>
               )}
@@ -481,18 +496,18 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                       </label>
                     </div>
 
-                    <button
+                    <Button
                       type="submit"
-                      className="btn-primary-full"
+                      variant="primary"
+                      fullWidth
                       disabled={!email || pending}
-                      style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      loading={pending}
+                      icon={<ArrowRight size={18} />}
+                      iconPosition="right"
+                      style={{ marginTop: '0.5rem' }}
                     >
-                      {pending ? (
-                        <>Sending Link… <Loader2 className="animate-spin" size={18} /></>
-                      ) : (
-                        <>Send Magic Link <ArrowRight size={18} /></>
-                      )}
-                    </button>
+                      Send Magic Link
+                    </Button>
                   </form>
                 </>
               ) : (
@@ -506,34 +521,24 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                   </p>
 
                   <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <button
+                    <Button
                       onClick={handleResend}
-                      className="btn-secondary-full"
-                      style={{ width: '100%', fontSize: '0.875rem' }}
+                      variant="secondary"
+                      fullWidth
+                      size="sm"
                       disabled={pending || resendCooldown > 0}
+                      loading={pending}
                     >
-                      {pending ? (
-                        <Loader2 className="animate-spin" size={16} />
-                      ) : resendCooldown > 0 ? (
-                        `Resend email (${resendCooldown}s)`
-                      ) : (
-                        "Resend email"
-                      )}
-                    </button>
+                      {resendCooldown > 0 ? `Resend email (${resendCooldown}s)` : "Resend email"}
+                    </Button>
 
-                    <button
+                    <Button
+                      variant="link"
+                      size="sm"
                       onClick={handleBack}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--primary)',
-                        fontSize: '0.8125rem',
-                        cursor: 'pointer',
-                        textDecoration: 'underline'
-                      }}
                     >
                       Entered the wrong email? Click here to change it
-                    </button>
+                    </Button>
                   </div>
 
                   {testMode && (
@@ -548,13 +553,15 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                           <p style={{ fontSize: '0.75rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
                             Test Link Captured:
                           </p>
-                          <a
+                          <Button
+                            as="a"
                             href={capturedLink}
-                            className="btn-primary-full"
-                            style={{ width: '100%', fontSize: '0.875rem', padding: '8px' }}
+                            variant="primary"
+                            fullWidth
+                            size="sm"
                           >
                             Login Directly
-                          </a>
+                          </Button>
                         </div>
                       )}
                     </div>

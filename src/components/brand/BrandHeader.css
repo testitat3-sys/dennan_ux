@@ -1,12 +1,27 @@
-.brand-header {
+/* ─── BrandHeader ─────────────────────────────────────────────────────────── */
+/* Outer shell is the Card component (margin: 0 enforced by Card CSS).         */
+/* This file styles internals only.                                            */
+
+.brand-header.card {
   position: relative;
   width: 100%;
-  margin-bottom: var(--space-12);
+  overflow: hidden;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
+
+.brand-header.card:hover {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ─── Banner ─────────────────────────────────────────────────────────────── */
 
 .brand-header__banner {
   position: relative;
-  height: 400px;
+  height: 480px;
   overflow: hidden;
 }
 
@@ -14,215 +29,228 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.8s ease;
+  transition: transform 0.9s ease;
 }
 
-.brand-header {
-  &:hover .brand-header__banner-img {
-    transform: scale(1.05);
-  }
+.brand-header:hover .brand-header__banner-img {
+  transform: scale(1.04);
 }
 
 .brand-header__banner-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.4));
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 15%,
+    rgba(0, 0, 0, 0.28) 50%,
+    rgba(0, 0, 0, 0.76) 100%
+  );
 }
 
-.brand-header__content {
-  position: relative;
-  max-width: 1200px;
-  margin: -60px auto 0;
-  padding: 0 var(--space-6);
+/* ─── Actions (top-right, floating over banner) ──────────────────────────── */
+
+.brand-header__actions {
+  position: absolute;
+  top: var(--space-5);
+  right: var(--space-6);
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+  gap: var(--space-3);
+  z-index: 10;
+}
+
+/* ─── Identity row (bottom of banner) ───────────────────────────────────── */
+
+.brand-header__content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 var(--space-8) var(--space-7);
   z-index: 10;
 }
 
 .brand-header__identity {
   display: flex;
   align-items: flex-end;
-  gap: var(--space-8);
+  gap: var(--space-6);
 }
 
+/* ─── Logo ───────────────────────────────────────────────────────────────── */
+
 .brand-header__logo-container {
-  width: 140px;
-  height: 140px;
+  flex-shrink: 0;
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
   background: var(--surface);
-  padding: var(--space-4);
-  box-shadow: var(--shadow-deep);
-  border-radius: var(--radius-md);
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.brand-header__logo-placeholder {
-  font-family: var(--font-editorial);
-  font-size: 2.5rem;
-  color: var(--color-brand-primary);
-  font-weight: 700;
+  overflow: hidden;
+  /* Nudge logo up so it sits on the gradient, not fully inside the darkest zone */
+  margin-bottom: var(--space-2);
 }
 
 .brand-header__logo-img {
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  padding: var(--space-2);
+  padding: var(--space-3);
 }
 
+.brand-header__logo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--color-brand-primary);
+  font-family: var(--font-editorial);
+}
+
+/* ─── Info ───────────────────────────────────────────────────────────────── */
+
 .brand-header__info {
-  padding-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-1);
 }
 
 .brand-header__title {
-  font-family: var(--font-editorial);
-  font-size: var(--display-lg);
   color: var(--color-gallery-white);
-  margin-bottom: var(--space-2);
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  line-height: 1.1;
 }
 
 .brand-header__mission {
-  color: var(--surface-container-low);
-  font-size: var(--title-sm);
-  max-width: 500px;
-  margin-bottom: var(--space-4);
-  font-weight: 400;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 520px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
+
+/* ─── Certification Badges ───────────────────────────────────────────────── */
 
 .brand-header__badges {
   display: flex;
-  gap: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 
 .brand-header__badge {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+  gap: var(--space-1);
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-pill);
   color: var(--color-gallery-white);
-  font-size: var(--label-md);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
 }
 
-.brand-header__actions {
-  display: flex;
-  gap: var(--space-4);
-  padding-bottom: var(--space-4);
+.brand-header__badge-icon {
+  font-size: 0.85em;
+  line-height: 1;
 }
 
-.brand-header__btn {
-  padding: var(--space-3) var(--space-6);
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  transition: all 0.3s ease;
+/* ─── Mobile-only block (hidden on desktop) ─────────────────────────────── */
+
+.brand-header__mobile-content {
+  display: none;
 }
 
-.brand-header__btn--primary {
-  background: var(--color-anchor);
-  color: var(--color-on-primary);
-}
+/* ─── Mobile (≤ 767px) ───────────────────────────────────────────────────── */
 
-.brand-header__btn--primary:hover {
-  background: var(--color-brand-primary);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-primary);
-}
+@media (max-width: 767px) {
 
-.brand-header__btn--secondary {
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--color-anchor);
-  backdrop-filter: blur(5px);
-}
+  /* Shorten banner; hide desktop identity overlay */
+  .brand-header__banner {
+    height: 210px;
+  }
 
-.brand-header__btn--secondary:hover {
-  background: var(--color-gallery-white);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-deep);
-}
-
-@media (max-width: 768px) {
   .brand-header__content {
-    flex-direction: column;
-    align-items: center;
-    margin-top: -80px;
-    text-align: center;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 0 var(--space-4);
-    gap: var(--space-6);
-  }
-  
-  .brand-header__identity {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-4);
-    width: 100%;
-  }
-
-  .brand-header__logo-container {
-    width: 100px;
-    height: 100px;
-    padding: var(--space-2);
-  }
-
-  .brand-header__info {
-    width: 100%;
-    padding-bottom: 0;
-  }
-  
-  .brand-header__title {
-    color: var(--text-primary);
-    text-shadow: none;
-    font-size: var(--headline-lg);
-  }
-  
-  .brand-header__mission {
-    color: var(--text-secondary);
-    font-size: var(--body-md);
-    margin-bottom: var(--space-4);
-  }
-  
-  .brand-header__badges {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-2);
-  }
-
-  .brand-header__badge {
-    background: var(--surface-container);
-    color: var(--text-secondary);
+    display: none;
   }
 
   .brand-header__actions {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-3);
-    padding-bottom: var(--space-2);
+    display: none;
   }
 
-  .brand-header__btn {
-    flex: 1;
-    min-width: 120px;
-    max-width: 200px;
+  /* Logo pops out of banner bottom edge */
+  .brand-header__logo-container {
+    width: 84px;
+    height: 84px;
+    border-width: 2.5px;
+    /* Pull logo up over the banner bottom */
+    margin: -42px auto var(--space-4);
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Mobile identity block becomes visible */
+  .brand-header__mobile-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 var(--space-5) var(--space-6);
+    gap: var(--space-4);
+  }
+
+  .brand-header__mobile-content .brand-header__info {
+    align-items: center;
+    text-align: center;
+    gap: var(--space-2);
+    padding-bottom: 0;
+  }
+
+  .brand-header__mobile-content .brand-header__title {
+    color: var(--text-primary);
+    text-shadow: none;
+  }
+
+  .brand-header__mobile-content .brand-header__mission {
+    color: var(--text-secondary);
+    text-shadow: none;
+    max-width: 100%;
+  }
+
+  .brand-header__mobile-content .brand-header__badge {
+    background: var(--surface-container);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-color: var(--surface-container-highest);
+    color: var(--text-secondary);
+  }
+
+  .brand-header__mobile-content .brand-header__badges {
     justify-content: center;
-    padding: var(--space-2-5) var(--space-4);
-    font-size: var(--body-sm);
+  }
+
+  .brand-header__mobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    width: 100%;
+  }
+
+  /* Lighter overlay on shorter mobile banner */
+  .brand-header__banner-overlay {
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 30%,
+      rgba(0, 0, 0, 0.42) 100%
+    );
+  }
+
+  /* No parallax zoom on mobile */
+  .brand-header:hover .brand-header__banner-img {
+    transform: none;
   }
 }
-

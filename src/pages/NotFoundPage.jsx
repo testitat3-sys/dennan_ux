@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Button from '../components/ui/Button';
 import './NotFoundPage.css';
 
 const NotFoundPage = () => {
@@ -13,8 +14,8 @@ const NotFoundPage = () => {
         </p>
         
         <div className="not-found__cta">
-          <Link to="/" className="btn-primary">Go back to the nursery</Link>
-          <Link to="/category/all" className="btn-ghost">Browse all products</Link>
+          <Button to="/" variant="primary">Go back to the nursery</Button>
+          <Button to="/category/all" variant="ghost">Browse all products</Button>
         </div>
       </div>
     </div>

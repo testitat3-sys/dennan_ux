@@ -1,4 +1,6 @@
 import React from 'react';
+import Text from '../ui/Text';
+import Card from '../ui/Card';
 import './CheckoutStepper.css';
 
 const StepIcons = {
@@ -50,7 +52,7 @@ const CheckoutStepper = ({ currentStepId, steps = [], currentStep }) => {
   }));
 
   return (
-    <div className="checkout-stepper-container">
+    <Card className="checkout-stepper-container" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
       <div className="checkout-stepper">
         {displaySteps.map((step, index) => {
           const isCompleted = index < currentStepIndex;
@@ -69,7 +71,7 @@ const CheckoutStepper = ({ currentStepId, steps = [], currentStep }) => {
                     </div>
                   )}
                 </div>
-                <span className="stepper-label">{step.label}</span>
+                <Text role="label-sm" className="stepper-label">{step.label}</Text>
               </div>
               {index < displaySteps.length - 1 && (
                 <div className={`stepper-line ${isCompleted ? 'is-active' : ''}`} />
@@ -78,7 +80,7 @@ const CheckoutStepper = ({ currentStepId, steps = [], currentStep }) => {
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 };
 

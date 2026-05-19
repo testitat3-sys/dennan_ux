@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './SmartAddressSearch.css';
+import Button from '../ui/Button';
 
 const SmartAddressSearch = ({ onSelectAddress, landmarks = [], history = [] }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -155,16 +156,14 @@ const SmartAddressSearch = ({ onSelectAddress, landmarks = [], history = [] }) =
           }}
           onFocus={() => setIsFocused(true)}
         />
-        <button 
+        <Button 
+          variant="ghost"
           className={`gps-btn ${isLocating ? 'is-loading' : ''}`} 
           onClick={handleGetCurrentLocation}
           title="Use current location"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
-        </button>
+          loading={isLocating}
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>}
+        />
       </div>
 
       {isFocused && (

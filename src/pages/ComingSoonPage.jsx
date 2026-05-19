@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Button from '../components/ui/Button';
 import './ComingSoonPage.css';
 
 const ComingSoonPage = () => {
@@ -13,8 +14,8 @@ const ComingSoonPage = () => {
         </p>
         
         <div className="coming-soon__cta">
-          <Link to="/" className="btn-primary">Return Home</Link>
-          <button className="btn-ghost">Notify Me</button>
+          <Button to="/" variant="primary">Return Home</Button>
+          <Button variant="ghost">Notify Me</Button>
         </div>
 
         <div className="coming-soon__visual">

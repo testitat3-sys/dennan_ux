@@ -1,4 +1,6 @@
 import React from 'react';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
 import './RegistryHeader.css';
 
 const RegistryHeader = ({ profile, onShowToast }) => {
@@ -15,22 +17,26 @@ const RegistryHeader = ({ profile, onShowToast }) => {
   };
 
   return (
-    <header className="registry-header">
-      <div className="header-top">
-        <div className="profile-info">
-          <span className="label-md">Registry</span>
-          <h1>Baby Registry</h1>
-        </div>
-        <div className="share-controls">
-          <button className="btn-secondary btn-sm" onClick={handleCopyLink}>
-            <span>Copy Link</span>
-          </button>
-          <button className="btn-secondary btn-sm" onClick={handleCopyLink}>
-            <span>Share</span>
-          </button>
-        </div>
-      </div>
-    </header>
+    <Card 
+      variant="section" 
+      hasBorder={false} 
+      hasShadow={false} 
+      hasBackground={false} 
+      className="registry-header"
+    >
+      <Card.Header>
+        <span className="label-md">Registry</span>
+        <h1>Baby Registry</h1>
+      </Card.Header>
+      <Card.Actions>
+        <Button variant="secondary" size="sm" onClick={handleCopyLink}>
+          Copy Link
+        </Button>
+        <Button variant="secondary" size="sm" onClick={handleCopyLink}>
+          Share
+        </Button>
+      </Card.Actions>
+    </Card>
   );
 };
 

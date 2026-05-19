@@ -10,6 +10,11 @@ import SearchStrip from '../components/home/SearchStrip';
 import QuickViewModal from '../components/ui/QuickViewModal';
 import Toast from '../components/ui/Toast';
 import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
+import Button from '../components/ui/Button';
+import Page from '../components/ui/Page';
+import Card from '../components/ui/Card';
+import CardGrid from '../components/ui/CardGrid';
+import Text from '../components/ui/Text';
 import './BrandPage.css';
 
 const BrandPage = () => {
@@ -67,9 +72,9 @@ const BrandPage = () => {
   // Loading skeleton state (when brand query is undefined)
   if (brand === undefined) {
     return (
-      <div className="brand-page brand-page--loading" aria-hidden="true">
+      <Page className="brand-page brand-page--loading" aria-hidden="true">
         {/* 1. Header Skeleton */}
-        <div className="brand-header brand-header--skeleton">
+        <Page.Section fullBleed className="brand-header brand-header--skeleton">
           <div className="brand-header__banner skeleton-shimmer" style={{ height: '400px' }}></div>
           <div className="brand-header__content">
             <div className="brand-header__identity">
@@ -88,10 +93,10 @@ const BrandPage = () => {
               <div className="skeleton-shimmer" style={{ width: '160px', height: '42px', borderRadius: 'var(--radius-md)' }}></div>
             </div>
           </div>
-        </div>
+        </Page.Section>
 
         {/* 2. Overlapping Search Strip Skeleton */}
-        <div className="search-strip search-strip--skeleton" style={{ paddingTop: 'var(--space-4)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Page.Section className="search-strip search-strip--skeleton" style={{ paddingTop: 'var(--space-4)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div className="skeleton-shimmer" style={{ width: '200px', height: '14px', margin: '0 auto var(--space-4)', borderRadius: 'var(--radius-sm)' }}></div>
           <div className="skeleton-shimmer" style={{ height: '56px', width: '100%', maxWidth: '680px', margin: '0 auto var(--space-5)', borderRadius: 'var(--radius-pill)', background: 'var(--surface-container-low)' }}></div>
           <div className="search-suggestions" style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center', width: '100%' }}>
@@ -99,10 +104,10 @@ const BrandPage = () => {
               <div key={i} className="skeleton-shimmer" style={{ width: '120px', height: '32px', borderRadius: 'var(--radius-pill)', background: 'var(--surface-container-low)' }}></div>
             ))}
           </div>
-        </div>
+        </Page.Section>
 
         {/* 3. Main content area skeleton */}
-        <main className="brand-page__main" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 var(--space-6)' }}>
+        <Page.Section className="brand-page__main" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 var(--space-6)' }}>
           {/* Nav Rail tabs skeleton */}
           <div className="skeleton-tabs" style={{ display: 'flex', gap: 'var(--space-6)', borderBottom: '2px solid var(--surface-container)', padding: 'var(--space-4) 0', marginBottom: 'var(--space-10)' }}>
             {[1, 2, 3, 4].map((i) => (
@@ -113,94 +118,100 @@ const BrandPage = () => {
           {/* Product Grid Skeleton */}
           <div className="skeleton-products" style={{ marginBottom: 'var(--space-16)' }}>
             <div className="skeleton-shimmer" style={{ width: '180px', height: '24px', borderRadius: 'var(--radius-sm)', marginBottom: '24px' }}></div>
-            <div className="plp__grid">
+            <CardGrid className="plp__grid">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <ProductCardSkeleton key={i} />
               ))}
-            </div>
+            </CardGrid>
           </div>
-        </main>
-      </div>
+        </Page.Section>
+      </Page>
     );
   }
 
   // Fallback state if brand doesn't exist in our database (null)
   if (brand === null) {
     return (
-      <div className="brand-page brand-page--error">
-        <div className="brand-error-container">
-          <span className="brand-error-icon">✨</span>
-          <h1 className="brand-error-title">Curating Soon</h1>
-          <p className="brand-error-text">
-            We are currently hand-selecting the finest essentials from <strong>{brandId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</strong>.
-          </p>
-          <p className="brand-error-subtext">
-            Our pediatric experts are verifying safety and comfort parameters to bring you a premium experience.
-          </p>
-          <button onClick={() => navigate('/')} className="brand-error-btn">
-            Explore Curated Stages
-          </button>
-        </div>
-      </div>
+      <Page className="brand-page brand-page--error">
+        <Page.Section>
+          <Card variant="feature" hasShadow={false} className="brand-error-container">
+            <span className="brand-error-icon">✨</span>
+            <Text variant="headline-lg" as="h1" className="brand-error-title">Curating Soon</Text>
+            <Text variant="body-lg" className="brand-error-text">
+              We are currently hand-selecting the finest essentials from <strong>{brandId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</strong>.
+            </Text>
+            <Text variant="body-sm" className="brand-error-subtext">
+              Our pediatric experts are verifying safety and comfort parameters to bring you a premium experience.
+            </Text>
+            <Button onClick={() => navigate('/')} variant="primary" className="brand-error-btn">
+              Explore Curated Stages
+            </Button>
+          </Card>
+        </Page.Section>
+      </Page>
     );
   }
 
   return (
-    <div className="brand-page">
-      <BrandHeader brand={brand} />
-      <SearchStrip />
+    <Page noPaddingTop className="brand-page">
+      <Page.Section fullBleed noPadding>
+        <BrandHeader brand={brand} />
+      </Page.Section>
+      <Page.Section>
+        <SearchStrip />
+      </Page.Section>
       
-      <main className="brand-page__main">
+      <Page.Section className="brand-page__main" spacing="tight">
         <StageNavRail 
           activeStage={activeStage} 
           onStageChange={setActiveStage} 
         />
         
-        <div className="brand-page__products">
-          <ProductSection 
-            title={`${activeStage === 'all' ? 'Full Collection' : activeStage.charAt(0).toUpperCase() + activeStage.slice(1) + ' Essentials'}`}
-            eyebrow={brand.name}
-            products={filteredProducts}
-            viewAllLink="#"
-            viewAllText=""
-            onAddToCart={handleAddToCart}
-          />
-        </div>
-        
-        <BrandStory story={brand.story} />
-        
-        <section className="brand-page__bundles">
-          <div className="brand-page__bundles-header">
-            <h2 className="brand-page__bundles-title">Curated Bundles</h2>
-            <p className="brand-page__bundles-subtitle">Shop the look with one click.</p>
-          </div>
-          {/* Bundle placeholder */}
-          <div className="brand-page__bundle-card">
-            <img src="https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=1200" alt="Bundle" className="brand-page__bundle-img" />
-            <div className="brand-page__bundle-info">
-              <h3>The Newborn Starter Set</h3>
-              <p>Includes: 6 Bottles, Sterilizer, Bottle Warmer, and Soothers.</p>
-              <button className="brand-page__bundle-btn">Add Bundle to Cart — UGX 149,000</button>
-            </div>
-          </div>
-        </section>
-
-        {selectedProduct && (
-          <QuickViewModal 
-            product={selectedProduct} 
-            isOpen={isModalOpen} 
-            onClose={() => setIsModalOpen(false)} 
-            onSuccess={handleModalSuccess}
-          />
-        )}
-
-        <Toast 
-          isOpen={showToast} 
-          message={toastMessage} 
-          onClose={() => setShowToast(false)} 
+        <ProductSection 
+          products={filteredProducts}
+          onAddToCart={handleAddToCart}
         />
-      </main>
-    </div>
+      </Page.Section>
+
+      <Page.Section spacing="loose" fullBleed>
+        <BrandStory story={brand.story} banner={brand.banner} />
+      </Page.Section>
+      
+      <Page.Section spacing="loose" className="brand-page__bundles">
+        <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} className="brand-page__bundles-header">
+          <Card.Header align="center">
+            <Text variant="headline-md" as="h2" className="brand-page__bundles-title">Curated Bundles</Text>
+            <Text variant="body-sm" className="brand-page__bundles-subtitle">Shop the look with one click.</Text>
+          </Card.Header>
+        </Card>
+        {/* Bundle placeholder */}
+        <Card className="brand-page__bundle-card" variant="feature" layout="horizontal">
+          <img src="https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=1200" alt="Bundle" className="brand-page__bundle-img" />
+          <Card.Body className="brand-page__bundle-info">
+            <Text variant="headline-md" as="h3">The Newborn Starter Set</Text>
+            <Text variant="body-sm">Includes: 6 Bottles, Sterilizer, Bottle Warmer, and Soothers.</Text>
+            <Button variant="hero" fullWidth>
+              Add Bundle to Cart — UGX 149,000
+            </Button>
+          </Card.Body>
+        </Card>
+      </Page.Section>
+
+      {selectedProduct && (
+        <QuickViewModal 
+          product={selectedProduct} 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onSuccess={handleModalSuccess}
+        />
+      )}
+
+      <Toast 
+        isOpen={showToast} 
+        message={toastMessage} 
+        onClose={() => setShowToast(false)} 
+      />
+    </Page>
   );
 };
 

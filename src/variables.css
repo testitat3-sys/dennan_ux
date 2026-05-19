@@ -102,6 +102,30 @@
   --width-sidebar-sm: 240px;
 
   --layout-inset: var(--space-12);
+
+  /* ─── Page Layout Tokens ──────────────────────────────────────── */
+  --page-padding-x-mobile:   var(--space-4);        /* 16px */
+  --page-padding-x-tablet:   var(--space-6);        /* 24px */
+  --page-padding-x-desktop:  var(--space-8);        /* 32px */
+  --page-padding-y:          var(--space-8);        /* 32px */
+
+  --page-max-width:          var(--width-container); /* 1200px */
+
+  --section-gap-tight:       var(--space-6);        /* 24px */
+  --section-gap-default:     var(--space-12);       /* 48px */
+  --section-gap-loose:       var(--space-20);       /* 80px */
+
+  --grid-gap-tight:          var(--space-3);        /* 12px */
+  --grid-gap-default:        var(--space-6);        /* 24px */
+  --grid-gap-loose:          var(--space-8);        /* 32px */
+}
+
+@media (max-width: 768px) {
+  :root {
+    --section-gap-loose:   var(--space-10);  /* 40px */
+    --section-gap-default: var(--space-6);   /* 24px */
+    --section-gap-tight:   var(--space-4);   /* 16px */
+  }
 }
 
 @media (max-width: 1024px) {

@@ -1,69 +1,84 @@
 import React from 'react';
 import { formatPrice } from '../../utils/priceUtils';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import { Trash2, ShoppingBag, Gift } from 'lucide-react';
 import './RegistryItemCard.css';
 
 const RegistryItemCard = ({ item, viewMode, onBuy, onContribute, onRemove }) => {
   const isPurchased = item.status === 'purchased';
 
   return (
-    <article className={`product-card product-card--loaded ${isPurchased ? 'purchased' : ''} registry-item-card`}>
-      <div className="product-card__image" style={{ position: 'relative' }}>
-        <img src={item.image} alt={item.name} className="item-image" />
-        {isPurchased && (
-          <div className="purchased-overlay">
-            <span className="label-md">Gifted</span>
-          </div>
-        )}
-        
-        {viewMode === 'parent' && (
-          <button 
-            className="product-card__wishlist" 
-            aria-label="Remove from registry"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onRemove && onRemove(item.id);
-            }}
-            style={{ backgroundColor: 'var(--surface-container-low)', zIndex: 10 }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        )}
-      </div>
+    <Card 
+      className={`registry-item-card ${isPurchased ? 'purchased' : ''}`}
+      variant="default"
+    >
+      <Card.Header>
+        <div className="product-card__image" style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+          <img src={item.image} alt={item.name} className="item-image" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          
+          {isPurchased && (
+            <div className="purchased-overlay">
+              <span className="label-md">Gifted</span>
+            </div>
+          )}
+          
+          {viewMode === 'parent' && (
+            <Button 
+              variant="ghost"
+              className="product-card__wishlist" 
+              aria-label="Remove from registry"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onRemove && onRemove(item.id);
+              }}
+              style={{ backgroundColor: 'var(--surface-container-low)', zIndex: 10, position: 'absolute', top: '8px', right: '8px' }}
+              icon={<Trash2 size={16} />}
+            />
+          )}
+        </div>
+        <span className="product-card__tier" style={{ marginTop: 'var(--space-2)' }}>{item.category}</span>
+      </Card.Header>
 
-      <div className="product-card__info" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <span className="product-card__tier">{item.category}</span>
-        <h3 className="product-card__name" style={{ flex: 1, minHeight: '44px', marginBottom: 'var(--space-2)' }}>{item.name}</h3>
-        
-        <div className="product-card__price-row" style={{ marginTop: 'auto' }}>
+      <Card.Body>
+        <h3 className="product-card__name" style={{ flex: 1, minHeight: '44px' }}>{item.name}</h3>
+        <div className="product-card__price-row">
           <span className="product-card__price">{formatPrice(item.price)}</span>
         </div>
+      </Card.Body>
 
-        {viewMode !== 'parent' && (
-          <div className="card-actions" style={{ marginTop: 'var(--space-4)', display: 'flex', gap: 'var(--space-2)' }}>
-            {!isPurchased ? (
-              <>
-                <button className="btn-primary product-card__add" onClick={() => onBuy(item.id)} style={{ flex: 1 }}>
-                  Buy Now
-                </button>
-                {item.isGroupGifting && (
-                  <button className="btn-secondary" onClick={() => onContribute(item.id)} style={{ flex: 1 }}>
-                    Contribute
-                  </button>
-                )}
-              </>
-            ) : (
-              <button className="btn-secondary disabled" disabled style={{ flex: 1 }}>
-                Gifted
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </article>
+      {viewMode !== 'parent' && (
+        <Card.Actions>
+          {!isPurchased ? (
+            <>
+              <Button 
+                variant="primary" 
+                onClick={() => onBuy(item.id)} 
+                style={{ flex: 1 }}
+                icon={<ShoppingBag size={16} />}
+              >
+                Buy Now
+              </Button>
+              {item.isGroupGifting && (
+                <Button 
+                  variant="secondary" 
+                  onClick={() => onContribute(item.id)} 
+                  style={{ flex: 1 }}
+                  icon={<Gift size={16} />}
+                >
+                  Contribute
+                </Button>
+              )}
+            </>
+          ) : (
+            <Button variant="secondary" disabled style={{ flex: 1 }}>
+              Gifted
+            </Button>
+          )}
+        </Card.Actions>
+      )}
+    </Card>
   );
 };
 

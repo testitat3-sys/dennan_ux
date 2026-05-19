@@ -1,3 +1,4 @@
+import Button from '../ui/Button';
 import './NextMilestoneCard.css';
 
 const NextMilestoneCard = ({ stageInfo, nextMilestoneData = [] }) => {
@@ -20,7 +21,7 @@ const NextMilestoneCard = ({ stageInfo, nextMilestoneData = [] }) => {
         <span className="next-milestone-card__eyebrow">Coming Up Next</span>
         <h3 className="next-milestone-card__title">{content.title}</h3>
         <p className="next-milestone-card__desc">{content.desc}</p>
-        <button className="next-milestone-card__btn">{content.action}</button>
+        <Button variant="white">{content.action}</Button>
       </div>
       
     </div>

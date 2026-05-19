@@ -43,17 +43,21 @@ const Hero = ({ content }) => {
         </p>
 
         <div className="hero__actions">
-          <Button onClick={handleStartJourney} variant="primary">
+          <Button 
+            onClick={handleStartJourney} 
+            variant="primary"
+            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
+            iconPosition="right"
+          >
             Start with your stage
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
           </Button>
-          <Button as={Link} to="/category/all" variant="ghost">
+          <Button 
+            to="/category/all" 
+            variant="ghost"
+            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
+            iconPosition="right"
+          >
             Browse all
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
           </Button>
         </div>
       </div>

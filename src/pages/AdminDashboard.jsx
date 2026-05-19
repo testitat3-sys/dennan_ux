@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users, TrendingUp, DollarSign, Activity, Search, Filter } from 'lucide-react';
+import Button from '../components/ui/Button';
 
 export default function AdminDashboard() {
   const stats = [
@@ -37,9 +38,16 @@ export default function AdminDashboard() {
               <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input type="text" className="input-field" placeholder="Search users..." style={{ paddingLeft: '40px', width: '240px', fontSize: '0.875rem' }} />
             </div>
-            <button className="btn glass" style={{ gap: '8px', fontSize: '0.875rem' }}>
-              <Filter size={16} /> Filter
-            </button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="glass" 
+              style={{ gap: '8px', fontSize: '0.875rem' }}
+              icon={<Filter size={16} />}
+              iconPosition="left"
+            >
+              Filter
+            </Button>
           </div>
         </div>
 
@@ -76,7 +84,7 @@ export default function AdminDashboard() {
                 </td>
                 <td style={{ padding: '12px', fontSize: '0.875rem', color: 'var(--text-muted)' }}>{user.date}</td>
                 <td style={{ padding: '12px' }}>
-                  <button className="btn" style={{ fontSize: '0.75rem', padding: '4px 12px' }}>View Details</button>
+                  <Button variant="secondary" size="sm" style={{ fontSize: '0.75rem', padding: '4px 12px' }}>View Details</Button>
                 </td>
               </tr>
             ))}

@@ -57,28 +57,12 @@
   gap: var(--space-8);
 }
 
-.profile-card {
-  background-color: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
-  border: 1px solid var(--surface-container);
-  box-shadow: var(--shadow-ambient);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.profile-card:hover {
-  box-shadow: var(--shadow-deep);
-}
-
 .profile-card-title {
   font-family: var(--font-editorial);
   font-size: var(--headline-sm);
   color: var(--color-anchor);
-  margin: 0 0 var(--space-2) 0;
   font-weight: 400;
+  margin: 0;
 }
 
 /* Custom Editorial Inputs */
@@ -146,33 +130,6 @@
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
 }
 
-.profile-segment-btn {
-  border: none;
-  background: none;
-  padding: var(--space-3) var(--space-6);
-  font-family: var(--font-sans);
-  font-size: var(--label-md);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.profile-segment-btn:hover {
-  color: var(--text-primary);
-}
-
-.profile-segment-btn--active {
-  background-color: var(--surface);
-  color: var(--color-brand-primary);
-  box-shadow: 0 2px 8px rgba(17, 17, 17, 0.05);
-}
 
 /* Children List Adjustments */
 .profile-children-list {
@@ -194,47 +151,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.profile-child-remove-btn {
-  background: none;
-  border: none;
-  color: var(--color-support-red);
-  cursor: pointer;
-  padding: var(--space-3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  transition: background 0.25s;
-}
 
-.profile-child-remove-btn:hover {
-  background-color: color-mix(in srgb, var(--color-support-red), transparent 92%);
-}
-
-.profile-child-add-btn {
-  background: none;
-  border: 1px dashed var(--color-brand-primary-light);
-  color: var(--color-brand-primary);
-  font-family: var(--font-sans);
-  font-size: var(--label-md);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.25s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
-
-.profile-child-add-btn:hover {
-  background-color: color-mix(in srgb, var(--color-brand-primary), transparent 95%);
-  border-color: var(--color-brand-primary);
-}
 
 /* Errors and Alerts */
 .profile-validation-error {
@@ -269,23 +186,7 @@
 }
 
 /* ─── Profile Saved Payment & Delivery Styles ────────────────────────────── */
-
-.delivery-card {
-  background-color: var(--surface-container-low);
-  border: 1px solid var(--surface-container-highest);
-  border-radius: var(--radius-2xl);
-  padding: var(--space-6);
-  transition: all 0.25s ease;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.delivery-card:hover {
-  background-color: var(--surface);
-  border-color: var(--color-brand-primary-light);
-  box-shadow: var(--shadow-ambient);
-}
+/* (Refactored to use foundational Card component) */
 
 .delivery-empty {
   display: flex;
@@ -294,7 +195,7 @@
   justify-content: center;
   text-align: center;
   gap: var(--space-4);
-  padding: var(--space-4) 0;
+  /* Padding is handled by Card.Body */
 }
 
 .delivery-empty p {
@@ -304,68 +205,21 @@
   margin: 0;
 }
 
-.btn-add-location {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-3) var(--space-6);
-  background-color: var(--surface-container);
-  color: var(--text-primary);
-  border: 1px solid var(--surface-container-highest);
-  border-radius: var(--radius-lg);
-  font-weight: 600;
-  font-size: var(--body-md);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-add-location:hover {
-  background-color: var(--surface-container-high);
-  border-color: var(--text-secondary);
-}
-
-.delivery-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.delivery-details {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
 .delivery-name {
-  font-weight: 700;
+  font-family: var(--font-editorial);
+  font-weight: 500;
   font-size: var(--title-lg);
-  color: var(--text-primary);
+  color: var(--color-anchor);
   margin: 0;
 }
 
 .delivery-zone {
+  font-family: var(--font-sans);
   font-size: var(--body-md);
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   margin: 0;
 }
 
-.btn-change-location {
-  padding: var(--space-2-5) var(--space-5);
-  background-color: transparent;
-  color: var(--color-brand-primary);
-  border: 1px solid var(--color-brand-primary-light);
-  border-radius: var(--radius-lg);
-  font-weight: 600;
-  font-size: var(--body-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-change-location:hover {
-  background-color: var(--color-brand-primary-light);
-  color: var(--color-on-primary);
-}
 
 .profile-delivery-locations-list {
   display: flex;

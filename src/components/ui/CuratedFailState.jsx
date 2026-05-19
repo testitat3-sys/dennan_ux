@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from './Button';
 
 const CuratedFailState = ({ 
   title = "Exhibit Temporarily Unavailable", 
@@ -13,13 +14,14 @@ const CuratedFailState = ({
       <h2 className="curated-fail-state__title">{title}</h2>
       <p className="curated-fail-state__message">{message}</p>
       {onAction && (
-        <button 
+        <Button 
+          variant="primary"
           onClick={onAction} 
           className="curated-fail-state__action"
           aria-label={actionLabel}
         >
           {actionLabel}
-        </button>
+        </Button>
       )}
     </div>
   );

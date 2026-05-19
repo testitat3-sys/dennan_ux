@@ -1,0 +1,239 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Page Layout Shell
+   Design contract:
+   - Page owns padding-inline and overflow containment.
+   - Page.Section owns max-width, centering, and vertical section gaps.
+   - CardGrid owns grid gap and column template.
+   - Cards (and all leaf components) are always margin: 0.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Page — Outermost Shell ──────────────────────────────────── */
+
+.page {
+  /* Containment: nothing may cause horizontal scroll on this element */
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+
+  /*
+   * Page enforces safe-area padding directly.
+   * --current-page-padding-x is set here and inherited by children so
+   * full-bleed / scroll sections can read it to compensate exactly.
+   */
+  --current-page-padding-x: var(--page-padding-x-mobile);
+  padding-inline: var(--current-page-padding-x);
+  padding-block: var(--page-padding-y);
+}
+
+@media (min-width: 768px) {
+  .page {
+    --current-page-padding-x: var(--page-padding-x-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    --current-page-padding-x: var(--page-padding-x-desktop);
+  }
+}
+
+/* ─── Page Section — Constrained (default) ─────────────────────── */
+
+.page-section {
+  /* Centers the content column within the padded Page area */
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin-inline: auto;
+  box-sizing: border-box;
+
+  /* Internal layout: sections stack their own children vertically */
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap-default);
+}
+
+/* Vertical spacing between consecutive sections */
+.page-section + .page-section {
+  margin-top: var(--section-gap-default);
+}
+
+/* Spacing variants */
+.page-section--tight {
+  gap: var(--section-gap-tight);
+}
+.page-section--tight + .page-section--tight {
+  margin-top: var(--section-gap-tight);
+}
+
+.page-section--loose {
+  gap: var(--section-gap-loose);
+}
+.page-section--loose + .page-section--loose {
+  margin-top: var(--section-gap-loose);
+}
+
+/* ─── Section Title ────────────────────────────────────────────── */
+
+/*
+ * .page-section__title is the optional heading rendered by Page.Section
+ * when a `title` prop is supplied.
+ *
+ * Rules:
+ * - Inherits all typography styles (font-size, weight, color) from the
+ *   consumer's className or the cascade, so it can be styled freely.
+ * - Margin is overridden to 0 unconditionally — vertical rhythm is the
+ *   Section's responsibility via `gap`, not the title element's margin.
+ */
+.page-section__title {
+  margin: 0 !important;
+  padding: 0;
+}
+
+/* ─── Page Section — Full-Bleed ────────────────────────────────── */
+
+/*
+ * Full-bleed sections escape Page's padding-inline to stretch edge-to-edge.
+ * They read --current-page-padding-x (set on .page) and invert it.
+ * The compensation is always in sync with the active breakpoint.
+ *
+ * After escaping, padding-inline is re-applied inside so content within
+ * the full-bleed section is still safe-padded.
+ */
+.page-section--full-bleed {
+  width: calc(100% + 2 * var(--current-page-padding-x));
+  margin-inline: calc(-1 * var(--current-page-padding-x));
+  max-width: none;
+
+  /* Re-apply safe inner padding so content inside doesn't touch the edge */
+  padding-inline: var(--current-page-padding-x);
+  box-sizing: border-box;
+}
+
+/* Inner content column inside a full-bleed section */
+.page-section--full-bleed .page-section__inner {
+  max-width: var(--page-max-width);
+  margin-inline: auto;
+  width: 100%;
+}
+
+/* ─── Page Horizontal Scroller ─────────────────────────────────── */
+
+/*
+ * The scroller also escapes Page's padding so cards don't clip at the edge,
+ * then restores padding-inline so the first/last items have breathing room.
+ */
+.page-hscroller {
+  /* Escape Page's padding to reach viewport edges */
+  width: calc(100% + 2 * var(--current-page-padding-x));
+  margin-inline: calc(-1 * var(--current-page-padding-x));
+
+  /* Horizontal scroll */
+  overflow-x: auto;
+  overflow-y: visible;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--grid-gap-default);
+
+  /* Safe inner padding — first and last items won't clip against the edge */
+  padding-inline: var(--current-page-padding-x);
+  padding-block: var(--space-2);
+  box-sizing: border-box;
+
+  /* Scroll snap for tactile feel on touch devices */
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline-start: var(--current-page-padding-x);
+  -webkit-overflow-scrolling: touch;
+
+  /* Hide scrollbar on desktop — interaction via drag or touch */
+  scrollbar-width: none;
+}
+.page-hscroller::-webkit-scrollbar {
+  display: none;
+}
+
+/* Each scroll item snaps and holds its width */
+.page-hscroller > * {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+}
+
+/* Gap variants */
+.page-hscroller--tight { gap: var(--grid-gap-tight); }
+.page-hscroller--loose { gap: var(--grid-gap-loose); }
+
+/* ─── Card Grid ─────────────────────────────────────────────────── */
+
+/*
+ * CardGrid is a thin layout-only wrapper.
+ * It owns gap and grid-template-columns only.
+ * No padding, no margin — those belong to Page.Section.
+ */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--grid-gap-default);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Gap variants */
+.card-grid--tight { gap: var(--grid-gap-tight); }
+.card-grid--loose { gap: var(--grid-gap-loose); }
+
+/* Fixed column overrides — collapse gracefully on small screens */
+.card-grid--2col { grid-template-columns: repeat(2, 1fr); }
+.card-grid--3col { grid-template-columns: repeat(3, 1fr); }
+.card-grid--4col { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 640px) {
+  .card-grid--2col,
+  .card-grid--3col,
+  .card-grid--4col {
+    /* All fixed-column grids collapse to single column on mobile */
+    grid-template-columns: 1fr;
+  }
+
+  /* Mobile Column API Overrides */
+  .card-grid--m-2col {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .card-grid--m-1col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1023px) {
+  /* 4-col collapses to 2-col on tablet */
+  .card-grid--4col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ─── Safety: direct children of Page must not set outer margin ─── */
+
+/*
+ * Enforces the layout contract at the CSS level.
+ * Leaf components (Card, Button, etc.) already enforce margin: 0 themselves,
+ * but this catches any stray direct children inside Page.
+ */
+.page > *:not(.page-section):not(.page-section--full-bleed):not(.page-hscroller) {
+  max-width: 100%;
+}
+
+/* ─── Standard Utilities for Flush Layouts ──────────────────────── */
+
+.page--no-padding-top {
+  padding-top: 0 !important;
+}
+
+.page-section--no-padding {
+  padding-inline: 0 !important;
+  padding-block: 0 !important;
+}
+
+.page-section--full-bleed.page-section--no-padding {
+  padding-inline: 0 !important;
+}
+

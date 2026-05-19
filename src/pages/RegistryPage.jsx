@@ -9,6 +9,9 @@ import GroupGiftingModal from '../components/registry/GroupGiftingModal';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
 import Toast from '../components/ui/Toast';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import { ShoppingBag, Plus, Trash2, ArrowRight } from 'lucide-react';
 import './RegistryPage.css';
 
 // Local Suggestion Product Card - Consistent with the Shop's Premium Product Card
@@ -35,27 +38,33 @@ const SuggestionProductCard = ({ product, onAddToRegistry }) => {
   }
 
   return (
-    <article className="touch-scroll-item product-card product-card--loaded" style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--surface-container-low)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', padding: 'var(--space-3)' }}>
-      <Link to={`/product/${id}`} className="product-card__image-link" style={{ display: 'block', height: '180px', borderRadius: 'var(--radius-md)', overflow: 'hidden', position: 'relative' }}>
-        <div className="product-card__image" style={{ height: '100%' }}>
-          <img src={image} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div className="product-card__tags">
-            {unitsSold !== undefined && unitsSold > 0 && (
-              <span className="tag tag--sales">
-                {unitsSold} sold
-              </span>
-            )}
-            {tags && tags
-              .filter(tag => tag && tag.text && tag.text.toLowerCase() !== 'in stock')
-              .map((tag, i) => (
-                <span key={i} className={`tag tag--${tag.type}`}>{tag.text}</span>
-              ))
-            }
+    <Card 
+      className="touch-scroll-item" 
+      style={{ flex: '0 0 240px' }}
+      variant="default"
+    >
+      <Card.Header>
+        <Link to={`/product/${id}`} className="product-card__image-link" style={{ display: 'block', height: '180px', borderRadius: 'var(--radius-md)', overflow: 'hidden', position: 'relative' }}>
+          <div className="product-card__image" style={{ height: '100%' }}>
+            <img src={image} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div className="product-card__tags">
+              {unitsSold !== undefined && unitsSold > 0 && (
+                <span className="tag tag--sales">
+                  {unitsSold} sold
+                </span>
+              )}
+              {tags && tags
+                .filter(tag => tag && tag.text && tag.text.toLowerCase() !== 'in stock')
+                .map((tag, i) => (
+                  <span key={i} className={`tag tag--${tag.type}`}>{tag.text}</span>
+                ))
+              }
+            </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+      </Card.Header>
       
-      <div className="product-card__info" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: 'var(--space-3) 0 0', justifyContent: 'space-between' }}>
+      <Card.Body>
         <div>
           <span className="product-card__tier" style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>{brand || product.brand}</span>
           <Link to={`/product/${id}`} className="product-card__name-link">
@@ -66,19 +75,22 @@ const SuggestionProductCard = ({ product, onAddToRegistry }) => {
             {wasPrice && <span className="product-card__price-was" style={{ textDecoration: 'line-through', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>UGX {wasPrice.toLocaleString()}</span>}
           </div>
         </div>
+      </Card.Body>
 
-        <button 
-          className="product-card__add" 
+      <Card.Actions>
+        <Button 
+          variant="primary"
+          fullWidth
           onClick={(e) => {
             e.preventDefault();
             onAddToRegistry(product);
           }}
-          style={{ width: '100%', marginTop: 'var(--space-4)', paddingBlock: 'var(--space-2)' }}
+          icon={<Plus size={16} />}
         >
           Add to Registry
-        </button>
-      </div>
-    </article>
+        </Button>
+      </Card.Actions>
+    </Card>
   );
 };
 
@@ -469,13 +481,13 @@ const RegistryPage = () => {
               <p className="body-md text-secondary" style={{ lineHeight: '1.6', marginBlock: 'var(--space-4) var(--space-8)' }}>
                 Complete your parenting profile to activate your baby registry. This unlocks personalized, stage-by-stage suggested essentials and safe shipping parameters.
               </p>
-              <button 
-                className="btn-primary" 
+              <Button 
+                variant="primary" 
+                fullWidth
                 onClick={() => navigate('/onboarding')} 
-                style={{ width: '100%', paddingBlock: 'var(--space-3)' }}
               >
                 Finish Onboarding
-              </button>
+              </Button>
             </div>
           </div>
         </main>
@@ -499,18 +511,20 @@ const RegistryPage = () => {
           <section className="registry-controls-strip">
             <div className="parent-editorial-controls">
               <div className="parent-tabs">
-                <button 
+                <Button 
+                  variant={activeTab === 'registry' ? 'primary' : 'ghost'}
                   className={`tab-btn ${activeTab === 'registry' ? 'active' : ''}`}
                   onClick={() => setActiveTab('registry')}
                 >
                   Manage Registry
-                </button>
-                <button 
+                </Button>
+                <Button 
+                  variant={activeTab === 'thank-you' ? 'primary' : 'ghost'}
                   className={`tab-btn ${activeTab === 'thank-you' ? 'active' : ''}`}
                   onClick={() => setActiveTab('thank-you')}
                 >
                   Thank You Tracker
-                </button>
+                </Button>
               </div>
               
               {registryProfile && (
@@ -597,24 +611,37 @@ const RegistryPage = () => {
                       {activePacks.map(([key, pack]) => (
                         <div key={key} className="recommended-pack-lane">
                           
-                          {/* Left Leading pack-lead-card */}
-                          <div className="pack-lead-card" style={{ background: pack.color }}>
-                            <span className="label-xs text-brand">
-                              {pack.badge}
-                            </span>
-                            <h4 className="headline-sm">
-                              {pack.title}
-                            </h4>
-                            <p className="body-xs text-secondary">
-                              {pack.description}
-                            </p>
-                            <button 
-                              className="btn-primary btn-add-pack" 
-                              onClick={() => handleAddGroupToRegistry(key, pack)}
-                            >
-                              Add Entire Pack
-                            </button>
-                          </div>
+                          {/* Left Leading Pack Card */}
+                          <Card 
+                            variant="feature" 
+                            className="pack-lead-card" 
+                            style={{ background: pack.color, flex: '0 0 300px' }}
+                          >
+                            <Card.Header>
+                              <span className="label-xs text-brand">
+                                {pack.badge}
+                              </span>
+                              <h4 className="headline-sm" style={{ margin: 0 }}>
+                                {pack.title}
+                              </h4>
+                            </Card.Header>
+                            <Card.Body>
+                              <p className="body-xs text-secondary">
+                                {pack.description}
+                              </p>
+                            </Card.Body>
+                            <Card.Actions>
+                              <Button 
+                                variant="primary" 
+                                fullWidth
+                                onClick={() => handleAddGroupToRegistry(key, pack)}
+                                icon={<ArrowRight size={16} />}
+                                iconPosition="right"
+                              >
+                                Add Entire Pack
+                              </Button>
+                            </Card.Actions>
+                          </Card>
 
                           {/* Right Swipeable Lane Container (Using Consistent Shop Product Card Variant) */}
                           <div className="touch-scroll-row">

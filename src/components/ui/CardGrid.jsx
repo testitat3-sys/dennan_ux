@@ -1,0 +1,43 @@
+import React from 'react';
+import './Page.css';
+
+/* ─── CardGrid ──────────────────────────────────────────────────────
+ * A thin layout-only grid wrapper for Card components (or any items).
+ *
+ * Responsibilities:
+ *   - Owns gap between items (via tokens from Page.css).
+ *   - Owns grid-template-columns.
+ *   - Nothing else — no padding, no margin, no overflow.
+ *
+ * Must always live inside a Page.Section or Page.HorizontalScroller.
+ * Never introduces external spacing of its own.
+ *
+ * @param {string}        gap      - 'tight' | 'default' | 'loose'. Default: 'default'
+ * @param {2|3|4|'auto'}  columns  - Fixed column count or fluid 'auto'. Default: 'auto'
+ * @param {string}        className - Additional classes
+ * @param {node}          children - Card (or any) items
+ * ─────────────────────────────────────────────────────────────────── */
+const CardGrid = ({
+  gap = 'default',
+  columns = 'auto',
+  mobileColumns = 'auto',
+  className = '',
+  children,
+  ...props
+}) => {
+  const classes = [
+    'card-grid',
+    gap !== 'default' ? `card-grid--${gap}` : '',
+    columns !== 'auto' ? `card-grid--${columns}col` : '',
+    mobileColumns !== 'auto' ? `card-grid--m-${mobileColumns}col` : '',
+    className,
+  ].filter(Boolean).join(' ');
+
+  return (
+    <div className={classes} {...props}>
+      {children}
+    </div>
+  );
+};
+
+export default CardGrid;

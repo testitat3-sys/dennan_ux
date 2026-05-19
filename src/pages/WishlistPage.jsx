@@ -6,6 +6,10 @@ import { useRegistry } from '../context/RegistryContext';
 import { formatPrice } from '../utils/priceUtils';
 import Toast from '../components/ui/Toast';
 import ProductCard from '../components/ui/ProductCard';
+import Button from '../components/ui/Button';
+import Page from '../components/ui/Page';
+import Card from '../components/ui/Card';
+import CardGrid from '../components/ui/CardGrid';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import './WishlistPage.css';
@@ -120,8 +124,8 @@ const WishlistPage = () => {
   }
 
   return (
-    <main className="wishlist-page">
-      <div className="wishlist-container">
+    <Page className="wishlist-page">
+      <Page.Section className="wishlist-container">
         {/* Editorial Title Block */}
         <header className="wishlist-header">
           <div className="wishlist-title-wrap">
@@ -138,50 +142,51 @@ const WishlistPage = () => {
 
           {!isSharedView && itemsToDisplay.length > 0 && (
             <div className="wishlist-bulk-actions">
-              <button
-                className="wishlist-btn-secondary"
+              <Button
+                variant="secondary"
                 onClick={handleShareList}
                 aria-label="Share wishlist"
+                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" /></svg>}
+                iconPosition="left"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />
-                </svg>
                 Share Wishlist
-              </button>
-              <button
-                className="wishlist-btn-primary"
+              </Button>
+              <Button
+                variant="primary"
                 onClick={handleMoveAllToCart}
                 disabled={itemsToDisplay.filter(item => item.inventory === undefined || item.inventory > 0).length === 0}
               >
                 Move All to Cart
-              </button>
+              </Button>
             </div>
           )}
         </header>
 
         {/* Empty State */}
         {itemsToDisplay.length === 0 ? (
-          <div className="wishlist-empty-state">
-            <div className="wishlist-empty-art">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-              </svg>
-            </div>
-            <h2 className="wishlist-empty-title">
-              {isSharedView ? "No Items Found" : "Your wishlist is empty"}
-            </h2>
-            <p className="wishlist-empty-desc">
-              {isSharedView
-                ? "This shared wishlist is currently empty or has expired."
-                : "Explore our expert-guided categories to discover safe, beautiful essentials for your nursery."}
-            </p>
-            <Link to="/" className="wishlist-empty-btn">
-              Continue Shopping
-            </Link>
-          </div>
+          <Card variant="feature" hasShadow={false} className="wishlist-empty-state">
+            <Card.Body>
+              <div className="wishlist-empty-art">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+              </div>
+              <h2 className="wishlist-empty-title">
+                {isSharedView ? "No Items Found" : "Your wishlist is empty"}
+              </h2>
+              <p className="wishlist-empty-desc">
+                {isSharedView
+                  ? "This shared wishlist is currently empty or has expired."
+                  : "Explore our expert-guided categories to discover safe, beautiful essentials for your nursery."}
+              </p>
+              <Button to="/" variant="hero">
+                Continue Shopping
+              </Button>
+            </Card.Body>
+          </Card>
         ) : (
           /* Bookmarked Items Grid */
-          <div className="wishlist-grid">
+          <CardGrid className="wishlist-grid">
             {itemsToDisplay.map((item) => {
               const id = item.id || item._id;
               return (
@@ -198,16 +203,16 @@ const WishlistPage = () => {
                 />
               );
             })}
-          </div>
+          </CardGrid>
         )}
-      </div>
+      </Page.Section>
 
       <Toast
         isOpen={showToast}
         message={toastMessage}
         onClose={() => setShowToast(false)}
       />
-    </main>
+    </Page>
   );
 };
 

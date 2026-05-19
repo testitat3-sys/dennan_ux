@@ -14,7 +14,7 @@ a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 
-/* ─── Utilities ──────────────────────────────────────────────────── */
+/* ─── Typography & Utilities ──────────────────────────────────────── */
 .label-md {
   font-family: var(--font-sans);
   font-size: var(--label-md);
@@ -30,11 +30,102 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   text-transform: uppercase;
 }
 
-.body-lg { font-family: var(--font-sans); font-size: var(--body-lg); line-height: 1.6; }
-.body-sm { font-family: var(--font-sans); font-size: var(--body-sm); line-height: 1.6; }
+.body-lg {
+  font-family: var(--font-sans);
+  font-size: var(--body-lg);
+  line-height: 1.6;
+}
+.body-sm {
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  line-height: 1.6;
+}
 
-.display-lg { font-family: var(--font-editorial); font-size: var(--display-lg); line-height: 1.1; letter-spacing: -0.02em; }
-.display-sm { font-family: var(--font-editorial); font-size: var(--display-sm); line-height: 1.1; letter-spacing: -0.02em; }
+.display-lg {
+  font-family: var(--font-editorial);
+  font-size: var(--display-lg);
+  font-weight: normal;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  transition: font-size 0.2s ease;
+}
+.display-sm {
+  font-family: var(--font-editorial);
+  font-size: var(--display-sm);
+  font-weight: normal;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  transition: font-size 0.2s ease;
+}
+
+.headline-lg {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-lg);
+  font-weight: normal;
+  line-height: 1.2;
+  transition: font-size 0.2s ease;
+}
+.headline-md {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-md);
+  font-weight: normal;
+  line-height: 1.2;
+  transition: font-size 0.2s ease;
+}
+.headline-sm {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-sm);
+  font-weight: normal;
+  line-height: 1.2;
+  transition: font-size 0.2s ease;
+}
+
+.title-lg {
+  font-family: var(--font-sans);
+  font-size: var(--title-lg);
+  font-weight: 600;
+  transition: font-size 0.2s ease;
+}
+.title-sm {
+  font-family: var(--font-sans);
+  font-size: var(--title-sm);
+  font-weight: 500;
+  transition: font-size 0.2s ease;
+}
+
+/* ─── Responsive Typography ───────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .display-sm {
+    font-size: 3.5rem; /* Down from 5rem */
+  }
+  .display-lg {
+    font-size: 2.75rem; /* Down from 3.5rem */
+  }
+}
+
+@media (max-width: 600px) {
+  .display-sm {
+    font-size: 2.5rem; /* Down to 40px */
+  }
+  .display-lg {
+    font-size: 2.25rem; /* Down to 36px (var(--headline-lg)) */
+  }
+  .headline-lg {
+    font-size: var(--headline-md); /* Down to 28px */
+  }
+  .headline-md {
+    font-size: var(--headline-sm); /* Down to 24px */
+  }
+  .headline-sm {
+    font-size: var(--title-lg); /* Down to 20px */
+  }
+  .title-lg {
+    font-size: var(--title-sm); /* Down to 18px */
+  }
+  .title-sm {
+    font-size: var(--body-lg); /* Down to 16px */
+  }
+}
 .visually-hidden {
   position: absolute; width: 1px; height: 1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './SearchStrip.css';
 import { useNavigate } from 'react-router-dom';
+import Button from '../ui/Button';
 
 const suggestions = [
   { text: 'Newborn essentials checklist', sub: '18 curated products', type: 'checklist' },
@@ -133,7 +134,7 @@ const SearchStrip = ({ initialQuery = '' }) => {
             aria-label="Search products"
           />
 
-          <button type="submit" className="search-pill__submit">Search</button>
+          <Button type="submit" variant="search-submit">Search</Button>
         </form>
 
         {isDropdownOpen && (
@@ -163,18 +164,21 @@ const SearchStrip = ({ initialQuery = '' }) => {
 
       <div className="search-suggestions" aria-label="Popular searches">
         {popularChips.map((chip, i) => (
-          <button 
+          <Button 
             key={i} 
+            variant="secondary"
+            size="sm"
             className={`suggestion-chip ${chip.accent ? 'suggestion-chip--accent' : ''}`}
             onClick={() => handleChipClick(chip.text)}
-          >
-            {chip.accent && (
+            icon={chip.accent ? (
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/>
               </svg>
-            )}
+            ) : null}
+            iconPosition="left"
+          >
             {chip.text}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

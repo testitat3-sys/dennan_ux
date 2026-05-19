@@ -7,6 +7,9 @@ import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
 import SearchStrip from '../components/home/SearchStrip';
 import QuickViewModal from '../components/ui/QuickViewModal';
 import Toast from '../components/ui/Toast';
+import Button from '../components/ui/Button';
+import Page from '../components/ui/Page';
+import CardGrid from '../components/ui/CardGrid';
 import './PLP.css';
 
 const COLLECTIONS_METADATA = {
@@ -217,21 +220,21 @@ const PLP = () => {
 
   if (loading) {
     return (
-      <main className="plp plp--loading" aria-hidden="true">
-        <header className="plp__hero plp__hero--skeleton">
+      <Page className="plp plp--loading" aria-hidden="true">
+        <Page.Section as="header" fullBleed className="plp__hero plp__hero--skeleton">
           <div className="plp__hero-bg skeleton-shimmer" style={{ background: 'var(--surface-container-high, #ede9e5)', height: '100%' }} />
           <div className="plp__hero-content">
             <div className="plp__hero-shape" aria-hidden="true" />
             <div className="skeleton-title skeleton-shimmer" style={{ height: '40px', width: '280px', borderRadius: 'var(--radius-md)', marginBottom: '16px' }} />
             <div className="skeleton-subtext skeleton-shimmer" style={{ height: '20px', width: '100%', maxWidth: '420px', borderRadius: 'var(--radius-sm)' }} />
           </div>
-        </header>
+        </Page.Section>
 
-        <section className="plp__search-wrap">
+        <Page.Section className="plp__search-wrap">
           <div className="skeleton-shimmer" style={{ height: '56px', borderRadius: 'var(--radius-pill)', background: 'var(--surface-container-low)' }} />
-        </section>
+        </Page.Section>
 
-        <div className="plp__container">
+        <Page.Section className="plp__container">
           <aside className="plp__sidebar">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -254,14 +257,14 @@ const PLP = () => {
               <div className="skeleton-shimmer" style={{ height: '14px', width: '90px', borderRadius: '4px', background: 'var(--surface-container-high)' }} />
             </div>
 
-            <div className="plp__grid">
+            <CardGrid className="plp__grid">
               {Array.from({ length: 6 }).map((_, i) => (
                 <ProductCardSkeleton key={i} />
               ))}
-            </div>
+            </CardGrid>
           </section>
-        </div>
-      </main>
+        </Page.Section>
+      </Page>
     );
   }
 
@@ -309,8 +312,8 @@ const PLP = () => {
   const tiers = TIERS_LIST;
 
   return (
-    <main className="plp">
-      <header className={`plp__hero ${isCollectionView ? 'plp__hero--banner' : ''}`}>
+    <Page className="plp">
+      <Page.Section as="header" fullBleed className={`plp__hero ${isCollectionView ? 'plp__hero--banner' : ''}`}>
         <div className="plp__hero-bg">
           <img src={viewData.heroImage || viewData.image || ''} alt={viewData.title || ''} />
         </div>
@@ -319,13 +322,13 @@ const PLP = () => {
           <h1 className="plp__hero-title" dangerouslySetInnerHTML={{ __html: viewData.title || '' }}></h1>
           <p className="plp__hero-subtext">{viewData.subtext || viewData.copy || ''}</p>
         </div>
-      </header>
+      </Page.Section>
 
-      <section className="plp__search-wrap">
+      <Page.Section className="plp__search-wrap">
         <SearchStrip initialQuery={query} />
-      </section>
+      </Page.Section>
 
-      <div className="plp__container">
+      <Page.Section className="plp__container">
         <aside className="plp__sidebar">
           {categories.length > 0 && (
             <div className="filter-group">
@@ -381,12 +384,15 @@ const PLP = () => {
           <div className="plp__toolbar">
             <span className="plp__count">{filteredProducts.length} products found</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-              <button className="plp__mobile-filter-btn" onClick={() => setIsMobileFilterOpen(true)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '6px' }}>
-                  <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
-                </svg>
+              <Button 
+                variant="secondary" 
+                size="sm"
+                className="plp__mobile-filter-btn" 
+                onClick={() => setIsMobileFilterOpen(true)}
+                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>}
+              >
                 Filter {activeFilters.length > 0 && `(${activeFilters.length})`}
-              </button>
+              </Button>
               <div className="plp__sort">
                 Sort by: <span className="plp__sort-val">{isCollectionView ? 'Curated' : 'Recommended'}</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -396,7 +402,7 @@ const PLP = () => {
             </div>
           </div>
 
-          <div className="plp__grid">
+          <CardGrid className="plp__grid">
             {filteredProducts.map(product => (
               <ProductCard 
                 key={product._id || product.id} 
@@ -404,16 +410,16 @@ const PLP = () => {
                 onAddToCart={handleAddToCart}
               />
             ))}
-          </div>
+          </CardGrid>
           
           {filteredProducts.length === 0 && (
             <div className="plp__empty">
               <p>No products match your current filters.</p>
-              <button className="btn-ghost" onClick={() => setActiveFilters([])}>Clear all filters</button>
+              <Button variant="ghost" size="sm" onClick={() => setActiveFilters([])}>Clear all filters</Button>
             </div>
           )}
         </section>
-      </div>
+      </Page.Section>
 
       {selectedProduct && (
         <QuickViewModal 
@@ -436,11 +442,13 @@ const PLP = () => {
         <div className="plp__filter-drawer-content">
           <div className="plp__filter-drawer-header">
             <h3>Filter Products</h3>
-            <button className="plp__filter-drawer-close" aria-label="Close filters" onClick={() => setIsMobileFilterOpen(false)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M18 6 6 18M6 6l12 12"/>
-              </svg>
-            </button>
+            <Button 
+              variant="ghost" 
+              className="plp__filter-drawer-close" 
+              aria-label="Close filters" 
+              onClick={() => setIsMobileFilterOpen(false)}
+              icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>}
+            />
           </div>
           
           <div className="plp__filter-drawer-body">
@@ -495,16 +503,16 @@ const PLP = () => {
           </div>
 
           <div className="plp__filter-drawer-footer">
-            <button className="btn-ghost" onClick={() => { setActiveFilters([]); setIsMobileFilterOpen(false); }}>
+            <Button variant="ghost" fullWidth onClick={() => { setActiveFilters([]); setIsMobileFilterOpen(false); }}>
               Clear All
-            </button>
-            <button className="btn-primary" onClick={() => setIsMobileFilterOpen(false)}>
+            </Button>
+            <Button variant="primary" fullWidth onClick={() => setIsMobileFilterOpen(false)}>
               Apply Filters
-            </button>
+            </Button>
           </div>
         </div>
       </div>
-    </main>
+    </Page>
   );
 };
 

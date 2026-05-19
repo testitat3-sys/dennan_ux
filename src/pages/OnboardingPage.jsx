@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
+import Button from '../components/ui/Button';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -151,7 +152,8 @@ export default function OnboardingPage() {
                       cursor: 'pointer', 
                       textAlign: 'center',
                       border: formData.interests.includes(item) ? '2px solid var(--primary)' : '1px solid transparent',
-                      background: formData.interests.includes(item) ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--glass-bg)'
+                      background: formData.interests.includes(item) ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--glass-bg)',
+                      borderRadius: 'var(--radius-md)'
                     }}
                     onClick={() => handleInterestToggle(item)}
                   >
@@ -174,47 +176,41 @@ export default function OnboardingPage() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--space-xl)' }}>
             {step > 1 ? (
-              <button onClick={prevStep} className="btn" style={{ gap: '8px', color: 'var(--text-muted)' }} disabled={isSubmitting}>
-                <ArrowLeft size={18} /> Back
-              </button>
+              <Button 
+                variant="ghost"
+                onClick={prevStep} 
+                disabled={isSubmitting}
+                icon={<ArrowLeft size={18} />}
+                iconPosition="left"
+              >
+                Back
+              </Button>
             ) : <div />}
             
-            <button 
+            <Button 
+              variant="primary"
               onClick={step === 3 ? handleComplete : nextStep} 
-              className="btn btn-primary" 
-              style={{ gap: '8px' }}
-              disabled={isSubmitting}
+              loading={isSubmitting}
+              icon={<ArrowRight size={18} />}
+              iconPosition="right"
             >
-              {isSubmitting ? (
-                <Loader2 className="animate-spin" size={18} />
-              ) : (
-                <>
-                  {step === 3 ? 'Go to Profile' : 'Next'} <ArrowRight size={18} />
-                </>
-              )}
-            </button>
+              {step === 3 ? 'Go to Profile' : 'Next'}
+            </Button>
           </div>
         </div>
 
         {/* Sign Out option */}
         <div style={{ marginTop: 'var(--space-lg)', textAlign: 'center' }}>
-          <button 
+          <Button 
+            variant="ghost"
+            size="sm"
             onClick={handleSignOut}
-            className="btn-ghost"
-            style={{ 
-              fontSize: '0.8125rem', 
-              color: 'var(--text-muted)', 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              opacity: 0.6,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer'
-            }}
+            icon={<LogOut size={14} />}
+            iconPosition="left"
+            style={{ opacity: 0.6 }}
           >
-            <LogOut size={14} /> Not your account? Sign out
-          </button>
+            Not your account? Sign out
+          </Button>
         </div>
       </div>
       <style>{`

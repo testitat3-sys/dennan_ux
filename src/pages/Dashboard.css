@@ -2,12 +2,11 @@
 .dashboard-container {
   max-width: var(--width-wide);
   margin: 0 auto;
-  padding: var(--space-12) var(--layout-inset);
+  padding: var(--space-12) 0;
   background-color: var(--color-gallery-white);
   min-height: 100vh;
   display: grid;
   grid-template-columns: var(--width-sidebar-sm) 1fr;
-  gap: var(--space-12);
   position: relative;
 }
 
@@ -19,6 +18,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-10);
+  padding-left: var(--layout-inset);
   padding-right: var(--space-6);
 }
 
@@ -86,28 +86,11 @@
   padding-top: var(--space-4);
 }
 
-.dashboard-nav__logout-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  color: var(--color-support-red) !important;
-  font-family: var(--font-sans);
-  font-size: var(--body-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.25s ease;
-  padding: var(--space-2) 0;
-}
-
-.dashboard-nav__logout-btn:hover {
-  opacity: 0.8;
-}
 
 /* ─── Main Content Canvas ───────────────────────────────────────────────── */
 .dashboard-main {
   display: flex;
   flex-direction: column;
-  gap: var(--space-15);
 }
 
 /* Module 1: The Welcome Canvas (Hero Section) */
@@ -129,14 +112,7 @@
 }
 
 /* Layer 1 Container (No lines, only tonal shift) */
-.welcome-canvas__overview {
-  background-color: var(--surface-container-low);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-8);
-}
+/* Grid handled by CardGrid */
 
 .overview-stat {
   display: flex;
@@ -167,12 +143,7 @@
 }
 
 /* Module 2: The Journey Profile */
-.journey-profile {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-10);
-  align-items: start;
-}
+/* Grid handled by CardGrid */
 
 .journey-tracker {
   display: flex;
@@ -304,12 +275,8 @@
 
 /* Essentials Card (Support Green Wash) */
 .essentials-wash-card {
-  background-color: color-mix(in srgb, var(--color-support-green), transparent 90%);
-  padding: var(--space-8);
-  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
 }
 
 .essentials-wash-card__badge {
@@ -337,12 +304,8 @@
 
 /* Wildcard Discovery Card */
 .wildcard-discovery-card {
-  background-color: var(--surface-container-low);
-  padding: var(--space-8);
-  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
 }
 
 .wildcard-discovery-card__title {
@@ -361,9 +324,6 @@
 
 /* Module 4: Contribution & Gift Activity (Layer 2 Container) */
 .gift-activity-module {
-  background-color: var(--surface-container);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
@@ -389,28 +349,14 @@
   font-weight: 600;
 }
 
-.gift-activity-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-6);
-}
+/* Grid handled by CardGrid */
 
 /* Gift Cards Tonal Layering & Secondary Glow Hover */
 .gift-activity-card {
-  background-color: var(--color-gallery-white);
-  border-radius: var(--radius-md);
-  padding: var(--space-6);
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
   position: relative;
-}
-
-.gift-activity-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-secondary); /* Plum-tinted soft aura */
 }
 
 .gift-activity-card__image {
@@ -508,8 +454,8 @@
 @media (max-width: 1024px) {
   .dashboard-container {
     grid-template-columns: 1fr;
-    padding: var(--space-6) var(--layout-inset);
-    gap: var(--space-8);
+    padding: var(--space-6) 0;
+    gap: 0;
   }
 
   .dashboard-nav {
@@ -520,7 +466,8 @@
     align-items: center;
     border-bottom: 1px dashed var(--surface-container);
     padding-bottom: var(--space-6);
-    padding-right: 0;
+    padding-left: var(--layout-inset);
+    padding-right: var(--layout-inset);
   }
 
   .dashboard-nav__list {
@@ -544,14 +491,11 @@
 
 @media (max-width: 768px) {
   .dashboard-container {
-    padding: var(--space-6) var(--space-5) !important; /* Lock horizontal padding to a balanced 20px */
-    gap: var(--space-6);
+    padding: var(--space-6) 0 !important; /* Let Page handle horizontal padding */
+    gap: 0;
   }
 
-  .journey-profile {
-    grid-template-columns: 1fr;
-    gap: var(--space-8);
-  }
+  /* Grid handled by CardGrid */
   
   .welcome-canvas__greeting {
     font-size: var(--headline-lg);
@@ -560,20 +504,14 @@
 
 @media (max-width: 480px) {
   .dashboard-container {
-    padding: var(--space-5) var(--space-4) !important; /* Balanced 16px horizontal side gutters on tight screens */
+    padding: var(--space-5) 0 !important; /* Let Page handle horizontal padding */
   }
 
-  .welcome-canvas__overview {
-    grid-template-columns: 1fr !important;
-    padding: var(--space-5) !important;
-    gap: var(--space-5) !important;
-  }
+  /* Grid handled by CardGrid */
 
   .gift-activity-module {
-    padding: var(--space-5) !important;
+    /* Removed padding as Card handles it */
   }
 
-  .gift-activity-grid {
-    grid-template-columns: 1fr !important;
-  }
+  /* Grid handled by CardGrid */
 }

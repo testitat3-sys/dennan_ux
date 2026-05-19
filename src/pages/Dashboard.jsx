@@ -10,6 +10,9 @@ import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import Button from '../components/ui/Button';
 import TierCard from '../components/ui/TierCard';
 import StageTile from '../components/ui/StageTile';
+import Page from '../components/ui/Page';
+import Card from '../components/ui/Card';
+import CardGrid from '../components/ui/CardGrid';
 
 import PredictiveFeed from '../components/dashboard/PredictiveFeed';
 import QuickViewModal from '../components/ui/QuickViewModal';
@@ -152,105 +155,117 @@ const Dashboard = () => {
       <DashboardSidebar />
 
       {/* Main Content Scroll Canvas */}
-      <main className="dashboard-main">
+      <Page as="main" className="dashboard-main">
         
         {/* 1. The Welcome Canvas (Hero Section) */}
-        <header className="welcome-canvas">
+        <Page.Section as="header" className="welcome-canvas">
           <h1 className="welcome-canvas__greeting">
             {collectionTitle}
           </h1>
           
-          <div className="welcome-canvas__overview">
-            <div className="overview-stat">
-              <span className="overview-stat__label">Parent profile</span>
-              <span className="overview-stat__value">{displayName}</span>
-              <span className="overview-stat__desc">{convexUser?.email || user?.email}</span>
-            </div>
-            
-            <div className="overview-stat">
-              <span className="overview-stat__label">Current path</span>
-              <span className="overview-stat__value">
-                {stageInfo ? stageInfo.display : 'Not Onboarded'}
-              </span>
-              <span className="overview-stat__desc">
-                {stageInfo ? `Tailored items based on your child's age.` : 'Personalize your feed by completing onboarding.'}
-              </span>
-            </div>
+          <Card variant="section" hasBorder={false} style={{ backgroundColor: 'var(--surface-container-low)' }}>
+            <Card.Body>
+              <CardGrid columns={3} gap="default" className="welcome-canvas__overview">
+                <div className="overview-stat">
+                  <span className="overview-stat__label">Parent profile</span>
+                  <span className="overview-stat__value">{displayName}</span>
+                  <span className="overview-stat__desc">{convexUser?.email || user?.email}</span>
+                </div>
+                
+                <div className="overview-stat">
+                  <span className="overview-stat__label">Current path</span>
+                  <span className="overview-stat__value">
+                    {stageInfo ? stageInfo.display : 'Not Onboarded'}
+                  </span>
+                  <span className="overview-stat__desc">
+                    {stageInfo ? `Tailored items based on your child's age.` : 'Personalize your feed by completing onboarding.'}
+                  </span>
+                </div>
 
-            {convexUser?.interests && convexUser.interests.length > 0 && (
-              <div className="overview-stat">
-                <span className="overview-stat__label">Interests</span>
-                <span className="overview-stat__value">Curated Fit</span>
-                <span className="overview-stat__desc">{convexUser.interests.join(', ')}</span>
-              </div>
-            )}
-          </div>
-        </header>
+                {convexUser?.interests && convexUser.interests.length > 0 && (
+                  <div className="overview-stat">
+                    <span className="overview-stat__label">Interests</span>
+                    <span className="overview-stat__value">Curated Fit</span>
+                    <span className="overview-stat__desc">{convexUser.interests.join(', ')}</span>
+                  </div>
+                )}
+              </CardGrid>
+            </Card.Body>
+          </Card>
+        </Page.Section>
 
         {!stageInfo ? (
-          <div style={{ padding: 'var(--space-8) 0' }}>
-            <div className="wildcard-discovery-card" style={{ background: 'var(--surface-container-low)', textAlign: 'center', padding: 'var(--space-12)' }}>
-              <h2 className="welcome-canvas__greeting" style={{ fontSize: 'var(--headline-lg)', marginBottom: 'var(--space-4)', margin: '0 auto' }}>
-                Start Your Journey
-              </h2>
-              <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--text-secondary)', marginBottom: 'var(--space-8)', maxWidth: '500px', margin: 'var(--space-4) auto var(--space-8)' }}>
-                Completing your parenting profile details lets us personalize your dashboard, recommend size-appropriate gear, and track important developmental milestones.
-              </p>
-              <Button onClick={() => navigate('/profile')}>Complete Profile Setup</Button>
-            </div>
-          </div>
+          <Page.Section>
+            <Card className="wildcard-discovery-card" variant="feature" hasBorder={false} style={{ background: 'var(--surface-container-low)', textAlign: 'center' }}>
+              <Card.Header align="center">
+                <h2 className="welcome-canvas__greeting" style={{ fontSize: 'var(--headline-lg)', margin: '0 auto' }}>
+                  Start Your Journey
+                </h2>
+              </Card.Header>
+              <Card.Body align="center">
+                <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto' }}>
+                  Completing your parenting profile details lets us personalize your dashboard, recommend size-appropriate gear, and track important developmental milestones.
+                </p>
+              </Card.Body>
+              <Card.Actions align="center">
+                <Button onClick={() => navigate('/profile')}>Complete Profile Setup</Button>
+              </Card.Actions>
+            </Card>
+          </Page.Section>
         ) : (
           <>
             {/* 2. The Journey Profile (Dynamic Module) */}
-            <section className="journey-profile">
-              <div className="journey-tracker">
-                <h2 className="journey-tracker__title">Timeline of Growth</h2>
-                
-                <div className="progress-bar-container">
-                  <div className="progress-bar__labels">
-                    <span>{stageInfo.type === 'expecting' ? 'Conception' : 'Birth'}</span>
-                    <span>{stageInfo.type === 'expecting' ? 'Week 40' : '2 Years'}</span>
-                  </div>
-                  <div className="progress-bar__track">
-                    <div 
-                      className="progress-bar__fill" 
-                      style={{ width: `${stageInfo.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="journey-milestones">
-                  <div className="milestone-highlight">
-                    <span className="milestone-highlight__title">Current Status</span>
-                    <span className="milestone-highlight__date">{stageInfo.display}</span>
-                  </div>
-                  {stageInfo.type === 'expecting' && user.dueDate && (
-                    <div className="milestone-highlight">
-                      <span className="milestone-highlight__title">Expected Due Date</span>
-                      <span className="milestone-highlight__date">
-                        {new Date(user.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </span>
+            <Page.Section className="journey-profile">
+              <CardGrid columns={2} gap="loose">
+                <div className="journey-tracker">
+                  <h2 className="journey-tracker__title">Timeline of Growth</h2>
+                  
+                  <div className="progress-bar-container">
+                    <div className="progress-bar__labels">
+                      <span>{stageInfo.type === 'expecting' ? 'Conception' : 'Birth'}</span>
+                      <span>{stageInfo.type === 'expecting' ? 'Week 40' : '2 Years'}</span>
                     </div>
-                  )}
+                    <div className="progress-bar__track">
+                      <div 
+                        className="progress-bar__fill" 
+                        style={{ width: `${stageInfo.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div className="journey-milestones">
+                    <div className="milestone-highlight">
+                      <span className="milestone-highlight__title">Current Status</span>
+                      <span className="milestone-highlight__date">{stageInfo.display}</span>
+                    </div>
+                    {stageInfo.type === 'expecting' && user.dueDate && (
+                      <div className="milestone-highlight">
+                        <span className="milestone-highlight__title">Expected Due Date</span>
+                        <span className="milestone-highlight__date">
+                          {new Date(user.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="journey-profile__cta-group">
+                    <Button variant="secondary" onClick={() => navigate('/profile')}>
+                      Edit Journey Info
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="journey-profile__cta-group">
-                  <Button variant="secondary" onClick={() => navigate('/profile')}>
-                    Edit Journey Info
-                  </Button>
+                {/* Dynamic StageTile Component from Design System */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+                  {activeStageTileData && <StageTile stage={activeStageTileData} />}
                 </div>
-              </div>
-
-              {/* Dynamic StageTile Component from Design System */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-                {activeStageTileData && <StageTile stage={activeStageTileData} />}
-              </div>
-            </section>
+              </CardGrid>
+            </Page.Section>
 
             {/* Timeline Details, NextMilestoneCard & MilestoneBadges removed for streamlined overview */}
 
             {/* 3. Curated Recommendations & Discovery (Asymmetric Grid) */}
-            <section className="discovery-section">
+            <Page.Section className="discovery-section">
               <div className="discovery-header">
                 <span className="discovery-header__eyebrow">AI-curated essentials</span>
                 <h2 className="discovery-header__title">The Now Feed</h2>
@@ -275,61 +290,73 @@ const Dashboard = () => {
 
                 <div className="discovery-sidebar-stack">
                   {/* Reuse TierCard with support green lookbook */}
-                  <div className="essentials-wash-card">
-                    <span className="essentials-wash-card__badge">Featured Tier</span>
-                    <h3 className="essentials-wash-card__title">The Essentials</h3>
-                    <p className="essentials-wash-card__copy">
-                      Daily comfort staples designed with clinical precision and botanical warmth. 
-                    </p>
-                    <div style={{ marginTop: 'var(--space-2)' }}>
-                      <TierCard tier={essentialsTier} />
-                    </div>
-                  </div>
+                  <Card variant="default" hasBorder={false} className="essentials-wash-card" style={{ backgroundColor: 'color-mix(in srgb, var(--color-support-green), transparent 90%)' }}>
+                    <Card.Header>
+                      <span className="essentials-wash-card__badge">Featured Tier</span>
+                      <h3 className="essentials-wash-card__title">The Essentials</h3>
+                    </Card.Header>
+                    <Card.Body>
+                      <p className="essentials-wash-card__copy">
+                        Daily comfort staples designed with clinical precision and botanical warmth. 
+                      </p>
+                      <div style={{ marginTop: 'var(--space-2)' }}>
+                        <TierCard tier={essentialsTier} />
+                      </div>
+                    </Card.Body>
+                  </Card>
 
                   {/* Discovery Wildcard Card */}
-                  <div className="wildcard-discovery-card">
-                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--label-sm)', color: 'var(--color-brand-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700' }}>
-                      Beyond the Basics
-                    </span>
-                    <h3 className="wildcard-discovery-card__title">Nursery Aesthetics</h3>
-                    <p className="wildcard-discovery-card__text">
-                      Editorial: {dashboardData.editorial.title}. {dashboardData.editorial.text}
-                    </p>
-                    <div style={{ marginTop: 'var(--space-4)' }}>
+                  <Card className="wildcard-discovery-card" variant="default">
+                    <Card.Header>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--label-sm)', color: 'var(--color-brand-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700' }}>
+                        Beyond the Basics
+                      </span>
+                      <h3 className="wildcard-discovery-card__title">Nursery Aesthetics</h3>
+                    </Card.Header>
+                    <Card.Body>
+                      <p className="wildcard-discovery-card__text">
+                        Editorial: {dashboardData.editorial.title}. {dashboardData.editorial.text}
+                      </p>
+                    </Card.Body>
+                    <Card.Actions>
                       <Button onClick={() => navigate('/collection/luxuries')} style={{ width: '100%' }}>
                         {dashboardData.editorial.btnText}
                       </Button>
-                    </div>
-                  </div>
+                    </Card.Actions>
+                  </Card>
                 </div>
               </div>
-            </section>
+            </Page.Section>
 
             {/* 4. Contribution & Gift Activity (Layer 2 Container) */}
-            <section className="gift-activity-module">
-              <div className="gift-activity-header">
-                <h2 className="gift-activity-header__title">Registry Contribution Tracker</h2>
-                <span className="gift-activity-header__stat">Active Communal Gifting</span>
-              </div>
-              
-              <div className="gift-activity-grid">
-                {displayContributions.map(contrib => (
-                  <div key={contrib.id} className="gift-activity-card">
-                    {contrib.saffronDot && <div className="gift-activity-card__saffron-dot"></div>}
-                    <img src={contrib.itemImage} alt={contrib.itemName} className="gift-activity-card__image" />
-                    <div className="gift-activity-card__content">
-                      <span className="gift-activity-card__contributor">{contrib.contributor}</span>
-                      <span className="gift-activity-card__status">{contrib.status}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <Page.Section>
+              <Card variant="section" hasBorder={false} className="gift-activity-module" style={{ backgroundColor: 'var(--surface-container)' }}>
+                <Card.Header className="gift-activity-header" layout="horizontal" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2 className="gift-activity-header__title">Registry Contribution Tracker</h2>
+                  <span className="gift-activity-header__stat">Active Communal Gifting</span>
+                </Card.Header>
+                
+                <Card.Body>
+                  <CardGrid columns="auto" gap="default" className="gift-activity-grid">
+                    {displayContributions.map(contrib => (
+                      <Card key={contrib.id} className="gift-activity-card" variant="compact" layout="horizontal" style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {contrib.saffronDot && <div className="gift-activity-card__saffron-dot"></div>}
+                        <img src={contrib.itemImage} alt={contrib.itemName} className="gift-activity-card__image" />
+                        <Card.Body className="gift-activity-card__content">
+                          <span className="gift-activity-card__contributor">{contrib.contributor}</span>
+                          <span className="gift-activity-card__status">{contrib.status}</span>
+                        </Card.Body>
+                      </Card>
+                    ))}
+                  </CardGrid>
+                </Card.Body>
+              </Card>
+            </Page.Section>
 
             {/* Stage Checklist Section removed for streamlined overview */}
           </>
         )}
-      </main>
+      </Page>
 
       {selectedProduct && (
         <QuickViewModal 

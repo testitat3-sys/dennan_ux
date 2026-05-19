@@ -58,21 +58,6 @@
   align-items: center;
 }
 
-.onboarding-skip {
-  background: none;
-  border: none;
-  color: var(--text-tertiary);
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  text-decoration: underline;
-  cursor: pointer;
-  padding: var(--space-2);
-  transition: color 0.2s ease;
-}
-
-.onboarding-skip:hover {
-  color: var(--text-secondary);
-}
 
 .onboarding-close {
   background: var(--surface-container);

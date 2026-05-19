@@ -1,34 +1,16 @@
 import { Link } from 'react-router-dom';
 import './ProductSection.css';
 import ProductCard from '../ui/ProductCard';
+import CardGrid from '../ui/CardGrid';
+import Button from '../ui/Button';
 
-const ProductSection = ({ title, eyebrow, subtitle, products, viewAllLink, viewAllText = 'View all', isScroll = false, onAddToCart }) => {
+const ProductSection = ({ products, onAddToCart }) => {
   return (
-    <section className="section" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, '-')}-heading`}>
-      <div className="rec-rail__header">
-        <div className="section__header">
-          {eyebrow && <p className="section__eyebrow">{eyebrow}</p>}
-          <h2 className="section__title" id={`${title.toLowerCase().replace(/\s+/g, '-')}-heading`}>{title}</h2>
-          {subtitle && <p className="section__subtitle">{subtitle}</p>}
-        </div>
-        {viewAllLink && (
-          <Link to={viewAllLink} className="section__link-action">
-            {viewAllText}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </Link>
-        )}
-      </div>
-
-      <div className={isScroll ? 'product-scroll-wrap' : ''}>
-        <div className={isScroll ? 'product-scroll' : 'product-grid'}>
-          {products.map((product, i) => (
-            <ProductCard key={i} product={product} onAddToCart={onAddToCart} />
-          ))}
-        </div>
-      </div>
-    </section>
+    <CardGrid columns={4} mobileColumns={2} gap="default">
+      {products.map((product, i) => (
+        <ProductCard key={i} product={product} onAddToCart={onAddToCart} />
+      ))}
+    </CardGrid>
   );
 };
 

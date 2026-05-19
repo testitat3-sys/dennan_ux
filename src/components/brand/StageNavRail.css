@@ -1,7 +1,6 @@
 .stage-nav {
   width: 100%;
   border-bottom: 2px solid var(--surface-container);
-  margin-bottom: var(--space-8);
   position: sticky;
   top: 80px; /* Adjust based on Navbar height */
   background: var(--surface);

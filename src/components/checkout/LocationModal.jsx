@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import SmartAddressSearch from './SmartAddressSearch';
 import { getKampalaETA } from '../../utils/deliveryUtils';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import Text from '../ui/Text';
 import './LocationModal.css';
 
 const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipConfirmation = false }) => {
@@ -61,16 +64,14 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipCo
 
   return (
     <div className={`location-overlay ${active ? 'is-active' : ''}`} onClick={onClose}>
-      <div className={`location-modal ${active ? 'is-active' : ''}`} onClick={(e) => e.stopPropagation()}>
-        <button className="close-modal-btn" onClick={onClose}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-
-        <div className="location-modal-header">
-          <h2 className="modal-title">Delivery Location</h2>
+      <Card className={`location-modal ${active ? 'is-active' : ''}`} variant="section" onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 'var(--space-4)' }}>
+          <Text role="headline-sm" as="h2" className="modal-title">Delivery Location</Text>
+          <Button 
+            variant="icon-action"
+            onClick={onClose}
+            icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>}
+          />
         </div>
 
         <div className="location-modal-content">
@@ -81,14 +82,14 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipCo
                 landmarks={landmarks}
                 history={history}
               />
-              <div className="location-hint">
+              <Text role="body-sm" color="secondary" className="location-hint" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="16" x2="12" y2="12"></line>
                   <line x1="12" y1="8" x2="12.01" y2="8"></line>
                 </svg>
                 Enter your landmark or suburb (e.g., Kiwatule)
-              </div>
+              </Text>
             </div>
           )}
 
@@ -97,7 +98,7 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipCo
               {isEstimating ? (
                 <div className="reveal-loader">
                   <div className="spinner"></div>
-                  <p>Calculating route...</p>
+                  <Text role="body-sm" color="secondary">Calculating route...</Text>
                 </div>
               ) : (
                 <div className="reveal-success">
@@ -106,30 +107,37 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipCo
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   </div>
-                  <h3 className="reveal-message">Great! We can reach you in</h3>
-                  <div className="reveal-timer">
-                    <span className="timer-value">{revealedETA.travelTime}</span>
-                    <span className="timer-unit">mins</span>
-                  </div>
-                  <p className="reveal-subtext">Estimated arrival by {revealedETA.timeString}</p>
+                  <Text role="title-lg" as="h3" className="reveal-message">Great! We can reach you in</Text>
+                  <Text role="display-lg" as="div" color="anchor" className="reveal-timer">
+                    {revealedETA.travelTime} <Text role="headline-sm" as="span" color="secondary" className="timer-unit">mins</Text>
+                  </Text>
+                  <Text role="body-sm" color="secondary" className="reveal-subtext">Estimated arrival by {revealedETA.timeString}</Text>
                   
                   <div className="selection-preview">
-                    <span className="preview-label">Delivering to</span>
-                    <span className="preview-value">{selection.name}</span>
+                    <Text role="label-sm" color="tertiary" className="preview-label">Delivering to</Text>
+                    <Text role="body-lg" color="primary" className="preview-value">{selection.name}</Text>
                   </div>
 
-                  <button className="btn-confirm-location" onClick={handleConfirm}>
+                  <Button 
+                    variant="primary"
+                    fullWidth
+                    onClick={handleConfirm}
+                  >
                     Confirm
-                  </button>
-                  <button className="btn-change-selection" onClick={() => { setRevealedETA(null); setSelection(null); }}>
+                  </Button>
+                  <Button 
+                    variant="ghost"
+                    fullWidth
+                    onClick={() => { setRevealedETA(null); setSelection(null); }}
+                  >
                     Change Location
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

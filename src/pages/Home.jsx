@@ -16,6 +16,7 @@ import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import HomeSkeleton from '../components/home/HomeSkeleton';
 import { useAuthActions } from "@convex-dev/auth/react";
+import Button from '../components/ui/Button';
 
 const Home = () => {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
@@ -102,25 +103,18 @@ const Home = () => {
             <span style={{ color: '#059669', marginLeft: '10px', fontWeight: '500' }}>
               Your app is working perfectly!
             </span>
-            <button 
+            <Button 
+              variant="secondary"
+              size="sm"
               onClick={() => {
                 console.log("[Home.jsx] Initiating sign out...");
                 signOut();
               }}
-              className="btn btn-secondary" 
-              style={{ 
-                marginLeft: '20px', 
-                padding: '4px 12px', 
-                fontSize: '0.75rem', 
-                height: 'auto',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
+              icon={<LogOut size={14} />}
+              style={{ marginLeft: '20px' }}
             >
-              <LogOut size={14} />
               Sign Out
-            </button>
+            </Button>
           </>
         )}
       </div>

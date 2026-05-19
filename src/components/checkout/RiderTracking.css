@@ -4,7 +4,6 @@
 
 .tracking-header {
   text-align: center;
-  margin-bottom: var(--space-16);
 }
 
 .countdown-container {
@@ -15,25 +14,14 @@
 }
 
 .countdown-label {
-  font-size: var(--body-xs);
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--color-brand-primary);
   letter-spacing: 0.15em;
 }
 
 .countdown-display {
-  font-family: 'Newsreader', serif;
-  font-size: 5rem;
-  color: var(--color-anchor);
   line-height: 1;
 }
 
 .countdown-display .unit {
-  font-size: var(--headline-sm);
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 400;
-  color: var(--text-secondary);
   margin-left: var(--space-2);
 }
 
@@ -48,9 +36,7 @@
 }
 
 .traffic-note {
-  font-size: var(--body-sm);
-  color: var(--text-secondary);
-  margin-top: var(--space-4);
+  display: block;
 }
 
 .tracking-body {
@@ -62,15 +48,11 @@
 
 /* Vertical Stepper */
 .roadmap-section {
-  background-color: var(--surface-container-low);
-  padding: var(--space-12);
-  border-radius: 2rem;
+  background-color: transparent !important;
 }
 
 .roadmap-title {
-  font-family: 'Newsreader', serif;
-  font-size: var(--headline-sm);
-  margin-bottom: var(--space-10);
+  display: block;
 }
 
 .vertical-stepper {
@@ -147,30 +129,20 @@
 }
 
 .step-title {
-  font-weight: 700;
-  color: var(--text-tertiary);
   transition: color 0.4s ease;
 }
 
 .step-item.active .step-title {
-  color: var(--text-primary);
 }
 
 .step-subtitle {
-  font-size: var(--body-xs);
-  color: var(--text-tertiary);
 }
 
 .step-item.active .step-subtitle {
-  color: var(--text-secondary);
 }
 
 /* Rider Card */
 .rider-card {
-  background-color: var(--surface);
-  border-radius: 2rem;
-  padding: var(--space-10);
-  box-shadow: var(--shadow-deep);
   position: sticky;
   top: var(--space-25);
 }
@@ -217,23 +189,13 @@
 }
 
 .rider-label {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
   letter-spacing: 0.1em;
 }
 
 .rider-name {
-  font-family: 'Newsreader', serif;
-  font-size: var(--headline-sm);
-  color: var(--text-primary);
-  margin: var(--space-1) 0;
 }
 
 .rider-meta {
-  font-size: var(--body-xs);
-  color: var(--text-secondary);
 }
 
 .bike-photo-container {
@@ -251,29 +213,7 @@
   object-fit: cover;
 }
 
-.btn-call-rider {
-  width: 100%;
-  padding: var(--space-5);
-  background-color: var(--color-anchor);
-  color: var(--color-on-primary);
-  border: none;
-  border-radius: var(--radius-lg-alt);
-  font-weight: 700;
-  font-size: var(--body-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-bottom: var(--space-6);
-}
-
-.btn-call-rider:hover {
-  background-color: #000;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-deep);
-}
+/* Button call rider overrides removed */
 
 .safety-note {
   display: flex;
@@ -298,9 +238,6 @@
 }
 
 .safety-note p {
-  font-size: 0.75rem;
-  color: var(--color-brand-primary-dark);
-  line-height: 1.5;
   margin: 0;
 }
 

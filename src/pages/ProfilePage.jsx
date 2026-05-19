@@ -6,6 +6,7 @@ import { useUser } from '../context/UserContext';
 import { Loader2, Calendar, Baby, User, Sparkles, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
 import Toast from '../components/ui/Toast';
 import LocationModal from '../components/checkout/LocationModal';
 import { getCheckoutData } from '../services/api';
@@ -326,8 +327,11 @@ export default function ProfilePage() {
         <form onSubmit={handleSubmit} className="profile-form-grid">
           
           {/* Section 1: Account Details */}
-          <section className="profile-card">
-            <h2 className="profile-card-title">Personal Identity</h2>
+          <Card variant="section">
+            <Card.Header>
+              <h2 className="profile-card-title">Personal Identity</h2>
+            </Card.Header>
+            <Card.Body>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
               {/* Email (Read Only) */}
@@ -375,31 +379,37 @@ export default function ProfilePage() {
                 <span className="profile-validation-error">{validationErrors.name}</span>
               )}
             </div>
-          </section>
+            </Card.Body>
+          </Card>
 
           {/* Section 2: Parenting Stage Details */}
           {!user.isAdmin && (
-            <section className="profile-card">
-              <h2 className="profile-card-title">Parenting Journey</h2>
+            <Card variant="section">
+              <Card.Header>
+                <h2 className="profile-card-title">Parenting Journey</h2>
+              </Card.Header>
+              <Card.Body>
               
               {/* Stage Role Selector Tabs */}
               <div className="profile-field-group">
                 <label className="profile-field-label" style={{ marginBottom: '8px' }}>Your Current Stage</label>
                 <div className="profile-segment-selector">
-                  <button
+                  <Button
                     type="button"
+                    variant={role === 'expecting' ? 'segment-active' : 'segment'}
+                    size="sm"
                     onClick={() => { setRole('expecting'); setValidationErrors({}); }}
-                    className={`profile-segment-btn ${role === 'expecting' ? 'profile-segment-btn--active' : ''}`}
                   >
                     Expecting Parent
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant={role === 'parent' ? 'segment-active' : 'segment'}
+                    size="sm"
                     onClick={() => { setRole('parent'); setValidationErrors({}); }}
-                    className={`profile-segment-btn ${role === 'parent' ? 'profile-segment-btn--active' : ''}`}
                   >
                     Parent
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -451,37 +461,44 @@ export default function ProfilePage() {
                           )}
                         </div>
                         {children.length > 1 && (
-                          <button 
+                          <Button 
+                            variant="remove"
+                            size="sm"
                             type="button" 
                             onClick={() => removeChild(child.id)}
-                            className="profile-child-remove-btn"
                             title="Remove child"
-                          >
-                            <Trash2 size={18} />
-                          </button>
+                            icon={<Trash2 size={18} />}
+                          />
                         )}
                       </div>
                     ))}
                   </div>
 
                   {children.length < 5 && (
-                    <button 
+                    <Button 
+                      variant="add-dashed"
+                      size="sm"
                       type="button" 
                       onClick={addChild}
-                      className="profile-child-add-btn"
+                      icon={<Plus size={16} />}
+                      iconPosition="left"
                     >
-                      <Plus size={16} /> Add another child
-                    </button>
+                      Add another child
+                    </Button>
                   )}
                 </div>
               )}
-            </section>
+              </Card.Body>
+            </Card>
           )}
 
           {/* Section 3: Saved Payment & Shipping Details */}
           {!user.isAdmin && (
-            <section className="profile-card">
-              <h2 className="profile-card-title">Saved Payment & Shipping</h2>
+            <Card variant="section">
+              <Card.Header>
+                <h2 className="profile-card-title">Saved Payment & Shipping</h2>
+              </Card.Header>
+              <Card.Body>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
                 {/* Ugandan Mobile Money Number */}
@@ -511,61 +528,65 @@ export default function ProfilePage() {
                 <div className="profile-delivery-locations-list">
                   {deliveryLocations.length > 0 ? (
                     deliveryLocations.map((loc, idx) => (
-                      <div className="delivery-card" key={idx}>
-                        <div className="delivery-info">
-                          <div className="delivery-details">
+                      <Card variant="default" layout="horizontal" key={idx}>
+                        <Card.Body>
+                          <Card.Header>
                             <h3 className="delivery-name">{loc.name}</h3>
-                            <p className="delivery-zone">Zone: {loc.zone}</p>
-                          </div>
-                          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-                            <button 
-                              type="button" 
-                              className="btn-change-location" 
-                              onClick={() => handleEditLocation(idx)}
-                            >
-                              Change
-                            </button>
-                            <button 
-                              type="button" 
-                              className="profile-child-remove-btn" 
-                              onClick={() => handleRemoveLocation(idx)}
-                              title="Remove location"
-                              style={{ padding: '8px', margin: 0 }}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                          </Card.Header>
+                          <p className="delivery-zone">Zone: {loc.zone}</p>
+                        </Card.Body>
+                        <Card.Actions>
+                          <Button 
+                            variant="outline-brand" 
+                            size="sm"
+                            type="button" 
+                            onClick={() => handleEditLocation(idx)}
+                          >
+                            Change
+                          </Button>
+                          <Button 
+                            variant="remove"
+                            size="sm"
+                            type="button" 
+                            onClick={() => handleRemoveLocation(idx)}
+                            title="Remove location"
+                            icon={<Trash2 size={16} />}
+                          />
+                        </Card.Actions>
+                      </Card>
                     ))
                   ) : (
-                    <div className="delivery-card">
-                      <div className="delivery-empty">
+                    <Card variant="default">
+                      <Card.Body className="delivery-empty">
                         <p>Where should we deliver your orders?</p>
-                        <button 
+                        <Button 
+                          variant="soft"
                           type="button" 
-                          className="btn-add-location" 
                           onClick={handleAddNewLocation}
                         >
                           Select Delivery Address
-                        </button>
-                      </div>
-                    </div>
+                        </Button>
+                      </Card.Body>
+                    </Card>
                   )}
                 </div>
 
                 {deliveryLocations.length > 0 && deliveryLocations.length < 5 && (
-                  <button 
+                  <Button 
+                    variant="add-dashed"
+                    size="sm"
                     type="button" 
                     onClick={handleAddNewLocation}
-                    className="profile-child-add-btn"
                     style={{ width: 'fit-content' }}
+                    icon={<Plus size={16} />}
+                    iconPosition="left"
                   >
-                    <Plus size={16} /> Add another location
-                  </button>
+                    Add another location
+                  </Button>
                 )}
               </div>
-            </section>
+              </Card.Body>
+            </Card>
           )}
 
           {/* Form Actions Section */}

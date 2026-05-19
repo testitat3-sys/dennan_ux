@@ -217,159 +217,20 @@
   box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.04);
 }
 
-.pack-lead-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  height: 100%;
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-}
-
+/* Pack Lead Card overrides for Card component */
 .pack-lead-card .label-xs {
   color: var(--color-brand-primary);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-size: var(--label-sm);
-  margin-bottom: var(--space-3);
 }
 
 .pack-lead-card .headline-sm {
   font-family: var(--font-editorial);
   font-size: var(--headline-lg);
   color: var(--text-primary);
-  margin-bottom: var(--space-3);
   line-height: 1.2;
-}
-
-.pack-lead-card .body-xs {
-  font-size: var(--body-sm);
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: var(--space-6);
-}
-
-.btn-add-pack {
-  width: 100%;
-  font-size: var(--label-sm);
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-anchor) !important;
-  color: var(--color-on-primary) !important;
-  border: none;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-}
-
-.btn-add-pack:hover {
-  background: var(--color-brand-primary) !important;
-  color: #fff !important;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-deep);
-}
-
-/* Individual Suggestion Product Card */
-.suggestion-product-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  box-shadow: var(--shadow-ambient);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 1px solid rgba(0, 0, 0, 0.02);
-  box-sizing: border-box;
-}
-
-.suggestion-product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-deep);
-  border-color: rgba(211, 80, 151, 0.1);
-}
-
-.suggestion-image-wrapper {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background: var(--surface-container-low);
-  margin-bottom: var(--space-4);
-}
-
-.suggestion-product-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.suggestion-product-card:hover .suggestion-product-image {
-  transform: scale(1.05);
-}
-
-.suggestion-tag {
-  position: absolute;
-  top: var(--space-3);
-  left: var(--space-3);
-  background: var(--surface-container-high);
-  color: var(--text-primary);
-  font-size: 10px;
-  font-weight: 700;
-  padding: var(--space-1) var(--space-2-5);
-  border-radius: var(--radius-pill);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  box-shadow: var(--shadow-ambient);
-}
-
-.suggestion-brand {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 700;
-  color: var(--text-tertiary);
-}
-
-.suggestion-name {
-  font-size: var(--body-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: var(--space-1) 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  height: 36px;
-  line-height: 1.3;
-}
-
-.suggestion-price {
-  font-family: var(--font-sans);
-  font-size: var(--body-sm);
-  color: var(--color-brand-primary);
-  font-weight: 700;
-}
-
-.suggestion-add-btn {
-  width: 100%;
-  margin-top: var(--space-5);
-  font-size: var(--label-sm);
-  padding: var(--space-2) var(--space-3) !important;
-  border-color: rgba(211, 80, 151, 0.1) !important;
-}
-
-.suggestion-add-btn:hover {
-  background: var(--color-brand-primary-light) !important;
-  color: var(--color-brand-primary) !important;
 }
 
 /* --- Thank You Note Tracker --- */

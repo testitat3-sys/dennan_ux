@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { formatPrice } from '../../utils/priceUtils';
 import CartItem from './CartItem';
+import Button from './Button';
 import './CartModal.css';
 
 
@@ -79,11 +80,13 @@ const CartModal = () => {
         {/* Header */}
         <div className="cart-modal__header">
           <h2 className="cart-modal__title">Your Cart ({totalItems} items)</h2>
-          <button className="cart-modal__close" onClick={handleClose} aria-label="Close cart">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-          </button>
+          <Button 
+            variant="ghost" 
+            className="cart-modal__close" 
+            onClick={handleClose} 
+            aria-label="Close cart"
+            icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg>}
+          />
         </div>
 
         {/* Scrollable Content */}
@@ -97,7 +100,7 @@ const CartModal = () => {
           ) : (
             <div className="cart-empty">
               <p>Your cart is empty.</p>
-              <button className="btn-secondary" onClick={handleClose}>Continue Shopping</button>
+              <Button variant="secondary" onClick={handleClose}>Continue Shopping</Button>
             </div>
           )}
         </div>
@@ -111,13 +114,15 @@ const CartModal = () => {
             <span className="subtotal-value">{formatPrice(subtotal)}</span>
           </div>
 
-          <button 
-            className="btn-primary cart-modal__checkout-btn" 
+          <Button 
+            variant="primary" 
+            fullWidth
+            className="cart-modal__checkout-btn" 
             onClick={handleCheckout}
             disabled={cartItems.length === 0}
           >
             Proceed to Checkout
-          </button>
+          </Button>
         </div>
 
         {/* Undo Toast - Floating above the footer */}
@@ -126,7 +131,9 @@ const CartModal = () => {
             {lastActionType === 'delete' && (
               <>
                 <span className="undo-message">Item removed from cart</span>
-                <button 
+                <Button 
+                  variant="link" 
+                  size="sm"
                   className="undo-action" 
                   onClick={() => {
                     undoRemove();
@@ -134,7 +141,7 @@ const CartModal = () => {
                   }}
                 >
                   Undo
-                </button>
+                </Button>
               </>
             )}
             {lastActionType === 'wishlist' && (
