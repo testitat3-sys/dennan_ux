@@ -1,35 +1,49 @@
-/* ─── RECOMMENDATION RAIL ────────────────────────────────────────── */
-.rec-rail { background: var(--surface-container-low); }
+/* ─── SECTION WRAPPER ─────────────────────────────────────────────── */
+/* No inline (left/right) padding here — the header and scroll rail   */
+/* each own their own padding so cards never clip at the edges.        */
+.most-loved-section {
+  padding: var(--space-12) 0;
+}
+
+/* ─── SECTION HEADER ROW ──────────────────────────────────────────── */
+/* Header is padded to match the scroll rail's inner padding           */
 .rec-rail__header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  gap: var(--space-4);
   margin-bottom: var(--space-8);
-}
-.rec-rail__header .section__header {
-  margin-bottom: 0;
-}
-.rec-rail__header .section__link-action {
-  white-space: nowrap;
+  padding: 0 var(--space-8);
 }
 
-/* ─── SECTION LINK ACTION ────────────────────────────────────────── */
+.rec-rail__header-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.section__eyebrow {
+  margin: 0;
+}
+
+/* ─── SEE MORE LINK ───────────────────────────────────────────────── */
 .section__link-action {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   color: var(--text-secondary);
   font-family: var(--font-sans);
-  font-size: var(--label-md);
+  font-size: var(--label-md, 0.75rem);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  transition: color 0.2s, transform 0.2s;
+  text-decoration: none;
+  transition: color 0.2s;
   padding: var(--space-2) 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  border: none;
-  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  /* Keeps link baseline-aligned with the title */
+  align-self: flex-end;
 }
 
 .section__link-action:hover {
@@ -43,53 +57,62 @@
 .section__link-action:hover svg {
   transform: translateX(4px);
 }
-/* ─── HORIZONTAL SCROLL ──────────────────────────────────────────── */
+
+/* ─── HORIZONTAL SCROLL RAIL ──────────────────────────────────────── */
+/* The wrap is naturally full width — no negative-margin hacks.        */
+/* padding-inline on the scroll container keeps first/last cards       */
+/* the same distance from the screen edge as the header title.         */
 .product-scroll-wrap {
   position: relative;
 }
+
 .product-scroll {
   display: flex;
   gap: var(--space-5);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding-bottom: var(--space-8);
   scrollbar-width: none;
   -ms-overflow-style: none;
-  /* Allow cards to bleed to edges but start aligned with container */
-  margin: 0 calc(-1 * var(--space-8));
-  padding: 0 var(--space-8);
+  /* Equal padding on both sides = cards never touch the edge */
+  padding: var(--space-2) var(--space-8) var(--space-8);
 }
+
 .product-scroll::-webkit-scrollbar {
   display: none;
 }
+
 .product-scroll .product-card {
   flex: 0 0 280px;
   scroll-snap-align: start;
 }
 
+/* ─── NON-SCROLL GRID WRAP ────────────────────────────────────────── */
+.product-grid-wrap {
+  padding: 0 var(--space-8);
+}
+
+/* ─── MOBILE ──────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  .most-loved-section {
+    padding: var(--space-10) 0;
+  }
+
   .rec-rail__header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-4);
-    text-align: left;
-  }
-  .rec-rail__header .section__header {
-    text-align: left;
-  }
-  .section__title {
-    text-align: left;
-  }
-  .section__eyebrow {
-    text-align: left;
-  }
-  .product-scroll {
-    margin: 0 calc(-1 * var(--space-4));
     padding: 0 var(--space-4);
-    gap: var(--space-4);
+    align-items: flex-start;
+    flex-wrap: nowrap;
   }
+
+  .product-scroll {
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4) var(--space-6);
+  }
+
   .product-scroll .product-card {
     flex: 0 0 240px;
   }
-}
 
+  .product-grid-wrap {
+    padding: 0 var(--space-4);
+  }
+}

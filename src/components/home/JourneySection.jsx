@@ -1,6 +1,7 @@
 import React from 'react';
 import './JourneySection.css';
 import StageTile from '../ui/StageTile';
+import Text from '../ui/Text';
 
 const JourneySection = ({ stages }) => {
   if (!stages) return null;
@@ -8,9 +9,15 @@ const JourneySection = ({ stages }) => {
   return (
     <section className="section journey-section" aria-labelledby="journey-heading">
       <div className="section__header">
-        <p className="section__eyebrow">Personalised for you</p>
-        <h2 className="section__title" id="journey-heading">Shop by journey stage</h2>
-        <p className="section__subtitle">Find everything curated to exactly where you are right now.</p>
+        <Text role="label-sm" as="p" color="brand-primary" className="section__eyebrow">
+          Personalised for you
+        </Text>
+        <Text role="headline-lg" as="h2" id="journey-heading">
+          Shop by journey stage
+        </Text>
+        <Text role="body-sm" as="p" color="secondary" className="section__subtitle">
+          Find everything curated to exactly where you are right now.
+        </Text>
       </div>
 
       <div className="journey-grid">
@@ -23,4 +30,3 @@ const JourneySection = ({ stages }) => {
 };
 
 export default JourneySection;
-

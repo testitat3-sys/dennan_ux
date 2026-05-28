@@ -1,7 +1,8 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { validateCouponInternal } from "./coupons";
+import { normalizeProductPrice } from "./products";
 
 export const placeOrder = mutation({
   args: {
@@ -32,11 +33,17 @@ export const placeOrder = mutation({
     // 2. Compute subtotal directly using DB prices and perform stock validation
     let computedSubtotal = 0;
     const itemsToOrder = [];
+    let hasTestProduct = false;
 
     for (const item of cartItems) {
-      const product = await ctx.db.get(item.productId);
-      if (!product || !product.isActive) {
+      const rawProduct = await ctx.db.get(item.productId);
+      if (!rawProduct || !rawProduct.isActive) {
         throw new Error(`Product ${item.productId} is no longer available.`);
+      }
+      const product = normalizeProductPrice(rawProduct);
+
+      if (product.slug === "pesapal-test-product") {
+        hasTestProduct = true;
       }
 
       // Deduct inventory atomically (if applicable) and increment units sold
@@ -85,7 +92,7 @@ export const placeOrder = mutation({
 
     // 4. Calculate Delivery Fee authoritatively (e.g. Kampala Central or Kololo = 0, others = 5000 UGX)
     let deliveryFee = 0;
-    if (args.deliveryAddress.zone !== "Kololo" && args.deliveryAddress.zone !== "Kampala Central") {
+    if (!hasTestProduct && args.deliveryAddress.zone !== "Kololo" && args.deliveryAddress.zone !== "Kampala Central") {
        deliveryFee = 5000; // Securely calculated fee
     }
 
@@ -132,5 +139,55 @@ export const placeOrder = mutation({
       deliveryFee,
       items: itemsToOrder,
     };
+  },
+});
+
+export const getOrderForPayment = internalQuery({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.orderId);
+  },
+});
+
+export const getOrderForClient = query({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return null;
+    }
+    const order = await ctx.db.get(args.orderId);
+    if (!order || order.userId !== userId) {
+      return null;
+    }
+    return order;
+  },
+});
+
+export const updateOrderWithPesapalDetails = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+    pesapalTrackingId: v.string(),
+    pesapalMerchantReference: v.string(),
+    pesapalRedirectUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.orderId, {
+      pesapalTrackingId: args.pesapalTrackingId,
+      pesapalMerchantReference: args.pesapalMerchantReference,
+      pesapalRedirectUrl: args.pesapalRedirectUrl,
+    });
+  },
+});
+
+export const updateOrderStatus = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+    status: v.union(v.literal("preparing"), v.literal("failed")),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.orderId, {
+      status: args.status,
+    });
   },
 });

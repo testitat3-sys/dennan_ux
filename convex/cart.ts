@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { normalizeProductPrice } from "./products";
 
 export const getCartItems = query({
   args: {},
@@ -21,7 +22,7 @@ export const getCartItems = query({
         const product = await ctx.db.get(item.productId);
         return {
           ...item,
-          product,
+          product: normalizeProductPrice(product),
         };
       })
     );
@@ -212,7 +213,7 @@ export const getGuestCartDetails = query({
           const product = await ctx.db.get(item.productId);
           return {
             ...item,
-            product,
+            product: normalizeProductPrice(product),
           };
         } catch (e) {
           return { ...item, product: null };

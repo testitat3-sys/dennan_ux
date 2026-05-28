@@ -1,21 +1,32 @@
 :root {
   /* Card Padding Scale */
-  --card-padding-xs: var(--space-2); /* 8px */
-  --card-padding-s: var(--space-3); /* 12px */
-  --card-padding-m: var(--space-4); /* 16px */
-  --card-padding-lg: var(--space-6); /* 24px */
+  --card-padding-xs: var(--space-2);
+  /* 8px */
+  --card-padding-s: var(--space-3);
+  /* 12px */
+  --card-padding-m: var(--space-4);
+  /* 16px */
+  --card-padding-lg: var(--space-6);
+  /* 24px */
 
   /* Card Gap Scale */
-  --card-gap-xs: var(--space-1); /* 4px */
-  --card-gap-s: var(--space-2); /* 8px */
-  --card-gap-m: var(--space-3); /* 12px */
-  --card-gap-lg: var(--space-4); /* 16px */
+  --card-gap-xs: var(--space-1);
+  /* 4px */
+  --card-gap-s: var(--space-2);
+  /* 8px */
+  --card-gap-m: var(--space-3);
+  /* 12px */
+  --card-gap-lg: var(--space-4);
+  /* 16px */
 
   /* Card Radius Scale */
-  --card-radius-xs: var(--radius-sm); /* 4px */
-  --card-radius-s: var(--radius-md); /* 8px */
+  --card-radius-xs: var(--radius-sm);
+  /* 4px */
+  --card-radius-s: var(--radius-md);
+  /* 8px */
   --card-radius-m: 12px;
-  --card-radius-lg: var(--radius-lg); /* 16px */
+  --card-radius-lg: var(--radius-lg);
+  /* 16px */
 
   /* Card Shadow Scale */
   --card-shadow-xs: none;
@@ -40,7 +51,7 @@
   /* Structural Layout */
   display: flex;
   flex-direction: column;
-  
+
   /* Strictly DO NOT ADD MARGIN */
   margin: 0 !important;
 
@@ -56,7 +67,7 @@
   gap: var(--current-card-gap);
   border-radius: var(--current-card-radius);
   box-shadow: var(--current-card-shadow);
-  
+
   font-size: var(--current-font-size);
   line-height: var(--current-line-height);
 
@@ -91,6 +102,7 @@
   --current-card-gap: var(--card-gap-xs);
   --current-card-radius: var(--card-radius-xs);
 }
+
 @media (min-width: 768px) {
   .card--variant-compact {
     --current-card-padding: var(--card-padding-s);
@@ -106,6 +118,7 @@
   --current-card-shadow: var(--card-shadow-s);
   border-color: transparent;
 }
+
 @media (min-width: 768px) {
   .card--variant-feature {
     --current-card-padding: var(--card-padding-lg);
@@ -119,9 +132,11 @@
   --current-card-padding: var(--card-padding-m);
   --current-card-gap: var(--card-gap-m);
 }
+
 @media (min-width: 768px) {
   .card--variant-section {
-    --current-card-padding: var(--space-8); /* 32px - Legacy Match */
+    --current-card-padding: var(--space-8);
+    /* 32px - Legacy Match */
     --current-card-gap: var(--space-6);
   }
 }
@@ -164,7 +179,7 @@
 
 /* --- Card Slots & Children Enforcement --- */
 
-.card > * {
+.card>* {
   /* Enforce strict gap-based layout by zeroing all direct child margins */
   margin: 0 !important;
 }
@@ -190,7 +205,8 @@
   flex-direction: column;
   gap: var(--card-gap-s);
   color: var(--text-secondary);
-  flex-grow: 1; /* Pushes meta/actions to bottom if card height is fixed by parent */
+  flex-grow: 1;
+  /* Pushes meta/actions to bottom if card height is fixed by parent */
 }
 
 .card-meta {
@@ -251,6 +267,7 @@
 .card--layout-horizontal {
   flex-direction: column;
 }
+
 @media (min-width: 768px) {
   .card--layout-horizontal {
     flex-direction: row;
@@ -259,7 +276,10 @@
 }
 
 /* --- Multi-Column Card Layout (Opt-in) --- */
-.card--columns-2 {
+
+.card--columns-2,
+.card--columns-3,
+.card--columns-4 {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-6);
@@ -269,6 +289,25 @@
   .card--columns-2 {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-8);
-    align-items: center;
+    align-items: flex-start;
+  }
+
+  .card--columns-3 {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-8);
+    align-items: flex-start;
+  }
+
+  .card--columns-4 {
+    /* Collapse 4 columns to 2 on tablet */
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+    align-items: flex-start;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card--columns-4 {
+    grid-template-columns: repeat(4, 1fr);
   }
 }

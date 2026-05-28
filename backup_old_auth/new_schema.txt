@@ -1,0 +1,81 @@
+products: defineTable({
+  name: v.string(),
+  brand: v.optional(v.string()),
+  size: v.optional(v.string()),
+  color: v.optional(v.string()),
+  // / pscs -> if it applies, this goes under specifications
+
+/** URL-safe unique identifier */
+slug: v.string(),
+
+  /** Operational & Logistics */
+  sku: v.optional(v.string()),
+    barcode: v.optional(v.string()),
+      weightGrams: v.optional(v.number()),
+        dimensions: v.optional(v.object({
+          length: v.number(),
+          width: v.number(),
+          height: v.number(),
+          unit: v.string()
+        })),
+
+          /** Pricing */
+          price: v.number(),
+            wasPrice: v.optional(v.number()),
+
+              /** Media */
+              image: v.string(),
+                images: v.optional(v.array(v.string())),
+
+                  /** Taxonomy & Merchandising */
+                  category: v.union(
+                    v.literal("Expectant and New Mom Essentials"),
+                    v.literal("Newborn Essentials & Kids Apparel/Footwear"),
+                    v.literal("Nursery and Furnishing"),
+                    v.literal("Feeding/Nursing Essentials"),
+                    v.literal("Bathing and Changing"),
+                    v.literal("Baby Play and Safety Gear"),
+                    v.literal("Travel Must-Haves")
+                  ),
+                    subCategory: v.optional(v.string()),
+                      targetGender: v.optional(v.union(v.literal("boy"), v.literal("girl"), v.literal("unisex"))),
+
+                        /** Composition & Care */
+                        material: v.optional(v.string()),
+                          pattern: v.optional(v.string()),
+
+                            /** Curation */
+                            isCurated: v.optional(v.boolean()),
+                              isMostLoved: v.optional(v.boolean()),
+
+                                /** Age Targeting */
+                                minMonth: v.optional(v.number()),
+                                  maxMonth: v.optional(v.number()),
+                                    minWeek: v.optional(v.number()),
+                                      maxWeek: v.optional(v.number()),
+
+                                        /** Content & Specifications */
+                                        description: v.string(),
+                                          tags: v.array(v.object({ type: v.string(), text: v.string() })),
+
+                                            //eg for a Car seat 
+                                            //   5. Travel Must-Haves (e.g., Car Seats, Changing Bags)
+
+                                            // { label: "Installation Type", value: "ISOFIX or Seatbelt" }
+
+                                            // { label: "Orientation", value: "Rear-Facing Only" }
+
+                                            // { label: "Included Accessories", value: "Changing Pad, Stroller Straps" }
+
+                                            //specifications: [
+                                            // { label: "Capacity", value: "350 ml" },
+                                            // { label: "Leak-Proof", value: "Yes" },
+                                            // { label: "Insulated", value: "Up to 6 hours" }
+                                            // ]
+                                            specifications: v.array(v.object({ label: v.string(), value: v.string() })),
+
+                                              /** Status & Metrics */
+                                              isActive: v.boolean(),
+                                                inventory: v.optional(v.number()),
+                                                  unitsSold: v.optional(v.number()),
+})

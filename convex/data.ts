@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { normalizeProductPrice } from "./products";
 
 export const getHero = query({
   args: {},
@@ -37,7 +38,7 @@ export const getProducts = query({
       results = results.filter(p => p.stage === args.stage);
     }
     
-    return results;
+    return results.map(normalizeProductPrice);
   },
 });
 
@@ -46,10 +47,11 @@ export const getProductById = query({
   handler: async (ctx, args) => {
     // Note: In a real app we might use Convex IDs, but for migration 
     // we might still be looking for the original numeric/string IDs
-    return await ctx.db
+    const product = await ctx.db
       .query("products")
       .filter((q) => q.eq(q.field("name"), args.id)) // Placeholder, should be mapped to actual ID field if available
       .first();
+    return normalizeProductPrice(product);
   },
 });
 

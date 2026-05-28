@@ -340,6 +340,10 @@ const DesignSystemPage = () => {
             <h3 className="ds-label">Icon Action & Controls</h3>
             <div className="ds-button-row">
               <div className="ds-button-example">
+                <Button variant="primary-icon" icon={<Plus size={18} />} aria-label="Add item" />
+                <code>variant="primary-icon"</code>
+              </div>
+              <div className="ds-button-example">
                 <Button variant="icon-action" icon={<Mail size={18} />} aria-label="Save to wishlist" />
                 <code>variant="icon-action"</code>
               </div>

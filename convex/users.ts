@@ -1,4 +1,4 @@
-import { internalMutation, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { auth } from "./auth";
 
@@ -247,4 +247,12 @@ export const updateProfile = mutation({
   },
 });
 
-
+/**
+ * Get user profile internally.
+ */
+export const getUserProfile = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});

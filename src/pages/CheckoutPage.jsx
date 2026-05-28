@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useConvex, useQuery, useMutation, useConvexAuth } from 'convex/react';
+import { useConvex, useQuery, useMutation, useConvexAuth, useAction } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import CheckoutStepper from '../components/checkout/CheckoutStepper';
 import CheckoutSkeleton from '../components/checkout/CheckoutSkeleton';
@@ -21,6 +21,7 @@ const CheckoutPage = () => {
   const { isAuthenticated } = useConvexAuth();
   const user = useQuery(api.users.viewer);
   const convexPlaceOrder = useMutation(api.orders.placeOrder);
+  const initiatePayment = useAction(api.pesapal.initiatePayment);
 
   const { cartItems, subtotal, clearCart } = useCart();
   const [checkoutData, setCheckoutData] = useState(null);
@@ -145,9 +146,11 @@ const CheckoutPage = () => {
   // Recalculated Shipping Fee
   const deliveryFee = useMemo(() => {
     if (!selectedAddress) return 0;
+    const hasTestProduct = cartItems.some(item => item.slug === 'pesapal-test-product');
+    if (hasTestProduct) return 0;
     // FREE delivery for Kampala Central / Kololo, otherwise UGX 5,000 flat-rate
     return (selectedAddress.zone === 'Kololo' || selectedAddress.zone === 'Kampala Central') ? 0 : 5000;
-  }, [selectedAddress]);
+  }, [selectedAddress, cartItems]);
 
   // Recalculated Coupon savings
   const discountAmount = useMemo(() => {
@@ -219,6 +222,24 @@ const CheckoutPage = () => {
         // Logged-in users: execute secure backend order transaction and save order to DB
         const result = await convexPlaceOrder(orderPayload);
         if (result.success) {
+          clearCart(); // sync frontend local states if needed
+          
+          if (selectedPayment === 'momo') {
+            setToastConfig({
+              isOpen: true,
+              message: "Initiating secure payment...",
+              variant: 'success'
+            });
+            const paymentResult = await initiatePayment({ 
+              orderId: result.orderId,
+              callbackUrl: `${window.location.origin}/checkout/callback`
+            });
+            if (paymentResult && paymentResult.redirectUrl) {
+              window.location.href = paymentResult.redirectUrl;
+              return;
+            }
+          }
+
           setPlacedOrderDetails(result);
           setIsOrderConfirmed(true);
           setToastConfig({
@@ -226,7 +247,6 @@ const CheckoutPage = () => {
             message: `Your order was successfully confirmed. Arriving in ${remainingTime || lockedETA?.travelTime} mins!`,
             variant: 'success'
           });
-          clearCart(); // sync frontend local states if needed
         }
       } else {
         // Guest checkout flow: simulate order success in order confirmation page while respecting live hydrated prices

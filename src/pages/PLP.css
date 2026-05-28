@@ -7,7 +7,8 @@
   align-items: center;
   padding: 0 var(--space-8);
   overflow: hidden;
-  background: var(--color-anchor); /* fallback */
+  background: var(--color-anchor);
+  /* fallback */
   transition: height 0.3s ease;
 }
 
@@ -66,7 +67,8 @@
   font-family: var(--font-editorial);
   font-size: var(--display-lg);
   line-height: 1.1;
-  text-transform: none; /* Title case from data */
+  text-transform: none;
+  /* Title case from data */
 }
 
 .plp__hero-subtext {
@@ -79,7 +81,7 @@
 .plp__search-wrap {
   position: relative;
   z-index: 10;
-  padding: 0 var(--space-8);
+
 }
 
 /* ─── MAIN LAYOUT ────────────────────────────────────────────────── */
@@ -102,8 +104,14 @@
 }
 
 /* Hide scrollbar for sidebar */
-.plp__sidebar::-webkit-scrollbar { display: none; }
-.plp__sidebar { -ms-overflow-style: none; scrollbar-width: none; }
+.plp__sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.plp__sidebar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
 .filter-group {
   margin-bottom: var(--space-10);
@@ -164,8 +172,7 @@
   margin-bottom: var(--space-8);
 }
 
-.plp__count {
-}
+.plp__count {}
 
 .plp__sort {
   display: flex;
@@ -174,16 +181,21 @@
   cursor: pointer;
 }
 
-.plp__sort-val {
-}
+.plp__sort-val {}
 
-.plp__grid {
-}
+.plp__grid {}
 
 /* Animations */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (min-width: 1025px) {
@@ -194,11 +206,13 @@
 }
 
 /* Responsive */
-@media (max-width: 1200px) {
-}
+@media (max-width: 1200px) {}
 
 @media (max-width: 1024px) {
-  .plp__sidebar { display: none; }
+  .plp__sidebar {
+    display: none;
+  }
+
   .plp__container {
     padding-block: var(--space-12);
     padding-inline: 0;
@@ -206,7 +220,11 @@
 }
 
 @media (max-width: 640px) {
-  .plp__hero { height: 35vh; min-height: 300px; padding: 0 var(--space-6); }
+  .plp__hero {
+    height: 35vh;
+    min-height: 300px;
+    padding: 0 var(--space-6);
+  }
 }
 
 /* ─── MOBILE FILTER TRIGGER ──────────────────────────────────────── */
@@ -229,16 +247,16 @@
     cursor: pointer;
     transition: background 0.2s, border-color 0.2s, transform 0.15s;
   }
-  
+
   .plp__mobile-filter-btn:hover {
     background: var(--surface-container);
     border-color: var(--text-tertiary);
   }
-  
+
   .plp__mobile-filter-btn:active {
     transform: scale(0.95);
   }
-  
+
   .plp__toolbar {
     gap: var(--space-4);
   }
@@ -351,5 +369,3 @@
   border-top: 1px solid var(--surface-container-high);
   background: var(--surface-container-low);
 }
-
-

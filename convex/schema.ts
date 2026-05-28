@@ -43,45 +43,81 @@ export default defineSchema({
    * to avoid hitting the 1 MB document limit as they grow.
    */
   products: defineTable({
+
     name: v.string(),
-    brand: v.string(),
+    brand: v.string(),//size if any
+    size: v.optional(v.string()),
+    color: v.optional(v.string()),//color if any
+
     /** URL-safe unique identifier, e.g. "closer-to-nature-baby-bottles" */
     slug: v.string(),
-    /** Price in UGX as a plain number */
+
+    /** Operational & Logistics */
+    sku: v.optional(v.string()),
+    barcode: v.string(), // Now strictly required in Phase 3
+    weightGrams: v.optional(v.number()),
+    dimensions: v.optional(
+      v.object({
+        length: v.number(),
+        width: v.number(),
+        height: v.number(),
+        unit: v.string(),
+      })
+    ),
+
+    /** Pricing */
     price: v.number(),
-    /** Original / was-price for sale strikethrough, in UGX */
     wasPrice: v.optional(v.number()),
-    /** Asset path or absolute URL */
-    image: v.string(),
-    /** Optional secondary product images array */
+    originalPrice: v.number(),
+    discountPrice: v.optional(v.number()),
+    discountExpiry: v.optional(v.number()),
+
+    /** Media */
+    image: v.optional(v.string()),
     images: v.optional(v.array(v.string())),
-    /** "mother" | "newborn" | "kid" */
-    stage: v.union(v.literal("mother"), v.literal("newborn"), v.literal("kid")),
-    /** "essentials" | "musthaves" | "luxuries" */
-    tier: v.union(v.literal("essentials"), v.literal("musthaves"), v.literal("luxuries")),
-    /** e.g. "Feeding", "Sleep", "Apparel", "Play", "Comfort", "On the Move" */
-    category: v.string(),
+
+    /** Taxonomy & Merchandising */
+    stage: v.optional(v.union(v.literal("mother"), v.literal("newborn"), v.literal("kid"))),
+    tier: v.optional(v.union(v.literal("essentials"), v.literal("musthaves"), v.literal("luxuries"))),
+    category: v.union(
+      v.literal("Expectant and New Mom Essentials"),
+      v.literal("Newborn Essentials & Kids Apparel/Footwear"),
+      v.literal("Nursery and Furnishing"),
+      v.literal("Feeding/Nursing Essentials"),
+      v.literal("Bathing and Changing"),
+      v.literal("Baby Play and Safety Gear"),
+      v.literal("Travel Must-Haves")
+    ), // Now strictly limited to union in Phase 3
+    subCategory: v.optional(v.string()),
+    targetGender: v.optional(v.union(v.literal("boy"), v.literal("girl"), v.literal("unisex"))),
+
+    /** Composition & Care */
+    material: v.optional(v.string()),
+    pattern: v.optional(v.string()),
+
+    /** Curation */
     isCurated: v.optional(v.boolean()),
     isMostLoved: v.optional(v.boolean()),
-    /** Age range in months — used for newborn / kid stage products */
+
+    /** Age Targeting */
     minMonth: v.optional(v.number()),
     maxMonth: v.optional(v.number()),
-    /** Age range in weeks — used for mother / expecting stage products */
     minWeek: v.optional(v.number()),
     maxWeek: v.optional(v.number()),
+
+    /** Content & Specifications */
     description: v.string(),
-    /** Display badge chips, e.g. [{ type: "primary", text: "1k+ sold" }] */
     tags: v.array(v.object({ type: v.string(), text: v.string() })),
-    /** Spec-sheet rows, e.g. [{ label: "BPA Free", value: "Yes" }] */
     specifications: v.array(v.object({ label: v.string(), value: v.string() })),
-    /** Soft-delete / visibility toggle */
+
+    /** Status & Metrics */
     isActive: v.boolean(),
-    /** Current available stock quantity */
     inventory: v.optional(v.number()),
-    /** Number of units sold */
     unitsSold: v.optional(v.number()),
+    actual_data: v.boolean(), // Now strictly required in Phase 3
   })
     .index("by_slug", ["slug"])
+    .index("by_barcode", ["barcode"])
     .index("by_stage", ["stage"])
     .index("by_tier", ["tier"])
     .index("by_category", ["category"])
@@ -283,7 +319,8 @@ export default defineSchema({
       v.literal("preparing"),
       v.literal("dispatched"),
       v.literal("delivered"),
-      v.literal("cancelled")
+      v.literal("cancelled"),
+      v.literal("failed")
     ),
     paymentMethod: v.string(), // "momo" | "card"
     momoPhone: v.optional(v.string()), // Ugandan mobile money number
@@ -296,6 +333,9 @@ export default defineSchema({
     deliveryFee: v.number(),   // Verified delivery fee
     grandTotal: v.number(),    // subtotal - discountAmount + deliveryFee
     couponApplied: v.optional(v.string()),
+    pesapalTrackingId: v.optional(v.string()),
+    pesapalMerchantReference: v.optional(v.string()),
+    pesapalRedirectUrl: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 

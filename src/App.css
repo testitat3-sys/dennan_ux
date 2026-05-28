@@ -499,12 +499,6 @@
   .tier-grid .tier-card:last-child { grid-column: 1 / -1; flex-direction: row; align-items: center; }
   .product-grid { grid-template-columns: repeat(2, 1fr); }
   .footer__grid { grid-template-columns: 1fr 1fr; gap: var(--space-8); }
-
-  /* Make Add to Cart persistent on touch/smaller screens */
-  .btn--card-add {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 @media (max-width: 768px) {
   .nav__links { display: none; }

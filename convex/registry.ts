@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { auth } from "./auth";
+import { normalizeProductPrice } from "./products";
 
 /**
  * Get active user's registry. Creates a default registry if none exists.
@@ -37,8 +38,9 @@ export const get = query({
     // Hydrate items with product details
     const items = [];
     for (const rawItem of rawItems) {
-      const product = await ctx.db.get(rawItem.productId);
-      if (product) {
+      const rawProduct = await ctx.db.get(rawItem.productId);
+      if (rawProduct) {
+        const product = normalizeProductPrice(rawProduct);
         items.push({
           id: rawItem._id, // item ID
           productId: rawItem.productId,
@@ -135,8 +137,9 @@ export const getShared = query({
 
     const items = [];
     for (const rawItem of rawItems) {
-      const product = await ctx.db.get(rawItem.productId);
-      if (product) {
+      const rawProduct = await ctx.db.get(rawItem.productId);
+      if (rawProduct) {
+        const product = normalizeProductPrice(rawProduct);
         items.push({
           id: rawItem._id,
           productId: rawItem.productId,
@@ -245,10 +248,11 @@ export const addItem = mutation({
       throw new Error("Could not find or create registry");
     }
 
-    const product = await ctx.db.get(args.productId);
-    if (!product) {
+    const rawProduct = await ctx.db.get(args.productId);
+    if (!rawProduct) {
       throw new Error("Product not found");
     }
+    const product = normalizeProductPrice(rawProduct);
 
     // Check if product already exists in this registry
     const existing = await ctx.db
@@ -378,10 +382,11 @@ export const addContribution = mutation({
       throw new Error("Registry item not found");
     }
 
-    const product = await ctx.db.get(args.productId);
-    if (!product) {
+    const rawProduct = await ctx.db.get(args.productId);
+    if (!rawProduct) {
       throw new Error("Product not found");
     }
+    const product = normalizeProductPrice(rawProduct);
 
     const currentContributions = registryItem.contributions || [];
     const newContributions = [

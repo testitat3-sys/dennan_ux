@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import RegistryPage from './pages/RegistryPage';
 import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
+import PaymentCallbackPage from './pages/PaymentCallbackPage';
 import PDP from './pages/PDP';
 import DesignSystemPage from './pages/DesignSystemPage';
 import ComingSoonPage from './pages/ComingSoonPage';
@@ -60,6 +61,7 @@ function App() {
           <Route path="/registry/:registryId" element={<RegistryPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/callback" element={<PaymentCallbackPage />} />
           <Route path="/product/:productId" element={<PDP />} />
           <Route path="/design-system" element={<DesignSystemPage />} />
           

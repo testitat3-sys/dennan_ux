@@ -66,6 +66,7 @@ export const seedData = mutation({
             slug,
             price,
             wasPrice,
+            originalPrice: wasPrice ?? price,
             image,
             images,
             stage,
@@ -536,4 +537,43 @@ export const backfillUnitsSold = mutation({
   }
 });
 
+export const createTestProduct = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const productId = await ctx.db.insert("products", {
+      name: "Pesapal Test Product",
+      brand: "Test Brand",
+      slug: "pesapal-test-product",
+      price: 1000,
+      originalPrice: 1000,
+      image: "https://picsum.photos/400/400?random=999",
+      stage: "newborn",
+      tier: "essentials",
+      category: "Test",
+      isCurated: true,
+      description: "A 1000 UGX product for testing Pesapal payments.",
+      tags: [{ type: "primary", text: "Test" }],
+      specifications: [],
+      isActive: true,
+      inventory: 1000,
+      unitsSold: 0,
+    });
+    return { success: true, productId };
+  }
+});
 
+export const backfillOriginalPrice = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    let updatedCount = 0;
+    for (const p of products) {
+      if (p.originalPrice === undefined) {
+        const originalPrice = p.wasPrice ?? p.price;
+        await ctx.db.patch(p._id, { originalPrice });
+        updatedCount++;
+      }
+    }
+    return { success: true, updatedCount };
+  }
+});
