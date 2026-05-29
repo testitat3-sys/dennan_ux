@@ -829,7 +829,7 @@
 @media (max-width: 480px) {
   .product-grid { grid-template-columns: 1fr 1fr; }
   .search-suggestions { display: none; }
-  .hero__actions { flex-direction: column; align-items: flex-start; }
+  .hero__actions { flex-direction: column; align-items: center; }
 }
 
 

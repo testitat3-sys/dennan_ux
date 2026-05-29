@@ -190,6 +190,26 @@
 
 /* Responsive Heritage Overrides */
 @media (max-width: 768px) {
+  .hero__content {
+    align-items: center;
+    text-align: center;
+    padding-top: var(--space-4);
+  }
+
+  .hero__headline {
+    text-align: center;
+  }
+
+  .hero__subcopy {
+    text-align: center;
+    max-width: none;
+  }
+
+  .hero__actions {
+    justify-content: center;
+    width: 100%;
+  }
+
   /*
     MANDATE: Hide the Hero Image on mobile devices to optimize layout space.
     To restore the hero image on mobile in the future:
