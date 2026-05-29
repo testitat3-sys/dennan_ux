@@ -5,7 +5,7 @@ import ProductCard from '../ui/ProductCard';
 import CardGrid from '../ui/CardGrid';
 import Text from '../ui/Text';
 
-const ProductSection = ({ title, eyebrow, products, viewAllLink, viewAllText = 'See more', isScroll = false, onAddToCart }) => {
+const ProductSection = ({ title, eyebrow, products, viewAllLink, viewAllText = 'See more', isScroll = false, desktopScrollMobileGrid = false, onAddToCart }) => {
   return (
     <section className="most-loved-section">
       {/* ── Section header: title left, see-more right ── */}
@@ -30,7 +30,23 @@ const ProductSection = ({ title, eyebrow, products, viewAllLink, viewAllText = '
       </div>
 
       {/* ── Product content ── */}
-      {isScroll ? (
+      {desktopScrollMobileGrid ? (
+        <div className="desktop-scroll-mobile-grid-wrap">
+          <div className="desktop-scroll-mobile-grid">
+            {products.map((product, i) => (
+              <ProductCard key={i} product={product} onAddToCart={onAddToCart} />
+            ))}
+            {viewAllLink && (
+              <Link to={viewAllLink} className="desktop-scroll-see-more-card">
+                <div className="see-more-card__circle">
+                  <ArrowRight size={24} />
+                </div>
+                <span className="see-more-card__text">See More</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      ) : isScroll ? (
         <div className="product-scroll-wrap">
           <div className="product-scroll">
             {products.map((product, i) => (

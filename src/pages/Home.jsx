@@ -85,14 +85,14 @@ const Home = () => {
     return <HomeSkeleton />;
   }
 
-  const mostLovedProducts = liveProducts.filter(p => p.isMostLoved).slice(0, 5);
+  const mostLovedProducts = liveProducts.filter(p => p.isMostLoved).slice(0, 8);
   const curatedProducts = liveProducts.filter(p => p.isCurated).slice(0, 4);
 
   return (
     <>
-      <div style={{ 
-        padding: '10px', 
-        textAlign: 'center', 
+      <div style={{
+        padding: '10px',
+        textAlign: 'center',
         background: isAuthenticated ? '#f0fdf4' : '#f9fafb',
         borderBottom: '1px solid #e5e7eb',
         fontSize: '0.875rem'
@@ -103,7 +103,7 @@ const Home = () => {
             <span style={{ color: '#059669', marginLeft: '10px', fontWeight: '500' }}>
               Your app is working perfectly!
             </span>
-            <Button 
+            <Button
               variant="secondary"
               size="sm"
               onClick={() => {
@@ -121,21 +121,22 @@ const Home = () => {
       <Hero content={restData.hero} />
       <SearchStrip />
       <BrandsBanner brands={restData.brands} />
-      
-      <ProductSection 
-        title="Most Loved by Parents"
+
+
+      <ProductSection
+        title="Most Loved by Parents          "
         eyebrow="Performance Picks"
         products={mostLovedProducts}
         viewAllLink="/collection/most-loved"
-        viewAllText="View most loved"
-        isScroll={true}
+        viewAllText="See more"
+        desktopScrollMobileGrid={true}
         onAddToCart={handleAddToCart}
       />
-      
+
       <JourneySection stages={liveStages} />
       <TierSection tiers={liveTiers} />
-      
-      <ProductSection 
+
+      <ProductSection
         title="Curated picks for your journey"
         eyebrow="AI-curated picks"
         products={curatedProducts}
@@ -143,23 +144,23 @@ const Home = () => {
         viewAllText="View all"
         onAddToCart={handleAddToCart}
       />
-      
+
       <ReelsSection reels={liveReels} />
       <TrustStrip items={restData.trustItems} />
 
       {selectedProduct && (
-        <QuickViewModal 
-          product={selectedProduct} 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
+        <QuickViewModal
+          product={selectedProduct}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
           onSuccess={handleModalSuccess}
         />
       )}
 
-      <Toast 
-        isOpen={showToast} 
-        message={toastMessage} 
-        onClose={() => setShowToast(false)} 
+      <Toast
+        isOpen={showToast}
+        message={toastMessage}
+        onClose={() => setShowToast(false)}
       />
     </>
   );

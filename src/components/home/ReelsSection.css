@@ -4,7 +4,7 @@
   overflow: hidden;
 }
 .reels-section__header-row {
-  padding: 0 var(--space-8);
+  padding: 0 var(--layout-inset);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -33,7 +33,7 @@
   display: flex;
   gap: var(--space-4);
   overflow-x: auto;
-  padding: 0 var(--space-8) var(--space-10);
+  padding: 0 var(--layout-inset) var(--space-10);
   scroll-snap-type: x mandatory;
   scrollbar-width: none; /* Hide for Firefox */
   -ms-overflow-style: none; /* Hide for IE/Edge */

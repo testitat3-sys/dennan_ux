@@ -1,6 +1,6 @@
 /* ─── TRUST STRIP ────────────────────────────────────────────────── */
 .trust-strip {
-  padding: var(--space-12) var(--space-8);
+  padding: var(--space-12) var(--layout-inset);
   display: flex;
   align-items: center;
   justify-content: center;

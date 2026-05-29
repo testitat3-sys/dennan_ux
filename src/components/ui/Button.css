@@ -548,3 +548,11 @@
 .btn-icon--left { margin-right: var(--space-1); }
 .btn-icon--right { margin-left: var(--space-1); }
 
+/* Mobile Overrides */
+@media (max-width: 768px) {
+  .btn--card-add {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+  }
+}
+

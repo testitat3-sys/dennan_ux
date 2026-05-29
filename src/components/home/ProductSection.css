@@ -1,19 +1,16 @@
-/* ─── SECTION WRAPPER ─────────────────────────────────────────────── */
-/* No inline (left/right) padding here — the header and scroll rail   */
-/* each own their own padding so cards never clip at the edges.        */
 .most-loved-section {
-  padding: var(--space-12) 0;
+  padding: var(--space-12) var(--layout-inset);
 }
 
 /* ─── SECTION HEADER ROW ──────────────────────────────────────────── */
-/* Header is padded to match the scroll rail's inner padding           */
+/* Header aligns with the parent container's padding */
 .rec-rail__header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-4);
   margin-bottom: var(--space-8);
-  padding: 0 var(--space-8);
+  padding: 0;
 }
 
 .rec-rail__header-text {
@@ -73,8 +70,7 @@
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  /* Equal padding on both sides = cards never touch the edge */
-  padding: var(--space-2) var(--space-8) var(--space-8);
+  padding: var(--space-2) 0 var(--space-8);
 }
 
 .product-scroll::-webkit-scrollbar {
@@ -86,33 +82,144 @@
   scroll-snap-align: start;
 }
 
-/* ─── NON-SCROLL GRID WRAP ────────────────────────────────────────── */
 .product-grid-wrap {
-  padding: 0 var(--space-8);
+  padding: 0;
 }
 
 /* ─── MOBILE ──────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .most-loved-section {
-    padding: var(--space-10) 0;
+    padding: var(--space-10) var(--space-4) !important;
+  }
+
+  .rec-rail__header,
+  .rec-rail__header-text {
+    padding: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 
   .rec-rail__header {
-    padding: 0 var(--space-4);
     align-items: flex-start;
     flex-wrap: nowrap;
   }
 
-  .product-scroll {
-    gap: var(--space-4);
-    padding: var(--space-2) var(--space-4) var(--space-6);
-  }
-
-  .product-scroll .product-card {
-    flex: 0 0 240px;
-  }
-
   .product-grid-wrap {
-    padding: 0 var(--space-4);
+    padding: 0 !important;
+  }
+
+  /* Hide the 5th card on mobile to fit exactly 2 rows of 2 columns (4 items) */
+  .product-grid-wrap .product-card:nth-child(n+5) {
+    display: none !important;
+  }
+}
+
+/* ─── DESKTOP SCROLL / MOBILE GRID HYBRID ─── */
+
+/* 1. Mobile & Tablet (Default): 2-Column Grid */
+.desktop-scroll-mobile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--grid-gap-default);
+  width: 100%;
+}
+
+/* On mobile/tablet, hide cards past the 4th item to keep a perfect 2x2 grid */
+.desktop-scroll-mobile-grid .product-card:nth-child(n+5) {
+  display: none !important;
+}
+
+/* Hide the scrolling "See More" card on mobile/tablet */
+.desktop-scroll-see-more-card {
+  display: none;
+}
+
+/* 2. Desktop: Horizontal Scroll Track (1 Row) */
+@media (min-width: 1024px) {
+  .desktop-scroll-mobile-grid-wrap {
+    overflow: hidden; /* Enforces clean clipping boundary at page padding */
+    position: relative;
+    width: 100%;
+  }
+
+  .desktop-scroll-mobile-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: var(--space-5);
+    padding-bottom: var(--space-6);
+    scrollbar-width: none; /* Hide scrollbar for an ultra-clean look */
+    -ms-overflow-style: none;
+    width: 100%;
+  }
+
+  .desktop-scroll-mobile-grid::-webkit-scrollbar {
+    display: none; /* Hide scrollbar in webkit browsers */
+  }
+
+  /* Show all products in the scrolling rail on desktop */
+  .desktop-scroll-mobile-grid .product-card:nth-child(n+5) {
+    display: block !important;
+  }
+
+  /* Each product card occupies exactly 1/4 of the viewport width minus gaps */
+  .desktop-scroll-mobile-grid .product-card {
+    flex: 0 0 calc((100% - 3 * var(--space-5)) / 4);
+    scroll-snap-align: start;
+  }
+
+  /* Premium "See More" Card at the end of the scroll */
+  .desktop-scroll-see-more-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 calc((100% - 3 * var(--space-5)) / 4); /* Same dimensions as product cards */
+    background: var(--surface-container-low);
+    border: 1px solid var(--surface-container-high);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    scroll-snap-align: start;
+    cursor: pointer;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    box-sizing: border-box;
+  }
+
+  .desktop-scroll-see-more-card:hover {
+    background: var(--surface-container);
+    border-color: var(--color-brand-primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-ambient);
+  }
+
+  .see-more-card__circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--color-brand-primary-light);
+    color: var(--color-on-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .desktop-scroll-see-more-card:hover .see-more-card__circle {
+    background: var(--color-brand-primary);
+    transform: scale(1.1);
+  }
+
+  .see-more-card__text {
+    font-family: var(--font-sans);
+    font-size: var(--label-md);
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 }

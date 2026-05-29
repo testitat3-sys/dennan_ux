@@ -1,6 +1,6 @@
 /* ─── BRANDS BANNER ────────────────────────────────────────────── */
 .brands-banner {
-  padding: var(--space-16) 0;
+  padding: var(--space-16) var(--layout-inset);
   background: var(--surface); /* Keep it on white for gallery feel */
   position: relative;
 }
@@ -17,7 +17,7 @@
 }
 
 .brands-banner .section__header {
-  padding: 0 var(--space-8);
+  padding: 0;
   position: relative;
   z-index: 1;
 }
@@ -36,7 +36,7 @@
 
 .brands-banner__track-wrap {
   width: 100%;
-  padding: 0 var(--space-8);
+  padding: 0;
   margin-top: var(--space-10);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -139,6 +139,7 @@
 
 @media (max-width: 768px) {
   .brands-banner { padding: var(--space-12) 0; }
+  .brands-banner .section__header { padding: 0 var(--space-4); }
   .brands-banner__track-wrap { padding: 0 var(--space-4); }
   .brands-banner__track { gap: var(--space-4); }
   .brand-item { min-width: 140px; }

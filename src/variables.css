@@ -101,7 +101,7 @@
   --width-sidebar: 260px;
   --width-sidebar-sm: 240px;
 
-  --layout-inset: var(--space-12);
+  --layout-inset: var(--space-20);
 
   /* ─── Page Layout Tokens ──────────────────────────────────────── */
   --page-padding-x-mobile:   var(--space-4);        /* 16px */
