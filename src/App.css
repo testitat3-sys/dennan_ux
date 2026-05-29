@@ -610,7 +610,8 @@
 .mobile-menu__pane-container {
   display: flex;
   width: 200%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -618,7 +619,7 @@
   width: 50%;
   height: 100%;
   overflow-y: auto;
-  padding: var(--space-8) var(--space-6);
+  padding: var(--space-8) var(--space-6) calc(var(--space-20) + env(safe-area-inset-bottom, 0px));
 }
 
 .mobile-menu__list {

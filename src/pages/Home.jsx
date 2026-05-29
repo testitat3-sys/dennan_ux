@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
 import Hero from '../components/home/Hero';
 import SearchStrip from '../components/home/SearchStrip';
 import BrandsBanner from '../components/home/BrandsBanner';
@@ -12,15 +11,11 @@ import TrustStrip from '../components/home/TrustStrip';
 import QuickViewModal from '../components/ui/QuickViewModal';
 import Toast from '../components/ui/Toast';
 import { getHomepageData } from '../services/api';
-import { useConvexAuth, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import HomeSkeleton from '../components/home/HomeSkeleton';
-import { useAuthActions } from "@convex-dev/auth/react";
-import Button from '../components/ui/Button';
 
 const Home = () => {
-  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
-  const { signOut } = useAuthActions();
   const navigate = useNavigate();
 
 
@@ -90,34 +85,6 @@ const Home = () => {
 
   return (
     <>
-      <div style={{
-        padding: '10px',
-        textAlign: 'center',
-        background: isAuthenticated ? '#f0fdf4' : '#f9fafb',
-        borderBottom: '1px solid #e5e7eb',
-        fontSize: '0.875rem'
-      }}>
-        Auth Status: {authLoading ? "Checking..." : isAuthenticated ? "✅ Authenticated" : "❌ Not Authenticated"}
-        {isAuthenticated && (
-          <>
-            <span style={{ color: '#059669', marginLeft: '10px', fontWeight: '500' }}>
-              Your app is working perfectly!
-            </span>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                console.log("[Home.jsx] Initiating sign out...");
-                signOut();
-              }}
-              icon={<LogOut size={14} />}
-              style={{ marginLeft: '20px' }}
-            >
-              Sign Out
-            </Button>
-          </>
-        )}
-      </div>
       <Hero content={restData.hero} />
       <SearchStrip />
       <BrandsBanner brands={restData.brands} />
