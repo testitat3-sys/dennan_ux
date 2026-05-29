@@ -32,6 +32,33 @@
   row-gap: var(--space-12); /* Vertical rhythm */
 }
 
+@media (min-width: 769px) {
+  .items-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: var(--space-8) !important;
+    padding-bottom: var(--space-4) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--surface-container-high) transparent !important;
+  }
+  .items-grid::-webkit-scrollbar {
+    height: 6px !important;
+  }
+  .items-grid::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+  .items-grid::-webkit-scrollbar-thumb {
+    background: var(--surface-container-high) !important;
+    border-radius: var(--radius-pill) !important;
+  }
+  .items-grid > * {
+    flex: 0 0 280px !important;
+  }
+}
+
 @media (max-width: 1280px) {
   .items-grid {
     grid-template-columns: repeat(3, 1fr);

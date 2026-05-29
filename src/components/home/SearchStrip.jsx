@@ -36,7 +36,15 @@ const SEARCH_SHORTCUTS = {
   'about': '/about',
 };
 
-const SearchStrip = ({ initialQuery = '' }) => {
+const SearchStrip = ({ 
+  initialQuery = '', 
+  placeholder = "Ask anything… 'hospital bag for C-section', 'pumps for returning to work'",
+  showLabel = true,
+  showSuggestions = true,
+  isMinimal = false,
+  onChange = null,
+  onSubmit = null
+}) => {
   const [query, setQuery] = useState(initialQuery);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [localSuggestions, setLocalSuggestions] = useState(suggestions);
@@ -60,36 +68,52 @@ const SearchStrip = ({ initialQuery = '' }) => {
   const handleInput = (e) => {
     const val = e.target.value;
     setQuery(val);
+    if (onChange) {
+      onChange(val);
+    }
     
-    // Dynamically add shortcuts to suggestions
-    const normalizedVal = val.toLowerCase().trim();
-    if (normalizedVal.length > 1) {
-      const matchedShortcuts = Object.keys(SEARCH_SHORTCUTS)
-        .filter(key => key.includes(normalizedVal))
-        .map(key => ({
-          text: key.charAt(0).toUpperCase() + key.slice(1),
-          sub: `Go to ${key} page`,
-          type: 'shortcut',
-          route: SEARCH_SHORTCUTS[key]
-        }));
-      
-      setLocalSuggestions([...matchedShortcuts, ...suggestions].slice(0, 5));
-      setIsDropdownOpen(true);
-    } else {
-      setLocalSuggestions(suggestions);
-      setIsDropdownOpen(false);
+    // Only show dynamic suggestions if suggestions are enabled and not minimal
+    if (showSuggestions && !isMinimal) {
+      const normalizedVal = val.toLowerCase().trim();
+      if (normalizedVal.length > 1) {
+        const matchedShortcuts = Object.keys(SEARCH_SHORTCUTS)
+          .filter(key => key.includes(normalizedVal))
+          .map(key => ({
+            text: key.charAt(0).toUpperCase() + key.slice(1),
+            sub: `Go to ${key} page`,
+            type: 'shortcut',
+            route: SEARCH_SHORTCUTS[key]
+          }));
+        
+        setLocalSuggestions([...matchedShortcuts, ...suggestions].slice(0, 5));
+        setIsDropdownOpen(true);
+      } else {
+        setLocalSuggestions(suggestions);
+        setIsDropdownOpen(false);
+      }
     }
   };
 
   const handleChipClick = (text) => {
     setQuery(text);
+    if (onChange) {
+      onChange(text);
+    }
+    if (onSubmit) {
+      onSubmit(text);
+      return;
+    }
     setIsDropdownOpen(true);
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
+    if (onSubmit) {
+      onSubmit(query);
+      return;
+    }
+
     const normalizedQuery = query.toLowerCase().trim();
-    
     if (SEARCH_SHORTCUTS[normalizedQuery]) {
       navigate(SEARCH_SHORTCUTS[normalizedQuery]);
       setIsDropdownOpen(false);
@@ -107,17 +131,25 @@ const SearchStrip = ({ initialQuery = '' }) => {
       navigate(item.route);
     } else {
       setQuery(item.text);
-      // Optional: auto-trigger search on selection
-      navigate(`/category/all?q=${encodeURIComponent(item.text)}`);
+      if (onChange) {
+        onChange(item.text);
+      }
+      if (onSubmit) {
+        onSubmit(item.text);
+      } else {
+        navigate(`/category/all?q=${encodeURIComponent(item.text)}`);
+      }
     }
     setIsDropdownOpen(false);
   };
 
   return (
-    <div className="search-strip" aria-label="AI-powered product search">
-      <span className="search-strip__label">Find exactly what you need</span>
+    <div className={`search-strip ${isMinimal ? 'search-strip--minimal' : ''}`} aria-label="AI-powered product search" style={isMinimal ? { padding: 0, animation: 'none', opacity: 1 } : {}}>
+      {showLabel && !isMinimal && (
+        <span className="search-strip__label">Find exactly what you need</span>
+      )}
 
-      <div className="search-pill-wrap" ref={containerRef}>
+      <div className="search-pill-wrap" ref={containerRef} style={isMinimal ? { maxWidth: '100%' } : {}}>
         <form className="search-pill" role="search" onSubmit={handleSearch}>
           <span className="search-pill__icon" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -129,7 +161,7 @@ const SearchStrip = ({ initialQuery = '' }) => {
             type="search"
             value={query}
             onChange={handleInput}
-            placeholder="Ask anything… 'hospital bag for C-section', 'pumps for returning to work'"
+            placeholder={placeholder}
             autoComplete="off"
             aria-label="Search products"
           />
@@ -147,7 +179,7 @@ const SearchStrip = ({ initialQuery = '' }) => {
           />
         </form>
 
-        {isDropdownOpen && (
+        {showSuggestions && !isMinimal && isDropdownOpen && (
           <div className="search-dropdown is-active" role="listbox" aria-label="Search suggestions">
             {localSuggestions.map((item, i) => (
               <div key={i} className="search-dropdown__item" role="option" onClick={() => handleSuggestionClick(item)}>
@@ -172,25 +204,27 @@ const SearchStrip = ({ initialQuery = '' }) => {
         )}
       </div>
 
-      <div className="search-suggestions" aria-label="Popular searches">
-        {popularChips.map((chip, i) => (
-          <Button 
-            key={i} 
-            variant="secondary"
-            size="sm"
-            className={`suggestion-chip ${chip.accent ? 'suggestion-chip--accent' : ''}`}
-            onClick={() => handleChipClick(chip.text)}
-            icon={chip.accent ? (
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/>
-              </svg>
-            ) : null}
-            iconPosition="left"
-          >
-            {chip.text}
-          </Button>
-        ))}
-      </div>
+      {showSuggestions && !isMinimal && (
+        <div className="search-suggestions" aria-label="Popular searches">
+          {popularChips.map((chip, i) => (
+            <Button 
+              key={i} 
+              variant="secondary"
+              size="sm"
+              className={`suggestion-chip ${chip.accent ? 'suggestion-chip--accent' : ''}`}
+              onClick={() => handleChipClick(chip.text)}
+              icon={chip.accent ? (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/>
+                </svg>
+              ) : null}
+              iconPosition="left"
+            >
+              {chip.text}
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

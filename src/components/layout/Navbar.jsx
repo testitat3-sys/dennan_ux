@@ -93,7 +93,30 @@ const Navbar = () => {
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [navHidden, setNavHidden] = useState(false);
   let timeoutId = null;
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY <= 50) {
+        setNavHidden(false);
+      } else if (currentScrollY > lastScrollY) {
+        // Scrolling down - slowly hide navbar
+        setNavHidden(true);
+      } else {
+        // Scrolling up - show navbar
+        setNavHidden(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const handleAccountClick = () => {
     if (user) {
@@ -170,7 +193,7 @@ const Navbar = () => {
 
   return (
     <>
-    <nav className="nav">
+    <nav className={`nav ${navHidden ? 'nav--hidden' : ''}`}>
       <button 
         className="btn btn--ghost nav__mobile-menu-trigger" 
         onClick={toggleMenu}

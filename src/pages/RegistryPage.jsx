@@ -1,11 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useRegistry } from '../context/RegistryContext';
+import { useCart } from '../context/CartContext';
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import RegistryHeader from '../components/registry/RegistryHeader';
 import RegistryCategoryGroup from '../components/registry/RegistryCategoryGroup';
 import GroupGiftingModal from '../components/registry/GroupGiftingModal';
+import SuggestionProductCard from '../components/registry/SuggestionProductCard';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
 import Toast from '../components/ui/Toast';
@@ -13,89 +15,11 @@ import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import { ShoppingBag, Plus, Trash2, ArrowRight } from 'lucide-react';
 import './RegistryPage.css';
-
-// Local Suggestion Product Card - Consistent with the Shop's Premium Product Card
-const SuggestionProductCard = ({ product, onAddToRegistry }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-
-  const { image, name, price, wasPrice, brand, tags, unitsSold } = product;
-  const id = product.id || product._id;
-
-  if (!imageLoaded && !imageError) {
-    return (
-      <div className="touch-scroll-item" style={{ flex: '0 0 240px', position: 'relative' }}>
-        <ProductCardSkeleton />
-        <img 
-          src={image} 
-          alt="" 
-          onLoad={() => setImageLoaded(true)} 
-          onError={() => setImageError(true)} 
-          style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }} 
-        />
-      </div>
-    );
-  }
-
-  return (
-    <Card 
-      className="touch-scroll-item" 
-      style={{ flex: '0 0 240px' }}
-      variant="default"
-    >
-      <Card.Header>
-        <Link to={`/product/${id}`} className="product-card__image-link" style={{ display: 'block', height: '180px', borderRadius: 'var(--radius-md)', overflow: 'hidden', position: 'relative' }}>
-          <div className="product-card__image" style={{ height: '100%' }}>
-            <img src={image} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <div className="product-card__tags">
-              {unitsSold !== undefined && unitsSold > 0 && (
-                <span className="tag tag--sales">
-                  {unitsSold} sold
-                </span>
-              )}
-              {tags && tags
-                .filter(tag => tag && tag.text && tag.text.toLowerCase() !== 'in stock')
-                .map((tag, i) => (
-                  <span key={i} className={`tag tag--${tag.type}`}>{tag.text}</span>
-                ))
-              }
-            </div>
-          </div>
-        </Link>
-      </Card.Header>
-      
-      <Card.Body>
-        <div>
-          <span className="product-card__tier" style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>{brand || product.brand}</span>
-          <Link to={`/product/${id}`} className="product-card__name-link">
-            <h3 className="product-card__name" style={{ fontSize: '0.95rem', height: '36px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginTop: '2px', lineHeight: '1.2' }}>{name}</h3>
-          </Link>
-          <div className="product-card__price-row" style={{ marginTop: 'var(--space-1)', display: 'flex', gap: 'var(--space-2)' }}>
-            <span className="product-card__price" style={{ fontSize: '0.95rem', fontWeight: '700' }}>UGX {price.toLocaleString()}</span>
-            {wasPrice && <span className="product-card__price-was" style={{ textDecoration: 'line-through', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>UGX {wasPrice.toLocaleString()}</span>}
-          </div>
-        </div>
-      </Card.Body>
-
-      <Card.Actions>
-        <Button 
-          variant="primary"
-          fullWidth
-          onClick={(e) => {
-            e.preventDefault();
-            onAddToRegistry(product);
-          }}
-          icon={<Plus size={16} />}
-        >
-          Add to Registry
-        </Button>
-      </Card.Actions>
-    </Card>
-  );
-};
+import SearchStrip from '../components/home/SearchStrip';
 
 const RegistryPage = () => {
   const navigate = useNavigate();
+  const { setIsCartOpen } = useCart();
   const {
     registryItems,
     registryProfile,
@@ -116,6 +40,25 @@ const RegistryPage = () => {
   const [activeTab, setActiveTab] = useState('registry'); // registry, thank-you
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Dynamic Catalog Search & Suggested Items
+  const displayedSearchProducts = useMemo(() => {
+    const registryProductIds = new Set(registryItems.map(item => item.productId || item.id));
+    const available = dbProducts.filter(p => !registryProductIds.has(p._id || p.id || p.productId));
+
+    if (!searchQuery.trim()) {
+      const stageFilter = convexUser?.stage || 'newborn';
+      const stageProducts = available.filter(p => p.stage === stageFilter);
+      return stageProducts.length > 0 ? stageProducts.slice(0, 4) : available.slice(0, 4);
+    }
+
+    return available.filter(p =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.brand && p.brand.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
+    ).slice(0, 8);
+  }, [dbProducts, searchQuery, registryItems, convexUser]);
 
   // Toast States
   const [showToast, setShowToast] = useState(false);
@@ -175,10 +118,10 @@ const RegistryPage = () => {
   // Overall Master Progress Calculator
   const totalRegistryStats = useMemo(() => {
     if (registryItems.length === 0) return { percent: 0, contributed: 0, total: 0 };
-    
+
     let totalValue = 0;
     let contributedValue = 0;
-    
+
     registryItems.forEach(item => {
       totalValue += item.price;
       if (item.status === 'purchased') {
@@ -187,7 +130,7 @@ const RegistryPage = () => {
         contributedValue += item.contributions.reduce((acc, curr) => acc + curr.amount, 0);
       }
     });
-    
+
     const percent = Math.round((contributedValue / totalValue) * 100) || 0;
     return { percent, contributed: contributedValue, total: totalValue };
   }, [registryItems]);
@@ -481,10 +424,10 @@ const RegistryPage = () => {
               <p className="body-md text-secondary" style={{ lineHeight: '1.6', marginBlock: 'var(--space-4) var(--space-8)' }}>
                 Complete your parenting profile to activate your baby registry. This unlocks personalized, stage-by-stage suggested essentials and safe shipping parameters.
               </p>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 fullWidth
-                onClick={() => navigate('/onboarding')} 
+                onClick={() => navigate('/onboarding')}
               >
                 Finish Onboarding
               </Button>
@@ -501,77 +444,21 @@ const RegistryPage = () => {
       <DashboardSidebar />
 
       {/* Main Registry Canvas */}
-      <main className="dashboard-main registry-page" style={{ padding: 0 }}>
-        <RegistryHeader 
-          profile={registryProfile} 
+      <main className="dashboard-main registry-page">
+        <RegistryHeader
+          profile={registryProfile}
           onShowToast={showHeaderToast}
+          onAddFromCart={() => setIsCartOpen(true)}
+          totalRegistryStats={totalRegistryStats}
+          registryItems={registryItems}
         />
 
-        <div className="registry-content" style={{ paddingInline: 0 }}>
-          <section className="registry-controls-strip">
-            <div className="parent-editorial-controls">
-              <div className="parent-tabs">
-                <Button 
-                  variant={activeTab === 'registry' ? 'primary' : 'ghost'}
-                  className={`tab-btn ${activeTab === 'registry' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('registry')}
-                >
-                  Manage Registry
-                </Button>
-                <Button 
-                  variant={activeTab === 'thank-you' ? 'primary' : 'ghost'}
-                  className={`tab-btn ${activeTab === 'thank-you' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('thank-you')}
-                >
-                  Thank You Tracker
-                </Button>
-              </div>
-              
-              {registryProfile && (
-                <div className="privacy-settings-pill">
-                  <span className="label-md">Privacy:</span>
-                  <select 
-                    className="privacy-select"
-                    value={registryProfile.privacy}
-                    onChange={(e) => {
-                      updatePrivacy(e.target.value);
-                      showHeaderToast(`Registry privacy updated to ${e.target.value}`);
-                    }}
-                  >
-                    <option value="public">Public</option>
-                    <option value="hidden">Hidden</option>
-                    <option value="private">Private</option>
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {/* Overall Progress Tracker Box (UGX-Based Overall Progress Bar) */}
-            {activeTab === 'registry' && registryItems.length > 0 && (
-              <div className="registry-overall-progress" style={{ background: 'var(--surface-container-low)', padding: 'var(--space-5) var(--space-6)', borderRadius: 'var(--radius-xl)', marginTop: 'var(--space-6)', boxShadow: 'var(--shadow-ambient)', border: '1px solid rgba(0,0,0,0.02)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
-                  <div>
-                    <h4 className="title-sm" style={{ fontFamily: 'var(--font-sans)', fontWeight: '700', color: 'var(--text-primary)' }}>Funding Progress</h4>
-                    <p className="body-xs text-secondary" style={{ marginTop: '2px' }}>
-                      UGX {totalRegistryStats.contributed.toLocaleString()} / {totalRegistryStats.total.toLocaleString()}
-                    </p>
-                  </div>
-                  <span className="headline-sm" style={{ color: 'var(--color-brand-primary)', fontFamily: 'var(--font-editorial)', fontSize: 'var(--headline-md)' }}>
-                    {totalRegistryStats.percent}%
-                  </span>
-                </div>
-                <div style={{ width: '100%', height: '8px', background: 'var(--surface-container-high)', borderRadius: 'var(--radius-pill)', overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min(totalRegistryStats.percent, 100)}%`, height: '100%', background: 'var(--color-brand-primary)', borderRadius: 'var(--radius-pill)', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)' }} />
-                </div>
-              </div>
-            )}
-          </section>
-
+        <div className="registry-content">
           {activeTab === 'registry' ? (
             <div className="registry-items-section">
               {categories.length > 0 ? (
                 categories.map(cat => (
-                  <RegistryCategoryGroup 
+                  <RegistryCategoryGroup
                     key={cat}
                     category={cat}
                     items={sortedItems.filter(i => i.category === cat)}
@@ -597,7 +484,7 @@ const RegistryPage = () => {
                   </div>
 
                   {/* Curated Recommendations Lanes */}
-                  <section className="curated-recommendations-section" style={{ paddingBottom: 'var(--space-10)' }}>
+                  <section className="curated-recommendations-section" style={{ backgroundColor: "blue", paddingBottom: 'var(--space-10)' }}>
                     <div className="recommendations-header" style={{ marginBottom: 'var(--space-8)' }}>
                       <h3 className="headline-md" style={{ fontFamily: 'var(--font-editorial)', fontSize: 'var(--headline-lg)', color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>
                         Recommended for Your Journey
@@ -610,11 +497,11 @@ const RegistryPage = () => {
                     <div className="recommended-packs-lanes" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-12)' }}>
                       {activePacks.map(([key, pack]) => (
                         <div key={key} className="recommended-pack-lane">
-                          
+
                           {/* Left Leading Pack Card */}
-                          <Card 
-                            variant="feature" 
-                            className="pack-lead-card" 
+                          <Card
+                            variant="feature"
+                            className="pack-lead-card"
                             style={{ background: pack.color, flex: '0 0 300px' }}
                           >
                             <Card.Header>
@@ -631,8 +518,8 @@ const RegistryPage = () => {
                               </p>
                             </Card.Body>
                             <Card.Actions>
-                              <Button 
-                                variant="primary" 
+                              <Button
+                                variant="primary"
                                 fullWidth
                                 onClick={() => handleAddGroupToRegistry(key, pack)}
                                 icon={<ArrowRight size={16} />}
@@ -646,10 +533,10 @@ const RegistryPage = () => {
                           {/* Right Swipeable Lane Container (Using Consistent Shop Product Card Variant) */}
                           <div className="touch-scroll-row">
                             {pack.items.map((item, idx) => (
-                              <SuggestionProductCard 
-                                key={item.id || idx} 
-                                product={item} 
-                                onAddToRegistry={handleAddToRegistry} 
+                              <SuggestionProductCard
+                                key={item.id || idx}
+                                product={item}
+                                onAddToRegistry={handleAddToRegistry}
                               />
                             ))}
                           </div>
@@ -692,21 +579,61 @@ const RegistryPage = () => {
               </div>
             </div>
           )}
+
+          {/* Persistent Suggested Items Section with dynamic Search Bar */}
+          <section className="registry-discovery-section" style={{ borderTop: '1px dashed var(--surface-container-high)', paddingTop: 'var(--space-16)', paddingBottom: '0' }}>
+            <div className="discovery-header" style={{ marginBottom: 'var(--space-8)' }}>
+              <h3 className="headline-md" style={{ fontFamily: 'var(--font-editorial)', fontSize: 'var(--headline-lg)', color: 'var(--text-primary)' }}>
+                Add Items to Your Registry
+              </h3>
+              <p className="body-md text-secondary" style={{ marginTop: 'var(--space-2)' }}>
+                Search our premium catalog or browse suggested essentials below to build your dream collection.
+              </p>
+
+              {/* Search Bar Input Container */}
+              <div className="registry-search-bar-wrap" style={{ marginTop: 'var(--space-6)', maxWidth: '500px', marginBottom: 'var(--space-8)' }}>
+                <SearchStrip
+                  initialQuery={searchQuery}
+                  placeholder="Search premium stroller, bedside crib, bottles..."
+                  isMinimal={true}
+                  onChange={(val) => setSearchQuery(val)}
+                  onSubmit={(val) => setSearchQuery(val)}
+                />
+              </div>
+            </div>
+
+            {/* Search Results / Curated Suggestions Grid */}
+            <div className="registry-search-results-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-6)' }}>
+              {displayedSearchProducts.length > 0 ? (
+                displayedSearchProducts.map(product => (
+                  <SuggestionProductCard
+                    key={product.id || product._id}
+                    product={product}
+                    onAddToRegistry={handleAddToRegistry}
+                  />
+                ))
+              ) : (
+                <div style={{ gridColumn: '1 / -1', padding: 'var(--space-8) 0', textAlign: 'center', color: 'var(--text-tertiary)', fontFamily: 'var(--font-sans)' }}>
+                  No matching products found. Try searching for "crib", "stroller", or "backpack".
+                </div>
+              )}
+            </div>
+          </section>
         </div>
       </main>
 
-      <GroupGiftingModal 
+      <GroupGiftingModal
         item={selectedItem}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleConfirmContribution}
       />
-      
+
       {/* Floating notifications */}
-      <Toast 
-        isOpen={showToast} 
-        message={toastMessage} 
-        onClose={() => setShowToast(false)} 
+      <Toast
+        isOpen={showToast}
+        message={toastMessage}
+        onClose={() => setShowToast(false)}
       />
     </div>
   );

@@ -37,7 +37,7 @@ const DashboardSidebar = () => {
             className={`dashboard-nav__link ${isActive('/dashboard') ? 'dashboard-nav__link--active' : ''}`}
           >
             <LayoutDashboard className="dashboard-nav__link-icon" />
-            Overview
+            <span className="dashboard-nav__link-text">Overview</span>
           </span>
         </li>
         <li>
@@ -46,7 +46,7 @@ const DashboardSidebar = () => {
             className={`dashboard-nav__link ${isActive('/profile') ? 'dashboard-nav__link--active' : ''}`}
           >
             <User className="dashboard-nav__link-icon" />
-            Profile
+            <span className="dashboard-nav__link-text">Profile</span>
           </span>
         </li>
         <li>
@@ -55,21 +55,19 @@ const DashboardSidebar = () => {
             className={`dashboard-nav__link ${isActive('/registry') ? 'dashboard-nav__link--active' : ''}`}
           >
             <Gift className="dashboard-nav__link-icon" />
-            Registry
+            <span className="dashboard-nav__link-text">Registry</span>
+          </span>
+        </li>
+        <li className="dashboard-nav__logout-item">
+          <span 
+            onClick={handleSignOut} 
+            className="dashboard-nav__link dashboard-nav__link--logout"
+          >
+            <LogOut className="dashboard-nav__link-icon" />
+            <span className="dashboard-nav__link-text">Sign Out</span>
           </span>
         </li>
       </ul>
-      
-      <div className="dashboard-nav__logout">
-        <Button 
-          variant="nav-logout"
-          onClick={handleSignOut}
-          icon={<LogOut className="dashboard-nav__link-icon" />}
-          iconPosition="left"
-        >
-          Sign Out
-        </Button>
-      </div>
     </nav>
   );
 };

@@ -542,6 +542,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease !important;
+  }
+  .nav--hidden {
+    transform: translateY(-100%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
   .nav__wordmark {
     order: 2;

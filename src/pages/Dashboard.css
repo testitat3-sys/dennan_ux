@@ -18,8 +18,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-10);
-  padding-left: var(--layout-inset);
-  padding-right: var(--space-6);
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8) var(--space-6) !important;
+  box-shadow: 0 12px 30px var(--shadow-ambient);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  margin-left: var(--layout-inset);
+  margin-right: var(--space-6);
 }
 
 .dashboard-nav__brand {
@@ -465,9 +470,14 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px dashed var(--surface-container);
-    padding-bottom: var(--space-6);
-    padding-left: var(--layout-inset);
-    padding-right: var(--layout-inset);
+    padding: 0 0 var(--space-6) !important;
+    padding-left: var(--layout-inset) !important;
+    padding-right: var(--layout-inset) !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
   }
 
   .dashboard-nav__list {
@@ -492,7 +502,12 @@
 @media (max-width: 768px) {
   .dashboard-container {
     padding: var(--space-6) 0 !important; /* Let Page handle horizontal padding */
+    padding-bottom: 100px !important; /* Avoid fixed bottom nav overlay */
     gap: 0;
+  }
+
+  .dashboard-main {
+    padding-bottom: 100px !important; /* Avoid fixed bottom nav overlay */
   }
 
   /* Grid handled by CardGrid */
@@ -515,3 +530,116 @@
 
   /* Grid handled by CardGrid */
 }
+
+/* Streamlined Mobile Navigation Sidebar (Horizontal fixed bottom bar, icons only) */
+@media (max-width: 768px) {
+  .dashboard-nav {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    background: var(--surface) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05) !important;
+    padding-top: var(--space-3) !important;
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom)) !important;
+    padding-left: var(--space-4) !important;
+    padding-right: var(--space-4) !important;
+    border-top: 1px solid var(--surface-container-high) !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .dashboard-nav__list {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    list-style: none !important;
+  }
+
+  .dashboard-nav__link-text {
+    display: none !important;
+  }
+
+  .dashboard-nav__link {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: var(--space-2) var(--space-4) !important; /* comfortable touch target */
+    gap: var(--space-1) !important;
+    color: var(--text-secondary) !important;
+  }
+
+  .dashboard-nav__link--active {
+    color: var(--color-brand-primary) !important;
+  }
+
+  .dashboard-nav__link--active::before {
+    display: none !important;
+  }
+
+  .dashboard-nav__logout-item {
+    margin-left: 0 !important;
+  }
+}
+
+/* Sign Out Link styling (Passive grey, destructive red on hover) */
+.dashboard-nav__link--logout {
+  color: var(--text-secondary) !important;
+}
+
+.dashboard-nav__link--logout:hover {
+  color: var(--color-support-red) !important;
+}
+
+/* ─── Premium Desktop Sidebar Redesign (Sticky Grid-Integrated) ─── */
+@media (min-width: 1025px) {
+  .dashboard-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    grid-template-columns: 280px 1fr !important;
+    padding: 0 !important;
+    display: grid !important;
+    position: relative !important;
+  }
+
+  .dashboard-nav {
+    position: sticky !important;
+    top: 80px !important; /* Starts exactly below the sticky main navbar */
+    left: 0 !important;
+    width: 280px !important;
+    height: calc(100vh - 80px) !important; /* Fill screen height below navbar */
+    z-index: 999 !important; /* Below navbar's 1000 z-index */
+    background: var(--surface-container-low) !important; /* Much lighter, premium surface */
+    border-radius: 0 !important;
+    border: none !important;
+    border-right: 1px solid var(--surface-container-high) !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: var(--space-8) var(--space-6) !important; /* Standard padding since top starts below navbar */
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+
+  .dashboard-nav__list {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    gap: var(--space-4) !important;
+  }
+
+  /* Keep Sign Out at the bottom of the screen */
+  .dashboard-nav__logout-item {
+    margin-top: auto !important;
+    padding-top: var(--space-4) !important;
+    border-top: 1px dashed var(--surface-container-high) !important;
+  }
+}
+
