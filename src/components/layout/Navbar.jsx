@@ -88,6 +88,7 @@ const Navbar = () => {
   const { totalWishlistItems } = useWishlist();
   const [activeMenu, setActiveMenu] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const [activeView, setActiveView] = useState('main');
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState([]);
@@ -119,6 +120,7 @@ const Navbar = () => {
     setActiveView('main');
     setMobileSearchQuery('');
     setShowMobileSuggestions(false);
+    setIsSearchActive(false);
   };
 
   const handleMobileSearch = (e) => {
@@ -242,12 +244,13 @@ const Navbar = () => {
       <div className={`mobile-menu ${isMenuOpen ? 'is-open' : ''}`}>
         <div className="mobile-menu__header">
           <button 
-            className="btn btn--nav-icon mobile-menu__account"
-            onClick={() => { handleAccountClick(); setIsMenuOpen(false); }}
-            aria-label="Account"
+            className="btn btn--nav-icon mobile-menu__search-toggle"
+            onClick={() => setIsSearchActive(!isSearchActive)}
+            aria-label="Toggle Search"
+            style={{ color: isSearchActive ? 'var(--color-brand-primary)' : 'inherit' }}
           >
             <span className="btn-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             </span>
           </button>
           <button 
@@ -261,52 +264,58 @@ const Navbar = () => {
           </button>
         </div>
 
-        <div className="mobile-menu__search">
-          <form className="mobile-menu__search-form" onSubmit={handleMobileSearch}>
-            <div className="mobile-menu__search-inner">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mobile-menu__search-icon">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input 
-                type="text" 
-                placeholder="Search products, brands..." 
-                className="mobile-menu__search-input"
-                value={mobileSearchQuery}
-                onChange={(e) => setMobileSearchQuery(e.target.value)}
-                onFocus={() => mobileSearchQuery.length > 1 && setShowMobileSuggestions(true)}
-              />
-              {mobileSearchQuery && (
-                <Button 
-                  variant="ghost"
-                  size="sm"
-                  type="button" 
-                  className="mobile-menu__search-clear"
-                  onClick={() => setMobileSearchQuery('')}
-                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
+        {isSearchActive && (
+          <div className="mobile-menu__search">
+            <form className="mobile-menu__search-form" onSubmit={handleMobileSearch}>
+              <div className="mobile-menu__search-inner">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mobile-menu__search-icon">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input 
+                  type="text" 
+                  placeholder="Search products, brands..." 
+                  className="mobile-menu__search-input"
+                  value={mobileSearchQuery}
+                  onChange={(e) => setMobileSearchQuery(e.target.value)}
+                  onFocus={() => mobileSearchQuery.length > 1 && setShowMobileSuggestions(true)}
+                  autoFocus={true}
                 />
-              )}
-            </div>
-            
-            {showMobileSuggestions && searchSuggestions.length > 0 && (
-              <div className="mobile-menu__suggestions">
-                {searchSuggestions.map((suggestion, index) => (
+                {mobileSearchQuery && (
                   <Button 
-                    key={index} 
                     variant="ghost"
-                    fullWidth
-                    className="mobile-menu__suggestion-item"
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    style={{ textAlign: 'left', justifyContent: 'flex-start' }}
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>}
-                    iconPosition="left"
-                  >
-                    {suggestion}
-                  </Button>
-                ))}
+                    size="sm"
+                    type="button" 
+                    className="mobile-menu__search-clear"
+                    onClick={() => setMobileSearchQuery('')}
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
+                  />
+                )}
               </div>
-            )}
-          </form>
-        </div>
+              
+              {showMobileSuggestions && searchSuggestions.length > 0 && (
+                <>
+                  <div className="mobile-menu__search-backdrop" onClick={() => setShowMobileSuggestions(false)} />
+                  <div className="mobile-menu__suggestions">
+                    {searchSuggestions.map((suggestion, index) => (
+                      <Button 
+                        key={index} 
+                        variant="ghost"
+                        fullWidth
+                        className="mobile-menu__suggestion-item"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        style={{ textAlign: 'left', justifyContent: 'flex-start' }}
+                        icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>}
+                        iconPosition="left"
+                      >
+                        {suggestion}
+                      </Button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </form>
+          </div>
+        )}
 
         <div className="mobile-menu__pane-container" style={{ transform: activeView === 'main' ? 'translateX(0)' : 'translateX(-50%)' }}>
           {/* Main Pane */}
@@ -332,6 +341,26 @@ const Navbar = () => {
                   </Button>
                 </li>
               ))}
+              
+              {/* Profile/Account Option at the bottom */}
+              <li className="mobile-menu__item mobile-menu__item--profile" style={{ marginTop: 'var(--space-2)' }}>
+                <Button 
+                  variant="ghost"
+                  fullWidth
+                  className="mobile-menu__trigger"
+                  onClick={() => { handleAccountClick(); setIsMenuOpen(false); }}
+                  style={{ justifyContent: 'space-between' }}
+                  icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>}
+                  iconPosition="right"
+                >
+                  <span className="mobile-menu__trigger-left">
+                    <svg viewBox="0 0 24 24" fill={user ? "var(--color-brand-primary)" : "none"} stroke="currentColor" strokeWidth="1.8" className="mobile-menu__icon">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    {user ? 'Profile' : 'Sign In'}
+                  </span>
+                </Button>
+              </li>
             </ul>
           </div>
 

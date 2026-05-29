@@ -5,16 +5,18 @@
   min-height: 400px;
   display: flex;
   align-items: center;
-  padding: 0 var(--space-8);
+  padding: var(--space-16) var(--space-8);
   overflow: hidden;
   background: var(--color-anchor);
   /* fallback */
   transition: height 0.3s ease;
+  box-sizing: border-box;
 }
 
 .plp__hero--banner {
-  height: 250px;
+  height: auto;
   min-height: 250px;
+  padding: var(--space-12) var(--space-8);
 }
 
 .plp__hero--banner .plp__hero-title {
@@ -221,9 +223,9 @@
 
 @media (max-width: 640px) {
   .plp__hero {
-    height: 35vh;
+    height: auto;
     min-height: 300px;
-    padding: 0 var(--space-6);
+    padding: var(--space-12) var(--space-6);
   }
 }
 

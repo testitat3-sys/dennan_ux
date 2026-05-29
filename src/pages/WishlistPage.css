@@ -251,6 +251,14 @@
   to { transform: rotate(360deg); }
 }
 
+/* Custom styling for Move to Registry secondary buttons to match primary button layout perfectly */
+.product-card--wishlist .btn--secondary {
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  font-size: var(--label-md);
+  margin-top: 0;
+}
+
 /* Responsive Overrides */
 @media (max-width: 768px) {
   .wishlist-header {

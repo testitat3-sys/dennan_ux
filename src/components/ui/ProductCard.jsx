@@ -162,8 +162,7 @@ const ProductCard = ({
               </Button>
               {onMoveToRegistry && (
                 <Button 
-                  variant="card-add" 
-                  size="sm"
+                  variant="secondary" 
                   fullWidth
                   onClick={(e) => {
                     e.preventDefault();
@@ -197,8 +196,7 @@ const ProductCard = ({
             </Button>
             {wishlistMode && onMoveToRegistry && (
               <Button 
-                variant="card-add" 
-                size="sm"
+                variant="secondary" 
                 fullWidth
                 onClick={(e) => {
                   e.preventDefault();
