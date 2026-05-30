@@ -50,3 +50,17 @@
   letter-spacing: 0.05em;
   box-shadow: 0 4px 12px var(--shadow-ambient);
 }
+
+/* Delete button (trash icon) starts invisible, fades in on hover of card */
+.registry-item-card .product-card__wishlist {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.25s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+  transform: scale(0.9) translateY(-4px);
+}
+
+.registry-item-card:hover .product-card__wishlist {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translateY(0);
+}

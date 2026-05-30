@@ -227,3 +227,26 @@
   gap: var(--space-4);
   width: 100%;
 }
+
+/* Custom Sign Out styling in Profile Header */
+.profile-header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.profile-logout-btn {
+  height: 40px !important;
+  font-size: var(--body-sm) !important;
+  font-weight: 600 !important;
+}
+
+@media (max-width: 768px) {
+  .profile-header-actions {
+    margin-left: 0;
+    margin-top: var(--space-2);
+    width: 100%;
+    justify-content: center;
+  }
+}
+

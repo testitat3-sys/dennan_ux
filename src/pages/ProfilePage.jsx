@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from '../../convex/_generated/api';
 import { useUser } from '../context/UserContext';
 import { Loader2, Calendar, Baby, User, Sparkles, AlertCircle, Plus, Trash2 } from 'lucide-react';
@@ -15,8 +16,21 @@ import './ProfilePage.css';
 export default function ProfilePage() {
   const user = useQuery(api.users.viewer);
   const updateProfileMutation = useMutation(api.users.updateProfile);
-  const { updateProfile } = useUser();
+  const { updateProfile, logout } = useUser();
+  const { signOut } = useAuthActions();
   const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      console.log("[ProfilePage] Initiating sign out...");
+      logout();
+      await signOut();
+    } catch (error) {
+      console.error("Failed to sign out from Convex:", error);
+    } finally {
+      navigate('/');
+    }
+  };
 
   // ── Form and UI States ──────────────────────────────────────────────────────
   const [formInitialized, setFormInitialized] = useState(false);
@@ -315,6 +329,18 @@ export default function ProfilePage() {
               )}
             </div>
           )}
+          
+          <div className="profile-header-actions">
+            <Button 
+              id="profile-header-signout-btn"
+              type="button" 
+              variant="outline-brand" 
+              onClick={handleSignOut}
+              className="profile-logout-btn"
+            >
+              Sign Out
+            </Button>
+          </div>
         </header>
 
         {formError && (

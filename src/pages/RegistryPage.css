@@ -1,3 +1,7 @@
+.mobile-only {
+  display: none;
+}
+
 .registry-page {
   padding-bottom: var(--space-8);
   background: var(--surface);
@@ -185,6 +189,7 @@
   max-width: 800px;
   position: relative;
   z-index: 1;
+  padding: var(--space-6);
 }
 
 /* Pre and Post empty state variations */
@@ -247,13 +252,6 @@
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-size: var(--label-sm);
-}
-
-.pack-lead-card .headline-sm {
-  font-family: var(--font-editorial);
-  font-size: var(--headline-lg);
-  color: var(--text-primary);
-  line-height: 1.2;
 }
 
 /* --- Thank You Note Tracker --- */
@@ -417,9 +415,36 @@
     padding: var(--space-10);
   }
 
-  .starter-kit .headline-md {
-    font-size: var(--headline-lg);
+  .empty-state {
+    padding: var(--space-6) var(--space-4) !important;
   }
+
+  .starter-kit {
+    padding: var(--space-2) !important;
+  }
+
+  .empty-state-card {
+    padding: var(--space-4) !important;
+  }
+
+  .registry-search-results-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--space-3) !important;
+  }
+
+  .mobile-only {
+    display: inline !important;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+.registry-search-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-6);
 }
 
 /* --- Onboarding Gate Layout --- */
@@ -452,11 +477,17 @@
 }
 
 /* Refined Mobile Layout Overrides for Registry Page */
+@media (max-width: 1024px) {
+  .registry-page {
+    padding-bottom: 120px !important;
+    /* Avoid fixed bottom nav overlay */
+  }
+}
+
 @media (max-width: 768px) {
   .registry-page {
     padding-inline: var(--page-padding-x-mobile) !important;
-    padding-bottom: 100px !important;
-    /* Avoid fixed bottom nav overlay */
+    padding-bottom: 120px !important;
   }
 }
 

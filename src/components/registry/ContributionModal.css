@@ -1,0 +1,453 @@
+/* ─── Contribution Modal ─────────────────────────────────────────────────── */
+
+.contribution-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.contribution-overlay.is-open {
+  opacity: 1;
+}
+
+.contribution-modal {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 24px 64px rgba(17, 17, 17, 0.18);
+  overflow-y: auto;
+  max-height: 90vh;
+  transform: translateY(16px) scale(0.98);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+  opacity: 0;
+}
+
+.contribution-overlay.is-open .contribution-modal {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.contribution-inner {
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ─── Modal Header ───────────────────────────────────────────────────────── */
+
+.contribution-modal-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.contribution-eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-brand-primary);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.contribution-headline {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-sm);
+  color: var(--color-anchor);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.contribution-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-container);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
+}
+
+.contribution-close:hover {
+  background: var(--surface-container-high);
+  color: var(--color-anchor);
+}
+
+/* ─── Item Summary ───────────────────────────────────────────────────────── */
+
+.contribution-item-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-6);
+}
+
+.contribution-item-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--surface-container);
+}
+
+.contribution-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  flex: 1;
+  min-width: 0;
+}
+
+.contribution-item-name {
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contribution-item-price {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  color: var(--text-secondary);
+}
+
+/* Mini progress bar for group gifting items */
+.contribution-mini-progress {
+  margin-top: var(--space-2);
+}
+
+.contribution-mini-track {
+  height: 5px;
+  background: var(--surface-container-high);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.contribution-mini-fill {
+  height: 100%;
+  background: var(--color-brand-primary);
+  border-radius: var(--radius-pill);
+  transition: width 0.4s ease;
+}
+
+.contribution-mini-label {
+  font-family: var(--font-sans);
+  font-size: var(--label-sm);
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
+}
+
+/* ─── Anonymous Toggle ───────────────────────────────────────────────────── */
+
+.anon-toggle {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.anon-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--surface-container);
+  border: 1.5px solid var(--surface-container-high);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.anon-pill.is-active {
+  background: rgba(211, 80, 151, 0.08);
+  border-color: var(--color-brand-primary);
+  border-width: 2px;
+  color: var(--color-brand-primary);
+  font-weight: 600;
+}
+
+.anon-pill:hover:not(.is-active) {
+  border-color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
+}
+
+/* ─── Form Fields ────────────────────────────────────────────────────────── */
+
+.contribution-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-5);
+}
+
+.contribution-label {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.contribution-input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1.5px solid var(--surface-container-high);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--body-md);
+  color: var(--text-primary);
+  background: var(--surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.contribution-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.contribution-input:focus {
+  outline: none;
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 0 0 3px rgba(211, 80, 151, 0.1);
+}
+
+.contribution-input:disabled {
+  background: var(--surface-container-low);
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+}
+
+.contribution-input-error {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  color: var(--color-support-red);
+  margin-top: var(--space-1);
+}
+
+/* ─── Payment Section ────────────────────────────────────────────────────── */
+
+.payment-section {
+  border-top: 1px solid var(--surface-container-high);
+  padding-top: var(--space-6);
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.payment-section-title {
+  margin-bottom: var(--space-5) !important;
+}
+
+/* ─── Mobile Money Card Container ─── */
+.momo-payment-card {
+  background-color: var(--surface);
+  border: 1.5px solid var(--color-brand-primary);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-ambient);
+  overflow: hidden;
+}
+
+.momo-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--surface-container-high);
+  background-color: var(--surface-container-low);
+}
+
+.momo-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  flex: 1;
+  min-width: 0;
+}
+
+.option-radio {
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: 50%;
+  border: 2px solid var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.option-radio.checked {
+  border-color: var(--color-brand-primary);
+}
+
+.option-radio.checked .radio-inner {
+  width: var(--space-2-5);
+  height: var(--space-2-5);
+  background-color: var(--color-brand-primary);
+  border-radius: 50%;
+}
+
+.option-name {
+  font-weight: 600 !important;
+}
+
+/* ─── Badges ─── */
+.option-brand-icons {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.brand-badge {
+  font-weight: 600 !important;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  user-select: none;
+}
+
+.brand-badge--mtn {
+  background-color: #ffcc00;
+  color: #000000 !important;
+}
+
+.brand-badge--airtel {
+  background-color: #ff0000;
+  color: #ffffff !important;
+}
+
+/* ─── Phone Inputs ─── */
+.momo-input-wrapper-card {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.momo-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--surface-container-high);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: var(--surface-container-low);
+  transition: all 0.3s ease;
+}
+
+.momo-input-wrapper:focus-within {
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 0 0 3px rgba(211, 80, 151, 0.1);
+  background-color: var(--surface);
+}
+
+.momo-prefix {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--surface-container-high);
+  border-right: 1.5px solid var(--surface-container-high);
+  user-select: none;
+}
+
+.ug-flag {
+  font-size: 1.25rem;
+}
+
+.momo-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+}
+
+.momo-error-text {
+  margin-top: var(--space-1) !important;
+}
+
+.momo-helper-text {
+  margin-top: var(--space-1) !important;
+  line-height: 1.4 !important;
+}
+
+/* ─── CTA ────────────────────────────────────────────────────────────────── */
+
+.contribution-cta {
+  margin-top: var(--space-2);
+}
+
+.contribution-disclaimer {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  color: var(--text-tertiary);
+  text-align: center;
+  margin-top: var(--space-4);
+  line-height: 1.5;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .contribution-inner {
+    padding: var(--space-6);
+  }
+
+  /* Optimize mobile money header structure on mobile */
+  .momo-card-header {
+    display: grid;
+    grid-template-areas:
+      "radio info"
+      ". icons";
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: var(--space-1) var(--space-3);
+  }
+
+  .option-radio {
+    grid-area: radio;
+    margin-top: 4px;
+  }
+
+  .momo-card-info {
+    grid-area: info;
+  }
+
+  .option-brand-icons {
+    grid-area: icons;
+    margin-left: 0;
+    margin-top: var(--space-2);
+  }
+}

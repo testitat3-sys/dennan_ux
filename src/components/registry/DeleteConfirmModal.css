@@ -1,0 +1,48 @@
+/* ─── Delete Confirm Modal ────────────────────────────────────────────────── */
+
+.delete-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.delete-confirm-overlay.is-open {
+  opacity: 1;
+}
+
+.delete-confirm-modal {
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 24px 64px rgba(17, 17, 17, 0.18);
+  overflow: hidden;
+  transform: translateY(16px) scale(0.98);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+  opacity: 0;
+}
+
+.delete-confirm-overlay.is-open .delete-confirm-modal {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.delete-confirm-close:hover {
+  background: var(--surface-container-high) !important;
+  color: var(--color-anchor) !important;
+}
+
+@media (max-width: 480px) {
+  .delete-confirm-card {
+    border-radius: 0;
+  }
+}

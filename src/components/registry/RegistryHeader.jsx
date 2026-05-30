@@ -32,7 +32,7 @@ const RegistryHeader = ({ profile, onShowToast, onAddFromCart, totalRegistryStat
       <div className="registry-header__main">
         <Card.Header>
           <span className="label-md registry-header__eyebrow">Registry</span>
-          <h1>Baby Registry</h1>
+          <h1>{profile?.eventType ? `${profile.eventType} Registry` : 'Baby Registry'}</h1>
         </Card.Header>
         <Card.Actions>
           {onAddFromCart && (
@@ -73,9 +73,12 @@ const RegistryHeader = ({ profile, onShowToast, onAddFromCart, totalRegistryStat
                 style={{ width: `${Math.min(totalRegistryStats.percent, 100)}%` }} 
               />
             </div>
-            <div className="funding-progress-card__value-row">
+            <div className="funding-progress-card__value-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span className="funding-progress-card__value">
-                UGX {totalRegistryStats.contributed.toLocaleString()} / {totalRegistryStats.total.toLocaleString()}
+                UGX {totalRegistryStats.contributed.toLocaleString()} raised of UGX {totalRegistryStats.total.toLocaleString()}
+              </span>
+              <span style={{ fontSize: 'var(--label-md)', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                UGX {(totalRegistryStats.total - totalRegistryStats.contributed).toLocaleString()} left
               </span>
             </div>
           </div>

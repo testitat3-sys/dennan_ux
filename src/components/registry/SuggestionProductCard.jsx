@@ -5,7 +5,7 @@ import Button from '../ui/Button';
 import ProductCardSkeleton from '../ui/ProductCardSkeleton';
 import { Plus } from 'lucide-react';
 
-const SuggestionProductCard = ({ product, onAddToRegistry }) => {
+const SuggestionProductCard = ({ product, onAddToRegistry, isGridItem = false }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -14,7 +14,7 @@ const SuggestionProductCard = ({ product, onAddToRegistry }) => {
 
   if (!imageLoaded && !imageError) {
     return (
-      <div className="touch-scroll-item" style={{ flex: '0 0 240px', position: 'relative' }}>
+      <div className={isGridItem ? "suggestion-grid-item" : "touch-scroll-item"} style={isGridItem ? { position: 'relative', width: '100%' } : { flex: '0 0 240px', position: 'relative' }}>
         <ProductCardSkeleton />
         <img
           src={image}
@@ -29,13 +29,13 @@ const SuggestionProductCard = ({ product, onAddToRegistry }) => {
 
   return (
     <Card
-      className="touch-scroll-item"
-      style={{ flex: '0 0 240px' }}
+      className={isGridItem ? "suggestion-grid-item" : "touch-scroll-item"}
+      style={isGridItem ? { width: '100%' } : { flex: '0 0 240px' }}
       variant="default"
     >
       <Card.Header>
-        <Link to={`/product/${id}`} className="product-card__image-link" style={{ backgroundColor: "red", display: 'block', height: '180px', borderRadius: 'var(--radius-md)', overflow: 'hidden', position: 'relative' }}>
-          <div className="product-card__image" style={{ height: '100%', backgroundColor: 'green' }}>
+        <Link to={`/product/${id}`} className="product-card__image-link" style={{ display: 'block', height: '180px', borderRadius: 'var(--radius-md)', overflow: 'hidden', position: 'relative' }}>
+          <div className="product-card__image" style={{ height: '100%' }}>
             <img src={image} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div className="product-card__tags">
               {unitsSold !== undefined && unitsSold > 0 && (
@@ -77,7 +77,8 @@ const SuggestionProductCard = ({ product, onAddToRegistry }) => {
           }}
           icon={<Plus size={16} />}
         >
-          Add to Registry
+          <span className="desktop-only">Add to Registry</span>
+          <span className="mobile-only">Add</span>
         </Button>
       </Card.Actions>
     </Card>

@@ -2,17 +2,20 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useRegistry } from '../context/RegistryContext';
 import { useCart } from '../context/CartContext';
-import { useConvexAuth, useQuery } from "convex/react";
+import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import RegistryHeader from '../components/registry/RegistryHeader';
 import RegistryCategoryGroup from '../components/registry/RegistryCategoryGroup';
 import GroupGiftingModal from '../components/registry/GroupGiftingModal';
+import AddEventModal from '../components/registry/AddEventModal';
+import DeleteConfirmModal from '../components/registry/DeleteConfirmModal';
 import SuggestionProductCard from '../components/registry/SuggestionProductCard';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
 import Toast from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import Text from '../components/ui/Text';
 import { ShoppingBag, Plus, Trash2, ArrowRight } from 'lucide-react';
 import './RegistryPage.css';
 import SearchStrip from '../components/home/SearchStrip';
@@ -41,6 +44,12 @@ const RegistryPage = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+  // Convex mutation for saving event type
+  const dbSetEventType = useMutation(api.registry.setEventType);
 
   // Dynamic Catalog Search & Suggested Items
   const displayedSearchProducts = useMemo(() => {
@@ -115,6 +124,34 @@ const RegistryPage = () => {
     setShowToast(true);
   };
 
+  const handleInitiateRemove = (itemId) => {
+    const item = registryItems.find(i => i.id === itemId || i.productId === itemId);
+    if (!item) return;
+
+    const totalContributed = (item.contributions || []).reduce((acc, c) => acc + c.amount, 0);
+
+    if (totalContributed > 0) {
+      setItemToDelete({ item, totalContributed });
+      setIsDeleteConfirmOpen(true);
+    } else {
+      removeFromRegistry(item.id || item.productId);
+      setToastMessage(`"${item.name}" removed from your registry.`);
+      setShowToast(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    const { item, totalContributed } = itemToDelete;
+    
+    await removeFromRegistry(item.id || item.productId);
+    setToastMessage(`"${item.name}" removed. UGX ${totalContributed.toLocaleString()} converted to Dennan Store Credit!`);
+    setShowToast(true);
+    
+    setIsDeleteConfirmOpen(false);
+    setItemToDelete(null);
+  };
+
   // Overall Master Progress Calculator
   const totalRegistryStats = useMemo(() => {
     if (registryItems.length === 0) return { percent: 0, contributed: 0, total: 0 };
@@ -186,6 +223,7 @@ const RegistryPage = () => {
     const stage1Products = dbProducts.filter(p => p.stage === 'mother').slice(0, 3);
     const stage2Products = dbProducts.filter(p => p.stage === 'newborn').slice(0, 3);
     const stage3Products = dbProducts.filter(p => p.stage === 'kid').slice(0, 3);
+    const stage4Products = dbProducts.filter(p => p.stage === 'christening').slice(0, 3);
 
     const fallbackMother = [
       {
@@ -295,6 +333,42 @@ const RegistryPage = () => {
       }
     ];
 
+    const fallbackChristening = [
+      {
+        id: "mock-c1",
+        _id: "mock-c1",
+        name: "Heirloom Linen Christening Gown",
+        brand: "Mamas & Papas",
+        price: 250000,
+        image: "https://images.unsplash.com/photo-1515488042361-404e9250afef?w=400&auto=format&fit=crop&q=80",
+        category: "Apparel",
+        stage: "christening",
+        tags: [{ type: "primary", text: "Heirloom Outfit" }]
+      },
+      {
+        id: "mock-c2",
+        _id: "mock-c2",
+        name: "Sterling Silver Keepsake Spoon & Rattle Set",
+        brand: "Tiffany & Co.",
+        price: 450000,
+        image: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&auto=format&fit=crop&q=80",
+        category: "Keepsakes",
+        stage: "christening",
+        tags: [{ type: "primary", text: "Sterling Silver" }]
+      },
+      {
+        id: "mock-c3",
+        _id: "mock-c3",
+        name: "Embroidered Organic Cotton Shawl",
+        brand: "Mamas & Papas",
+        price: 180000,
+        image: "/new_assets/Organic Cotton Starter Set.jfif",
+        category: "Comfort",
+        stage: "christening",
+        tags: [{ type: "primary", text: "100% Organic" }]
+      }
+    ];
+
     return {
       mother: {
         title: "Expectant Mothers",
@@ -316,6 +390,13 @@ const RegistryPage = () => {
         color: "rgba(127, 169, 62, 0.05)", // Muted Support Green
         badge: "Stage 3",
         items: stage3Products.length > 0 ? stage3Products : fallbackToddler
+      },
+      christening: {
+        title: "Christening Celebration",
+        description: "Elegant keepsake gifts, embroidered linen shawls, and heirloom outfits designed for a beautiful, blessed christening ceremony.",
+        color: "rgba(225, 211, 40, 0.05)", // Muted Gold Brand Accent
+        badge: "Special Event",
+        items: stage4Products.length > 0 ? stage4Products : fallbackChristening
       }
     };
   }, [dbProducts]);
@@ -350,12 +431,15 @@ const RegistryPage = () => {
 
   // Stage Personalization Selector
   const userStagePackKey = useMemo(() => {
+    if (registryProfile?.eventType?.toLowerCase() === 'christening') {
+      return 'christening';
+    }
     const stage = convexUser?.stage;
     if (stage === 'mother') return 'mother';
     if (stage === 'newborn') return 'newborn';
     if (stage === 'kid') return 'toddler';
     return 'newborn'; // default fallback
-  }, [convexUser]);
+  }, [convexUser, registryProfile]);
 
   const activePacks = useMemo(() => {
     const key = userStagePackKey;
@@ -456,42 +540,140 @@ const RegistryPage = () => {
         <div className="registry-content">
           {activeTab === 'registry' ? (
             <div className="registry-items-section">
-              {categories.length > 0 ? (
-                categories.map(cat => (
-                  <RegistryCategoryGroup
-                    key={cat}
-                    category={cat}
-                    items={sortedItems.filter(i => i.category === cat)}
-                    viewMode={viewMode}
-                    onBuy={handleBuy}
-                    onContribute={handleContributeClick}
-                    onRemove={removeFromRegistry}
-                  />
-                ))
+              {/* ── Empty state: no event type set yet ───────────────────────── */}
+              {!registryProfile?.eventType && categories.length === 0 ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+                  <Card
+                    hasShadow={true}
+                    hasBorder={true}
+                    className="empty-state-card"
+                    style={{ maxWidth: 480, width: '100%' }}
+                  >
+                    <Card.Header>
+                      <Text
+                        variant="label-md"
+                        color="brand-primary"
+                        style={{ fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 'var(--space-2)' }}
+                      >
+                        Registry
+                      </Text>
+                      <Text
+                        variant="headline-md"
+                        color="primary"
+                        style={{ fontFamily: 'var(--font-editorial)', margin: 0 }}
+                      >
+                        Your registry is empty
+                      </Text>
+                    </Card.Header>
+                    <Card.Body>
+                      <Text variant="body-lg" color="secondary">
+                        Create an event to start building your registry.
+                      </Text>
+                    </Card.Body>
+                    <Card.Actions>
+                      <Button
+                        variant="primary"
+                        icon={<Plus size={16} />}
+                        iconPosition="left"
+                        onClick={() => setIsAddEventOpen(true)}
+                      >
+                        Add an event
+                      </Button>
+                    </Card.Actions>
+                  </Card>
+                </div>
+              ) : categories.length > 0 ? (
+                <>
+                  {categories.map(cat => (
+                    <RegistryCategoryGroup
+                      key={cat}
+                      category={cat}
+                      items={sortedItems.filter(i => i.category === cat)}
+                      viewMode={viewMode}
+                      onBuy={handleBuy}
+                      onContribute={handleContributeClick}
+                      onRemove={handleInitiateRemove}
+                    />
+                  ))}
+
+                  {/* Direct Contributions Log Section */}
+                  {contributionsList.length > 0 && (
+                    <section className="contributions-tracker-section" style={{ borderTop: '1px dashed var(--surface-container-high)', marginTop: 'var(--space-12)', paddingTop: 'var(--space-10)', width: '100%' }}>
+                      <div style={{ marginBottom: 'var(--space-6)' }}>
+                        <Text variant="headline-sm" color="primary" style={{ fontFamily: 'var(--font-editorial)', margin: 0 }}>
+                          Gifts & Contributions Received
+                        </Text>
+                        <Text variant="body-sm" color="secondary" style={{ fontWeight: 300, marginTop: 'var(--space-1)' }}>
+                          A live tracker of contributions and items purchased by your loved ones.
+                        </Text>
+                      </div>
+
+                      <div className="gift-log-table">
+                        <div className="log-header">
+                          <span>Gift Item</span>
+                          <span>Price Contributed</span>
+                          <span>From</span>
+                          <span>Date</span>
+                        </div>
+                        {contributionsList.map(contrib => (
+                          <div key={contrib.id} className="log-row">
+                            <div className="gift-info" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                              <img src={contrib.image} alt="" className="mini-thumb" />
+                              <span className="title-sm">{contrib.itemName}</span>
+                            </div>
+                            <span className="body-sm" style={{ fontWeight: '600', color: 'var(--color-brand-primary)' }}>
+                              UGX {contrib.priceContributed.toLocaleString()}
+                            </span>
+                            <span className="body-sm" style={{ fontWeight: '500' }}>{contrib.from}</span>
+                            <span className="body-sm text-secondary">{formatDate(contrib.date)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                </>
               ) : (
-                // Post-Onboarding Empty State
+                /* ── Event set but no items yet: show curated recommendations */
                 <div className="empty-state-container">
                   <div className="empty-state post-onboarding-empty" style={{ marginBottom: 'var(--space-12)' }}>
-                    <div className="starter-kit" style={{ padding: 'var(--space-6)' }}>
+                    <div className="starter-kit">
                       <span className="label-md text-brand" style={{ color: 'var(--color-brand-primary)', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                         Getting Started
                       </span>
-                      <h3 className="headline-md" style={{ fontFamily: 'var(--font-editorial)', marginTop: 'var(--space-2)' }}>Your Registry is Empty</h3>
-                      <p className="body-md text-secondary" style={{ maxWidth: '480px', marginBlock: 'var(--space-4) 0', lineHeight: '1.5' }}>
+                      <Text
+                        variant="headline-md"
+                        color="primary"
+                        style={{ fontFamily: 'var(--font-editorial)', marginTop: 'var(--space-2)', marginBlock: 0 }}
+                      >
+                        Your Registry is Empty
+                      </Text>
+                      <Text
+                        variant="body-md"
+                        color="secondary"
+                        style={{ maxWidth: '480px', marginBlock: 'var(--space-4) 0', lineHeight: '1.5' }}
+                      >
                         Start your journey by adding curated, high-end essentials designed for your parenting phase below.
-                      </p>
+                      </Text>
                     </div>
                   </div>
 
                   {/* Curated Recommendations Lanes */}
-                  <section className="curated-recommendations-section" style={{ backgroundColor: "blue", paddingBottom: 'var(--space-10)' }}>
+                  <section className="curated-recommendations-section" style={{ paddingBottom: 'var(--space-10)' }}>
                     <div className="recommendations-header" style={{ marginBottom: 'var(--space-8)' }}>
-                      <h3 className="headline-md" style={{ fontFamily: 'var(--font-editorial)', fontSize: 'var(--headline-lg)', color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>
+                      <Text
+                        variant="headline-md"
+                        color="primary"
+                        style={{ fontFamily: 'var(--font-editorial)', marginBottom: 'var(--space-2)', marginTop: 0 }}
+                      >
                         Recommended for Your Journey
-                      </h3>
-                      <p className="body-md text-secondary">
+                      </Text>
+                      <Text
+                        variant="body-md"
+                        color="secondary"
+                        style={{ fontWeight: 300 }}
+                      >
                         Hand-selected essentials from top-tier brands, optimized for your current stage. Click "Add to Registry" to include them.
-                      </p>
+                      </Text>
                     </div>
 
                     <div className="recommended-packs-lanes" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-12)' }}>
@@ -508,9 +690,13 @@ const RegistryPage = () => {
                               <span className="label-xs text-brand">
                                 {pack.badge}
                               </span>
-                              <h4 className="headline-sm" style={{ margin: 0 }}>
+                              <Text
+                                variant="headline-sm"
+                                color="primary"
+                                style={{ fontFamily: 'var(--font-editorial)', margin: 0 }}
+                              >
                                 {pack.title}
-                              </h4>
+                              </Text>
                             </Card.Header>
                             <Card.Body>
                               <p className="body-xs text-secondary">
@@ -530,7 +716,7 @@ const RegistryPage = () => {
                             </Card.Actions>
                           </Card>
 
-                          {/* Right Swipeable Lane Container (Using Consistent Shop Product Card Variant) */}
+                          {/* Right Swipeable Lane */}
                           <div className="touch-scroll-row">
                             {pack.items.map((item, idx) => (
                               <SuggestionProductCard
@@ -583,12 +769,20 @@ const RegistryPage = () => {
           {/* Persistent Suggested Items Section with dynamic Search Bar */}
           <section className="registry-discovery-section" style={{ borderTop: '1px dashed var(--surface-container-high)', paddingTop: 'var(--space-16)', paddingBottom: '0' }}>
             <div className="discovery-header" style={{ marginBottom: 'var(--space-8)' }}>
-              <h3 className="headline-md" style={{ fontFamily: 'var(--font-editorial)', fontSize: 'var(--headline-lg)', color: 'var(--text-primary)' }}>
+              <Text
+                variant="headline-md"
+                color="primary"
+                style={{ fontFamily: 'var(--font-editorial)', margin: 0 }}
+              >
                 Add Items to Your Registry
-              </h3>
-              <p className="body-md text-secondary" style={{ marginTop: 'var(--space-2)' }}>
+              </Text>
+              <Text
+                variant="body-md"
+                color="secondary"
+                style={{ fontWeight: 300, marginTop: 'var(--space-2)' }}
+              >
                 Search our premium catalog or browse suggested essentials below to build your dream collection.
-              </p>
+              </Text>
 
               {/* Search Bar Input Container */}
               <div className="registry-search-bar-wrap" style={{ marginTop: 'var(--space-6)', maxWidth: '500px', marginBottom: 'var(--space-8)' }}>
@@ -603,13 +797,14 @@ const RegistryPage = () => {
             </div>
 
             {/* Search Results / Curated Suggestions Grid */}
-            <div className="registry-search-results-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-6)' }}>
+            <div className="registry-search-results-grid">
               {displayedSearchProducts.length > 0 ? (
                 displayedSearchProducts.map(product => (
                   <SuggestionProductCard
                     key={product.id || product._id}
                     product={product}
                     onAddToRegistry={handleAddToRegistry}
+                    isGridItem={true}
                   />
                 ))
               ) : (
@@ -622,11 +817,32 @@ const RegistryPage = () => {
         </div>
       </main>
 
+      <DeleteConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        item={itemToDelete?.item}
+        totalContributed={itemToDelete?.totalContributed || 0}
+      />
+
       <GroupGiftingModal
         item={selectedItem}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleConfirmContribution}
+      />
+
+      <AddEventModal
+        isOpen={isAddEventOpen}
+        onClose={() => setIsAddEventOpen(false)}
+        onConfirm={async (label) => {
+          try {
+            await dbSetEventType({ eventType: label });
+          } catch (err) {
+            console.error('[RegistryPage] setEventType error:', err);
+          }
+          setIsAddEventOpen(false);
+        }}
       />
 
       {/* Floating notifications */}

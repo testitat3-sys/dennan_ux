@@ -355,6 +355,8 @@ export default defineSchema({
     eventDate: v.string(),
     message: v.string(),
     privacy: v.union(v.literal("public"), v.literal("hidden"), v.literal("private")),
+    /** Frontend-chosen event label, e.g. "Birthday", "Christening", custom string */
+    eventType: v.optional(v.string()),
   }).index("by_user", ["userId"]),
 
   registryItems: defineTable({

@@ -66,6 +66,7 @@ export const get = query({
         eventDate: registry.eventDate,
         message: registry.message,
         privacy: registry.privacy,
+        eventType: registry.eventType ?? null,
       },
       items,
     };
@@ -164,9 +165,53 @@ export const getShared = query({
         eventDate: registry.eventDate,
         message: registry.message,
         privacy: registry.privacy,
+        eventType: registry.eventType ?? null,
       },
       items,
     };
+  },
+});
+
+/**
+ * Save the event type chosen in the Add Event Modal for the authenticated user's registry.
+ * Creates the registry first if it does not exist yet.
+ */
+export const setEventType = mutation({
+  args: {
+    eventType: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+
+    let registry = await ctx.db
+      .query("registries")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+
+    if (!registry) {
+      const user = await ctx.db.get(userId);
+      const defaultDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+
+      const newId = await ctx.db.insert("registries", {
+        userId,
+        ownerName: user?.name ?? "My Registry",
+        eventName: args.eventType + " Registry",
+        eventDate: defaultDate,
+        message: "",
+        privacy: "public",
+        eventType: args.eventType,
+      });
+      return newId;
+    }
+
+    await ctx.db.patch(registry._id, {
+      eventType: args.eventType,
+      eventName: args.eventType + " Registry",
+    });
+    return registry._id;
   },
 });
 

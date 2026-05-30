@@ -1,0 +1,264 @@
+/* ─── Public Registry Page ───────────────────────────────────────────────── */
+
+.public-registry-page {
+  max-width: var(--width-container);
+  margin: 0 auto;
+  padding: var(--page-padding-y) var(--page-padding-x-desktop);
+  min-height: 100vh;
+}
+
+/* ─── Hero Card ──────────────────────────────────────────────────────────── */
+
+.public-registry-hero {
+  margin-bottom: var(--space-12);
+}
+
+.public-registry-hero .card {
+  background: var(--surface-container-low);
+}
+
+.public-registry-owner-label {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-brand-primary);
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.public-registry-title {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-lg);
+  color: var(--color-anchor);
+  margin: 0 0 var(--space-3);
+  line-height: 1.15;
+}
+
+.public-registry-message {
+  font-family: var(--font-sans);
+  font-size: var(--body-lg);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 600px;
+}
+
+/* ─── Funding Progress ───────────────────────────────────────────────────── */
+
+.public-registry-progress {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--surface-container-high);
+}
+
+.public-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.public-progress-label {
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.public-progress-percent {
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 700;
+  color: var(--color-brand-primary);
+}
+
+.public-progress-track {
+  height: 8px;
+  background: var(--surface-container-high);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.public-progress-fill {
+  height: 100%;
+  background: var(--color-brand-primary);
+  border-radius: var(--radius-pill);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.public-progress-amounts {
+  margin-top: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  color: var(--text-tertiary);
+}
+
+/* ─── Section Heading ────────────────────────────────────────────────────── */
+
+.public-registry-section-header {
+  margin-bottom: var(--space-8);
+}
+
+.public-registry-section-title {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-md);
+  color: var(--color-anchor);
+  margin: 0 0 var(--space-2);
+}
+
+.public-registry-section-sub {
+  font-family: var(--font-sans);
+  font-size: var(--body-md);
+  color: var(--text-secondary);
+}
+
+/* ─── Items Grid ─────────────────────────────────────────────────────────── */
+
+.public-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--grid-gap-default);
+}
+
+/* ─── Item Card ──────────────────────────────────────────────────────────── */
+
+.public-item-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.public-item-image-wrap {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--surface-container);
+}
+
+.public-item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.public-item-card:hover .public-item-image {
+  transform: scale(1.04);
+}
+
+.public-item-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.public-item-name {
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.public-item-price {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  color: var(--text-secondary);
+}
+
+.public-item-gifted-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 600;
+  color: var(--color-support-green);
+  background: rgba(127, 169, 62, 0.1);
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-pill);
+  margin-top: var(--space-1);
+}
+
+.public-item-mini-progress {
+  margin-top: var(--space-2);
+}
+
+.public-item-mini-track {
+  height: 5px;
+  background: var(--surface-container-high);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.public-item-mini-fill {
+  height: 100%;
+  background: var(--color-brand-primary);
+  border-radius: var(--radius-pill);
+  transition: width 0.4s ease;
+}
+
+.public-item-mini-label {
+  font-family: var(--font-sans);
+  font-size: var(--label-sm);
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
+}
+
+.public-item-actions {
+  padding: var(--space-4);
+  padding-top: var(--space-3);
+}
+
+/* ─── Empty / Error States ───────────────────────────────────────────────── */
+
+.public-registry-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+/* ─── Skeleton Grid ──────────────────────────────────────────────────────── */
+
+.public-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--grid-gap-default);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .public-registry-page {
+    padding: var(--page-padding-y) var(--page-padding-x-mobile);
+    padding-bottom: var(--space-20);
+  }
+
+  .public-registry-title {
+    font-size: var(--headline-md);
+  }
+
+  .public-items-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--grid-gap-tight);
+  }
+}
+
+/* ─── Clickable Card Hover Styles ────────────────────────────────────────── */
+
+.public-item-card.clickable-card {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+}
+
+.public-item-card.clickable-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-deep);
+}

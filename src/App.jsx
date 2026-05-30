@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
@@ -15,13 +15,31 @@ import DesignSystemPage from './pages/DesignSystemPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import AuthPage from './pages/AuthPage';
 import AfterSignIn from './pages/AfterSignIn';
-import OnboardingPage from './pages/OnboardingPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
 import NotFoundPage from './pages/NotFoundPage';
+import PublicRegistryPage from './pages/PublicRegistryPage';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 
 import ScrollToTop from './utils/ScrollToTop';
+import { useQuery } from 'convex/react';
+import { api } from '../convex/_generated/api';
+import OnboardingModal from './components/ui/OnboardingModal';
+
+// A lightweight route wrapper that brings up the OnboardingModal automatically
+function OnboardingRoute() {
+  const navigate = useNavigate();
+  const convexUser = useQuery(api.users.viewer);
+
+  React.useEffect(() => {
+    if (convexUser && convexUser.isOnboarded) {
+      console.log("[OnboardingRoute] Already onboarded, redirecting to /dashboard");
+      navigate('/dashboard', { replace: true });
+    }
+  }, [convexUser, navigate]);
+
+  return <OnboardingModal isOpen={true} onClose={() => navigate('/')} />;
+}
 
 function App() {
   return (
@@ -32,7 +50,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/after-signin" element={<AfterSignIn />} />
-          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/onboarding" element={<OnboardingRoute />} />
           
           {/* Protected Private Routes */}
           <Route path="/profile" element={
@@ -58,7 +76,7 @@ function App() {
             </ProtectedRoute>
           } />
           
-          <Route path="/registry/:registryId" element={<RegistryPage />} />
+          <Route path="/registry/:registryId" element={<PublicRegistryPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/callback" element={<PaymentCallbackPage />} />
