@@ -69,15 +69,84 @@ const RegistryPage = () => {
     ).slice(0, 8);
   }, [dbProducts, searchQuery, registryItems, convexUser]);
 
-  // Toast States
+  // Toast States & Queue Management
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-
-
+  const [toastQueue, setToastQueue] = useState([]);
+  const [hasCheckedUnseen, setHasCheckedUnseen] = useState(false);
 
   // Loading state checks (handles authentication, user details, and registry collection)
   const onboardingLoading = isAuthenticated && convexUser === undefined;
   const isPageLoading = authLoading || loading || onboardingLoading;
+
+  // Process the toast queue in succession with a smooth transition delay
+  useEffect(() => {
+    if (!showToast && toastQueue.length > 0) {
+      const timer = setTimeout(() => {
+        const nextToast = toastQueue[0];
+        setToastMessage(nextToast);
+        setShowToast(true);
+        setToastQueue(prev => prev.slice(1));
+      }, 600); // 600ms delay gives enough time for the closing animation to fully finish
+      return () => clearTimeout(timer);
+    }
+  }, [showToast, toastQueue]);
+
+  // Live reactive notifications & catch-up for offline contributions
+  useEffect(() => {
+    if (isPageLoading || registryItems.length === 0) return;
+
+    let storedSeen;
+    try {
+      const stored = localStorage.getItem('dennan_seen_contributions');
+      storedSeen = stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      storedSeen = null;
+    }
+
+    const currentIds = contributionsList.map(c => c.id);
+
+    if (storedSeen === null) {
+      // First time tracking: initialize localStorage with current contributions and don't toast them
+      try {
+        localStorage.setItem('dennan_seen_contributions', JSON.stringify(currentIds));
+      } catch (e) {
+        console.error('[RegistryPage] failed to initialize localStorage:', e);
+      }
+      setHasCheckedUnseen(true);
+      return;
+    }
+
+    const seenSet = new Set(storedSeen);
+
+    // Find any new contributions that aren't in the seen list
+    const newContributions = contributionsList.filter(c => !seenSet.has(c.id));
+
+    if (newContributions.length > 0) {
+      // If we haven't done the initial load catch-up yet, we cap at 3 to prevent spam
+      const toProcess = !hasCheckedUnseen 
+        ? newContributions.slice(0, 3) 
+        : newContributions;
+
+      const newToastMessages = toProcess.map(c => {
+        const amountStr = c.priceContributed.toLocaleString();
+        return `🎉 ${c.from} just contributed UGX ${amountStr} towards "${c.itemName}"!`;
+      });
+
+      // Add to the queue
+      setToastQueue(prev => [...prev, ...newToastMessages]);
+
+      // Update localStorage seen IDs with ALL new IDs
+      const updatedSeen = Array.from(new Set([...storedSeen, ...currentIds]));
+      try {
+        localStorage.setItem('dennan_seen_contributions', JSON.stringify(updatedSeen));
+      } catch (e) {
+        console.error('[RegistryPage] failed to update localStorage:', e);
+      }
+    }
+
+    setHasCheckedUnseen(true);
+  }, [contributionsList, isPageLoading, hasCheckedUnseen]);
 
   // Sorting: Must-Haves first (Removed priceFilter)
   const sortedItems = useMemo(() => {
@@ -93,12 +162,20 @@ const RegistryPage = () => {
     return cats;
   }, [sortedItems]);
 
-
-
   const handleBuy = (itemId) => {
     markAsPurchased(itemId);
     const item = registryItems.find(i => i.id === itemId || i.productId === itemId);
     if (item) {
+      // Optimistically mark this purchase as seen in localStorage to prevent double toasting
+      const expectedId = `purchased-${itemId}`;
+      try {
+        const stored = localStorage.getItem('dennan_seen_contributions');
+        const seen = stored ? JSON.parse(stored) : [];
+        if (!seen.includes(expectedId)) {
+          localStorage.setItem('dennan_seen_contributions', JSON.stringify([...seen, expectedId]));
+        }
+      } catch (e) {}
+
       setToastMessage(`"${item.name}" marked as gifted!`);
       setShowToast(true);
     }
@@ -114,6 +191,17 @@ const RegistryPage = () => {
     confirmContribution(itemId, contribution.name, contribution.amount);
     const item = registryItems.find(i => i.id === itemId || i.productId === itemId);
     if (item) {
+      // Optimistically mark this contribution index as seen in localStorage to prevent double toasting
+      const contribIdx = item.contributions?.length || 0;
+      const expectedId = `contrib-${itemId}-${contribIdx}`;
+      try {
+        const stored = localStorage.getItem('dennan_seen_contributions');
+        const seen = stored ? JSON.parse(stored) : [];
+        if (!seen.includes(expectedId)) {
+          localStorage.setItem('dennan_seen_contributions', JSON.stringify([...seen, expectedId]));
+        }
+      } catch (e) {}
+
       setToastMessage(`UGX ${contribution.amount.toLocaleString()} contributed towards "${item.name}"!`);
       setShowToast(true);
     }

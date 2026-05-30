@@ -4,6 +4,7 @@ import { api } from '../../../convex/_generated/api';
 import { X, UserRound, EyeOff } from 'lucide-react';
 import Button from '../ui/Button';
 import Text from '../ui/Text';
+import Toast from '../ui/Toast';
 import './ContributionModal.css';
 
 const MIN_AMOUNT = 5000;
@@ -23,6 +24,10 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
   const [phoneError, setPhoneError] = useState('');
 
   const [loading, setLoading] = useState(false);
+
+  // Toast notifications for failures
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
 
   // Modal animation
   const [isMounted, setIsMounted] = useState(false);
@@ -120,6 +125,8 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
       onClose();
     } catch (err) {
       console.error('[ContributionModal] addContribution error:', err);
+      setToastMsg('Failed to process contribution. Please try again.');
+      setToastOpen(true);
     } finally {
       setLoading(false);
     }
@@ -307,6 +314,13 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
           <p className="contribution-disclaimer">
             Contributions are non-refundable and go directly toward this gift item.
           </p>
+
+          <Toast
+            isOpen={toastOpen}
+            message={toastMsg}
+            variant="danger"
+            onClose={() => setToastOpen(false)}
+          />
 
         </div>
       </div>
