@@ -96,6 +96,7 @@
 .dashboard-main {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 /* Module 1: The Welcome Canvas (Hero Section) */

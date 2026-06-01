@@ -2,13 +2,16 @@ import React from 'react';
 import RegistryItemCard from './RegistryItemCard';
 import './RegistryCategoryGroup.css';
 
-const RegistryCategoryGroup = ({ category, items, viewMode, onBuy, onContribute, onRemove }) => {
+const RegistryCategoryGroup = ({ category, title, items, viewMode, onBuy, onContribute, onRemove }) => {
   if (items.length === 0) return null;
+
+  // Use the explicit title override if provided, otherwise fall back to the category string
+  const displayTitle = title || category;
 
   return (
     <section className="category-group">
       <div className="category-header">
-        <h2 className="headline-md">{category}</h2>
+        <h2 className="headline-md">{displayTitle}</h2>
         <span className="count-badge">{items.length} items</span>
       </div>
       

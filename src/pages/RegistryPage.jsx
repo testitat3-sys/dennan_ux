@@ -619,15 +619,16 @@ const RegistryPage = () => {
 
       {/* Main Registry Canvas */}
       <main className="dashboard-main registry-page">
-        <RegistryHeader
-          profile={registryProfile}
-          onShowToast={showHeaderToast}
-          onAddFromCart={() => setIsCartOpen(true)}
-          totalRegistryStats={totalRegistryStats}
-          registryItems={registryItems}
-        />
+        <div className="registry-page-inner">
+          <RegistryHeader
+            profile={registryProfile}
+            onShowToast={showHeaderToast}
+            onAddFromCart={() => setIsCartOpen(true)}
+            totalRegistryStats={totalRegistryStats}
+            registryItems={registryItems}
+          />
 
-        <div className="registry-content">
+          <div className="registry-content">
           {activeTab === 'registry' ? (
             <div className="registry-items-section">
               {/* ── Empty state: no event type set yet ───────────────────────── */}
@@ -674,17 +675,16 @@ const RegistryPage = () => {
                 </div>
               ) : categories.length > 0 ? (
                 <>
-                  {categories.map(cat => (
-                    <RegistryCategoryGroup
-                      key={cat}
-                      category={cat}
-                      items={sortedItems.filter(i => i.category === cat)}
-                      viewMode={viewMode}
-                      onBuy={handleBuy}
-                      onContribute={handleContributeClick}
-                      onRemove={handleInitiateRemove}
-                    />
-                  ))}
+                  <RegistryCategoryGroup
+                    key="gift-items"
+                    category="Gift Items"
+                    title="Gift Items"
+                    items={sortedItems}
+                    viewMode={viewMode}
+                    onBuy={handleBuy}
+                    onContribute={handleContributeClick}
+                    onRemove={handleInitiateRemove}
+                  />
 
                   {/* Direct Contributions Log Section */}
                   {contributionsList.length > 0 && (
@@ -904,6 +904,7 @@ const RegistryPage = () => {
               )}
             </div>
           </section>
+        </div>
         </div>
       </main>
 
