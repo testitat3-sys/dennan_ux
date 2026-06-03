@@ -16,6 +16,8 @@ import Toast from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Text from '../components/ui/Text';
+import ContributorsModal from '../components/registry/ContributorsModal';
+import PackagingCard from '../components/registry/PackagingCard';
 import { ShoppingBag, Plus, Trash2, ArrowRight } from 'lucide-react';
 import './RegistryPage.css';
 import SearchStrip from '../components/home/SearchStrip';
@@ -43,6 +45,16 @@ const RegistryPage = () => {
   const [activeTab, setActiveTab] = useState('registry'); // registry, thank-you
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isContributorsModalOpen, setIsContributorsModalOpen] = useState(false);
+  const [seenContributorsModal, setSeenContributorsModal] = useState([]);
+  const [selectedPackaging, setSelectedPackaging] = useState(() => {
+    try {
+      const stored = localStorage.getItem('dennan_selected_packaging');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -237,6 +249,82 @@ const RegistryPage = () => {
     // Sort list by date descending (most recent first)
     return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [registryItems]);
+
+  // Load seen contributors modal on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('dennan_seen_contributors_modal');
+      if (stored) {
+        setSeenContributorsModal(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error('[RegistryPage] failed to parse seen contributors modal:', e);
+    }
+  }, []);
+
+  const unseenContributorsCount = useMemo(() => {
+    const seenSet = new Set(seenContributorsModal);
+    return contributionsList.filter(c => !seenSet.has(c.id)).length;
+  }, [contributionsList, seenContributorsModal]);
+
+  const handleOpenContributorsModal = () => {
+    setIsContributorsModalOpen(true);
+  };
+
+  const handleCloseContributorsModal = () => {
+    setIsContributorsModalOpen(false);
+    const currentIds = contributionsList.map(c => c.id);
+    setSeenContributorsModal(currentIds);
+    try {
+      localStorage.setItem('dennan_seen_contributors_modal', JSON.stringify(currentIds));
+    } catch (e) {
+      console.error('[RegistryPage] failed to save seen contributors modal:', e);
+    }
+  };
+
+  const handleSelectPackaging = (size, color) => {
+    const packaging = { size, color };
+    setSelectedPackaging(packaging);
+    try {
+      localStorage.setItem('dennan_selected_packaging', JSON.stringify(packaging));
+    } catch (e) {
+      console.error('[RegistryPage] failed to save packaging:', e);
+    }
+  };
+
+  const itemsCount = registryItems.length;
+  const packagingOptions = useMemo(() => {
+    return [
+      {
+        size: 'S',
+        name: 'Stripe Envelope Wrapper',
+        description: 'Best for apparel and tiny essentials.',
+        price: itemsCount * 5000,
+        patternType: 'stripe'
+      },
+      {
+        size: 'M',
+        name: 'Classic Dotted Box',
+        description: 'Perfect for toys, books, and diapers.',
+        price: itemsCount * 10000,
+        patternType: 'dots'
+      },
+      {
+        size: 'L',
+        name: 'Premium Chevron Gift Box',
+        description: 'Ideal for blankets, gift sets, and multiple packages.',
+        price: itemsCount * 18000,
+        patternType: 'chevron'
+      },
+      {
+        size: 'XL',
+        name: 'Deluxe Grid Hamper',
+        description: 'Designed for strollers, large nursery bundles, and high quantity.',
+        price: itemsCount * 35000,
+        patternType: 'grid'
+      }
+    ];
+  }, [itemsCount]);
 
   // Live reactive notifications & catch-up for offline contributions
   useEffect(() => {
@@ -626,10 +714,12 @@ const RegistryPage = () => {
             onAddFromCart={() => setIsCartOpen(true)}
             totalRegistryStats={totalRegistryStats}
             registryItems={registryItems}
+            hasContributors={contributionsList.length > 0}
+            unseenContributorsCount={unseenContributorsCount}
+            onSeeContributors={handleOpenContributorsModal}
           />
 
           <div className="registry-content">
-          {activeTab === 'registry' ? (
             <div className="registry-items-section">
               {/* ── Empty state: no event type set yet ───────────────────────── */}
               {!registryProfile?.eventType && categories.length === 0 ? (
@@ -686,41 +776,32 @@ const RegistryPage = () => {
                     onRemove={handleInitiateRemove}
                   />
 
-                  {/* Direct Contributions Log Section */}
-                  {contributionsList.length > 0 && (
-                    <section className="contributions-tracker-section" style={{ borderTop: '1px dashed var(--surface-container-high)', marginTop: 'var(--space-12)', paddingTop: 'var(--space-10)', width: '100%' }}>
-                      <div style={{ marginBottom: 'var(--space-6)' }}>
-                        <Text variant="headline-sm" color="primary" style={{ fontFamily: 'var(--font-editorial)', margin: 0 }}>
-                          Gifts & Contributions Received
-                        </Text>
+                  {/* Gift Packaging Section */}
+                  <section className="category-group packaging-section" style={{ borderTop: '1px dashed var(--surface-container-high)', marginTop: 'var(--space-12)', paddingTop: 'var(--space-10)' }}>
+                    <div className="category-header">
+                      <div>
+                        <h2 className="headline-md" style={{ fontFamily: 'var(--font-editorial)', margin: 0 }}>Gift Packaging</h2>
                         <Text variant="body-sm" color="secondary" style={{ fontWeight: 300, marginTop: 'var(--space-1)' }}>
-                          A live tracker of contributions and items purchased by your loved ones.
+                          Choose a premium wrapping theme for the items in your baby registry.
                         </Text>
                       </div>
-
-                      <div className="gift-log-table">
-                        <div className="log-header">
-                          <span>Gift Item</span>
-                          <span>Price Contributed</span>
-                          <span>From</span>
-                          <span>Date</span>
-                        </div>
-                        {contributionsList.map(contrib => (
-                          <div key={contrib.id} className="log-row">
-                            <div className="gift-info" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-                              <img src={contrib.image} alt="" className="mini-thumb" />
-                              <span className="title-sm">{contrib.itemName}</span>
-                            </div>
-                            <span className="body-sm" style={{ fontWeight: '600', color: 'var(--color-brand-primary)' }}>
-                              UGX {contrib.priceContributed.toLocaleString()}
-                            </span>
-                            <span className="body-sm" style={{ fontWeight: '500' }}>{contrib.from}</span>
-                            <span className="body-sm text-secondary">{formatDate(contrib.date)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
+                    </div>
+                    
+                    <div className="items-grid">
+                      {packagingOptions.map(option => (
+                        <PackagingCard
+                          key={option.size}
+                          size={option.size}
+                          name={option.name}
+                          description={option.description}
+                          price={option.price}
+                          patternType={option.patternType}
+                          isSelected={selectedPackaging?.size === option.size}
+                          onSelect={handleSelectPackaging}
+                        />
+                      ))}
+                    </div>
+                  </section>
                 </>
               ) : (
                 /* ── Event set but no items yet: show curated recommendations */
@@ -824,37 +905,6 @@ const RegistryPage = () => {
                 </div>
               )}
             </div>
-          ) : (
-            <div className="thank-you-section">
-              <div className="gift-log-table">
-                <div className="log-header">
-                  <span>Gift Item</span>
-                  <span>Price Contributed</span>
-                  <span>From</span>
-                  <span>Date</span>
-                </div>
-                {contributionsList.length > 0 ? (
-                  contributionsList.map(contrib => (
-                    <div key={contrib.id} className="log-row">
-                      <div className="gift-info" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-                        <img src={contrib.image} alt="" className="mini-thumb" />
-                        <span className="title-sm">{contrib.itemName}</span>
-                      </div>
-                      <span className="body-sm" style={{ fontWeight: '600', color: 'var(--color-brand-primary)' }}>
-                        UGX {contrib.priceContributed.toLocaleString()}
-                      </span>
-                      <span className="body-sm" style={{ fontWeight: '500' }}>{contrib.from}</span>
-                      <span className="body-sm text-secondary">{formatDate(contrib.date)}</span>
-                    </div>
-                  ))
-                ) : (
-                  <div style={{ padding: 'var(--space-12) var(--space-8)', textAlign: 'center', color: 'var(--text-tertiary)', fontFamily: 'var(--font-sans)', fontSize: 'var(--body-md)' }}>
-                    No contributions yet
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Persistent Suggested Items Section with dynamic Search Bar */}
           <section className="registry-discovery-section" style={{ borderTop: '1px dashed var(--surface-container-high)', paddingTop: 'var(--space-16)', paddingBottom: '0' }}>
@@ -914,6 +964,13 @@ const RegistryPage = () => {
         onConfirm={handleConfirmDelete}
         item={itemToDelete?.item}
         totalContributed={itemToDelete?.totalContributed || 0}
+      />
+
+      <ContributorsModal
+        isOpen={isContributorsModalOpen}
+        onClose={handleCloseContributorsModal}
+        contributions={contributionsList}
+        seenContributorsModal={seenContributorsModal}
       />
 
       <GroupGiftingModal

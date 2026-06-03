@@ -1,11 +1,20 @@
 import React from 'react';
-import { Copy } from 'lucide-react';
+import { Copy, Users } from 'lucide-react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Text from '../ui/Text';
 import './RegistryHeader.css';
 
-const RegistryHeader = ({ profile, onShowToast, onAddFromCart, totalRegistryStats, registryItems }) => {
+const RegistryHeader = ({ 
+  profile, 
+  onShowToast, 
+  onAddFromCart, 
+  totalRegistryStats, 
+  registryItems,
+  hasContributors,
+  unseenContributorsCount,
+  onSeeContributors
+}) => {
   const handleCopyLink = () => {
     if (!profile) return;
     const shareUrl = `${window.location.origin}/registry/${profile.id}`;
@@ -81,6 +90,45 @@ const RegistryHeader = ({ profile, onShowToast, onAddFromCart, totalRegistryStat
                 UGX {(totalRegistryStats.total - totalRegistryStats.contributed).toLocaleString()} left
               </span>
             </div>
+            {hasContributors && onSeeContributors && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-2)' }}>
+                <div style={{ position: 'relative', display: 'inline-flex' }}>
+                  <Button 
+                    variant="icon-action" 
+                    onClick={onSeeContributors}
+                    title="See contributors"
+                    style={{
+                      color: 'var(--color-brand-primary)',
+                      background: 'var(--surface-container-high)',
+                    }}
+                    icon={<Users size={18} />}
+                  />
+                  {unseenContributorsCount > 0 && (
+                    <span className="unseen-contributors-count-badge" style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      backgroundColor: 'var(--color-support-red, #e53e3e)',
+                      color: '#fff',
+                      fontSize: '0.65rem',
+                      fontWeight: '700',
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: '1',
+                      border: '2px solid var(--surface-container-low)',
+                      boxSizing: 'content-box',
+                      pointerEvents: 'none'
+                    }}>
+                      {unseenContributorsCount}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
