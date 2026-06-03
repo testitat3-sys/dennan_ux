@@ -134,7 +134,7 @@ export const staticData = {
     confirmation: {
       promos: [
         { id: "profile", title: "Save Profile", desc: "Track your toddler's growth with a personalized dashboard.", action: "Create Account →" },
-        { id: "refer", title: "Refer a Friend", desc: "Send a mom 10,000 UGX off her first order.", action: "Get Referral Link →" }
+        { id: "review", title: "Leave a Review", desc: "Share your experience with other parents and earn 50 loyalty points.", action: "Write a Review →" }
       ]
     },
     tracking: {

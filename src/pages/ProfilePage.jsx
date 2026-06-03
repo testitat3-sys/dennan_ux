@@ -39,6 +39,9 @@ export default function ProfilePage() {
   const [role, setRole] = useState('expecting');
   const [dueDate, setDueDate] = useState('');
   const [children, setChildren] = useState([{ id: Date.now(), dob: '' }]);
+  const [dob, setDob] = useState('');
+  const [gender, setGender] = useState('unspecified');
+  const [preferredContact, setPreferredContact] = useState('email');
 
   // Payment and Delivery States
   const [momoPhone, setMomoPhone] = useState('');
@@ -100,6 +103,15 @@ export default function ProfilePage() {
   minDobDateObj.setFullYear(today.getFullYear() - 12);
   const minDobDate = formatDateString(minDobDateObj);
 
+  // User DOB bounds: min = 120 years ago, max = 13 years ago
+  const minUserDobObj = new Date();
+  minUserDobObj.setFullYear(today.getFullYear() - 120);
+  const minUserDob = formatDateString(minUserDobObj);
+
+  const maxUserDobObj = new Date();
+  maxUserDobObj.setFullYear(today.getFullYear() - 13);
+  const maxUserDob = formatDateString(maxUserDobObj);
+
 
 
   // ── Hydrate Form Data from Convex User ──────────────────────────────────────
@@ -110,12 +122,15 @@ export default function ProfilePage() {
       setRole(user.role || 'expecting');
       setDueDate(user.dueDate || '');
       if (user.children && user.children.length > 0) {
-        setChildren(user.children.map((c, idx) => ({ id: idx, dob: c.dob })));
+        setChildren(user.children.map((c, idx) => ({ id: idx, dob: c.dob, gender: c.gender || 'unspecified' })));
       } else {
-        setChildren([{ id: Date.now(), dob: '' }]);
+        setChildren([{ id: Date.now(), dob: '', gender: 'unspecified' }]);
       }
       setMomoPhone(user.momoPhone || '');
       setDeliveryLocations(user.deliveryLocations || []);
+      setDob(user.dob || '');
+      setGender(user.gender || 'unspecified');
+      setPreferredContact(user.preferredContact || 'email');
       setFormInitialized(true);
     }
   }, [user, formInitialized]);
@@ -136,7 +151,7 @@ export default function ProfilePage() {
   // ── Handlers ────────────────────────────────────────────────────────────────
   const addChild = () => {
     if (children.length < 5) {
-      setChildren([...children, { id: Date.now(), dob: '' }]);
+      setChildren([...children, { id: Date.now(), dob: '', gender: 'unspecified' }]);
     }
   };
 
@@ -144,12 +159,16 @@ export default function ProfilePage() {
     if (children.length > 1) {
       setChildren(children.filter(c => c.id !== id));
     } else {
-      setChildren([{ id: Date.now(), dob: '' }]);
+      setChildren([{ id: Date.now(), dob: '', gender: 'unspecified' }]);
     }
   };
 
   const updateChildDob = (id, dob) => {
     setChildren(children.map(c => c.id === id ? { ...c, dob } : c));
+  };
+
+  const updateChildGender = (id, gender) => {
+    setChildren(children.map(c => c.id === id ? { ...c, gender } : c));
   };
 
   const getInitials = (fullName) => {
@@ -201,6 +220,12 @@ export default function ProfilePage() {
       }
     }
 
+    if (dob.trim()) {
+      if (dob < minUserDob || dob > maxUserDob) {
+        errors.dob = `Must be between 13 and 120 years ago (born between ${new Date(minUserDob).toLocaleDateString(undefined, { dateStyle: 'medium' })} and ${new Date(maxUserDob).toLocaleDateString(undefined, { dateStyle: 'medium' })}).`;
+      }
+    }
+
     if (role === 'expecting') {
       if (!dueDate) {
         errors.dueDate = "Expected due date is required.";
@@ -241,9 +266,12 @@ export default function ProfilePage() {
       const payload = {
         name: name.trim(),
         username: username.trim() || undefined,
+        dob: dob.trim() ? dob : null,
+        gender: gender,
+        preferredContact: preferredContact,
         role,
         dueDate: role === 'expecting' ? dueDate : undefined,
-        children: role === 'parent' ? children.map(c => ({ dob: c.dob })) : undefined,
+        children: role === 'parent' ? children.map(c => ({ dob: c.dob, gender: c.gender || 'unspecified' })) : undefined,
         momoPhone: cleanPhone,
         deliveryLocations,
       };
@@ -255,6 +283,9 @@ export default function ProfilePage() {
       updateProfile({
         name: payload.name,
         username: payload.username,
+        dob: payload.dob,
+        gender: payload.gender,
+        preferredContact: payload.preferredContact,
         role: payload.role,
         dueDate: payload.dueDate,
         children: payload.children,
@@ -277,6 +308,9 @@ export default function ProfilePage() {
     const isUsernameDiff = username.trim() !== (user.username || '');
     const isRoleDiff = role !== (user.role || 'expecting');
     const isMomoDiff = (momoPhone.trim() ? normalizeUGPhone(momoPhone) : '') !== (user.momoPhone || '');
+    const isDobDiff = dob !== (user.dob || '');
+    const isGenderDiff = gender !== (user.gender || 'unspecified');
+    const isPreferredContactDiff = preferredContact !== (user.preferredContact || 'email');
 
     let isLocationsDiff = false;
     const origLocations = user.deliveryLocations || [];
@@ -296,11 +330,11 @@ export default function ProfilePage() {
       if (children.length !== originalChildren.length) {
         isJourneyDiff = true;
       } else {
-        isJourneyDiff = children.some((c, idx) => c.dob !== (originalChildren[idx]?.dob || ''));
+        isJourneyDiff = children.some((c, idx) => c.dob !== (originalChildren[idx]?.dob || '') || (c.gender || 'unspecified') !== (originalChildren[idx]?.gender || 'unspecified'));
       }
     }
 
-    return isNameDiff || isUsernameDiff || isRoleDiff || isJourneyDiff || isMomoDiff || isLocationsDiff;
+    return isNameDiff || isUsernameDiff || isRoleDiff || isJourneyDiff || isMomoDiff || isLocationsDiff || isDobDiff || isGenderDiff || isPreferredContactDiff;
   };
 
   return (
@@ -389,21 +423,79 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Full Name */}
-            <div className="profile-field-group">
-              <label className="profile-field-label">Full Name</label>
-              <div className="profile-field-input-wrap">
-                <input 
-                  type="text" 
-                  value={name} 
-                  onChange={(e) => { setName(e.target.value); setValidationErrors(prev => ({ ...prev, name: null })); }} 
-                  placeholder="Enter your full name"
-                  className="profile-field-input"
-                />
+            <div className="profile-identity-subgrid">
+              {/* Full Name */}
+              <div className="profile-field-group" style={{ margin: 0 }}>
+                <label className="profile-field-label">Full Name</label>
+                <div className="profile-field-input-wrap">
+                  <input 
+                    type="text" 
+                    value={name} 
+                    onChange={(e) => { setName(e.target.value); setValidationErrors(prev => ({ ...prev, name: null })); }} 
+                    placeholder="Enter your full name"
+                    className="profile-field-input"
+                  />
+                </div>
+                {validationErrors.name && (
+                  <span className="profile-validation-error">{validationErrors.name}</span>
+                )}
               </div>
-              {validationErrors.name && (
-                <span className="profile-validation-error">{validationErrors.name}</span>
-              )}
+
+              {/* Date of Birth */}
+              <div className="profile-field-group" style={{ margin: 0 }}>
+                <label className="profile-field-label">Date of Birth</label>
+                <div className="profile-field-input-wrap">
+                  <input 
+                    type="date" 
+                    value={dob} 
+                    min={minUserDob}
+                    max={maxUserDob}
+                    onChange={(e) => { setDob(e.target.value); setValidationErrors(prev => ({ ...prev, dob: null })); }} 
+                    className="profile-field-input"
+                  />
+                </div>
+                {validationErrors.dob ? (
+                  <span className="profile-validation-error">{validationErrors.dob}</span>
+                ) : (
+                  <span className="profile-field-input-disabled-text">Enables birthday offers.</span>
+                )}
+              </div>
+
+              {/* Gender */}
+              <div className="profile-field-group" style={{ margin: 0 }}>
+                <label className="profile-field-label">Gender</label>
+                <div className="profile-field-input-wrap">
+                  <select 
+                    value={gender} 
+                    onChange={(e) => { setGender(e.target.value); setValidationErrors(prev => ({ ...prev, gender: null })); }} 
+                    className="profile-field-input"
+                  >
+                    <option value="unspecified">Select Gender</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="profile-field-two-col">
+              {/* Preferred Communication */}
+              <div className="profile-field-group" style={{ margin: 0 }}>
+                <label className="profile-field-label">Preferred Communication</label>
+                <div className="profile-field-input-wrap">
+                  <select 
+                    value={preferredContact} 
+                    onChange={(e) => setPreferredContact(e.target.value)} 
+                    className="profile-field-input"
+                  >
+                    <option value="email">Email</option>
+                    <option value="sms">SMS</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="push">Push Notification</option>
+                  </select>
+                </div>
+              </div>
+              <div className="profile-field-empty"></div>
             </div>
             </Card.Body>
           </Card>
@@ -470,7 +562,7 @@ export default function ProfilePage() {
                   <div className="profile-children-list">
                     {children.map((child, idx) => (
                       <div key={child.id} className="profile-child-row">
-                        <div className="profile-field-group" style={{ flex: 1 }}>
+                        <div className="profile-field-group" style={{ margin: 0 }}>
                           <label className="profile-field-label" style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
                             Child {idx + 1} Date of Birth
                           </label>
@@ -486,6 +578,22 @@ export default function ProfilePage() {
                             <span className="profile-validation-error">{validationErrors[`child_${idx}`]}</span>
                           )}
                         </div>
+
+                        <div className="profile-field-group" style={{ margin: 0 }}>
+                          <label className="profile-field-label" style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                            Gender
+                          </label>
+                          <select 
+                            value={child.gender || 'unspecified'} 
+                            onChange={(e) => updateChildGender(child.id, e.target.value)} 
+                            className="profile-field-input"
+                          >
+                            <option value="unspecified">Select Gender</option>
+                            <option value="boy">Boy</option>
+                            <option value="girl">Girl</option>
+                          </select>
+                        </div>
+
                         {children.length > 1 && (
                           <Button 
                             variant="remove"

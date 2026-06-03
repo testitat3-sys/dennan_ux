@@ -3,12 +3,14 @@
   padding: var(--space-8) 0 var(--space-4);
   display: flex;
   justify-content: center;
+  align-items: center !important;
   background-color: var(--surface);
 }
 
 .checkout-stepper {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-4);
   max-width: var(--width-modal);
   width: 100%;

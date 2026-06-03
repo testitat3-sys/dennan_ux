@@ -25,7 +25,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   // ── Profile/Journey state ───────────────────────────────────────────────────
   const [role, setRole] = useState(null);       // 'expecting' | 'parent'
   const [dueDate, setDueDate] = useState('');
-  const [children, setChildren] = useState([{ id: Date.now(), dob: '' }]);
+  const [children, setChildren] = useState([{ id: Date.now(), dob: '', gender: 'unspecified' }]);
   const [username, setUsername] = useState('');
 
   // ── Email / auth state ──────────────────────────────────────────────────────
@@ -80,9 +80,9 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         setRole(user.role || null);
         setDueDate(user.dueDate || '');
         if (user.children) {
-          setChildren(user.children.map((c, i) => ({ id: i, dob: c.dob })));
+          setChildren(user.children.map((c, i) => ({ id: i, dob: c.dob, gender: c.gender || 'unspecified' })));
         } else {
-          setChildren([{ id: Date.now(), dob: '' }]);
+          setChildren([{ id: Date.now(), dob: '', gender: 'unspecified' }]);
         }
         setStep(1);
       } else {
@@ -151,7 +151,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
       const payload = {
         role,
         dueDate: role === 'expecting' ? dueDate : undefined,
-        children: role === 'parent' ? children.map(c => ({ dob: c.dob })) : undefined,
+        children: role === 'parent' ? children.map(c => ({ dob: c.dob, gender: c.gender || 'unspecified' })) : undefined,
         username: username.trim() || undefined,
       };
       console.log(`[OnboardingModal] Calling saveOnboardingJourney:`, payload);
@@ -177,12 +177,16 @@ const OnboardingModal = ({ isOpen, onClose }) => {
 
   const addChild = () => {
     if (children.length < 5) {
-      setChildren([...children, { id: Date.now(), dob: '' }]);
+      setChildren([...children, { id: Date.now(), dob: '', gender: 'unspecified' }]);
     }
   };
 
   const updateChildDob = (id, dob) => {
     setChildren(children.map(c => c.id === id ? { ...c, dob } : c));
+  };
+
+  const updateChildGender = (id, gender) => {
+    setChildren(children.map(c => c.id === id ? { ...c, gender } : c));
   };
 
   const isDateStepValid = () => {
@@ -350,15 +354,32 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                       <>
                         {children.map((child, index) => (
                           <div key={child.id} className="date-input-group">
-                            <label className="date-label">Child {index + 1} Birthday</label>
-                            <input
-                              type="date"
-                              className="onboarding-input"
-                              value={child.dob}
-                              min={minDobDate}
-                              max={maxDobDate}
-                              onChange={(e) => updateChildDob(child.id, e.target.value)}
-                            />
+                            <label className="date-label">Child {index + 1} Details</label>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                              <div style={{ flex: 1.6 }}>
+                                <input
+                                  type="date"
+                                  className="onboarding-input"
+                                  value={child.dob}
+                                  min={minDobDate}
+                                  max={maxDobDate}
+                                  onChange={(e) => updateChildDob(child.id, e.target.value)}
+                                  style={{ width: '100%' }}
+                                />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <select
+                                  value={child.gender || 'unspecified'}
+                                  onChange={(e) => updateChildGender(child.id, e.target.value)}
+                                  className="onboarding-input"
+                                  style={{ width: '100%', paddingRight: '20px' }}
+                                >
+                                  <option value="unspecified">Select Gender</option>
+                                  <option value="boy">Boy</option>
+                                  <option value="girl">Girl</option>
+                                </select>
+                              </div>
+                            </div>
                             {child.dob && (child.dob < minDobDate || child.dob > maxDobDate) && (
                               <p className="date-error-msg">
                                 {child.dob > maxDobDate

@@ -577,3 +577,31 @@ export const backfillOriginalPrice = mutation({
     return { success: true, updatedCount };
   }
 });
+
+export const seedNewProducts = mutation({
+  args: {
+    products: v.array(v.any()),
+  },
+  handler: async (ctx, args) => {
+    let insertedCount = 0;
+    let skippedCount = 0;
+
+    for (const product of args.products) {
+      const existing = await ctx.db
+        .query("products")
+        .withIndex("by_slug", (q) => q.eq("slug", product.slug))
+        .first();
+
+      if (existing) {
+        skippedCount++;
+        continue;
+      }
+
+      await ctx.db.insert("products", product);
+      insertedCount++;
+    }
+
+    return { success: true, insertedCount, skippedCount };
+  },
+});
+

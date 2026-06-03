@@ -1,4 +1,4 @@
-import { internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 // Reusable product field validators matching the products schema
@@ -247,3 +247,44 @@ export function normalizeProductPrice(product: any): any {
     wasPrice: undefined,
   };
 }
+
+export const getProductReviews = query({
+  args: { productId: v.id("products") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("productReviews")
+      .withIndex("by_product", (q) => q.eq("productId", args.productId))
+      .collect();
+  },
+});
+
+export const addReview = mutation({
+  args: {
+    productId: v.id("products"),
+    author: v.string(),
+    rating: v.number(),
+    childAge: v.optional(v.string()),
+    text: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (args.rating < 1 || args.rating > 5) {
+      throw new Error("Rating must be between 1 and 5");
+    }
+    if (!args.author.trim()) {
+      throw new Error("Author name is required");
+    }
+    if (!args.text.trim()) {
+      throw new Error("Review text is required");
+    }
+
+    const reviewId = await ctx.db.insert("productReviews", {
+      productId: args.productId,
+      author: args.author.trim(),
+      rating: args.rating,
+      childAge: args.childAge?.trim() || undefined,
+      text: args.text.trim(),
+    });
+
+    return { success: true, reviewId };
+  },
+});

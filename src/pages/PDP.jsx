@@ -42,6 +42,7 @@ const PDP = () => {
 
   // Live fetch from Convex
   const allProducts = useQuery(api.data.getProducts);
+  const reviews = useQuery(api.products.getProductReviews, product && product._id ? { productId: product._id } : 'skip');
 
   useEffect(() => {
     if (allProducts && productId) {
@@ -432,7 +433,7 @@ const PDP = () => {
               className={`pdp__tab ${activeTab === 'reviews' ? 'is-active' : ''}`}
               onClick={() => setActiveTab('reviews')}
             >
-              Reviews ({product.reviews?.length || 0})
+              Reviews ({reviews?.length || 0})
             </Button>
           </div>
 
@@ -465,24 +466,30 @@ const PDP = () => {
 
             {activeTab === 'reviews' && (
               <div className="pdp__reviews">
-                {product.reviews?.map((review, idx) => (
-                  <Card key={idx} variant="default" hasShadow={false} className="review-card">
-                    <Card.Header className="review-header">
-                      <div className="review-rating">
-                        {[...Array(5)].map((_, i) => (
-                          <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill={i < review.rating ? "currentColor" : "none"} stroke="currentColor">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                          </svg>
-                        ))}
-                      </div>
-                      <span className="review-age">Child: {review.childAge}</span>
-                    </Card.Header>
-                    <Card.Body>
-                      <p className="review-text">"{review.text}"</p>
-                      <span className="review-author">— {review.author}</span>
-                    </Card.Body>
-                  </Card>
-                ))}
+                {reviews && reviews.length > 0 ? (
+                  reviews.map((review, idx) => (
+                    <Card key={idx} variant="default" hasShadow={false} className="review-card">
+                      <Card.Header className="review-header">
+                        <div className="review-rating">
+                          {[...Array(5)].map((_, i) => (
+                            <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill={i < review.rating ? "currentColor" : "none"} stroke="currentColor">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
+                          ))}
+                        </div>
+                        {review.childAge && <span className="review-age">Child: {review.childAge}</span>}
+                      </Card.Header>
+                      <Card.Body>
+                        <p className="review-text">"{review.text}"</p>
+                        <span className="review-author">— {review.author}</span>
+                      </Card.Body>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="no-reviews-text" style={{ textAlign: 'center', padding: 'var(--space-10) 0', color: 'var(--text-secondary)' }}>
+                    No reviews yet for this product. Be the first to leave one!
+                  </p>
+                )}
               </div>
             )}
           </div>

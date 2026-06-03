@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useCart } from '../../context/CartContext';
 import { LayoutDashboard, User, Gift, LogOut } from 'lucide-react';
 import Button from '../ui/Button';
 import '../../pages/Dashboard.css';
@@ -11,6 +12,7 @@ const DashboardSidebar = () => {
   const { signOut } = useAuthActions();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isCartOpen } = useCart();
 
   const handleSignOut = async () => {
     try {
@@ -29,7 +31,7 @@ const DashboardSidebar = () => {
   };
 
   return (
-    <nav className="dashboard-nav" aria-label="Dashboard navigation">
+    <nav className={`dashboard-nav ${isCartOpen ? 'dashboard-nav--hidden' : ''}`} aria-label="Dashboard navigation">
       <ul className="dashboard-nav__list">
         <li>
           <span 

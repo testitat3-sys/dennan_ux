@@ -20,9 +20,82 @@ export default defineSchema({
     // Lazy onboarding profile fields
     role: v.optional(v.union(v.literal("expecting"), v.literal("parent"))),
     dueDate: v.optional(v.string()),
-    children: v.optional(v.array(v.object({ dob: v.string() }))),
+    children: v.optional(
+      v.array(
+        v.object({
+          dob: v.string(),
+          gender: v.optional(v.union(v.literal("boy"), v.literal("girl"), v.literal("unspecified"))),
+        })
+      )
+    ),
     momoPhone: v.optional(v.string()),
     deliveryLocations: v.optional(v.array(v.object({ name: v.string(), zone: v.string() }))),
+
+    // ==========================================
+    // NEW PERSONALISATION & AUTOMATION FIELDS
+    // ==========================================
+    phone: v.optional(v.string()),
+    accountStatus: v.optional(
+      v.union(
+        v.literal("active"),
+        v.literal("inactive"),
+        v.literal("suspended"),
+        v.literal("deleted")
+      )
+    ),
+    preferredContact: v.optional(
+      v.union(
+        v.literal("email"),
+        v.literal("sms"),
+        v.literal("whatsapp"),
+        v.literal("push")
+      )
+    ),
+    dob: v.optional(v.string()),
+    gender: v.optional(
+      v.union(
+        v.literal("male"),
+        v.literal("female"),
+        v.literal("unspecified")
+      )
+    ),
+    city: v.optional(v.string()),
+    region: v.optional(v.string()),
+    householdSize: v.optional(v.number()),
+    pricePreference: v.optional(
+      v.union(v.literal("budget"), v.literal("mid-range"), v.literal("premium"))
+    ),
+    preferredCategories: v.optional(v.array(v.string())),
+    preferredBrands: v.optional(v.array(v.id("brands"))),
+    sizePrefs: v.optional(v.string()),
+    colorPrefs: v.optional(v.string()),
+    allergies: v.optional(v.array(v.string())),
+    communicationPrefs: v.optional(
+      v.union(
+        v.literal("all"),
+        v.literal("promotions_only"),
+        v.literal("order_updates_only")
+      )
+    ),
+    loyaltyTier: v.optional(
+      v.union(
+        v.literal("bronze"),
+        v.literal("silver"),
+        v.literal("gold"),
+        v.literal("platinum")
+      )
+    ),
+    loyaltyPoints: v.optional(v.number()),
+    shoppingStyle: v.optional(
+      v.union(
+        v.literal("impulsive"),
+        v.literal("careful_comparer"),
+        v.literal("loyal_repeat")
+      )
+    ),
+    churnRisk: v.optional(v.number()),
+    engagementScore: v.optional(v.number()),
+    recentlyViewed: v.optional(v.array(v.id("products"))), // Capped array of recently viewed product IDs
   }).index("email", ["email"]),
 
   testLinks: defineTable({
@@ -115,6 +188,25 @@ export default defineSchema({
     inventory: v.optional(v.number()),
     unitsSold: v.optional(v.number()),
     actual_data: v.boolean(), // Now strictly required in Phase 3
+
+    // ==========================================
+    // NEW LOGISTICS & REFILL AUTOMATION FIELDS
+    // ==========================================
+    costPrice: v.optional(v.number()),
+    reorderPoint: v.optional(v.number()),
+    allergens: v.optional(v.array(v.string())),
+    usageInstructions: v.optional(v.string()),
+    expiryDate: v.optional(v.string()),
+    shelfLifeDays: v.optional(v.number()),
+    refillPeriodDays: v.optional(v.number()),
+    unitsPerUse: v.optional(v.number()),
+    recommendedFrequency: v.optional(
+      v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly"))
+    ),
+    productType: v.optional(
+      v.union(v.literal("physical"), v.literal("digital"), v.literal("service"))
+    ),
+    refillReminderLeadDays: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_barcode", ["barcode"])
@@ -488,6 +580,94 @@ export default defineSchema({
     sub: v.string(),
     zone: v.string(),
   }),
+
+  // ─── Customer Personalisation & Automation ──────────────────────────────
+
+  subscriptions: defineTable({
+    userId: v.id("users"),
+    productId: v.id("products"),
+    frequency: v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly")),
+    status: v.union(v.literal("active"), v.literal("paused"), v.literal("cancelled")),
+    nextRefillDate: v.number(), // Unix timestamp (ms)
+    reminderTriggered: v.boolean(),
+    lastPurchaseDate: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_nextRefill", ["nextRefillDate", "reminderTriggered"]),
+
+  searchHistory: defineTable({
+    userId: v.id("users"),
+    query: v.string(),
+    timestamp: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_timestamp", ["timestamp"]),
+
+  supportTickets: defineTable({
+    userId: v.id("users"),
+    category: v.string(),
+    status: v.union(v.literal("open"), v.literal("in_progress"), v.literal("resolved")),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  referrals: defineTable({
+    referrerId: v.id("users"),
+    refereeId: v.id("users"),
+    rewardStatus: v.union(v.literal("pending"), v.literal("issued"), v.literal("redeemed")),
+    createdAt: v.number(),
+  }).index("by_referrer", ["referrerId"]),
+
+  npsScores: defineTable({
+    userId: v.id("users"),
+    score: v.number(), // 0 to 10
+    comment: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  surveyResponses: defineTable({
+    userId: v.id("users"),
+    surveyId: v.string(),
+    answers: v.array(v.object({ questionId: v.string(), answer: v.string() })),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  cartAbandoned: defineTable({
+    userId: v.id("users"),
+    cartItems: v.array(
+      v.object({
+        productId: v.id("products"),
+        quantity: v.number(),
+        size: v.optional(v.string()),
+      })
+    ),
+    abandonedAt: v.number(),
+    recovered: v.boolean(),
+  }).index("by_user", ["userId"]),
+
+  loyaltyTransactions: defineTable({
+    userId: v.id("users"),
+    points: v.number(),
+    type: v.union(v.literal("earned"), v.literal("redeemed"), v.literal("adjusted")),
+    description: v.string(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  refunds: defineTable({
+    orderId: v.id("orders"),
+    productId: v.id("products"),
+    reason: v.string(),
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected")),
+    createdAt: v.number(),
+  }).index("by_order", ["orderId"]),
+
+  productRelations: defineTable({
+    productId: v.id("products"),
+    relatedProductId: v.id("products"),
+    type: v.union(v.literal("frequently_bought_together"), v.literal("related_categories")),
+    score: v.number(), // Co-occurrence metric
+  })
+    .index("by_product", ["productId"])
+    .index("by_type_score", ["type", "score"]),
 });
 
 

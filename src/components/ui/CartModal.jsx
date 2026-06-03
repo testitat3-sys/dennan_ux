@@ -52,6 +52,11 @@ const CartModal = () => {
     setIsCartOpen(false);
   };
 
+  const handleContinueShopping = () => {
+    setIsCartOpen(false);
+    navigate('/category/all');
+  };
+
   const handleCheckout = () => {
     setIsCartOpen(false);
     navigate('/checkout');
@@ -100,7 +105,7 @@ const CartModal = () => {
           ) : (
             <div className="cart-empty">
               <p>Your cart is empty.</p>
-              <Button variant="secondary" onClick={handleClose}>Continue Shopping</Button>
+              <Button variant="secondary" onClick={handleContinueShopping}>Continue Shopping</Button>
             </div>
           )}
         </div>

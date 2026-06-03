@@ -79,7 +79,21 @@ export const backfillLegacyProducts = mutation({
         }
       }
 
-      // 5. Save updates to database
+      // 5. Seed default logistics and automation values
+      if (product.costPrice === undefined) {
+        updates.costPrice = product.price * 0.60;
+      }
+      if (product.productType === undefined) {
+        updates.productType = "physical";
+      }
+      if (product.refillReminderLeadDays === undefined) {
+        updates.refillReminderLeadDays = 3;
+      }
+      if (product.reorderPoint === undefined) {
+        updates.reorderPoint = 5;
+      }
+
+      // 6. Save updates to database
       if (Object.keys(updates).length > 0) {
         await ctx.db.patch(product._id, updates);
         updatedCount++;
@@ -88,5 +102,61 @@ export const backfillLegacyProducts = mutation({
 
     console.log(`[migrations.ts] Successfully backfilled ${updatedCount} products.`);
     return { success: true, totalFound: products.length, updatedCount };
+  }
+});
+
+/**
+ * Migration Mutation: Backfills all existing users in the database.
+ * Sets default/placeholder values and copies checkout momoPhone to top-level phone field.
+ */
+export const backfillLegacyUsers = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // 1. Fetch all users
+    const users = await ctx.db.query("users").collect();
+    console.log(`[migrations.ts] Found ${users.length} users to migrate.`);
+
+    let updatedCount = 0;
+
+    for (const user of users) {
+      const updates: any = {};
+
+      // 2. Map checkout-level momoPhone to new general phone field
+      if (user.phone === undefined && user.momoPhone !== undefined) {
+        updates.phone = user.momoPhone;
+      }
+
+      // 3. Set default account status
+      if (user.accountStatus === undefined) {
+        updates.accountStatus = "active";
+      }
+
+      // 4. Set default gender fallback
+      if (user.gender === undefined) {
+        updates.gender = "unspecified";
+      }
+
+      // 5. Set default communication preferences
+      if (user.communicationPrefs === undefined) {
+        updates.communicationPrefs = "all";
+      }
+
+      // 6. Seed starting loyalty tiers & points
+      if (user.loyaltyTier === undefined) {
+        updates.loyaltyTier = "bronze";
+      }
+      if (user.loyaltyPoints === undefined) {
+        updates.loyaltyPoints = 0;
+      }
+
+      // 7. Save updates to database
+      if (Object.keys(updates).length > 0) {
+        await ctx.db.patch(user._id, updates);
+        updatedCount++;
+      }
+    }
+
+    console.log(`[migrations.ts] Successfully backfilled ${updatedCount} users.`);
+    return { success: true, totalFound: users.length, updatedCount };
   }
 });

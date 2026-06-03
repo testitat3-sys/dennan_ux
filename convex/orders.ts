@@ -3,6 +3,7 @@ import { mutation, query, internalQuery, internalMutation } from "./_generated/s
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { validateCouponInternal } from "./coupons";
 import { normalizeProductPrice } from "./products";
+import { internal } from "./_generated/api";
 
 export const placeOrder = mutation({
   args: {
@@ -128,6 +129,46 @@ export const placeOrder = mutation({
     // 7. Clear the user's cart on completion
     for (const item of cartItems) {
       await ctx.db.delete(item._id);
+    }
+
+    // 7.5. Award Loyalty Points and Create Transaction record
+    const earnedPoints = Math.floor(grandTotal / 1000);
+    if (earnedPoints > 0) {
+      const user = await ctx.db.get(userId);
+      if (user) {
+        const currentPoints = user.loyaltyPoints || 0;
+        const newPoints = currentPoints + earnedPoints;
+        
+        // Tier thresholds: bronze (0-99), silver (100-249), gold (250-499), platinum (500+)
+        let loyaltyTier = user.loyaltyTier || "bronze";
+        if (newPoints >= 500) {
+          loyaltyTier = "platinum";
+        } else if (newPoints >= 250) {
+          loyaltyTier = "gold";
+        } else if (newPoints >= 100) {
+          loyaltyTier = "silver";
+        }
+
+        await ctx.db.patch(userId, {
+          loyaltyPoints: newPoints,
+          loyaltyTier,
+        });
+
+        await ctx.db.insert("loyaltyTransactions", {
+          userId,
+          points: earnedPoints,
+          type: "earned",
+          description: `Earned from purchase (Order #${orderId})`,
+          createdAt: Date.now(),
+        });
+      }
+    }
+
+    // 8. Recalculate and update user preferences in background mutation
+    try {
+      await ctx.runMutation(internal.users.recalculateUserBehavioralPreferences, { userId });
+    } catch (err) {
+      console.error("[orders.ts] Failed to recalculate user preferences:", err);
     }
 
     return {
