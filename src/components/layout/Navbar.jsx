@@ -95,6 +95,10 @@ const Navbar = () => {
   const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [navHidden, setNavHidden] = useState(false);
+  const [isDesktopSearchActive, setIsDesktopSearchActive] = useState(false);
+  const [desktopSearchQuery, setDesktopSearchQuery] = useState('');
+  const [showDesktopSuggestions, setShowDesktopSuggestions] = useState(false);
+  const [desktopSuggestions, setDesktopSuggestions] = useState([]);
   let timeoutId = null;
 
   useEffect(() => {
@@ -161,6 +165,21 @@ const Navbar = () => {
     setIsMenuOpen(false);
   };
 
+  const handleDesktopSearchSubmit = (e) => {
+    e.preventDefault();
+    if (desktopSearchQuery.trim()) {
+      navigate(`/category/all?q=${encodeURIComponent(desktopSearchQuery.trim())}`);
+      setIsDesktopSearchActive(false);
+    }
+  };
+
+  const handleDesktopSuggestionClick = (suggestion) => {
+    setDesktopSearchQuery(suggestion);
+    setShowDesktopSuggestions(false);
+    navigate(`/category/all?q=${encodeURIComponent(suggestion)}`);
+    setIsDesktopSearchActive(false);
+  };
+
   useEffect(() => {
     if (mobileSearchQuery.length > 1) {
       const allLinks = navData.flatMap(item => 
@@ -176,6 +195,22 @@ const Navbar = () => {
       setShowMobileSuggestions(false);
     }
   }, [mobileSearchQuery]);
+
+  useEffect(() => {
+    if (desktopSearchQuery.length > 1) {
+      const allLinks = navData.flatMap(item => 
+        item.menu.columns.flatMap(col => col.links.map(l => l.text))
+      );
+      const filtered = [...new Set(allLinks)].filter(text => 
+        text.toLowerCase().includes(desktopSearchQuery.toLowerCase())
+      ).slice(0, 5);
+      setDesktopSuggestions(filtered);
+      setShowDesktopSuggestions(true);
+    } else {
+      setDesktopSuggestions([]);
+      setShowDesktopSuggestions(false);
+    }
+  }, [desktopSearchQuery]);
 
   // Lock background body scroll when mobile drawer is open
   useEffect(() => {
@@ -208,40 +243,110 @@ const Navbar = () => {
         <img src="/dennan_logo_2.svg" alt="Dennan Kids Logo" className="nav__logo" />
       </Link>
 
-      <ul className="nav__links">
-        {navData.map((item) => (
-          <li 
-            key={item.type} 
-            className="nav__link-item"
-            onMouseEnter={() => handleMouseEnter(item.type)}
-            onMouseLeave={handleMouseLeave}
-          >
-            {['mother', 'newborn', 'kid'].includes(item.type) ? (
-              <Link to={`/category/${item.type}`} className="nav__link-trigger">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="nav__link-icon">
-                  {item.icon}
-                </svg>
-                {item.title}
-              </Link>
-            ) : (
-              <div className="nav__link-trigger">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="nav__link-icon">
-                  {item.icon}
-                </svg>
-                {item.title}
-              </div>
+      {isDesktopSearchActive ? (
+        <div className="nav__desktop-search animate-fadeIn">
+          <form className="nav__desktop-search-form" onSubmit={handleDesktopSearchSubmit}>
+            <div className="mobile-menu__search-inner">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mobile-menu__search-icon">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input 
+                type="text" 
+                placeholder="Search products, brands..." 
+                className="mobile-menu__search-input"
+                value={desktopSearchQuery}
+                onChange={(e) => setDesktopSearchQuery(e.target.value)}
+                onFocus={() => desktopSearchQuery.length > 1 && setShowDesktopSuggestions(true)}
+                autoFocus={true}
+              />
+              {desktopSearchQuery && (
+                <Button 
+                  variant="ghost"
+                  size="sm"
+                  type="button" 
+                  className="mobile-menu__search-clear"
+                  onClick={() => setDesktopSearchQuery('')}
+                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
+                />
+              )}
+              <Button 
+                variant="ghost"
+                size="sm"
+                type="button" 
+                className="mobile-menu__search-clear"
+                onClick={() => {
+                  setIsDesktopSearchActive(false);
+                  setDesktopSearchQuery('');
+                }}
+                icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
+              />
+            </div>
+            
+            {showDesktopSuggestions && desktopSuggestions.length > 0 && (
+              <>
+                <div className="mobile-menu__search-backdrop" onClick={() => setShowDesktopSuggestions(false)} style={{ top: '80px' }} />
+                <div className="mobile-menu__suggestions desktop-suggestions">
+                  {desktopSuggestions.map((suggestion, index) => (
+                    <Button 
+                      key={index} 
+                      variant="ghost"
+                      fullWidth
+                      className="mobile-menu__suggestion-item"
+                      onClick={() => handleDesktopSuggestionClick(suggestion)}
+                      style={{ textAlign: 'left', justifyContent: 'flex-start' }}
+                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>}
+                      iconPosition="left"
+                    >
+                      {suggestion}
+                    </Button>
+                  ))}
+                </div>
+              </>
             )}
-            <MegaMenu isOpen={activeMenu === item.type} data={item.menu} categoryType={item.type} />
-          </li>
-        ))}
-      </ul>
+          </form>
+        </div>
+      ) : (
+        <ul className="nav__links">
+          {navData.map((item) => (
+            <li 
+              key={item.type} 
+              className="nav__link-item"
+              onMouseEnter={() => handleMouseEnter(item.type)}
+              onMouseLeave={handleMouseLeave}
+            >
+              {['mother', 'newborn', 'kid'].includes(item.type) ? (
+                <Link to={`/category/${item.type}`} className="nav__link-trigger">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="nav__link-icon">
+                    {item.icon}
+                  </svg>
+                  {item.title}
+                </Link>
+              ) : (
+                <div className="nav__link-trigger">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="nav__link-icon">
+                    {item.icon}
+                  </svg>
+                  {item.title}
+                </div>
+              )}
+              <MegaMenu isOpen={activeMenu === item.type} data={item.menu} categoryType={item.type} />
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="nav__actions">
-        <button className="btn btn--nav-icon nav__action-search" aria-label="Search">
-          <span className="btn-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          </span>
-        </button>
+        {!isDesktopSearchActive && (
+          <button 
+            className="btn btn--nav-icon nav__action-search" 
+            aria-label="Search"
+            onClick={() => setIsDesktopSearchActive(true)}
+          >
+            <span className="btn-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </span>
+          </button>
+        )}
         <button 
           className="btn btn--nav-icon nav__action-account" 
           aria-label="Account"

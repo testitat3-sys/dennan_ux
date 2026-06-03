@@ -251,10 +251,11 @@ export function normalizeProductPrice(product: any): any {
 export const getProductReviews = query({
   args: { productId: v.id("products") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const reviews = await ctx.db
       .query("productReviews")
       .withIndex("by_product", (q) => q.eq("productId", args.productId))
       .collect();
+    return reviews.sort((a, b) => b._creationTime - a._creationTime);
   },
 });
 

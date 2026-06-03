@@ -10,7 +10,7 @@
   box-shadow: 0 1px 0 var(--shadow-ambient);
 }
 .nav__mobile-menu-trigger {
-  display: none;
+  display: none !important;
 }
 .nav__wordmark {
   font-family: var(--font-editorial);
@@ -569,7 +569,7 @@
     display: flex !important;
   }
   .nav__mobile-menu-trigger {
-    display: flex;
+    display: flex !important;
     order: 1;
     width: var(--space-9); height: var(--space-9);
     align-items: center; justify-content: center;
@@ -1078,4 +1078,30 @@
   .heritage-card { transform: none !important; }
   .heritage-section { padding: var(--space-16) var(--space-8); }
 }
+
+/* Desktop Search Layout Styles */
+.nav__desktop-search {
+  flex: 1;
+  max-width: 600px;
+  margin: 0 var(--space-8);
+  position: relative;
+}
+
+.nav__desktop-search-form {
+  width: 100%;
+}
+
+.desktop-suggestions {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px var(--shadow-deep);
+  overflow: hidden;
+  z-index: 1000;
+  animation: slideDownMobile 0.2s ease-out;
+}
+
 
