@@ -3,6 +3,50 @@ import { v } from "convex/values";
 import { auth } from "./auth";
 import { normalizeProductPrice } from "./products";
 
+// --- Gift Packaging Calculation Constants & Helper ---
+const themeMultipliers: Record<string, number> = {
+  stripe: 1.0,
+  dots: 1.1,
+  chevron: 1.2,
+  grid: 1.3
+};
+
+const themeNames: Record<string, string> = {
+  stripe: 'Stripe Envelope Theme',
+  dots: 'Classic Dotted Box Theme',
+  chevron: 'Premium Chevron Gift Box Theme',
+  grid: 'Deluxe Grid Hamper Theme'
+};
+
+const colorNames: Record<string, string> = {
+  pink: 'Muted Pink',
+  blue: 'Support Blue',
+  green: 'Support Green',
+  gold: 'Support Gold',
+  anchor: 'Anchor Grey'
+};
+
+function calculatePackaging(items: any[]) {
+  let S = 0, M = 0, L = 0, XL = 0;
+  for (const item of items) {
+    if (item.productId === "virtual-packaging") continue;
+    const name = (item.name || "").toLowerCase();
+    const category = (item.category || "").toLowerCase();
+    const price = item.price || 0;
+
+    if (price > 500000 || category.includes("travel") || name.includes("stroller") || name.includes("pram") || name.includes("car seat") || name.includes("high chair") || name.includes("cot") || name.includes("crib") || name.includes("hamper") || name.includes("playard")) {
+      XL++;
+    } else if (price > 150000 || category.includes("nursery") || name.includes("set") || name.includes("pack") || name.includes("bag") || name.includes("backpack") || name.includes("nest") || name.includes("lounger") || name.includes("carrier") || name.includes("gym") || name.includes("blender") || name.includes("processor") || name.includes("steriliser") || name.includes("pump") || name.includes("tub") || name.includes("bathtub") || name.includes("seat")) {
+      L++;
+    } else if (price > 30000 || name.includes("blanket") || name.includes("sheet") || name.includes("towel") || name.includes("bottle") || name.includes("warmer") || name.includes("toy") || name.includes("book") || name.includes("cushion") || name.includes("pillow") || name.includes("diaper")) {
+      M++;
+    } else {
+      S++;
+    }
+  }
+  return { S, M, L, XL };
+}
+
 /**
  * Get active user's registry. Creates a default registry if none exists.
  */
@@ -57,17 +101,59 @@ export const get = query({
       }
     }
 
-    // Return profile structure
+    const profile = {
+      id: registry._id,
+      ownerName: registry.ownerName,
+      eventName: registry.eventName,
+      eventDate: registry.eventDate,
+      message: registry.message,
+      privacy: registry.privacy,
+      eventType: registry.eventType ?? null,
+      selectedPackagingPattern: registry.selectedPackagingPattern ?? null,
+      selectedPackagingColor: registry.selectedPackagingColor ?? null,
+      packagingStatus: registry.packagingStatus ?? null,
+      packagingPurchasedBy: registry.packagingPurchasedBy ?? null,
+    };
+
+    if (registry.selectedPackagingPattern && registry.selectedPackagingColor) {
+      const boxes = calculatePackaging(items);
+      const theme = registry.selectedPackagingPattern;
+      const color = registry.selectedPackagingColor;
+      
+      const multiplier = themeMultipliers[theme] || 1.0;
+      const basePrice = (boxes.S * 5000) + (boxes.M * 10000) + (boxes.L * 18000) + (boxes.XL * 35000);
+      const finalPrice = Math.round(basePrice * multiplier);
+      
+      const themeName = themeNames[theme] || 'Custom Gift Wrapper';
+      const colorName = colorNames[color] || color;
+
+      const breakdownParts = [];
+      if (boxes.S > 0) breakdownParts.push(`${boxes.S} S Box${boxes.S > 1 ? 'es' : ''}`);
+      if (boxes.M > 0) breakdownParts.push(`${boxes.M} M Box${boxes.M > 1 ? 'es' : ''}`);
+      if (boxes.L > 0) breakdownParts.push(`${boxes.L} L Wrapper${boxes.L > 1 ? 's' : ''}`);
+      if (boxes.XL > 0) breakdownParts.push(`${boxes.XL} XL Hamper${boxes.XL > 1 ? 's' : ''}`);
+      const breakdownText = breakdownParts.join(', ');
+
+      items.push({
+        id: "virtual-packaging",
+        productId: "virtual-packaging",
+        name: `Gift Packaging: ${themeName} (${colorName})`,
+        price: finalPrice,
+        image: `virtual-packaging-${theme}-${color}`,
+        category: "Gift Packaging",
+        isMustHave: false,
+        isGroupGifting: false,
+        status: registry.packagingStatus || "available",
+        purchasedBy: registry.packagingPurchasedBy,
+        description: `Intelligent packaging bundle. Includes: ${breakdownText}`,
+        patternType: theme,
+        colorCode: color,
+        boxesBreakdown: boxes
+      });
+    }
+
     return {
-      profile: {
-        id: registry._id,
-        ownerName: registry.ownerName,
-        eventName: registry.eventName,
-        eventDate: registry.eventDate,
-        message: registry.message,
-        privacy: registry.privacy,
-        eventType: registry.eventType ?? null,
-      },
+      profile,
       items,
     };
   },
@@ -157,16 +243,59 @@ export const getShared = query({
       }
     }
 
+    const profile = {
+      id: registry._id,
+      ownerName: registry.ownerName,
+      eventName: registry.eventName,
+      eventDate: registry.eventDate,
+      message: registry.message,
+      privacy: registry.privacy,
+      eventType: registry.eventType ?? null,
+      selectedPackagingPattern: registry.selectedPackagingPattern ?? null,
+      selectedPackagingColor: registry.selectedPackagingColor ?? null,
+      packagingStatus: registry.packagingStatus ?? null,
+      packagingPurchasedBy: registry.packagingPurchasedBy ?? null,
+    };
+
+    if (registry.selectedPackagingPattern && registry.selectedPackagingColor) {
+      const boxes = calculatePackaging(items);
+      const theme = registry.selectedPackagingPattern;
+      const color = registry.selectedPackagingColor;
+      
+      const multiplier = themeMultipliers[theme] || 1.0;
+      const basePrice = (boxes.S * 5000) + (boxes.M * 10000) + (boxes.L * 18000) + (boxes.XL * 35000);
+      const finalPrice = Math.round(basePrice * multiplier);
+      
+      const themeName = themeNames[theme] || 'Custom Gift Wrapper';
+      const colorName = colorNames[color] || color;
+
+      const breakdownParts = [];
+      if (boxes.S > 0) breakdownParts.push(`${boxes.S} S Box${boxes.S > 1 ? 'es' : ''}`);
+      if (boxes.M > 0) breakdownParts.push(`${boxes.M} M Box${boxes.M > 1 ? 'es' : ''}`);
+      if (boxes.L > 0) breakdownParts.push(`${boxes.L} L Wrapper${boxes.L > 1 ? 's' : ''}`);
+      if (boxes.XL > 0) breakdownParts.push(`${boxes.XL} XL Hamper${boxes.XL > 1 ? 's' : ''}`);
+      const breakdownText = breakdownParts.join(', ');
+
+      items.push({
+        id: "virtual-packaging",
+        productId: "virtual-packaging",
+        name: `Gift Packaging: ${themeName} (${colorName})`,
+        price: finalPrice,
+        image: `virtual-packaging-${theme}-${color}`,
+        category: "Gift Packaging",
+        isMustHave: false,
+        isGroupGifting: false,
+        status: registry.packagingStatus || "available",
+        purchasedBy: registry.packagingPurchasedBy,
+        description: `Intelligent packaging bundle. Includes: ${breakdownText}`,
+        patternType: theme,
+        colorCode: color,
+        boxesBreakdown: boxes
+      });
+    }
+
     return {
-      profile: {
-        id: registry._id,
-        ownerName: registry.ownerName,
-        eventName: registry.eventName,
-        eventDate: registry.eventDate,
-        message: registry.message,
-        privacy: registry.privacy,
-        eventType: registry.eventType ?? null,
-      },
+      profile,
       items,
     };
   },
@@ -411,15 +540,27 @@ export const toggleMustHave = mutation({
 export const addContribution = mutation({
   args: {
     registryId: v.id("registries"),
-    productId: v.id("products"),
+    productId: v.string(), // Changed to string to support "virtual-packaging"
     contributorName: v.string(),
     amount: v.number(),
   },
   handler: async (ctx, args) => {
+    if (args.productId === "virtual-packaging") {
+      await ctx.db.patch(args.registryId, {
+        packagingStatus: "purchased",
+        packagingPurchasedBy: {
+          name: args.contributorName,
+          date: new Date().toISOString(),
+        }
+      });
+      return { success: true, totalContributed: args.amount, status: "purchased" };
+    }
+
+    const prodId = args.productId as any;
     const registryItem = await ctx.db
       .query("registryItems")
       .withIndex("by_registry_and_product", (q) =>
-        q.eq("registryId", args.registryId).eq("productId", args.productId)
+        q.eq("registryId", args.registryId).eq("productId", prodId)
       )
       .first();
 
@@ -427,7 +568,7 @@ export const addContribution = mutation({
       throw new Error("Registry item not found");
     }
 
-    const rawProduct = await ctx.db.get(args.productId);
+    const rawProduct = await ctx.db.get(prodId);
     if (!rawProduct) {
       throw new Error("Product not found");
     }
@@ -484,6 +625,60 @@ export const markPurchased = mutation({
       },
     });
 
+    return { success: true };
+  },
+});
+
+/**
+ * Update selected packaging theme and color for the registry.
+ */
+export const updatePackaging = mutation({
+  args: {
+    registryId: v.id("registries"),
+    pattern: v.string(),
+    color: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+
+    const registry = await ctx.db.get(args.registryId);
+    if (!registry || registry.userId !== userId) {
+      throw new Error("Unauthorized or registry not found");
+    }
+
+    await ctx.db.patch(args.registryId, {
+      selectedPackagingPattern: args.pattern,
+      selectedPackagingColor: args.color,
+      packagingStatus: "available",
+      packagingPurchasedBy: undefined, // reset purchased status on new selection
+    });
+    return { success: true };
+  },
+});
+
+/**
+ * Remove selected packaging from the registry.
+ */
+export const removePackaging = mutation({
+  args: {
+    registryId: v.id("registries"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+
+    const registry = await ctx.db.get(args.registryId);
+    if (!registry || registry.userId !== userId) {
+      throw new Error("Unauthorized or registry not found");
+    }
+
+    await ctx.db.patch(args.registryId, {
+      selectedPackagingPattern: undefined,
+      selectedPackagingColor: undefined,
+      packagingStatus: undefined,
+      packagingPurchasedBy: undefined,
+    });
     return { success: true };
   },
 });

@@ -87,6 +87,8 @@ export const RegistryProvider = ({ children }) => {
   const dbUpdateProfile = useMutation(api.registry.updateProfile);
   const dbAddContribution = useMutation(api.registry.addContribution);
   const dbMarkPurchased = useMutation(api.registry.markPurchased);
+  const dbUpdatePackaging = useMutation(api.registry.updatePackaging);
+  const dbRemovePackaging = useMutation(api.registry.removePackaging);
 
   // Auto-create database registry if missing for authenticated user
   useEffect(() => {
@@ -102,13 +104,92 @@ export const RegistryProvider = ({ children }) => {
     }
   }, [isAuthenticated, dbRegistry, dbEnsureRegistry]);
 
+  // Helper to calculate packaging for local/guest preview
+  const calculatePackaging = (itemsList) => {
+    let S = 0, M = 0, L = 0, XL = 0;
+    for (const item of itemsList) {
+      if (item.productId === "virtual-packaging") continue;
+      const name = (item.name || "").toLowerCase();
+      const category = (item.category || "").toLowerCase();
+      const price = item.price || 0;
+
+      if (price > 500000 || category.includes("travel") || name.includes("stroller") || name.includes("pram") || name.includes("car seat") || name.includes("high chair") || name.includes("cot") || name.includes("crib") || name.includes("hamper") || name.includes("playard")) {
+        XL++;
+      } else if (price > 150000 || category.includes("nursery") || name.includes("set") || name.includes("pack") || name.includes("bag") || name.includes("backpack") || name.includes("nest") || name.includes("lounger") || name.includes("carrier") || name.includes("gym") || name.includes("blender") || name.includes("processor") || name.includes("steriliser") || name.includes("pump") || name.includes("tub") || name.includes("bathtub") || name.includes("seat")) {
+        L++;
+      } else if (price > 30000 || name.includes("blanket") || name.includes("sheet") || name.includes("towel") || name.includes("bottle") || name.includes("warmer") || name.includes("toy") || name.includes("book") || name.includes("cushion") || name.includes("pillow") || name.includes("diaper")) {
+        M++;
+      } else {
+        S++;
+      }
+    }
+    return { S, M, L, XL };
+  };
+
   // Unified registry data
   const registryItems = useMemo(() => {
-    if (isAuthenticated) {
-      return dbRegistry?.items || [];
+    let items = isAuthenticated ? (dbRegistry?.items || []) : guestItems;
+    
+    // For guest mode, if they have selected packaging and it hasn't been injected yet:
+    if (!isAuthenticated && guestProfile?.selectedPackagingPattern && guestProfile?.selectedPackagingColor) {
+      const boxes = calculatePackaging(items);
+      const theme = guestProfile.selectedPackagingPattern;
+      const color = guestProfile.selectedPackagingColor;
+      
+      const multiplier = {
+        stripe: 1.0,
+        dots: 1.1,
+        chevron: 1.2,
+        grid: 1.3
+      }[theme] || 1.0;
+      const basePrice = (boxes.S * 5000) + (boxes.M * 10000) + (boxes.L * 18000) + (boxes.XL * 35000);
+      const finalPrice = Math.round(basePrice * multiplier);
+      
+      const themeName = {
+        stripe: 'Stripe Envelope Theme',
+        dots: 'Classic Dotted Box Theme',
+        chevron: 'Premium Chevron Gift Box Theme',
+        grid: 'Deluxe Grid Hamper Theme'
+      }[theme] || 'Custom Gift Wrapper';
+
+      const colorName = {
+        pink: 'Muted Pink',
+        blue: 'Support Blue',
+        green: 'Support Green',
+        gold: 'Support Gold',
+        anchor: 'Anchor Grey'
+      }[color] || color;
+
+      const breakdownParts = [];
+      if (boxes.S > 0) breakdownParts.push(`${boxes.S} S Box${boxes.S > 1 ? 'es' : ''}`);
+      if (boxes.M > 0) breakdownParts.push(`${boxes.M} M Box${boxes.M > 1 ? 'es' : ''}`);
+      if (boxes.L > 0) breakdownParts.push(`${boxes.L} L Wrapper${boxes.L > 1 ? 's' : ''}`);
+      if (boxes.XL > 0) breakdownParts.push(`${boxes.XL} XL Hamper${boxes.XL > 1 ? 's' : ''}`);
+      const breakdownText = breakdownParts.join(', ');
+
+      const exists = items.some(i => i.productId === 'virtual-packaging');
+      if (!exists) {
+        items = [...items, {
+          id: "virtual-packaging",
+          productId: "virtual-packaging",
+          name: `Gift Packaging: ${themeName} (${colorName})`,
+          price: finalPrice,
+          image: `virtual-packaging-${theme}-${color}`,
+          category: "Gift Packaging",
+          isMustHave: false,
+          isGroupGifting: false,
+          status: guestProfile.packagingStatus || "available",
+          purchasedBy: guestProfile.packagingPurchasedBy,
+          description: `Intelligent packaging bundle. Includes: ${breakdownText}`,
+          patternType: theme,
+          colorCode: color,
+          boxesBreakdown: boxes
+        }];
+      }
     }
-    return guestItems;
-  }, [isAuthenticated, dbRegistry, guestItems]);
+    
+    return items;
+  }, [isAuthenticated, dbRegistry, guestItems, guestProfile]);
 
   const registryProfile = useMemo(() => {
     if (isAuthenticated) {
@@ -169,7 +250,54 @@ export const RegistryProvider = ({ children }) => {
     }
   };
 
+  const updatePackaging = async (pattern, color) => {
+    if (isAuthenticated && registryProfile) {
+      try {
+        await dbUpdatePackaging({
+          registryId: registryProfile.id,
+          pattern,
+          color
+        });
+      } catch (error) {
+        console.error("Failed to update packaging in database:", error);
+      }
+    } else if (guestProfile) {
+      setGuestProfile(prev => ({
+        ...prev,
+        selectedPackagingPattern: pattern,
+        selectedPackagingColor: color,
+        packagingStatus: 'available',
+        packagingPurchasedBy: undefined
+      }));
+    }
+  };
+
+  const removePackaging = async () => {
+    if (isAuthenticated && registryProfile) {
+      try {
+        await dbRemovePackaging({
+          registryId: registryProfile.id
+        });
+      } catch (error) {
+        console.error("Failed to remove packaging from database:", error);
+      }
+    } else if (guestProfile) {
+      setGuestProfile(prev => {
+        const copy = { ...prev };
+        delete copy.selectedPackagingPattern;
+        delete copy.selectedPackagingColor;
+        delete copy.packagingStatus;
+        delete copy.packagingPurchasedBy;
+        return copy;
+      });
+    }
+  };
+
   const removeFromRegistry = async (itemId) => {
+    if (itemId === 'virtual-packaging') {
+      await removePackaging();
+      return;
+    }
     // Determine the product ID
     let prodId = itemId;
     const matchedItem = registryItems.find(item => item.id === itemId || item.productId === itemId);
@@ -209,6 +337,28 @@ export const RegistryProvider = ({ children }) => {
   };
 
   const confirmContribution = async (itemId, contributorName, amount) => {
+    if (itemId === 'virtual-packaging') {
+      if (isAuthenticated && registryProfile) {
+        try {
+          await dbAddContribution({
+            registryId: registryProfile.id,
+            productId: 'virtual-packaging',
+            contributorName,
+            amount: parseFloat(amount)
+          });
+        } catch (error) {
+          console.error("Failed to add contribution for packaging in database:", error);
+        }
+      } else if (guestProfile) {
+        setGuestProfile(prev => ({
+          ...prev,
+          packagingStatus: 'purchased',
+          packagingPurchasedBy: { name: contributorName, date: new Date().toISOString() }
+        }));
+      }
+      return;
+    }
+
     let prodId = itemId;
     const matchedItem = registryItems.find(item => item.id === itemId || item.productId === itemId);
     if (matchedItem) {
@@ -244,6 +394,28 @@ export const RegistryProvider = ({ children }) => {
   };
 
   const markAsPurchased = async (itemId) => {
+    if (itemId === 'virtual-packaging') {
+      if (isAuthenticated && registryProfile) {
+        try {
+          await dbAddContribution({
+            registryId: registryProfile.id,
+            productId: 'virtual-packaging',
+            contributorName: 'Anonymous Guest',
+            amount: 0
+          });
+        } catch (error) {
+          console.error("Failed to mark packaging as purchased in database:", error);
+        }
+      } else if (guestProfile) {
+        setGuestProfile(prev => ({
+          ...prev,
+          packagingStatus: 'purchased',
+          packagingPurchasedBy: { name: 'Anonymous Guest', date: new Date().toISOString() }
+        }));
+      }
+      return;
+    }
+
     let prodId = itemId;
     const matchedItem = registryItems.find(item => item.id === itemId || item.productId === itemId);
     if (matchedItem) {
@@ -310,7 +482,9 @@ export const RegistryProvider = ({ children }) => {
     markAsPurchased,
     updatePrivacy,
     moveFromWishlistToRegistry,
-    moveFromCartToRegistry
+    moveFromCartToRegistry,
+    updatePackaging,
+    removePackaging
   };
 
   return (

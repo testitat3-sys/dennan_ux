@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Text from '../ui/Text';
@@ -13,15 +13,21 @@ const PACKAGING_COLORS = [
   { id: 'anchor', name: 'Anchor Grey', hex: '#111111' }
 ];
 
-const PackagingCard = ({ size, name, description, price, patternType, isSelected, onSelect }) => {
-  const [color, setColor] = useState('pink');
+const PackagingCard = ({ name, description, price, patternType, isSelected, onSelect, initialColor }) => {
+  const [color, setColor] = useState(initialColor || 'pink');
+
+  useEffect(() => {
+    if (isSelected && initialColor) {
+      setColor(initialColor);
+    }
+  }, [isSelected, initialColor]);
 
   const activeColorObj = PACKAGING_COLORS.find(c => c.id === color) || PACKAGING_COLORS[0];
   const colorHex = activeColorObj.hex;
 
   // Render SVG pattern definitions based on patternType
   const renderPatternDef = () => {
-    const patternId = `pattern-${size}-${color}`;
+    const patternId = `pattern-${patternType}-${color}`;
     switch (patternType) {
       case 'stripe':
         return (
@@ -61,13 +67,13 @@ const PackagingCard = ({ size, name, description, price, patternType, isSelected
     }
   };
 
-  const patternId = `pattern-${size}-${color}`;
+  const patternId = `pattern-${patternType}-${color}`;
 
   return (
     <Card className="packaging-card" variant="default">
       <Card.Header>
         <div className="packaging-card__preview">
-          <span className="packaging-card__badge">{size} wrapper</span>
+          <span className="packaging-card__badge" style={{ textTransform: 'capitalize' }}>{patternType} pattern</span>
           
           {isSelected && (
             <div className="packaging-card__selected-overlay" />
@@ -125,6 +131,9 @@ const PackagingCard = ({ size, name, description, price, patternType, isSelected
               onClick={(e) => {
                 e.preventDefault();
                 setColor(c.id);
+                if (isSelected) {
+                  onSelect(patternType, c.id);
+                }
               }}
               title={c.name}
               aria-label={`Select ${c.name}`}
@@ -158,7 +167,7 @@ const PackagingCard = ({ size, name, description, price, patternType, isSelected
           fullWidth
           onClick={(e) => {
             e.preventDefault();
-            onSelect(size, color);
+            onSelect(patternType, color);
           }}
           icon={isSelected ? <Check size={16} /> : null}
         >

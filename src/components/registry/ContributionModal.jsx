@@ -57,6 +57,13 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (item && item.productId === 'virtual-packaging') {
+      setAmount(item.price.toString());
+      setAmountError('');
+    }
+  }, [item, isOpen]);
+
   // ── Derived values ──────────────────────────────────────────────────────
   const totalContributed = (item?.contributions || []).reduce(
     (acc, c) => acc + c.amount, 0
@@ -105,7 +112,10 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
 
   const isFormValid = () => {
     const num = parseFloat(amount);
-    const amtOk = !isNaN(num) && num >= MIN_AMOUNT && num <= MAX_AMOUNT && num <= remaining;
+    const isVirtualPackaging = item?.productId === 'virtual-packaging';
+    const amtOk = isVirtualPackaging
+      ? (!isNaN(num) && num === item.price)
+      : (!isNaN(num) && num >= MIN_AMOUNT && num <= MAX_AMOUNT && num <= remaining);
     const nameOk = isAnonymous || name.trim().length > 0;
     const paymentOk = isValidPhone;
     return amtOk && nameOk && paymentOk;
@@ -156,12 +166,18 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
 
           {/* Item Summary */}
           <div className="contribution-item-row">
-            {item.image && (
-              <img
-                src={item.image}
-                alt={item.name}
-                className="contribution-item-thumb"
-              />
+            {isVirtualPackaging ? (
+              <div className="contribution-item-thumb" style={{ background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {renderPackagingPreview()}
+              </div>
+            ) : (
+              item.image && (
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="contribution-item-thumb"
+                />
+              )
             )}
             <div className="contribution-item-info">
               <span className="contribution-item-name">{item.name}</span>
@@ -220,23 +236,34 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
           )}
 
           {/* Amount field */}
-          <div className="contribution-field">
-            <label className="contribution-label">
-              Amount (UGX) — Min 5,000 / Max 500,000
-            </label>
-            <input
-              className="contribution-input"
-              type="number"
-              placeholder="Enter amount"
-              min={MIN_AMOUNT}
-              max={Math.min(MAX_AMOUNT, remaining)}
-              value={amount}
-              onChange={handleAmountChange}
-            />
-            {amountError && (
-              <span className="contribution-input-error">{amountError}</span>
-            )}
-          </div>
+          {(() => {
+            const isVirtualPackaging = item?.productId === 'virtual-packaging';
+            return (
+              <div className="contribution-field">
+                <label className="contribution-label">
+                  {isVirtualPackaging ? "Amount (Fixed for Packaging)" : "Amount (UGX) — Min 5,000 / Max 500,000"}
+                </label>
+                <input
+                  className="contribution-input"
+                  type="number"
+                  placeholder="Enter amount"
+                  min={MIN_AMOUNT}
+                  max={Math.min(MAX_AMOUNT, remaining)}
+                  value={amount}
+                  onChange={handleAmountChange}
+                  disabled={isVirtualPackaging}
+                  readOnly={isVirtualPackaging}
+                  style={{ 
+                    backgroundColor: isVirtualPackaging ? 'var(--surface-container-low)' : 'transparent', 
+                    cursor: isVirtualPackaging ? 'not-allowed' : 'text' 
+                  }}
+                />
+                {amountError && (
+                  <span className="contribution-input-error">{amountError}</span>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Payment Details */}
           <div className="payment-section">

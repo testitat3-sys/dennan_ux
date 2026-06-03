@@ -34,7 +34,9 @@ const RegistryPage = () => {
     confirmContribution,
     markAsPurchased,
     updatePrivacy,
-    removeFromRegistry
+    removeFromRegistry,
+    updatePackaging,
+    removePackaging
   } = useRegistry();
 
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
@@ -47,14 +49,15 @@ const RegistryPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isContributorsModalOpen, setIsContributorsModalOpen] = useState(false);
   const [seenContributorsModal, setSeenContributorsModal] = useState([]);
-  const [selectedPackaging, setSelectedPackaging] = useState(() => {
-    try {
-      const stored = localStorage.getItem('dennan_selected_packaging');
-      return stored ? JSON.parse(stored) : null;
-    } catch (e) {
-      return null;
+  const selectedPackaging = useMemo(() => {
+    if (registryProfile?.selectedPackagingPattern && registryProfile?.selectedPackagingColor) {
+      return {
+        pattern: registryProfile.selectedPackagingPattern,
+        color: registryProfile.selectedPackagingColor
+      };
     }
-  });
+    return null;
+  }, [registryProfile]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -282,49 +285,81 @@ const RegistryPage = () => {
     }
   };
 
-  const handleSelectPackaging = (size, color) => {
-    const packaging = { size, color };
-    setSelectedPackaging(packaging);
-    try {
-      localStorage.setItem('dennan_selected_packaging', JSON.stringify(packaging));
-    } catch (e) {
-      console.error('[RegistryPage] failed to save packaging:', e);
+  // Box assignment logic matching products to box sizes (S, M, L, XL)
+  const boxesBreakdown = useMemo(() => {
+    let S = 0, M = 0, L = 0, XL = 0;
+    const actualItems = registryItems.filter(item => item.productId !== 'virtual-packaging');
+    
+    for (const item of actualItems) {
+      const name = (item.name || "").toLowerCase();
+      const category = (item.category || "").toLowerCase();
+      const price = item.price || 0;
+
+      if (price > 500000 || category.includes("travel") || name.includes("stroller") || name.includes("pram") || name.includes("car seat") || name.includes("high chair") || name.includes("cot") || name.includes("crib") || name.includes("hamper") || name.includes("playard")) {
+        XL++;
+      } else if (price > 150000 || category.includes("nursery") || name.includes("set") || name.includes("pack") || name.includes("bag") || name.includes("backpack") || name.includes("nest") || name.includes("lounger") || name.includes("carrier") || name.includes("gym") || name.includes("blender") || name.includes("processor") || name.includes("steriliser") || name.includes("pump") || name.includes("tub") || name.includes("bathtub") || name.includes("seat")) {
+        L++;
+      } else if (price > 30000 || name.includes("blanket") || name.includes("sheet") || name.includes("towel") || name.includes("bottle") || name.includes("warmer") || name.includes("toy") || name.includes("book") || name.includes("cushion") || name.includes("pillow") || name.includes("diaper")) {
+        M++;
+      } else {
+        S++;
+      }
     }
+    return { S, M, L, XL };
+  }, [registryItems]);
+
+  const boxesBreakdownText = useMemo(() => {
+    const parts = [];
+    if (boxesBreakdown.S > 0) parts.push(`${boxesBreakdown.S} S Box${boxesBreakdown.S > 1 ? 'es' : ''}`);
+    if (boxesBreakdown.M > 0) parts.push(`${boxesBreakdown.M} M Box${boxesBreakdown.M > 1 ? 'es' : ''}`);
+    if (boxesBreakdown.L > 0) parts.push(`${boxesBreakdown.L} L Wrapper${boxesBreakdown.L > 1 ? 's' : ''}`);
+    if (boxesBreakdown.XL > 0) parts.push(`${boxesBreakdown.XL} XL Hamper${boxesBreakdown.XL > 1 ? 's' : ''}`);
+    return parts.join(', ') || 'No packaging needed';
+  }, [boxesBreakdown]);
+
+  const handleSelectPackaging = (pattern, color) => {
+    updatePackaging(pattern, color);
+    const themeName = {
+      stripe: 'Stripe Envelope Theme',
+      dots: 'Classic Dotted Box Theme',
+      chevron: 'Premium Chevron Gift Box Theme',
+      grid: 'Deluxe Grid Hamper Theme'
+    }[pattern] || 'Custom wrapper';
+    
+    setToastMessage(`"${themeName}" wrapper selected for your items!`);
+    setShowToast(true);
   };
 
-  const itemsCount = registryItems.length;
   const packagingOptions = useMemo(() => {
+    const basePrice = (boxesBreakdown.S * 5000) + (boxesBreakdown.M * 10000) + (boxesBreakdown.L * 18000) + (boxesBreakdown.XL * 35000);
+    
     return [
       {
-        size: 'S',
-        name: 'Stripe Envelope Wrapper',
-        description: 'Best for apparel and tiny essentials.',
-        price: itemsCount * 5000,
+        name: 'Stripe Envelope Theme',
+        description: 'Clean diagonal stripes on premium wrapping paper.',
+        price: Math.round(basePrice * 1.0),
         patternType: 'stripe'
       },
       {
-        size: 'M',
-        name: 'Classic Dotted Box',
-        description: 'Perfect for toys, books, and diapers.',
-        price: itemsCount * 10000,
+        name: 'Classic Dotted Box Theme',
+        description: 'Sophisticated dotted pattern on premium textured paper.',
+        price: Math.round(basePrice * 1.1),
         patternType: 'dots'
       },
       {
-        size: 'L',
-        name: 'Premium Chevron Gift Box',
-        description: 'Ideal for blankets, gift sets, and multiple packages.',
-        price: itemsCount * 18000,
+        name: 'Premium Chevron Gift Box Theme',
+        description: 'Textured chevron pattern on heavyweight matte boards.',
+        price: Math.round(basePrice * 1.2),
         patternType: 'chevron'
       },
       {
-        size: 'XL',
-        name: 'Deluxe Grid Hamper',
-        description: 'Designed for strollers, large nursery bundles, and high quantity.',
-        price: itemsCount * 35000,
+        name: 'Deluxe Grid Hamper Theme',
+        description: 'Luxe woven grid design with double-satin ribbons.',
+        price: Math.round(basePrice * 1.3),
         patternType: 'grid'
       }
     ];
-  }, [itemsCount]);
+  }, [boxesBreakdown]);
 
   // Live reactive notifications & catch-up for offline contributions
   useEffect(() => {
@@ -778,26 +813,48 @@ const RegistryPage = () => {
 
                   {/* Gift Packaging Section */}
                   <section className="category-group packaging-section" style={{ borderTop: '1px dashed var(--surface-container-high)', marginTop: 'var(--space-12)', paddingTop: 'var(--space-10)' }}>
-                    <div className="category-header">
+                    <div className="category-header" style={{ marginBottom: 'var(--space-4)' }}>
                       <div>
                         <h2 className="headline-md" style={{ fontFamily: 'var(--font-editorial)', margin: 0 }}>Gift Packaging</h2>
                         <Text variant="body-sm" color="secondary" style={{ fontWeight: 300, marginTop: 'var(--space-1)' }}>
-                          Choose a premium wrapping theme for the items in your baby registry.
+                          Choose a premium wrapping theme. The system automatically sizes and combines wrappers for your items.
                         </Text>
                       </div>
                     </div>
+
+                    {registryItems.filter(item => item.productId !== 'virtual-packaging').length > 0 && (
+                      <div className="packaging-breakdown-banner" style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        background: 'var(--surface-container-low)', 
+                        padding: 'var(--space-4) var(--space-6)', 
+                        borderRadius: 'var(--radius-lg)', 
+                        marginBottom: 'var(--space-6)', 
+                        border: '1px dashed var(--surface-container-high)',
+                        color: 'var(--text-secondary)'
+                      }}>
+                        <div>
+                          <Text variant="label-md" color="primary" style={{ fontWeight: 600, display: 'block', marginBottom: '2px' }}>Intelligent Packaging Match</Text>
+                          <Text variant="body-sm" color="secondary">Your registry items require: <strong style={{ color: 'var(--text-primary)' }}>{boxesBreakdownText}</strong></Text>
+                        </div>
+                        <span className="badge" style={{ background: 'var(--surface-container-high)', color: 'var(--text-primary)', fontWeight: 600, padding: 'var(--space-1) var(--space-3)', borderRadius: 'var(--radius-pill)', fontSize: '0.8rem' }}>
+                          {registryItems.filter(item => item.productId !== 'virtual-packaging').length} Items
+                        </span>
+                      </div>
+                    )}
                     
                     <div className="items-grid">
                       {packagingOptions.map(option => (
                         <PackagingCard
-                          key={option.size}
-                          size={option.size}
+                          key={option.patternType}
                           name={option.name}
                           description={option.description}
                           price={option.price}
                           patternType={option.patternType}
-                          isSelected={selectedPackaging?.size === option.size}
+                          isSelected={selectedPackaging?.pattern === option.patternType}
                           onSelect={handleSelectPackaging}
+                          initialColor={selectedPackaging?.pattern === option.patternType ? selectedPackaging.color : 'pink'}
                         />
                       ))}
                     </div>

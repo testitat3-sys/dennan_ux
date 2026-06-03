@@ -449,6 +449,15 @@ export default defineSchema({
     privacy: v.union(v.literal("public"), v.literal("hidden"), v.literal("private")),
     /** Frontend-chosen event label, e.g. "Birthday", "Christening", custom string */
     eventType: v.optional(v.string()),
+    selectedPackagingPattern: v.optional(v.string()),
+    selectedPackagingColor: v.optional(v.string()),
+    packagingStatus: v.optional(v.union(v.literal("available"), v.literal("purchased"))),
+    packagingPurchasedBy: v.optional(
+      v.object({
+        name: v.string(),
+        date: v.string(),
+      })
+    ),
   }).index("by_user", ["userId"]),
 
   registryItems: defineTable({

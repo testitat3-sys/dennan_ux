@@ -7,6 +7,81 @@ import './RegistryItemCard.css';
 
 const RegistryItemCard = ({ item, viewMode, onBuy, onContribute, onRemove }) => {
   const isPurchased = item.status === 'purchased';
+  const isVirtualPackaging = item.productId === 'virtual-packaging';
+
+  const renderPackagingPreview = () => {
+    const patternType = item.patternType || 'stripe';
+    const color = item.colorCode || 'pink';
+    const colorHex = {
+      pink: '#d35097',
+      blue: '#4dbee3',
+      green: '#7fa93e',
+      gold: '#e1d328',
+      anchor: '#111111'
+    }[color] || '#d35097';
+    
+    const patternId = `card-pattern-${patternType}-${color}`;
+    
+    let patternSVG = null;
+    switch (patternType) {
+      case 'stripe':
+        patternSVG = (
+          <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="20" height="20" fill="#fdfdfd" />
+            <line x1="0" y1="0" x2="0" y2="20" stroke={colorHex} strokeWidth="8" />
+            <line x1="0" y1="0" x2="0" y2="20" stroke="#ffffff" strokeWidth="2" />
+          </pattern>
+        );
+        break;
+      case 'dots':
+        patternSVG = (
+          <pattern id={patternId} width="24" height="24" patternUnits="userSpaceOnUse">
+            <rect width="24" height="24" fill="#fdfdfd" />
+            <circle cx="12" cy="12" r="5" fill={colorHex} />
+          </pattern>
+        );
+        break;
+      case 'grid':
+        patternSVG = (
+          <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+            <rect width="20" height="20" fill="#fdfdfd" />
+            <rect width="20" height="20" fill="none" stroke={colorHex} strokeWidth="3" />
+          </pattern>
+        );
+        break;
+      case 'chevron':
+        patternSVG = (
+          <pattern id={patternId} width="24" height="24" patternUnits="userSpaceOnUse">
+            <rect width="24" height="24" fill="#fdfdfd" />
+            <path d="M0 12 L12 0 L24 12 L12 24 Z" fill="none" stroke={colorHex} strokeWidth="3" />
+          </pattern>
+        );
+        break;
+      default:
+        patternSVG = (
+          <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+            <rect width="20" height="20" fill={colorHex} />
+          </pattern>
+        );
+    }
+
+    return (
+      <svg viewBox="0 0 200 200" style={{ width: '100%', height: '100%', display: 'block' }}>
+        <defs>{patternSVG}</defs>
+        <rect x="40" y="40" width="120" height="120" rx="12" ry="12" fill={`url(#${patternId})`} stroke="rgba(0,0,0,0.08)" strokeWidth="1.5" />
+        <rect x="93" y="40" width="14" height="120" fill="#ffffff" opacity="0.95" />
+        <rect x="99" y="40" width="2" height="120" fill="var(--color-brand-accent, #e1d328)" />
+        <rect x="40" y="93" width="120" height="14" fill="#ffffff" opacity="0.95" />
+        <rect x="40" y="99" width="120" height="2" fill="var(--color-brand-accent, #e1d328)" />
+        <path d="M95 100 L75 135 L85 133 Z" fill="#ffffff" opacity="0.95" />
+        <path d="M105 100 L125 135 L115 133 Z" fill="#ffffff" opacity="0.95" />
+        <path d="M100 100 C70 70 50 110 100 100" fill="#ffffff" opacity="0.95" stroke="rgba(0,0,0,0.05)" strokeWidth="1" />
+        <path d="M100 100 C130 70 150 110 100 100" fill="#ffffff" opacity="0.95" stroke="rgba(0,0,0,0.05)" strokeWidth="1" />
+        <circle cx="100" cy="100" r="7" fill="#ffffff" stroke="rgba(0,0,0,0.05)" strokeWidth="1" />
+        <circle cx="100" cy="100" r="3" fill="var(--color-brand-accent, #e1d328)" />
+      </svg>
+    );
+  };
 
   return (
     <Card 
@@ -15,7 +90,13 @@ const RegistryItemCard = ({ item, viewMode, onBuy, onContribute, onRemove }) => 
     >
       <Card.Header>
         <div className="product-card__image" style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-          <img src={item.image} alt={item.name} className="item-image" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {isVirtualPackaging ? (
+            <div style={{ width: '100%', height: '100%', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {renderPackagingPreview()}
+            </div>
+          ) : (
+            <img src={item.image} alt={item.name} className="item-image" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          )}
           
           {isPurchased && (
             <div className="purchased-overlay">
