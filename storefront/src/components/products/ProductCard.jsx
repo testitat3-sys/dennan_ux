@@ -93,12 +93,6 @@ const ProductCard = ({
                 {brand}
               </span>
             )}
-            {tags && tags
-              .filter(tag => tag && tag.text && tag.text.toLowerCase() !== 'in stock')
-              .map((tag, i) => (
-                <span key={i} className={`tag tag--${tag.type}`}>{tag.text}</span>
-              ))
-            }
             {unitsSold !== undefined && unitsSold > 0 && (
               <span className="tag tag--sales">
                 {formatUnitsSold(unitsSold)}

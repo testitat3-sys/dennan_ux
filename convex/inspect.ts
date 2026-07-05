@@ -30,3 +30,34 @@ export const checkProductDataStatus = query({
     };
   },
 });
+
+export const checkCollectionCounts = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    const activeProducts = products.filter(p => p.actual_data === true);
+    let essentials = 0;
+    let musthaves = 0;
+    let luxuries = 0;
+    let mostloved = 0;
+    let curatedforyou = 0;
+    
+    for (const p of activeProducts) {
+      if (p.isEssentials) essentials++;
+      if (p.isMustHave) musthaves++;
+      if (p.isLuxury) luxuries++;
+      if (p.isMostLoved) mostloved++;
+      if (p.isCuratedForYou) curatedforyou++;
+    }
+    
+    return {
+      total: products.length,
+      activeTotal: activeProducts.length,
+      essentials,
+      musthaves,
+      luxuries,
+      mostloved,
+      curatedforyou,
+    };
+  },
+});

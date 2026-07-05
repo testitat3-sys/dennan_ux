@@ -166,15 +166,15 @@ const PLP = () => {
     // 1. Filter by collection or stage
     if (collectionId) {
       if (collectionId === 'curated-picks') {
-        results = results.filter(p => p.isCurated);
+        results = results.filter(p => p.isCuratedForYou || p.isCurated);
       } else if (collectionId === 'most-loved') {
         results = results.filter(p => p.isMostLoved);
       } else if (collectionId === 'essentials') {
-        results = results.filter(p => p.tier?.toLowerCase() === 'essentials');
+        results = results.filter(p => p.isEssentials);
       } else if (collectionId === 'must-haves') {
-        results = results.filter(p => p.tier?.toLowerCase() === 'musthaves' || p.tier?.toLowerCase() === 'must-haves');
+        results = results.filter(p => p.isMustHave);
       } else if (collectionId === 'luxuries') {
-        results = results.filter(p => p.tier?.toLowerCase() === 'luxuries');
+        results = results.filter(p => p.isLuxury);
       }
     } else if (stageId && stageId !== 'all') {
       results = results.filter(p => p.stage === stageId);
@@ -300,11 +300,11 @@ const PLP = () => {
   const categories = allProducts 
     ? [...new Set(allProducts.filter(p => {
         if (collectionId) {
-          if (collectionId === 'curated-picks') return p.isCurated;
+          if (collectionId === 'curated-picks') return p.isCuratedForYou || p.isCurated;
           if (collectionId === 'most-loved') return p.isMostLoved;
-          if (collectionId === 'essentials') return p.tier?.toLowerCase() === 'essentials';
-          if (collectionId === 'must-haves') return p.tier?.toLowerCase() === 'musthaves' || p.tier?.toLowerCase() === 'must-haves';
-          if (collectionId === 'luxuries') return p.tier?.toLowerCase() === 'luxuries';
+          if (collectionId === 'essentials') return p.isEssentials;
+          if (collectionId === 'must-haves') return p.isMustHave;
+          if (collectionId === 'luxuries') return p.isLuxury;
           return true;
         }
         return p.stage === stageId;

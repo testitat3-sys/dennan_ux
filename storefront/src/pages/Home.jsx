@@ -81,7 +81,7 @@ const Home = () => {
   }
 
   const mostLovedProducts = liveProducts.filter(p => p.isMostLoved).slice(0, 8);
-  const curatedProducts = liveProducts.filter(p => p.isCurated).slice(0, 4);
+  const curatedProducts = liveProducts.filter(p => p.isCuratedForYou).slice(0, 4);
 
   return (
     <>

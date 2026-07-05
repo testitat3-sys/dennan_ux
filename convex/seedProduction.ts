@@ -1,6 +1,7 @@
 import { mutation } from "./_generated/server";
 import { NEW_PRODUCTS } from "./seedProducts";
 import { CLOSE_MATCHES_PRODUCTS } from "./seedCloseMatches";
+import emlData from "../eml.json";
 
 export const runProductionSeed = mutation({
   args: {},
@@ -18,6 +19,12 @@ export const runProductionSeed = mutation({
     }
     console.log(`Marked ${markedCount} existing products as actual_data = false.`);
 
+    const isEssentialsSet = new Set(emlData.isEssentials);
+    const isMustHaveSet = new Set(emlData.isMustHave);
+    const isLuxurySet = new Set(emlData.isLuxury);
+    const isMostLovedSet = new Set(emlData.isMostLoved);
+    const isCuratedForYouSet = new Set(emlData.isCuratedForYou);
+
     // Helper to upsert a product list
     const upsertProducts = async (products: any[]) => {
       for (const item of products) {
@@ -34,6 +41,19 @@ export const runProductionSeed = mutation({
             .withIndex("by_slug", (q) => q.eq("slug", item.slug))
             .unique();
         }
+
+        const barcode = item.barcode;
+        const isEssentials = isEssentialsSet.has(barcode);
+        const isMustHave = isMustHaveSet.has(barcode);
+        const isLuxury = isLuxurySet.has(barcode);
+        const isMostLoved = isMostLovedSet.has(barcode);
+        const isCuratedForYou = isCuratedForYouSet.has(barcode);
+
+        // Derive tier based on eml.json arrays, falling back to existing item.tier
+        let derivedTier = item.tier;
+        if (isEssentials) derivedTier = "essentials";
+        else if (isMustHave) derivedTier = "musthaves";
+        else if (isLuxury) derivedTier = "luxuries";
 
         const productFields: any = {
           name: item.name,
@@ -53,14 +73,18 @@ export const runProductionSeed = mutation({
           image: item.image,
           images: item.images,
           stage: item.stage,
-          tier: item.tier,
+          tier: derivedTier,
           category: item.category,
           subCategory: item.subCategory,
           targetGender: item.targetGender,
           material: item.material,
           pattern: item.pattern,
           isCurated: item.isCurated,
-          isMostLoved: item.isMostLoved,
+          isMostLoved: isMostLoved,
+          isEssentials,
+          isMustHave,
+          isLuxury,
+          isCuratedForYou,
           minMonth: item.minMonth,
           maxMonth: item.maxMonth,
           minWeek: item.minWeek,

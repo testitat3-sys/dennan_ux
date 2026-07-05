@@ -179,6 +179,10 @@ export default defineSchema({
     /** Curation */
     isCurated: v.optional(v.boolean()),
     isMostLoved: v.optional(v.boolean()),
+    isEssentials: v.optional(v.boolean()),
+    isMustHave: v.optional(v.boolean()),
+    isLuxury: v.optional(v.boolean()),
+    isCuratedForYou: v.optional(v.boolean()),
 
     /** Age Targeting */
     minMonth: v.optional(v.number()),
