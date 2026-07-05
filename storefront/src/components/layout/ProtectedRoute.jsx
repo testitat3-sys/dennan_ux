@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useConvexAuth } from 'convex/react';
 import { useUser } from '../../context/UserContext';
 import { Loader2 } from 'lucide-react';
@@ -14,13 +14,17 @@ import { Loader2 } from 'lucide-react';
 export default function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const { setShowOnboarding } = useUser();
+  const location = useLocation();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       console.log("[ProtectedRoute] Unauthenticated attempt detected. Triggering Onboarding/Login modal...");
+      const redirectPath = location.pathname + location.search + location.hash;
+      localStorage.setItem('dennan_redirect_after_login', redirectPath);
+      console.log(`[ProtectedRoute] Saved redirect target to localStorage: ${redirectPath}`);
       setShowOnboarding(true);
     }
-  }, [isLoading, isAuthenticated, setShowOnboarding]);
+  }, [isLoading, isAuthenticated, setShowOnboarding, location]);
 
   // Loading indicator matching the platform's high-fidelity branding
   if (isLoading) {

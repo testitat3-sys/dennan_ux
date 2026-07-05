@@ -40,7 +40,7 @@ export default function AfterSignIn() {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const user = useQuery(api.users.viewer);
   const ensureFields = useMutation(api.users.ensureUserFields);
-  const completeOnboarding = useMutation(api.users.completeOnboarding);
+  const saveOnboardingJourney = useMutation(api.users.saveOnboardingJourney);
   const mergeGuestCart = useMutation(api.cart.mergeGuestCart);
   const mergeGuestWishlist = useMutation(api.wishlist.mergeGuestWishlist);
   const { setShowOnboarding, login } = useUser();
@@ -121,15 +121,52 @@ export default function AfterSignIn() {
 
       if (user.isAdmin) {
         console.log(`[AfterSignIn.jsx] Admin user — redirecting to /admin`);
-        navigate("/admin", { replace: true });
+        if (window.location.port === "5173") {
+          console.log("[AfterSignIn.jsx] Development environment - redirecting to localhost:5174");
+          window.location.replace("http://localhost:5174/");
+        } else {
+          navigate("/admin", { replace: true });
+        }
         return;
+      }
+
+      // Preserve destination target page (e.g. /registry, /dashboard)
+      const savedRedirectPath = localStorage.getItem('dennan_redirect_after_login');
+      const targetDestination = savedRedirectPath || "/dashboard";
+
+      // ── Reconcile Cached pre-auth onboarding details ─────────────────────
+      const localProfile = readLocalProfile();
+      if (localProfile) {
+        console.log(`[AfterSignIn.jsx] Local pre-auth profile found:`, localProfile);
+        try {
+          await saveOnboardingJourney({
+            role: localProfile.role,
+            dueDate: localProfile.dueDate,
+            children: localProfile.children,
+            username: localProfile.username,
+          });
+          console.log(`[AfterSignIn.jsx] Pre-auth journey details saved to database`);
+          
+          login({
+            email: user.email,
+            role: localProfile.role,
+            dueDate: localProfile.dueDate,
+            children: localProfile.children,
+          });
+          clearLocalProfile();
+          localStorage.removeItem('dennan_redirect_after_login');
+          navigate(targetDestination, { replace: true });
+          return;
+        } catch (err) {
+          console.error(`[AfterSignIn.jsx] Failed to save pre-auth onboarding journey:`, err);
+        }
       }
 
       // ── Check if they already have journey data ──────────────────────────
       const hasJourneyData = user.role && (user.dueDate || (user.children && user.children.length > 0));
 
       if (hasJourneyData) {
-        console.log(`[AfterSignIn.jsx] Already has journey data — redirecting to /profile`);
+        console.log(`[AfterSignIn.jsx] Already has journey data — redirecting to ${targetDestination}`);
         login({
           email: user.email,
           role: user.role,
@@ -137,7 +174,8 @@ export default function AfterSignIn() {
           children: user.children,
         });
         clearLocalProfile(); // clean up any stale local data
-        navigate("/profile", { replace: true });
+        localStorage.removeItem('dennan_redirect_after_login');
+        navigate(targetDestination, { replace: true });
         return;
       } else {
         // ── Missing journey data — take them through the rest of onboarding ────
@@ -156,7 +194,7 @@ export default function AfterSignIn() {
     };
 
     run();
-  }, [user, ensureFields, completeOnboarding, mergeGuestCart, navigate, setShowOnboarding, login]);
+  }, [user, ensureFields, saveOnboardingJourney, mergeGuestCart, mergeGuestWishlist, navigate, setShowOnboarding, login]);
 
   return (
     <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>

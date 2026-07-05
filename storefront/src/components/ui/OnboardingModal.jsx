@@ -256,12 +256,20 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         </div>
 
         <div className="onboarding-header">
-          {isAuthenticated && step > 1 ? (
+          {step > 1 ? (
             <Button
               variant="ghost"
               size="sm"
               className="onboarding-skip"
-              onClick={() => setStep(prev => prev - 1)}
+              onClick={() => {
+                if (!isAuthenticated && step === 4 && sent) {
+                  setSent(false);
+                  setCapturedLink('');
+                  setResendCooldown(0);
+                } else {
+                  setStep(prev => prev - 1);
+                }
+              }}
               icon={<ArrowLeft size={14} />}
               iconPosition="left"
             >
@@ -281,203 +289,213 @@ const OnboardingModal = ({ isOpen, onClose }) => {
 
         <div className="onboarding-content">
 
-          {/* ── FLOW A: AUTHENTICATED USER WIZARD ── */}
-          {isAuthenticated ? (
-            <>
-              {/* Step 1: Role selection */}
-              {step === 1 && (
-                <div className="onboarding-step">
-                  <h2 className="onboarding-step-title">Where are you in your journey?</h2>
-                  <p className="onboarding-step-desc">We'll personalise your experience to show you exactly what you need.</p>
-                  <div className="onboarding-cards">
-                    <Button
-                      variant={role === 'expecting' ? 'primary' : 'ghost'}
-                      className={`onboarding-card ${role === 'expecting' ? 'is-active' : ''}`}
-                      onClick={() => handleRoleSelect('expecting')}
-                      style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: 'var(--space-6)' }}
-                    >
-                      <div className="onboarding-card-icon">
-                        <Heart size={28} strokeWidth={1.2} />
-                      </div>
-                      <span className="onboarding-card-label">I'm expecting</span>
-                      <span className="onboarding-card-sub">Pregnant & preparing</span>
-                    </Button>
-                    <Button
-                      variant={role === 'parent' ? 'primary' : 'ghost'}
-                      className={`onboarding-card ${role === 'parent' ? 'is-active' : ''}`}
-                      onClick={() => handleRoleSelect('parent')}
-                      style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: 'var(--space-6)' }}
-                    >
-                      <div className="onboarding-card-icon">
-                        <Baby size={28} strokeWidth={1.2} />
-                      </div>
-                      <span className="onboarding-card-label">I'm already a parent</span>
-                      <span className="onboarding-card-sub">My child is here</span>
-                    </Button>
+          {/* Step 1: Role selection */}
+          {step === 1 && (
+            <div className="onboarding-step">
+              <h2 className="onboarding-step-title">Where are you in your journey?</h2>
+              <p className="onboarding-step-desc">We'll personalise your experience to show you exactly what you need.</p>
+              <div className="onboarding-cards">
+                <Button
+                  variant={role === 'expecting' ? 'primary' : 'ghost'}
+                  className={`onboarding-card ${role === 'expecting' ? 'is-active' : ''}`}
+                  onClick={() => handleRoleSelect('expecting')}
+                  style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: 'var(--space-6)' }}
+                >
+                  <div className="onboarding-card-icon">
+                    <Heart size={28} strokeWidth={1.2} />
                   </div>
-                </div>
-              )}
+                  <span className="onboarding-card-label">I'm expecting</span>
+                  <span className="onboarding-card-sub">Pregnant & preparing</span>
+                </Button>
+                <Button
+                  variant={role === 'parent' ? 'primary' : 'ghost'}
+                  className={`onboarding-card ${role === 'parent' ? 'is-active' : ''}`}
+                  onClick={() => handleRoleSelect('parent')}
+                  style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: 'var(--space-6)' }}
+                >
+                  <div className="onboarding-card-icon">
+                    <Baby size={28} strokeWidth={1.2} />
+                  </div>
+                  <span className="onboarding-card-label">I'm already a parent</span>
+                  <span className="onboarding-card-sub">My child is here</span>
+                </Button>
+              </div>
+            </div>
+          )}
 
-              {/* Step 2: Date details */}
-              {step === 2 && (
-                <div className="onboarding-step">
-                  <h2 className="onboarding-step-title">
-                    {role === 'expecting' ? 'When is your due date?' : 'When is your child\'s birthday?'}
-                  </h2>
-                  <p className="onboarding-step-desc">
-                    {role === 'expecting'
-                      ? "We'll help you time your nursery setup and hospital bag."
-                      : "We'll show you gear that fits their current milestones."}
-                  </p>
+          {/* Step 2: Date details */}
+          {step === 2 && (
+            <div className="onboarding-step">
+              <h2 className="onboarding-step-title">
+                {role === 'expecting' ? 'When is your due date?' : 'When is your child\'s birthday?'}
+              </h2>
+              <p className="onboarding-step-desc">
+                {role === 'expecting'
+                  ? "We'll help you time your nursery setup and hospital bag."
+                  : "We'll show you gear that fits their current milestones."}
+              </p>
 
-                  <div className="onboarding-date-section">
-                    {role === 'expecting' ? (
-                      <div className="date-input-group">
-                        <label className="date-label">Expected Due Date</label>
-                        <input
-                          type="date"
-                          className="onboarding-input"
-                          value={dueDate}
-                          min={minDueDate}
-                          max={maxDueDate}
-                          onChange={(e) => setDueDate(e.target.value)}
-                        />
-                        {dueDate && (dueDate < minDueDate || dueDate > maxDueDate) && (
+              <div className="onboarding-date-section">
+                {role === 'expecting' ? (
+                  <div className="date-input-group">
+                    <label className="date-label">Expected Due Date</label>
+                    <input
+                      type="date"
+                      className="onboarding-input"
+                      value={dueDate}
+                      min={minDueDate}
+                      max={maxDueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                    />
+                    {dueDate && (dueDate < minDueDate || dueDate > maxDueDate) && (
+                      <p className="date-error-msg">
+                        {dueDate < minDueDate
+                          ? "Due date cannot be in the past."
+                          : `Due date must be within 10 months (by ${new Date(maxDueDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}).`}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {children.map((child, index) => (
+                      <div key={child.id} className="date-input-group">
+                        <label className="date-label">Child {index + 1} Details</label>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <div style={{ flex: 1.6 }}>
+                            <input
+                              type="date"
+                              className="onboarding-input"
+                              value={child.dob}
+                              min={minDobDate}
+                              max={maxDobDate}
+                              onChange={(e) => updateChildDob(child.id, e.target.value)}
+                              style={{ width: '100%' }}
+                            />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <select
+                              value={child.gender || 'unspecified'}
+                              onChange={(e) => updateChildGender(child.id, e.target.value)}
+                              className="onboarding-input"
+                              style={{ width: '100%', paddingRight: '20px' }}
+                            >
+                              <option value="unspecified">Select Gender</option>
+                              <option value="boy">Boy</option>
+                              <option value="girl">Girl</option>
+                            </select>
+                          </div>
+                        </div>
+                        {child.dob && (child.dob < minDobDate || child.dob > maxDobDate) && (
                           <p className="date-error-msg">
-                            {dueDate < minDueDate
-                              ? "Due date cannot be in the past."
-                              : `Due date must be within 10 months (by ${new Date(maxDueDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}).`}
+                            {child.dob > maxDobDate
+                              ? "Birthday cannot be in the future."
+                              : `Age limit is 12 years (born after ${new Date(minDobDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}).`}
                           </p>
                         )}
                       </div>
-                    ) : (
-                      <>
-                        {children.map((child, index) => (
-                          <div key={child.id} className="date-input-group">
-                            <label className="date-label">Child {index + 1} Details</label>
-                            <div style={{ display: 'flex', gap: '12px' }}>
-                              <div style={{ flex: 1.6 }}>
-                                <input
-                                  type="date"
-                                  className="onboarding-input"
-                                  value={child.dob}
-                                  min={minDobDate}
-                                  max={maxDobDate}
-                                  onChange={(e) => updateChildDob(child.id, e.target.value)}
-                                  style={{ width: '100%' }}
-                                />
-                              </div>
-                              <div style={{ flex: 1 }}>
-                                <select
-                                  value={child.gender || 'unspecified'}
-                                  onChange={(e) => updateChildGender(child.id, e.target.value)}
-                                  className="onboarding-input"
-                                  style={{ width: '100%', paddingRight: '20px' }}
-                                >
-                                  <option value="unspecified">Select Gender</option>
-                                  <option value="boy">Boy</option>
-                                  <option value="girl">Girl</option>
-                                </select>
-                              </div>
-                            </div>
-                            {child.dob && (child.dob < minDobDate || child.dob > maxDobDate) && (
-                              <p className="date-error-msg">
-                                {child.dob > maxDobDate
-                                  ? "Birthday cannot be in the future."
-                                  : `Age limit is 12 years (born after ${new Date(minDobDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}).`}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                        {children.length < 5 && (
-                          <Button 
-                            variant="ghost"
-                            size="sm"
-                            className="add-another-btn" 
-                            onClick={addChild}
-                            icon={<Plus size={18} />}
-                            iconPosition="left"
-                          >
-                            Add another child
-                          </Button>
-                        )}
-                      </>
+                    ))}
+                    {children.length < 5 && (
+                      <Button 
+                        variant="ghost"
+                        size="sm"
+                        className="add-another-btn" 
+                        onClick={addChild}
+                        icon={<Plus size={18} />}
+                        iconPosition="left"
+                      >
+                        Add another child
+                      </Button>
                     )}
-                  </div>
+                  </>
+                )}
+              </div>
 
-                  {emailError && (
-                    <p style={{ color: 'var(--error, #ef4444)', fontSize: '0.8125rem', marginTop: '12px', textAlign: 'center' }}>
-                      {emailError}
-                    </p>
-                  )}
-
-                  <div className="onboarding-actions">
-                    <Button
-                      variant="primary"
-                      fullWidth
-                      onClick={() => setStep(3)}
-                      disabled={!isDateStepValid() || pending}
-                      icon={<ArrowRight size={18} />}
-                      iconPosition="right"
-                    >
-                      Continue
-                    </Button>
-                  </div>
-                </div>
+              {emailError && (
+                <p style={{ color: 'var(--error, #ef4444)', fontSize: '0.8125rem', marginTop: '12px', textAlign: 'center' }}>
+                  {emailError}
+                </p>
               )}
 
-              {/* Step 3: Choose Username */}
-              {step === 3 && (
-                <div className="onboarding-step">
-                  <h2 className="onboarding-step-title">Choose your username</h2>
-                  <p className="onboarding-step-desc">
-                    This will be your unique identity on Dennan, visible on your registry and shared collections.
-                  </p>
+              <div className="onboarding-actions">
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onClick={() => setStep(3)}
+                  disabled={!isDateStepValid() || pending}
+                  icon={<ArrowRight size={18} />}
+                  iconPosition="right"
+                >
+                  Continue
+                </Button>
+              </div>
+            </div>
+          )}
 
-                  <div className="onboarding-date-section">
-                    <div className="date-input-group">
-                      <label className="date-label">Username</label>
-                      <input
-                        type="text"
-                        className="onboarding-input"
-                        placeholder="e.g. mommy_care"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
+          {/* Step 3: Choose Username */}
+          {step === 3 && (
+            <div className="onboarding-step">
+              <h2 className="onboarding-step-title">Choose your username</h2>
+              <p className="onboarding-step-desc">
+                This will be your unique identity on Dennan, visible on your registry and shared collections.
+              </p>
 
-                  {emailError && (
-                    <p style={{ color: 'var(--error, #ef4444)', fontSize: '0.8125rem', marginTop: '12px', textAlign: 'center' }}>
-                      {emailError}
-                    </p>
-                  )}
-
-                  <div className="onboarding-actions">
-                    <Button
-                      variant="primary"
-                      fullWidth
-                      onClick={handleJourneySubmit}
-                      disabled={!username.trim() || pending}
-                      loading={pending}
-                      icon={<ArrowRight size={18} />}
-                      iconPosition="right"
-                    >
-                      Complete Setup
-                    </Button>
-                  </div>
+              <div className="onboarding-date-section">
+                <div className="date-input-group">
+                  <label className="date-label">Username</label>
+                  <input
+                    type="text"
+                    className="onboarding-input"
+                    placeholder="e.g. mommy_care"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
                 </div>
+              </div>
+
+              {emailError && (
+                <p style={{ color: 'var(--error, #ef4444)', fontSize: '0.8125rem', marginTop: '12px', textAlign: 'center' }}>
+                  {emailError}
+                </p>
               )}
-            </>
-          ) : (
-            /* ── FLOW B: UNAUTHENTICATED EMAIL ENTRY ── */
+
+              <div className="onboarding-actions">
+                {isAuthenticated ? (
+                  <Button
+                    variant="primary"
+                    fullWidth
+                    onClick={handleJourneySubmit}
+                    disabled={!username.trim() || pending}
+                    loading={pending}
+                    icon={<ArrowRight size={18} />}
+                    iconPosition="right"
+                  >
+                    Complete Setup
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    fullWidth
+                    onClick={() => setStep(4)}
+                    disabled={!username.trim() || pending}
+                    icon={<ArrowRight size={18} />}
+                    iconPosition="right"
+                  >
+                    Continue
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Email Entry (Unauthenticated only) */}
+          {!isAuthenticated && step === 4 && (
             <div className="onboarding-step">
               {!sent ? (
                 <>
                   <h2 className="onboarding-step-title">Welcome to Dennan</h2>
                   <p className="onboarding-step-desc">
-                    Enter your email to receive a magic sign-in link and start your personal journey guide.
+                    Enter your email to receive a magic sign-in link and save your personalization journey.
                   </p>
                   <form onSubmit={handleEmailSubmit} style={{ width: '100%' }}>
                     <div className="date-input-group">
