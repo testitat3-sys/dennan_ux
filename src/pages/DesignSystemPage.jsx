@@ -4,11 +4,11 @@ import './DesignSystemPage.css';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Text from '../components/ui/Text';
-import ProductCard from '../components/ui/ProductCard';
-import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
+import ProductCard from '../components/products/ProductCard';
+import ProductCardSkeleton from '../components/products/ProductCardSkeleton';
 import TierCard from '../components/ui/TierCard';
 import StageTile from '../components/ui/StageTile';
-import QuickViewModal from '../components/ui/QuickViewModal';
+import QuickViewModal from '../components/products/QuickViewModal';
 import { useCart } from '../context/CartContext';
 
 // Import Assets

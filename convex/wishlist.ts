@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { normalizeProductPrice } from "./products";
+import { normalizeProductPrice, shouldKeepProduct } from "./products";
 
 export const getWishlistItems = query({
   args: {},
@@ -22,12 +22,12 @@ export const getWishlistItems = query({
         const product = await ctx.db.get(item.productId);
         return {
           ...item,
-          product: normalizeProductPrice(product),
+          product: shouldKeepProduct(product) ? normalizeProductPrice(product) : null,
         };
       })
     );
 
-    // Filter out items where the product was deleted
+    // Filter out items where the product was deleted or is legacy
     return hydratedWishlist.filter((item) => item.product !== null);
   },
 });
@@ -44,7 +44,7 @@ export const addToWishlist = mutation({
     }
 
     const product = await ctx.db.get(args.productId);
-    if (!product) {
+    if (!product || !shouldKeepProduct(product)) {
       throw new Error("Product not found");
     }
 
@@ -113,7 +113,7 @@ export const mergeGuestWishlist = mutation({
 
     for (const productId of args.guestProductIds) {
       const product = await ctx.db.get(productId);
-      if (!product || !product.isActive) {
+      if (!product || !product.isActive || !shouldKeepProduct(product)) {
         continue;
       }
 
@@ -157,6 +157,8 @@ export const getGuestWishlistDetails = query({
       })
     );
 
-    return hydratedWishlist.filter((item) => item.product !== null && item.product.isActive);
+    return hydratedWishlist.filter(
+      (item) => item.product !== null && item.product.isActive && shouldKeepProduct(item.product)
+    );
   },
 });

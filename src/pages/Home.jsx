@@ -8,7 +8,7 @@ import JourneySection from '../components/home/JourneySection';
 import TierSection from '../components/home/TierSection';
 import ReelsSection from '../components/home/ReelsSection';
 import TrustStrip from '../components/home/TrustStrip';
-import QuickViewModal from '../components/ui/QuickViewModal';
+import QuickViewModal from '../components/products/QuickViewModal';
 import Toast from '../components/ui/Toast';
 import { getHomepageData } from '../services/api';
 import { useQuery } from "convex/react";

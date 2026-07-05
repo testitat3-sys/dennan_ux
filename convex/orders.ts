@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { validateCouponInternal } from "./coupons";
-import { normalizeProductPrice } from "./products";
+import { normalizeProductPrice, shouldKeepProduct } from "./products";
 import { internal } from "./_generated/api";
 
 export const placeOrder = mutation({
@@ -38,7 +38,7 @@ export const placeOrder = mutation({
 
     for (const item of cartItems) {
       const rawProduct = await ctx.db.get(item.productId);
-      if (!rawProduct || !rawProduct.isActive) {
+      if (!rawProduct || !rawProduct.isActive || !shouldKeepProduct(rawProduct)) {
         throw new Error(`Product ${item.productId} is no longer available.`);
       }
       const product = normalizeProductPrice(rawProduct);
@@ -230,5 +230,14 @@ export const updateOrderStatus = internalMutation({
     await ctx.db.patch(args.orderId, {
       status: args.status,
     });
+  },
+});
+
+export const getOrderStatusById = internalQuery({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) return null;
+    return { status: order.status };
   },
 });

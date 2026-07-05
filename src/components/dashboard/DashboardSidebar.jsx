@@ -57,7 +57,7 @@ const DashboardSidebar = () => {
             className={`dashboard-nav__link ${isActive('/registry') ? 'dashboard-nav__link--active' : ''}`}
           >
             <Gift className="dashboard-nav__link-icon" />
-            <span className="dashboard-nav__link-text">Registry</span>
+            <span className="dashboard-nav__link-text">Circle of Love</span>
           </span>
         </li>
         <li className="dashboard-nav__logout-item">

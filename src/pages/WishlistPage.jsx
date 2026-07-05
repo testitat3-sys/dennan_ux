@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useRegistry } from '../context/RegistryContext';
 import { formatPrice } from '../utils/priceUtils';
 import Toast from '../components/ui/Toast';
-import ProductCard from '../components/ui/ProductCard';
+import ProductCard from '../components/products/ProductCard';
 import Button from '../components/ui/Button';
 import Page from '../components/ui/Page';
 import Card from '../components/ui/Card';

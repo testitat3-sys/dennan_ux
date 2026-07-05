@@ -11,6 +11,9 @@ import PDPSkeleton from '../components/ui/PDPSkeleton';
 import Page from '../components/ui/Page';
 import Card from '../components/ui/Card';
 import CardGrid from '../components/ui/CardGrid';
+import { FileText, ClipboardList, MessageSquare } from 'lucide-react';
+import ReviewModal from '../components/checkout/ReviewModal';
+import DefaultProductImage from '../components/products/DefaultProductImage';
 import './PDP.css';
 
 const formatUnitsSold = (units) => {
@@ -39,6 +42,7 @@ const PDP = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [notifyBackInStock, setNotifyBackInStock] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   // Live fetch from Convex
   const allProducts = useQuery(api.data.getProducts);
@@ -149,7 +153,39 @@ const PDP = () => {
   };
 
   const sizes = ['Newborn', '0-3m', '3-6m', '6-9m'];
-  const imagesList = product.images || [product.image];
+  const rawImages = product.images || (product.image ? [product.image] : []);
+  const imagesList = rawImages.filter(Boolean);
+  const hasNoImages = imagesList.length === 0;
+  const displayImages = hasNoImages ? ['placeholder'] : imagesList;
+
+  const renderReviewsList = () => (
+    <div className="pdp__reviews">
+      {reviews && reviews.length > 0 ? (
+        reviews.map((review, idx) => (
+          <Card key={idx} variant="default" hasShadow={false} className="review-card">
+            <Card.Header className="review-header">
+              <div className="review-rating">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill={i < review.rating ? "currentColor" : "none"} stroke="currentColor">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                ))}
+              </div>
+              {review.childAge && <span className="review-age">Child: {review.childAge}</span>}
+            </Card.Header>
+            <Card.Body>
+              <p className="review-text">"{review.text}"</p>
+              <span className="review-author">— {review.author}</span>
+            </Card.Body>
+          </Card>
+        ))
+      ) : (
+        <p className="no-reviews-text" style={{ textAlign: 'center', padding: 'var(--space-10) 0', color: 'var(--text-secondary)' }}>
+          No reviews yet for this product. Be the first to <Button variant="link" onClick={() => setShowReviewModal(true)} style={{ display: 'inline', padding: 0 }}>leave one</Button>!
+        </p>
+      )}
+    </div>
+  );
 
   return (
     <Page className="pdp">
@@ -160,7 +196,9 @@ const PDP = () => {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="9 18 15 12 9 6" />
           </svg>
-          <Link to={`/category/${product.stage}`}>{product.stage.charAt(0).toUpperCase() + product.stage.slice(1)}</Link>
+          <Link to={`/category/${product.stage || 'all'}`}>
+            {product.stage ? (product.stage.charAt(0).toUpperCase() + product.stage.slice(1)) : 'Products'}
+          </Link>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="9 18 15 12 9 6" />
           </svg>
@@ -172,7 +210,7 @@ const PDP = () => {
           <div className="pdp__gallery">
             <div className="pdp__main-image">
               {/* Localized Shimmer Overlay */}
-              {!loadedImages[activeImageIndex] && (
+              {!loadedImages[activeImageIndex] && displayImages[activeImageIndex] !== 'placeholder' && (
                 <div className="skeleton-shimmer" style={{
                   position: 'absolute',
                   top: 0,
@@ -185,7 +223,7 @@ const PDP = () => {
                 }} />
               )}
 
-              {imagesList.length > 1 && activeImageIndex > 0 && (
+              {displayImages.length > 1 && activeImageIndex > 0 && (
                 <Button
                   variant="ghost"
                   className="pdp__carousel-arrow pdp__carousel-arrow--left"
@@ -203,24 +241,31 @@ const PDP = () => {
                 className="pdp__carousel-track"
                 style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
               >
-                {imagesList.map((imgUrl, idx) => (
+                {displayImages.map((imgUrl, idx) => (
                   <div className="pdp__carousel-slide" key={idx}>
-                    <img
-                      src={imgUrl}
-                      alt={`${product.name} view ${idx + 1}`}
-                      onLoad={() => setLoadedImages(prev => ({ ...prev, [idx]: true }))}
-                    />
+                    {imgUrl === 'placeholder' ? (
+                      <div style={{ width: '100%', height: '100%', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+                        <DefaultProductImage />
+                      </div>
+                    ) : (
+                      <img
+                        src={imgUrl}
+                        alt={`${product.name} view ${idx + 1}`}
+                        onLoad={() => setLoadedImages(prev => ({ ...prev, [idx]: true }))}
+                        onError={() => setLoadedImages(prev => ({ ...prev, [idx]: true }))}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
 
-              {imagesList.length > 1 && activeImageIndex < imagesList.length - 1 && (
+              {displayImages.length > 1 && activeImageIndex < displayImages.length - 1 && (
                 <Button
                   variant="ghost"
                   className="pdp__carousel-arrow pdp__carousel-arrow--right"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setActiveImageIndex(prev => Math.min(imagesList.length - 1, prev + 1));
+                    setActiveImageIndex(prev => Math.min(displayImages.length - 1, prev + 1));
                   }}
                   aria-label="Next image"
                   style={{ zIndex: 3 }}
@@ -230,13 +275,19 @@ const PDP = () => {
             </div>
 
             <div className="pdp__thumbnails">
-              {imagesList.map((imgUrl, idx) => (
+              {displayImages.length > 1 && displayImages.map((imgUrl, idx) => (
                 <div
                   key={idx}
                   className={`pdp__thumbnail ${activeImageIndex === idx ? 'is-active' : ''}`}
                   onClick={() => setActiveImageIndex(idx)}
                 >
-                  <img src={imgUrl} alt={`${product.name} view ${idx + 1}`} />
+                  {imgUrl === 'placeholder' ? (
+                    <div style={{ width: '100%', height: '100%', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                      <DefaultProductImage />
+                    </div>
+                  ) : (
+                    <img src={imgUrl} alt={`${product.name} view ${idx + 1}`} />
+                  )}
                 </div>
               ))}
             </div>
@@ -401,21 +452,24 @@ const PDP = () => {
             className={`pdp__tab ${activeTab === 'details' ? 'is-active' : ''}`}
             onClick={() => setActiveTab('details')}
           >
-            Description
+            <FileText className={`pdp__tab-icon ${activeTab === 'details' ? 'is-active' : ''}`} />
+            <span>Description</span>
           </Button>
           <Button
             variant={activeTab === 'specs' ? 'primary' : 'ghost'}
             className={`pdp__tab ${activeTab === 'specs' ? 'is-active' : ''}`}
             onClick={() => setActiveTab('specs')}
           >
-            Specifications
+            <ClipboardList className={`pdp__tab-icon ${activeTab === 'specs' ? 'is-active' : ''}`} />
+            <span>Specifications</span>
           </Button>
           <Button
             variant={activeTab === 'reviews' ? 'primary' : 'ghost'}
-            className={`pdp__tab ${activeTab === 'reviews' ? 'is-active' : ''}`}
+            className={`pdp__tab pdp__tab--reviews ${activeTab === 'reviews' ? 'is-active' : ''}`}
             onClick={() => setActiveTab('reviews')}
           >
-            Reviews ({reviews?.length || 0})
+            <MessageSquare className={`pdp__tab-icon ${activeTab === 'reviews' ? 'is-active' : ''}`} />
+            <span>Reviews ({reviews?.length || 0})</span>
           </Button>
         </div>
 
@@ -446,41 +500,26 @@ const PDP = () => {
             </div>
           )}
 
-          {activeTab === 'reviews' && (
-            <div className="pdp__reviews">
-              {reviews && reviews.length > 0 ? (
-                reviews.map((review, idx) => (
-                  <Card key={idx} variant="default" hasShadow={false} className="review-card">
-                    <Card.Header className="review-header">
-                      <div className="review-rating">
-                        {[...Array(5)].map((_, i) => (
-                          <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill={i < review.rating ? "currentColor" : "none"} stroke="currentColor">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                          </svg>
-                        ))}
-                      </div>
-                      {review.childAge && <span className="review-age">Child: {review.childAge}</span>}
-                    </Card.Header>
-                    <Card.Body>
-                      <p className="review-text">"{review.text}"</p>
-                      <span className="review-author">— {review.author}</span>
-                    </Card.Body>
-                  </Card>
-                ))
-              ) : (
-                <p className="no-reviews-text" style={{ textAlign: 'center', padding: 'var(--space-10) 0', color: 'var(--text-secondary)' }}>
-                  No reviews yet for this product. Be the first to leave one!
-                </p>
-              )}
-            </div>
-          )}
+          {activeTab === 'reviews' && renderReviewsList()}
         </div>
+      </Page.Section>
+
+      {/* Mobile Reviews Section (only visible on mobile, positioned below the tabs) */}
+      <Page.Section className="pdp__mobile-reviews">
+        <h3 className="pdp__mobile-reviews-title">Reviews ({reviews?.length || 0})</h3>
+        {renderReviewsList()}
       </Page.Section>
 
       <Toast
         isOpen={showToast}
         message={toastMessage}
         onClose={() => setShowToast(false)}
+      />
+
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        orderItems={[product]}
       />
     </Page>
   );

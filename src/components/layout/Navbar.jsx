@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MegaMenu from './MegaMenu';
 import OnboardingModal from '../ui/OnboardingModal';
-import CartModal from '../ui/CartModal';
+import CartModal from '../products/CartModal';
 import { useUser } from '../../context/UserContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';

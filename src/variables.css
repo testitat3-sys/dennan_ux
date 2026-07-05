@@ -1,3 +1,27 @@
+@font-face {
+  font-family: 'Trimen Drawing Demo';
+  src: url('/fonts/Trimen Drawing Demo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Antipasto';
+  src: url('/fonts/Antipasto_regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Antipasto ExtraBold';
+  src: url('/fonts/Antipasto_extrabold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* ─── Colors ────────────────────────────────────────────────────── */
   --color-brand-primary: #d35097;
@@ -26,8 +50,9 @@
   --surface-container-highest: #e5e0db;
 
   /* ─── Typography ────────────────────────────────────────────────── */
-  --font-editorial: 'Newsreader', serif;
-  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-editorial: 'Trimen Drawing Demo', sans-serif;
+  --font-sans: 'Antipasto', sans-serif;
+  --font-body-heavy: 'Antipasto ExtraBold', sans-serif;
 
   /* Display - High Impact */
   --display-sm: 5rem;     /* 80px */

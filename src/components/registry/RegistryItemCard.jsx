@@ -3,6 +3,7 @@ import { formatPrice } from '../../utils/priceUtils';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import { Trash2, ShoppingBag, Gift } from 'lucide-react';
+import DefaultProductImage from '../products/DefaultProductImage';
 import './RegistryItemCard.css';
 
 const RegistryItemCard = ({ item, viewMode, onBuy, onContribute, onRemove }) => {
@@ -94,8 +95,12 @@ const RegistryItemCard = ({ item, viewMode, onBuy, onContribute, onRemove }) => 
             <div style={{ width: '100%', height: '100%', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {renderPackagingPreview()}
             </div>
-          ) : (
+          ) : item.image ? (
             <img src={item.image} alt={item.name} className="item-image" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%' }}>
+              <DefaultProductImage />
+            </div>
           )}
           
           {isPurchased && (

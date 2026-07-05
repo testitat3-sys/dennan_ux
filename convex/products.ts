@@ -227,6 +227,16 @@ async function upsertSingleProduct(ctx: any, fields: any) {
   }
 }
 
+export const ONLY_FETCH_ACTUAL_DATA = true;
+
+export function shouldKeepProduct(product: any): boolean {
+  if (!product) return false;
+  if (ONLY_FETCH_ACTUAL_DATA && product.actual_data !== true) {
+    return false;
+  }
+  return true;
+}
+
 // Centrally resolves active product selling price at runtime
 export function normalizeProductPrice(product: any): any {
   if (!product) return product;

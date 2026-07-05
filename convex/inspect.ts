@@ -9,3 +9,24 @@ export const getEnv = query({
     };
   },
 });
+
+export const checkProductDataStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    let actualCount = 0;
+    let legacyCount = 0;
+    for (const p of products) {
+      if (p.actual_data) {
+        actualCount++;
+      } else {
+        legacyCount++;
+      }
+    }
+    return {
+      total: products.length,
+      actual_data_true: actualCount,
+      actual_data_false: legacyCount,
+    };
+  },
+});

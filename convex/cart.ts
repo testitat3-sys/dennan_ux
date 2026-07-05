@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { normalizeProductPrice } from "./products";
+import { normalizeProductPrice, shouldKeepProduct } from "./products";
 
 export const getCartItems = query({
   args: {},
@@ -22,12 +22,12 @@ export const getCartItems = query({
         const product = await ctx.db.get(item.productId);
         return {
           ...item,
-          product: normalizeProductPrice(product),
+          product: shouldKeepProduct(product) ? normalizeProductPrice(product) : null,
         };
       })
     );
 
-    // Filter out items where the product was deleted
+    // Filter out items where the product was deleted or is legacy
     return hydratedCart.filter((item) => item.product !== null);
   },
 });
@@ -45,7 +45,7 @@ export const addToCart = mutation({
     }
 
     const product = await ctx.db.get(args.productId);
-    if (!product) {
+    if (!product || !shouldKeepProduct(product)) {
       throw new Error("Product not found");
     }
 
@@ -103,7 +103,7 @@ export const updateQuantity = mutation({
     }
 
     const product = await ctx.db.get(cartItem.productId);
-    if (!product) {
+    if (!product || !shouldKeepProduct(product)) {
        throw new Error("Product not found");
     }
 
@@ -154,8 +154,8 @@ export const mergeGuestCart = mutation({
 
     for (const guestItem of args.guestCartItems) {
       const product = await ctx.db.get(guestItem.productId);
-      if (!product || !product.isActive) {
-        continue; // Skip deleted or inactive products
+      if (!product || !product.isActive || !shouldKeepProduct(product)) {
+        continue; // Skip deleted, inactive, or non-actual products
       }
 
       let qtyToAdd = guestItem.quantity;
@@ -221,8 +221,10 @@ export const getGuestCartDetails = query({
       })
     );
 
-    // Filter out items where the product was deleted or is inactive
-    return hydratedCart.filter((item) => item.product !== null && item.product.isActive);
+    // Filter out items where the product was deleted, is inactive, or is not actual data
+    return hydratedCart.filter(
+      (item) => item.product !== null && item.product.isActive && shouldKeepProduct(item.product)
+    );
   },
 });
 

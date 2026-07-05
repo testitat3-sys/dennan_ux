@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation } from 'convex/react';
+import { useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { X, UserRound, EyeOff } from 'lucide-react';
 import Button from '../ui/Button';
@@ -10,11 +10,12 @@ import './ContributionModal.css';
 const MIN_AMOUNT = 5000;
 const MAX_AMOUNT = 500000;
 
-const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => {
-  const addContribution = useMutation(api.registry.addContribution);
+const ContributionModal = ({ item, registryId, isOpen, onClose, onPaymentInitiated }) => {
+  const initiateContributionPayment = useAction(api.registryPesapal.initiateContributionPayment);
 
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('');
   const [amountError, setAmountError] = useState('');
 
@@ -45,6 +46,7 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
         setIsMounted(false);
         // Reset form
         setName('');
+        setEmail('');
         setAmount('');
         setAmountError('');
         setMomoPhone('');
@@ -65,6 +67,7 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
   }, [item, isOpen]);
 
   // ── Derived values ──────────────────────────────────────────────────────
+  const isVirtualPackaging = item?.productId === 'virtual-packaging';
   const totalContributed = (item?.contributions || []).reduce(
     (acc, c) => acc + c.amount, 0
   );
@@ -72,6 +75,70 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
   const progressPercent = item ? Math.min(
     Math.round((totalContributed / item.price) * 100) || 0, 100
   ) : 0;
+
+  const renderPackagingPreview = () => {
+    const patternType = item?.patternType || 'stripe';
+    const color = item?.colorCode || 'pink';
+    const colorHex = {
+      pink: '#d35097',
+      blue: '#4dbee3',
+      green: '#7fa93e',
+      gold: '#e1d328',
+      anchor: '#111111'
+    }[color] || '#d35097';
+
+    const patternId = `contribution-modal-pattern-${patternType}-${color}`;
+
+    let patternSVG = null;
+    switch (patternType) {
+      case 'stripe':
+        patternSVG = (
+          <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="20" height="20" fill="#fdfdfd" />
+            <line x1="0" y1="0" x2="0" y2="20" stroke={colorHex} strokeWidth="8" />
+            <line x1="0" y1="0" x2="0" y2="20" stroke="#ffffff" strokeWidth="2" />
+          </pattern>
+        );
+        break;
+      case 'dots':
+        patternSVG = (
+          <pattern id={patternId} width="24" height="24" patternUnits="userSpaceOnUse">
+            <rect width="24" height="24" fill="#fdfdfd" />
+            <circle cx="12" cy="12" r="5" fill={colorHex} />
+          </pattern>
+        );
+        break;
+      case 'grid':
+        patternSVG = (
+          <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+            <rect width="20" height="20" fill="#fdfdfd" />
+            <rect width="20" height="20" fill="none" stroke={colorHex} strokeWidth="3" />
+          </pattern>
+        );
+        break;
+      case 'chevron':
+        patternSVG = (
+          <pattern id={patternId} width="24" height="24" patternUnits="userSpaceOnUse">
+            <rect width="24" height="24" fill="#fdfdfd" />
+            <path d="M0 12 L12 0 L24 12 L12 24 Z" fill="none" stroke={colorHex} strokeWidth="3" />
+          </pattern>
+        );
+        break;
+      default:
+        patternSVG = (
+          <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+            <rect width="20" height="20" fill={colorHex} />
+          </pattern>
+        );
+    }
+
+    return (
+      <svg viewBox="0 0 200 200" style={{ width: '100%', height: '100%', display: 'block' }}>
+        <defs>{patternSVG}</defs>
+        <rect x="40" y="40" width="120" height="120" rx="12" ry="12" fill={`url(#${patternId})`} stroke="rgba(0,0,0,0.08)" strokeWidth="1.5" />
+      </svg>
+    );
+  };
 
   // ── Validation ──────────────────────────────────────────────────────────
   const validateAmount = (val) => {
@@ -117,25 +184,29 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
       ? (!isNaN(num) && num === item.price)
       : (!isNaN(num) && num >= MIN_AMOUNT && num <= MAX_AMOUNT && num <= remaining);
     const nameOk = isAnonymous || name.trim().length > 0;
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
     const paymentOk = isValidPhone;
-    return amtOk && nameOk && paymentOk;
+    return amtOk && nameOk && emailOk && paymentOk;
   };
 
   const handleConfirm = async () => {
     if (!isFormValid()) return;
     setLoading(true);
     try {
-      await addContribution({
+      const { redirectUrl, paymentId } = await initiateContributionPayment({
         registryId,
         productId: item.productId,
         contributorName: isAnonymous ? 'Anonymous' : name.trim(),
+        contributorEmail: email.trim(),
+        contributorPhone: `256${momoPhone.replace(/\s+/g, '')}`,
         amount: parseFloat(amount),
+        frontendUrl: window.location.origin,
       });
-      onSuccess && onSuccess(item, parseFloat(amount));
+      onPaymentInitiated && onPaymentInitiated({ redirectUrl, paymentId, item, amount: parseFloat(amount) });
       onClose();
     } catch (err) {
-      console.error('[ContributionModal] addContribution error:', err);
-      setToastMsg('Failed to process contribution. Please try again.');
+      console.error('[ContributionModal] initiateContributionPayment error:', err);
+      setToastMsg('Failed to start payment. Please try again.');
       setToastOpen(true);
     } finally {
       setLoading(false);
@@ -235,35 +306,43 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onSuccess }) => 
             </div>
           )}
 
+          {/* Email field */}
+          <div className="contribution-field">
+            <label className="contribution-label">Your Email</label>
+            <input
+              className="contribution-input"
+              type="email"
+              placeholder="e.g. grandma.betty@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+            />
+          </div>
+
           {/* Amount field */}
-          {(() => {
-            const isVirtualPackaging = item?.productId === 'virtual-packaging';
-            return (
-              <div className="contribution-field">
-                <label className="contribution-label">
-                  {isVirtualPackaging ? "Amount (Fixed for Packaging)" : "Amount (UGX) — Min 5,000 / Max 500,000"}
-                </label>
-                <input
-                  className="contribution-input"
-                  type="number"
-                  placeholder="Enter amount"
-                  min={MIN_AMOUNT}
-                  max={Math.min(MAX_AMOUNT, remaining)}
-                  value={amount}
-                  onChange={handleAmountChange}
-                  disabled={isVirtualPackaging}
-                  readOnly={isVirtualPackaging}
-                  style={{ 
-                    backgroundColor: isVirtualPackaging ? 'var(--surface-container-low)' : 'transparent', 
-                    cursor: isVirtualPackaging ? 'not-allowed' : 'text' 
-                  }}
-                />
-                {amountError && (
-                  <span className="contribution-input-error">{amountError}</span>
-                )}
-              </div>
-            );
-          })()}
+          <div className="contribution-field">
+            <label className="contribution-label">
+              {isVirtualPackaging ? "Amount (Fixed for Packaging)" : "Amount (UGX) — Min 5,000 / Max 500,000"}
+            </label>
+            <input
+              className="contribution-input"
+              type="number"
+              placeholder="Enter amount"
+              min={MIN_AMOUNT}
+              max={Math.min(MAX_AMOUNT, remaining)}
+              value={amount}
+              onChange={handleAmountChange}
+              disabled={isVirtualPackaging}
+              readOnly={isVirtualPackaging}
+              style={{
+                backgroundColor: isVirtualPackaging ? 'var(--surface-container-low)' : 'transparent',
+                cursor: isVirtualPackaging ? 'not-allowed' : 'text'
+              }}
+            />
+            {amountError && (
+              <span className="contribution-input-error">{amountError}</span>
+            )}
+          </div>
 
           {/* Payment Details */}
           <div className="payment-section">

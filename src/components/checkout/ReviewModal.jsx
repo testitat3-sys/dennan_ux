@@ -3,6 +3,7 @@ import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import Button from '../ui/Button';
 import Text from '../ui/Text';
+import DefaultProductImage from '../products/DefaultProductImage';
 import './ReviewModal.css';
 
 const ReviewModal = ({ isOpen, onClose, orderItems = [], user }) => {
@@ -193,7 +194,11 @@ const ReviewModal = ({ isOpen, onClose, orderItems = [], user }) => {
               {/* Product Preview Header */}
               <div className="review-product-preview">
                 <div className="product-preview__thumbnail">
-                  <img src={selectedItem.image} alt={selectedItem.productName || selectedItem.name} />
+                  {selectedItem.image ? (
+                    <img src={selectedItem.image} alt={selectedItem.productName || selectedItem.name} />
+                  ) : (
+                    <DefaultProductImage />
+                  )}
                 </div>
                 <div className="product-preview__info">
                   <Text role="label-sm" as="span" color="brand-primary" className="product-preview__stage">
@@ -339,7 +344,11 @@ const ReviewModal = ({ isOpen, onClose, orderItems = [], user }) => {
                       onClick={() => !isReviewed && setSelectedItem(item)}
                     >
                       <div className="select-product-card__thumbnail">
-                        <img src={item.image} alt={item.productName || item.name} />
+                        {item.image ? (
+                          <img src={item.image} alt={item.productName || item.name} />
+                        ) : (
+                          <DefaultProductImage />
+                        )}
                       </div>
                       <div className="select-product-card__info">
                         <Text role="label-sm" as="span" color="secondary" className="select-product-card__stage">

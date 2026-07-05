@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import './ProductSection.css';
-import ProductCard from '../ui/ProductCard';
+import ProductCard from '../products/ProductCard';
 import CardGrid from '../ui/CardGrid';
 import Text from '../ui/Text';
 

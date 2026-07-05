@@ -40,8 +40,8 @@ const RegistryHeader = ({
     >
       <div className="registry-header__main">
         <Card.Header>
-          <span className="label-md registry-header__eyebrow">Registry</span>
-          <h1>{profile?.eventType ? `${profile.eventType} Registry` : 'Baby Registry'}</h1>
+          <span className="label-md registry-header__eyebrow">Gifting</span>
+          <h1>{profile?.eventType ? `${profile.eventType} Gifting` : "Baby's Gifting"}</h1>
         </Card.Header>
         <Card.Actions>
           {onAddFromCart && (

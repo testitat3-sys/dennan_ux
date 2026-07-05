@@ -1,0 +1,246 @@
+.product-card {
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s, box-shadow 0.25s, filter 0.25s, opacity 0.25s;
+  position: relative;
+  box-shadow: var(--shadow-ambient);
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-deep);
+}
+
+/* Out-of-stock whole-card treatment */
+.product-card.is-out-of-stock {
+  filter: grayscale(0.55);
+  opacity: 0.82;
+}
+.product-card.is-out-of-stock:hover {
+  transform: none;
+  box-shadow: var(--shadow-ambient);
+}
+
+.card-image {
+  aspect-ratio: 1;
+  background: var(--surface-container);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-image-el {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: var(--space-4);
+  transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.product-card:hover .card-image-el {
+  transform: scale(1.08);
+}
+
+/* Variant gradient backgrounds, keyed off a stable pseudo-index derived from product id */
+.product-card.variant-0 .card-image { background: linear-gradient(145deg, color-mix(in srgb, var(--color-brand-primary), transparent 85%), var(--surface-container-low)); }
+.product-card.variant-1 .card-image { background: linear-gradient(145deg, color-mix(in srgb, var(--color-support-blue), transparent 85%), var(--surface-container-low)); }
+.product-card.variant-2 .card-image { background: linear-gradient(145deg, color-mix(in srgb, var(--color-support-green), transparent 85%), var(--surface-container-low)); }
+.product-card.variant-3 .card-image { background: linear-gradient(145deg, color-mix(in srgb, var(--color-brand-primary), transparent 90%), color-mix(in srgb, var(--color-support-blue), transparent 90%)); }
+
+/* Legacy variant-prop backgrounds (kept for any data still using the "variant" field) */
+.product-card--p1 .card-image { background: linear-gradient(145deg, color-mix(in srgb, var(--color-brand-primary), transparent 85%), var(--surface-container-low)); }
+.product-card--p2 .card-image { background: linear-gradient(145deg, color-mix(in srgb, var(--color-support-blue), transparent 85%), var(--surface-container-low)); }
+.product-card--p3 .card-image { background: linear-gradient(145deg, color-mix(in srgb, var(--color-support-green), transparent 85%), var(--surface-container-low)); }
+.product-card--p4 .card-image { background: linear-gradient(145deg, color-mix(in srgb, var(--color-brand-primary), transparent 90%), color-mix(in srgb, var(--color-support-blue), transparent 90%)); }
+
+/* Tags overlay top-left */
+.card-tags {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  z-index: 10;
+}
+.tag--badge {
+  background: rgba(255,255,255,0.9);
+  color: var(--text-primary);
+}
+
+/* Badges overlay top-right */
+.card-badges-right {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1-5);
+  z-index: 10;
+}
+.card-discount-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-support-blue);
+  color: var(--color-on-primary);
+  box-shadow: 0 2px 8px rgba(17,17,17,0.08);
+}
+.discount-small {
+  font-size: 0.78em;
+  font-weight: 600;
+  opacity: 0.85;
+  letter-spacing: 0.02em;
+}
+.card-stock-pill {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(17,17,17,0.18);
+  pointer-events: none;
+}
+.card-stock-pill--oos {
+  background: rgba(20, 20, 20, 0.82);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.card-stock-pill--low {
+  background: #f59e0b;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Persistent wishlist icon button, restyled into the corner badge stack */
+.card-wishlist-icon {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  box-shadow: 0 2px 8px rgba(17,17,17,0.12);
+  padding: 0;
+}
+.card-wishlist-icon:hover {
+  background: rgba(255,255,255,1);
+  color: var(--text-primary);
+}
+
+.card-info {
+  padding: var(--space-4) var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+.card-tier {
+  font-size: var(--label-md);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.card-name {
+  font-family: var(--font-sans);
+  font-size: var(--title-sm);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+.card-price {
+  font-family: var(--font-editorial);
+  font-size: var(--title-sm);
+  font-weight: 400;
+  color: var(--text-primary);
+}
+.card-price-was {
+  font-size: var(--body-xs);
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+.price-small-digits {
+  font-size: 0.78em;
+  opacity: 0.85;
+  font-weight: 500;
+  vertical-align: baseline;
+  letter-spacing: -0.01em;
+}
+/* Card Fade-in Transition */
+@keyframes productCardFadeIn {
+  from {
+    opacity: 0.4;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.product-card--loaded {
+  animation: productCardFadeIn 0.35s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+}
+
+/* ─── PRODUCT TAGS ───────────────────────────────────────────────── */
+.tag {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  width: fit-content;
+  box-shadow: 0 2px 8px rgba(17,17,17,0.08);
+}
+.tag--primary {
+  background: var(--color-brand-primary);
+  color: var(--color-on-primary);
+}
+.tag--secondary {
+  background: var(--color-brand-secondary);
+  color: var(--color-on-primary);
+}
+.tag--accent {
+  background: var(--color-brand-accent);
+  color: var(--color-on-primary);
+}
+.tag--support-green {
+  background: var(--color-support-green);
+  color: var(--color-on-primary);
+}
+.tag--support-blue {
+  background: var(--color-support-blue);
+  color: var(--color-on-primary);
+}
+.tag--support-red {
+  background: var(--color-support-red);
+  color: var(--color-on-primary);
+}
+.tag--sales {
+  background: var(--color-brand-primary-dark);
+  color: var(--color-on-primary);
+}

@@ -15,11 +15,10 @@ import Card from '../components/ui/Card';
 import CardGrid from '../components/ui/CardGrid';
 
 import PredictiveFeed from '../components/dashboard/PredictiveFeed';
-import QuickViewModal from '../components/ui/QuickViewModal';
+import QuickViewModal from '../components/products/QuickViewModal';
 import Toast from '../components/ui/Toast';
 
 import { getDashboardData } from '../services/api';
-import { useRegistry } from '../context/RegistryContext';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -28,7 +27,6 @@ const Dashboard = () => {
   const { signOut } = useAuthActions();
   const navigate = useNavigate();
 
-  const { registryItems, loading: registryLoading } = useRegistry();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -70,63 +68,6 @@ const Dashboard = () => {
 
   const hasName = convexUser?.name || convexUser?.username;
   const collectionTitle = hasName ? `The ${hasName} Collection.` : "Your Collection.";
-
-  // Extract communal gift contributions
-  const contributionsList = [];
-  if (registryItems) {
-    registryItems.forEach(item => {
-      const itemId = item._id || item.id || item.productId;
-      if (item.contributions && item.contributions.length > 0) {
-        item.contributions.forEach(contrib => {
-          contributionsList.push({
-            id: `${itemId}-${contrib.name}`,
-            contributor: contrib.name,
-            amount: contrib.amount,
-            itemName: item.name,
-            itemImage: item.image,
-            status: `Contributed UGX ${contrib.amount.toLocaleString()} towards ${item.name}`,
-            saffronDot: true
-          });
-        });
-      } else if (item.status === 'purchased' && item.purchasedBy) {
-        contributionsList.push({
-          id: `${itemId}-purchased`,
-          contributor: item.purchasedBy.name,
-          itemName: item.name,
-          itemImage: item.image,
-          status: `Fully gifted: ${item.name}`,
-          saffronDot: false
-        });
-      }
-    });
-  }
-
-  const displayContributions = contributionsList.length > 0 ? contributionsList.slice(0, 3) : [
-    {
-      id: "mock-1",
-      contributor: "Aunt Jane",
-      itemName: "SnüzPod 4 Bedside Crib",
-      itemImage: "/new_assets/SnüzPod 4 Bedside Crib - White.jfif",
-      status: "Contributed UGX 250,000 to SnüzPod 4 Bedside Crib",
-      saffronDot: true
-    },
-    {
-      id: "mock-2",
-      contributor: "Emma Wilson",
-      itemName: "Skip Hop Forma Backpack",
-      itemImage: "/new_assets/Skip Hop Forma Backpack Nappy Bag.jfif",
-      status: "Fully gifted: Skip Hop Forma Backpack",
-      saffronDot: false
-    },
-    {
-      id: "mock-3",
-      contributor: "Mike & Sarah",
-      itemName: "Closer to Nature Baby Bottles",
-      itemImage: "/new_assets/Tommee Tippee Closer to Nature Starter Set.jfif",
-      status: "Contributed UGX 100,000 to Closer to Nature Bottles",
-      saffronDot: true
-    }
-  ];
 
   // StageTile mock structure matching user stage parameters
   const activeStageTileData = stageInfo ? {
@@ -326,31 +267,6 @@ const Dashboard = () => {
                   </Card>
                 </div>
               </div>
-            </Page.Section>
-
-            {/* 4. Contribution & Gift Activity (Layer 2 Container) */}
-            <Page.Section>
-              <Card variant="section" hasBorder={false} className="gift-activity-module" style={{ backgroundColor: 'var(--surface-container)' }}>
-                <Card.Header className="gift-activity-header" layout="horizontal" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h2 className="gift-activity-header__title">Registry Contribution Tracker</h2>
-                  <span className="gift-activity-header__stat">Active Communal Gifting</span>
-                </Card.Header>
-                
-                <Card.Body>
-                  <CardGrid columns="auto" gap="default" className="gift-activity-grid">
-                    {displayContributions.map(contrib => (
-                      <Card key={contrib.id} className="gift-activity-card" variant="compact" layout="horizontal" style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        {contrib.saffronDot && <div className="gift-activity-card__saffron-dot"></div>}
-                        <img src={contrib.itemImage} alt={contrib.itemName} className="gift-activity-card__image" />
-                        <Card.Body className="gift-activity-card__content">
-                          <span className="gift-activity-card__contributor">{contrib.contributor}</span>
-                          <span className="gift-activity-card__status">{contrib.status}</span>
-                        </Card.Body>
-                      </Card>
-                    ))}
-                  </CardGrid>
-                </Card.Body>
-              </Card>
             </Page.Section>
 
             {/* Stage Checklist Section removed for streamlined overview */}

@@ -81,6 +81,228 @@ http.route({
 });
 
 http.route({
+  path: "/api/pesapal/ipn",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const url = new URL(req.url);
+    const orderTrackingId = url.searchParams.get("OrderTrackingId");
+    const orderMerchantReference = url.searchParams.get("OrderMerchantReference");
+    const frontendUrl = url.searchParams.get("frontendUrl") || "";
+
+    if (!orderTrackingId || !orderMerchantReference) {
+      return new Response("Missing parameters", { status: 400 });
+    }
+
+    try {
+      const statusData = await ctx.runAction(internal.pesapal.getTransactionStatus, {
+        orderTrackingId,
+      });
+
+      const statusDesc = statusData.payment_status_description?.toUpperCase() || "";
+      let newStatus: "preparing" | "failed" | null = null;
+      if (statusDesc === "COMPLETED") {
+        newStatus = "preparing";
+      } else if (statusDesc === "FAILED" || statusDesc === "INVALID") {
+        newStatus = "failed";
+      }
+
+      if (newStatus) {
+        await ctx.runMutation(internal.orders.updateOrderStatus, {
+          orderId: orderMerchantReference as any,
+          status: newStatus,
+        });
+      }
+    } catch (error) {
+      console.error("[convex/http.ts] Pesapal GET IPN status check failed:", error);
+    }
+
+    const callbackParams = new URLSearchParams({
+      OrderTrackingId: orderTrackingId,
+      OrderMerchantReference: orderMerchantReference,
+    });
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: `${frontendUrl}/checkout/callback?${callbackParams.toString()}`,
+      },
+    });
+  }),
+});
+
+http.route({
+  path: "/api/pesapal/status",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const url = new URL(req.url);
+    const orderId = url.searchParams.get("orderId");
+    if (!orderId) {
+      return new Response(JSON.stringify({ error: "Missing orderId" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      });
+    }
+
+    const result = await ctx.runQuery(internal.orders.getOrderStatusById, {
+      orderId: orderId as any,
+    });
+
+    return new Response(JSON.stringify({ status: result?.status ?? null }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }),
+});
+
+http.route({
+  path: "/api/pesapal/status",
+  method: "OPTIONS",
+  handler: httpAction(async () => {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }),
+});
+
+http.route({
+  path: "/api/pesapal/contribution-ipn",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    try {
+      const url = new URL(req.url);
+      const searchParams = url.searchParams;
+
+      let orderTrackingId = searchParams.get("OrderTrackingId");
+      let orderMerchantReference = searchParams.get("OrderMerchantReference");
+
+      try {
+        const body = await req.json();
+        if (body.OrderTrackingId) orderTrackingId = body.OrderTrackingId;
+        if (body.OrderMerchantReference) orderMerchantReference = body.OrderMerchantReference;
+      } catch (e) {
+        // ignore JSON parse error, might be form data or just query params
+      }
+
+      console.log(`[convex/http.ts] Pesapal contribution IPN received for tracking ID: ${orderTrackingId}`);
+
+      if (!orderTrackingId || !orderMerchantReference) {
+        return new Response("Missing parameters", { status: 400 });
+      }
+
+      const statusData = await ctx.runAction(internal.pesapal.getTransactionStatus, {
+        orderTrackingId: orderTrackingId as string,
+      });
+
+      const statusDesc = statusData.payment_status_description?.toUpperCase() || "";
+
+      if (statusDesc === "COMPLETED") {
+        await ctx.runMutation(internal.registry.completeContributionPayment, {
+          paymentId: orderMerchantReference as any,
+        });
+      } else if (statusDesc === "FAILED" || statusDesc === "INVALID") {
+        await ctx.runMutation(internal.registry.failContributionPayment, {
+          paymentId: orderMerchantReference as any,
+        });
+      }
+
+      return new Response(JSON.stringify({ status: "success" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      console.error("[convex/http.ts] Pesapal contribution IPN Error:", error);
+      return new Response("Internal Server Error", { status: 500 });
+    }
+  }),
+});
+
+http.route({
+  path: "/api/pesapal/contribution-ipn",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const url = new URL(req.url);
+    const orderTrackingId = url.searchParams.get("OrderTrackingId");
+    const orderMerchantReference = url.searchParams.get("OrderMerchantReference");
+    const frontendUrl = url.searchParams.get("frontendUrl") || "";
+    const registryId = url.searchParams.get("registryId") || "";
+
+    if (!orderTrackingId || !orderMerchantReference) {
+      return new Response("Missing parameters", { status: 400 });
+    }
+
+    try {
+      const statusData = await ctx.runAction(internal.pesapal.getTransactionStatus, {
+        orderTrackingId,
+      });
+
+      const statusDesc = statusData.payment_status_description?.toUpperCase() || "";
+
+      if (statusDesc === "COMPLETED") {
+        await ctx.runMutation(internal.registry.completeContributionPayment, {
+          paymentId: orderMerchantReference as any,
+        });
+      } else if (statusDesc === "FAILED" || statusDesc === "INVALID") {
+        await ctx.runMutation(internal.registry.failContributionPayment, {
+          paymentId: orderMerchantReference as any,
+        });
+      }
+    } catch (error) {
+      console.error("[convex/http.ts] Pesapal contribution GET IPN status check failed:", error);
+    }
+
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: `${frontendUrl}/registry/${registryId}`,
+      },
+    });
+  }),
+});
+
+http.route({
+  path: "/api/pesapal/contribution-status",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const url = new URL(req.url);
+    const paymentId = url.searchParams.get("paymentId");
+    if (!paymentId) {
+      return new Response(JSON.stringify({ error: "Missing paymentId" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      });
+    }
+
+    const result = await ctx.runQuery(internal.registry.getPendingContributionPayment, {
+      paymentId: paymentId as any,
+    });
+
+    return new Response(JSON.stringify({ status: result?.status ?? null }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }),
+});
+
+http.route({
+  path: "/api/pesapal/contribution-status",
+  method: "OPTIONS",
+  handler: httpAction(async () => {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }),
+});
+
+http.route({
   path: "/api/webhooks/products",
   method: "POST",
   handler: httpAction(async (ctx, req) => {

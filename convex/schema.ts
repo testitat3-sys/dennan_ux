@@ -152,15 +152,17 @@ export default defineSchema({
     /** Taxonomy & Merchandising */
     stage: v.optional(v.union(v.literal("mother"), v.literal("newborn"), v.literal("kid"))),
     tier: v.optional(v.union(v.literal("essentials"), v.literal("musthaves"), v.literal("luxuries"))),
-    category: v.union(
-      v.literal("Expectant and New Mom Essentials"),
-      v.literal("Newborn Essentials & Kids Apparel/Footwear"),
-      v.literal("Nursery and Furnishing"),
-      v.literal("Feeding/Nursing Essentials"),
-      v.literal("Bathing and Changing"),
-      v.literal("Baby Play and Safety Gear"),
-      v.literal("Travel Must-Haves")
-    ), // Now strictly limited to union in Phase 3
+    category: v.optional(
+      v.union(
+        v.literal("Expectant and New Mom Essentials"),
+        v.literal("Newborn Essentials & Kids Apparel/Footwear"),
+        v.literal("Nursery and Furnishing"),
+        v.literal("Feeding/Nursing Essentials"),
+        v.literal("Bathing and Changing"),
+        v.literal("Baby Play and Safety Gear"),
+        v.literal("Travel Must-Haves")
+      )
+    ), // Now strictly limited to union in Phase 3 and optional
     subCategory: v.optional(v.string()),
     targetGender: v.optional(v.union(v.literal("boy"), v.literal("girl"), v.literal("unisex"))),
 
@@ -456,9 +458,28 @@ export default defineSchema({
       v.object({
         name: v.string(),
         date: v.string(),
+        email: v.optional(v.string()),
       })
     ),
   }).index("by_user", ["userId"]),
+
+  registryNotifySignups: defineTable({
+    userId: v.optional(v.id("users")),
+    email: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+    phone: v.string(),
+    stage: v.optional(
+      v.union(
+        v.literal("expectant"),
+        v.literal("newborn"),
+        v.literal("toddler"),
+        v.literal("not_a_mother")
+      )
+    ),
+    source: v.string(), // e.g. "registry_coming_soon"
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]).index("by_email", ["email"]),
 
   registryItems: defineTable({
     registryId: v.id("registries"),
@@ -471,6 +492,7 @@ export default defineSchema({
         name: v.string(),
         amount: v.number(),
         date: v.string(),
+        email: v.optional(v.string()),
       })
     ),
     purchasedBy: v.optional(
@@ -482,6 +504,21 @@ export default defineSchema({
   })
     .index("by_registry", ["registryId"])
     .index("by_registry_and_product", ["registryId", "productId"]),
+
+  registryContributionPayments: defineTable({
+    registryId: v.id("registries"),
+    /** Real product id (as a string) or the literal "virtual-packaging" */
+    productId: v.string(),
+    contributorName: v.string(),
+    contributorEmail: v.string(),
+    contributorPhone: v.string(),
+    amount: v.number(),
+    status: v.union(v.literal("pending"), v.literal("completed"), v.literal("failed")),
+    pesapalTrackingId: v.optional(v.string()),
+    pesapalMerchantReference: v.optional(v.string()),
+    pesapalRedirectUrl: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_registry", ["registryId"]),
 
   // ─── Homepage static elements ────────────────────────────────────────────────
   hero: defineTable({

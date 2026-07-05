@@ -6,8 +6,9 @@ import { Gift, CheckCircle } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Text from '../components/ui/Text';
-import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
+import ProductCardSkeleton from '../components/products/ProductCardSkeleton';
 import ContributionModal from '../components/registry/ContributionModal';
+import PesapalPaymentModal from '../components/checkout/PesapalPaymentModal';
 import Toast from '../components/ui/Toast';
 import './PublicRegistryPage.css';
 
@@ -25,6 +26,8 @@ const PublicRegistryPage = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showAllItems, setShowAllItems] = useState(false);
+  const [pendingPayment, setPendingPayment] = useState(null); // { redirectUrl, paymentId, item, amount }
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // Intelligently select the default item to contribute to when using the general contribute CTA
   const defaultContributeItem = useMemo(() => {
@@ -67,11 +70,27 @@ const PublicRegistryPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleContributionSuccess = (item, amount) => {
-    setToastMessage(
-      `UGX ${amount.toLocaleString()} contributed toward "${item.name}". Thank you!`
-    );
+  const handlePaymentInitiated = ({ redirectUrl, paymentId, item, amount }) => {
+    setPendingPayment({ redirectUrl, paymentId, item, amount });
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setIsPaymentModalOpen(false);
+    if (pendingPayment) {
+      setToastMessage(
+        `UGX ${pendingPayment.amount.toLocaleString()} contributed toward "${pendingPayment.item.name}". Thank you!`
+      );
+      setShowToast(true);
+    }
+    setPendingPayment(null);
+  };
+
+  const handlePaymentFailure = () => {
+    setIsPaymentModalOpen(false);
+    setToastMessage('Payment did not go through. Please try again.');
     setShowToast(true);
+    setPendingPayment(null);
   };
 
   // ── Loading state ─────────────────────────────────────────────────────────
@@ -358,7 +377,20 @@ const PublicRegistryPage = () => {
         registryId={profile.id}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={handleContributionSuccess}
+        onPaymentInitiated={handlePaymentInitiated}
+      />
+
+      {/* Pesapal Payment Modal */}
+      <PesapalPaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        redirectUrl={pendingPayment?.redirectUrl}
+        orderId={pendingPayment?.paymentId}
+        statusEndpoint="contribution-status?paymentId="
+        successStatuses={['completed']}
+        failureStatuses={['failed']}
+        onSuccess={handlePaymentSuccess}
+        onFailure={handlePaymentFailure}
       />
 
       {/* Toast */}

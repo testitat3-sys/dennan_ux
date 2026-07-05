@@ -1,0 +1,49 @@
+# Dependencies and Package Managers
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# Build Outputs (Vite and Production Bundles)
+dist/
+build/
+out/
+*.local
+
+# Convex Generated Files (Crucial for token saving)
+# This prevents Claude from reading massive auto-generated type definition files
+convex/_generated/
+
+# Logs and Debugging Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment and Secrets (Security)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Editor/OS Metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# PWA Assets and Large Media Binaries
+# Prevents Claude from tracking massive image directories or generated asset lists
+public/pwa-*.png
+public/android-chrome-*.png
+public/apple-touch-icon.png
+public/screenshots/
+src/assets/
+utils/clarity.js
+utils/googleAnalytics.js 
+utils/
+assets/
+scratch/

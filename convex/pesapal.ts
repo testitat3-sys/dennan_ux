@@ -3,14 +3,14 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-function getPesapalBaseUrl() {
+export function getPesapalBaseUrl() {
   const env = process.env.PESAPAL_ENV || "sandbox";
   return env === "production"
     ? "https://pay.pesapal.com/v3/api"
     : "https://cybqa.pesapal.com/pesapalv3/api";
 }
 
-async function getPesapalToken() {
+export async function getPesapalToken() {
   const consumerKey = process.env.PESAPAL_CONSUMER_KEY;
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
@@ -43,14 +43,14 @@ async function getPesapalToken() {
   return data.token;
 }
 
-async function registerIPN(token: string) {
+export async function registerIPN(token: string, ipnPath: string = "/api/pesapal/ipn") {
   // We use Convex's site URL for HTTP webhook endpoints
-  const siteUrl = process.env.VITE_CONVEX_SITE_URL || process.env.SITE_URL;
+  const siteUrl = process.env.CONVEX_SITE_URL;
   if (!siteUrl) {
-    throw new Error("VITE_CONVEX_SITE_URL or SITE_URL is not defined");
+    throw new Error("CONVEX_SITE_URL is not defined");
   }
-  
-  const ipnUrl = `${siteUrl}/api/pesapal/ipn`;
+
+  const ipnUrl = `${siteUrl}${ipnPath}`;
 
   const response = await fetch(`${getPesapalBaseUrl()}/URLSetup/RegisterIPN`, {
     method: "POST",
@@ -82,7 +82,7 @@ async function registerIPN(token: string) {
 export const initiatePayment = action({
   args: {
     orderId: v.id("orders"),
-    callbackUrl: v.string(),
+    frontendUrl: v.string(),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -107,7 +107,11 @@ export const initiatePayment = action({
     const ipnId = await registerIPN(token);
 
     // 5. Submit Order
-    const callbackUrl = args.callbackUrl;
+    const siteUrl = process.env.CONVEX_SITE_URL;
+    if (!siteUrl) {
+      throw new Error("CONVEX_SITE_URL is not defined");
+    }
+    const callbackUrl = `${siteUrl}/api/pesapal/ipn?frontendUrl=${encodeURIComponent(args.frontendUrl)}`;
 
     // Pesapal requires amounts in local currency, Uganda shillings typically don't have decimals, but pesapal expects a decimal amount.
     const amount = order.grandTotal;
@@ -119,6 +123,7 @@ export const initiatePayment = action({
       description: `Payment for order ${order._id}`,
       callback_url: callbackUrl,
       notification_id: ipnId,
+      redirect_mode: "TOP_WINDOW",
       billing_address: {
         email_address: user?.email || "customer@example.com",
         phone_number: order.momoPhone || "",

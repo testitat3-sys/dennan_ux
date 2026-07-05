@@ -1,7 +1,7 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { Doc } from "./_generated/dataModel";
-import { normalizeProductPrice } from "./products";
+import { normalizeProductPrice, shouldKeepProduct } from "./products";
 
 /**
  * Fetch a specific brand by its slug, along with all of its associated products.
@@ -27,9 +27,9 @@ export const getBrandBySlug = query({
       .withIndex("by_brand", (q) => q.eq("brand", brand.name))
       .collect();
 
-    // 3. Filter out inactive products in memory to avoid un-indexed database filtering
+    // 3. Filter out inactive/legacy products in memory to avoid un-indexed database filtering
     const activeProducts = products
-      .filter((p) => p.isActive !== false)
+      .filter((p) => p.isActive !== false && shouldKeepProduct(p))
       .map(normalizeProductPrice);
 
     return {

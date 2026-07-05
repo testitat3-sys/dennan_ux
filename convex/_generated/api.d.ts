@@ -22,7 +22,10 @@ import type * as orders from "../orders.js";
 import type * as pesapal from "../pesapal.js";
 import type * as products from "../products.js";
 import type * as registry from "../registry.js";
+import type * as registryPesapal from "../registryPesapal.js";
 import type * as seed from "../seed.js";
+import type * as seedCloseMatches from "../seedCloseMatches.js";
+import type * as seedProducts from "../seedProducts.js";
 import type * as users from "../users.js";
 import type * as wishlist from "../wishlist.js";
 
@@ -47,7 +50,10 @@ declare const fullApi: ApiFromModules<{
   pesapal: typeof pesapal;
   products: typeof products;
   registry: typeof registry;
+  registryPesapal: typeof registryPesapal;
   seed: typeof seed;
+  seedCloseMatches: typeof seedCloseMatches;
+  seedProducts: typeof seedProducts;
   users: typeof users;
   wishlist: typeof wishlist;
 }>;

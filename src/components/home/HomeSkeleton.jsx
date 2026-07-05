@@ -1,5 +1,5 @@
 import React from 'react';
-import ProductCardSkeleton from '../ui/ProductCardSkeleton';
+import ProductCardSkeleton from '../products/ProductCardSkeleton';
 import SearchStrip from './SearchStrip';
 import './HomeSkeleton.css';
 

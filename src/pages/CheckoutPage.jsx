@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useConvex, useQuery, useMutation, useConvexAuth, useAction } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import CheckoutStepper from '../components/checkout/CheckoutStepper';
@@ -6,6 +6,7 @@ import CheckoutSkeleton from '../components/checkout/CheckoutSkeleton';
 import LocationModal from '../components/checkout/LocationModal';
 import RiderTracking from '../components/checkout/RiderTracking';
 import ReviewModal from '../components/checkout/ReviewModal';
+import PesapalPaymentModal from '../components/checkout/PesapalPaymentModal';
 import Toast from '../components/ui/Toast';
 import { useCart } from '../context/CartContext';
 import { getKampalaETA } from '../utils/deliveryUtils';
@@ -15,6 +16,7 @@ import Button from '../components/ui/Button';
 import Page from '../components/ui/Page';
 import Card from '../components/ui/Card';
 import Text from '../components/ui/Text';
+import DefaultProductImage from '../components/products/DefaultProductImage';
 import './CheckoutPage.css';
 
 const CheckoutPage = () => {
@@ -36,6 +38,10 @@ const CheckoutPage = () => {
   const [remainingTime, setRemainingTime] = useState(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pesapalRedirectUrl, setPesapalRedirectUrl] = useState(null);
+  const [pendingOrderId, setPendingOrderId] = useState(null);
+  const [pendingOrderItems, setPendingOrderItems] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isOrderConfirmed, setIsOrderConfirmed] = useState(false);
   const [showTracking, setShowTracking] = useState(false);
@@ -47,6 +53,19 @@ const CheckoutPage = () => {
     message: '',
     variant: 'success'
   });
+
+  // Tracks whether CheckoutPage is still mounted, so async/delayed callbacks
+  // (e.g. the simulated guest checkout timer) can't act on a page the user has left.
+  const isMountedRef = useRef(true);
+  const guestConfirmTimerRef = useRef(null);
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (guestConfirmTimerRef.current) {
+        clearTimeout(guestConfirmTimerRef.current);
+      }
+    };
+  }, []);
 
   const queueToast = (message, variant = 'success') => {
     setToastQueue(prev => [...prev, { message, variant }]);
@@ -69,7 +88,9 @@ const CheckoutPage = () => {
   }, [toastConfig.isOpen, toastQueue]);
 
   // Developer Mode States
-  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  // To enable developer mode for testing mock checkouts locally, uncomment the line below and comment "const isDev = false;":
+  // const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const isDev = false;
   const [showDevPanel, setShowDevPanel] = useState(false);
 
   // Payment states
@@ -368,6 +389,7 @@ const CheckoutPage = () => {
     }
 
     setIsProcessing(true);
+    console.log('[CheckoutPage] handlePlaceOrder started', { selectedPayment, isAuthenticated });
     try {
       const orderPayload = {
         paymentMethod: selectedPayment,
@@ -382,35 +404,49 @@ const CheckoutPage = () => {
       if (isAuthenticated) {
         // Logged-in users: execute secure backend order transaction and save order to DB
         const result = await convexPlaceOrder(orderPayload);
+        console.log('[CheckoutPage] convexPlaceOrder result', result);
         if (result.success) {
-          clearCart(); // sync frontend local states if needed
+          // Cart is cleared only once payment is confirmed (see handlePaymentSuccess / fallback below)
 
-          /* 
-          // MOMO redirect bypassed for Developer Mode simulated payments
-          if (selectedPayment === 'momo') {
-            setToastConfig({
-              isOpen: true,
-              message: "Initiating secure payment...",
-              variant: 'success'
-            });
-            const paymentResult = await initiatePayment({ 
+          // Open secure Pesapal payment gateway in-page for MOMO and card payments
+          if (selectedPayment === 'momo' || selectedPayment === 'card') {
+            console.log('[CheckoutPage] initiating payment for order', result.orderId);
+            const paymentResult = await initiatePayment({
               orderId: result.orderId,
-              callbackUrl: `${window.location.origin}/checkout/callback`
+              frontendUrl: window.location.origin
             });
+            console.log('[CheckoutPage] initiatePayment result', paymentResult);
             if (paymentResult && paymentResult.redirectUrl) {
-              window.location.href = paymentResult.redirectUrl;
+              console.log('[CheckoutPage] opening payment modal with redirectUrl', paymentResult.redirectUrl);
+              setPendingOrderId(result.orderId);
+              setPendingOrderItems(cartItems.map(item => ({
+                productName: item.name,
+                size: item.size || "Standard",
+                quantity: item.quantity,
+                unitPrice: item.price,
+                image: item.image,
+                stage: item.stage || "Newborn",
+                productId: item._id || item.id
+              })));
+              setPesapalRedirectUrl(paymentResult.redirectUrl);
+              setShowPaymentModal(true);
+              return;
+            } else {
+              console.error('[CheckoutPage] initiatePayment returned no redirectUrl, cannot proceed to payment', paymentResult);
+              queueToast("We couldn't start the payment process. Please try again.", 'danger');
               return;
             }
           }
-          */
 
+          // No online payment step required for this method (e.g. cash on delivery)
+          clearCart();
           setPlacedOrderDetails(result);
           setIsOrderConfirmed(true);
           if (isAuthenticated && user && !user.preferredContact) {
             setShowPrefPrompt(true);
           }
           queueToast(`Your order was successfully confirmed. Arriving in ${remainingTime || lockedETA?.travelTime} mins!`, 'success');
-          
+
           const points = Math.floor(result.grandTotal / 1000);
           if (points > 0) {
             queueToast(`✨ You've earned +${points} Dennan Loyalty Points! They have been credited to your profile.`, 'success');
@@ -418,7 +454,8 @@ const CheckoutPage = () => {
         }
       } else {
         // Guest checkout flow: simulate order success in order confirmation page while respecting live hydrated prices
-        setTimeout(() => {
+        guestConfirmTimerRef.current = setTimeout(() => {
+          if (!isMountedRef.current) return; // user navigated away before the simulated confirmation fired
           const guestResult = {
             success: true,
             orderId: "guest-" + Math.random().toString(36).substr(2, 9),
@@ -453,6 +490,27 @@ const CheckoutPage = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handlePaymentSuccess = (order) => {
+    setShowPaymentModal(false);
+    clearCart();
+    setPlacedOrderDetails({ ...order, items: pendingOrderItems || [] });
+    setIsOrderConfirmed(true);
+    if (isAuthenticated && user && !user.preferredContact) {
+      setShowPrefPrompt(true);
+    }
+    queueToast(`Your order was successfully confirmed. Arriving in ${remainingTime || lockedETA?.travelTime} mins!`, 'success');
+
+    const points = Math.floor(order.grandTotal / 1000);
+    if (points > 0) {
+      queueToast(`✨ You've earned +${points} Dennan Loyalty Points! They have been credited to your profile.`, 'success');
+    }
+  };
+
+  const handlePaymentFailure = () => {
+    setShowPaymentModal(false);
+    queueToast("Payment was not completed. Please try again.", 'danger');
   };
 
   const handleSavePref = async () => {
@@ -780,7 +838,11 @@ const CheckoutPage = () => {
                           >
                             <Card.Body style={{ flexDirection: 'row', alignItems: 'center', gap: 'var(--space-5)' }}>
                               <div className="item-img-wrapper">
-                                <img src={item.image} alt={name} />
+                                {item.image ? (
+                                  <img src={item.image} alt={name} />
+                                ) : (
+                                  <DefaultProductImage />
+                                )}
                                 <Text role="label-sm" as="span" color="white" className={`stage-badge stage--${(item.stage || 'newborn').toLowerCase()}`}>
                                   {item.stage || 'Newborn'}
                                 </Text>
@@ -912,6 +974,15 @@ const CheckoutPage = () => {
         onClose={() => setShowReviewModal(false)}
         orderItems={placedOrderDetails?.items || []}
         user={user}
+      />
+
+      <PesapalPaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        redirectUrl={pesapalRedirectUrl}
+        orderId={pendingOrderId}
+        onSuccess={handlePaymentSuccess}
+        onFailure={handlePaymentFailure}
       />
 
 

@@ -2,7 +2,6 @@ export const brands = {
   'tommee-tippee': {
     id: 'tommee-tippee',
     name: 'Tommee Tippee',
-    logo: '/assets/brands/tommee_tippee_logo.png', // Placeholder
     banner: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=2000', // Lifestyle banner
     mission: 'Helping you feed, sleep, and care for your baby with products designed for real life.',
     certifications: [

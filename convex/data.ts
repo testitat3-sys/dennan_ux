@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { normalizeProductPrice } from "./products";
+import { normalizeProductPrice, shouldKeepProduct } from "./products";
 
 export const getHero = query({
   args: {},
@@ -28,6 +28,9 @@ export const getProducts = query({
     // Simple filtering logic (can be optimized with indexes later)
     let results = await products.collect();
     
+    // Only return products matching the central filter
+    results = results.filter(shouldKeepProduct);
+    
     if (args.category) {
       results = results.filter(p => p.category === args.category);
     }
@@ -51,6 +54,10 @@ export const getProductById = query({
       .query("products")
       .filter((q) => q.eq(q.field("name"), args.id)) // Placeholder, should be mapped to actual ID field if available
       .first();
+    
+    if (!product || !shouldKeepProduct(product)) {
+      return null;
+    }
     return normalizeProductPrice(product);
   },
 });

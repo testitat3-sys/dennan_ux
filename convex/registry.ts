@@ -1,7 +1,7 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { auth } from "./auth";
-import { normalizeProductPrice } from "./products";
+import { normalizeProductPrice, shouldKeepProduct } from "./products";
 
 // --- Gift Packaging Calculation Constants & Helper ---
 const themeMultipliers: Record<string, number> = {
@@ -83,7 +83,7 @@ export const get = query({
     const items = [];
     for (const rawItem of rawItems) {
       const rawProduct = await ctx.db.get(rawItem.productId);
-      if (rawProduct) {
+      if (rawProduct && shouldKeepProduct(rawProduct)) {
         const product = normalizeProductPrice(rawProduct);
         items.push({
           id: rawItem._id, // item ID
@@ -225,7 +225,7 @@ export const getShared = query({
     const items = [];
     for (const rawItem of rawItems) {
       const rawProduct = await ctx.db.get(rawItem.productId);
-      if (rawProduct) {
+      if (rawProduct && shouldKeepProduct(rawProduct)) {
         const product = normalizeProductPrice(rawProduct);
         items.push({
           id: rawItem._id,
@@ -423,7 +423,7 @@ export const addItem = mutation({
     }
 
     const rawProduct = await ctx.db.get(args.productId);
-    if (!rawProduct) {
+    if (!rawProduct || !shouldKeepProduct(rawProduct)) {
       throw new Error("Product not found");
     }
     const product = normalizeProductPrice(rawProduct);
@@ -543,6 +543,7 @@ export const addContribution = mutation({
     productId: v.string(), // Changed to string to support "virtual-packaging"
     contributorName: v.string(),
     amount: v.number(),
+    email: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (args.productId === "virtual-packaging") {
@@ -551,6 +552,7 @@ export const addContribution = mutation({
         packagingPurchasedBy: {
           name: args.contributorName,
           date: new Date().toISOString(),
+          email: args.email,
         }
       });
       return { success: true, totalContributed: args.amount, status: "purchased" };
@@ -581,6 +583,7 @@ export const addContribution = mutation({
         name: args.contributorName,
         amount: args.amount,
         date: new Date().toISOString(),
+        email: args.email,
       },
     ];
 
@@ -680,5 +683,193 @@ export const removePackaging = mutation({
       packagingPurchasedBy: undefined,
     });
     return { success: true };
+  },
+});
+
+/**
+ * Check whether the current authed user has already signed up for the
+ * Registry "coming soon" notify list.
+ */
+export const notifySignupStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) return null;
+
+    return await ctx.db
+      .query("registryNotifySignups")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+  },
+});
+
+/**
+ * Save a "notify me" signup for the Registry coming-soon page.
+ */
+export const submitNotifySignup = mutation({
+  args: {
+    email: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+    phone: v.string(),
+    stage: v.optional(
+      v.union(
+        v.literal("expectant"),
+        v.literal("newborn"),
+        v.literal("toddler"),
+        v.literal("not_a_mother")
+      )
+    ),
+    source: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+
+    await ctx.db.insert("registryNotifySignups", {
+      userId: userId ?? undefined,
+      email: args.email,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      phone: args.phone,
+      stage: args.stage,
+      source: args.source,
+      createdAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+// ─── Guest-safe contribution payments (Pesapal) ────────────────────────────
+//
+// Contributions now go through a real Pesapal payment instead of being
+// recorded instantly. A pending row is created here, the payment is
+// initiated from convex/registryPesapal.ts, and the Pesapal IPN webhook
+// (convex/http.ts) calls completeContributionPayment/failContributionPayment
+// once Pesapal confirms the transaction status.
+
+export const createPendingContributionPayment = internalMutation({
+  args: {
+    registryId: v.id("registries"),
+    productId: v.string(),
+    contributorName: v.string(),
+    contributorEmail: v.string(),
+    contributorPhone: v.string(),
+    amount: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("registryContributionPayments", {
+      registryId: args.registryId,
+      productId: args.productId,
+      contributorName: args.contributorName,
+      contributorEmail: args.contributorEmail,
+      contributorPhone: args.contributorPhone,
+      amount: args.amount,
+      status: "pending",
+      createdAt: Date.now(),
+    });
+  },
+});
+
+export const updatePendingContributionPayment = internalMutation({
+  args: {
+    paymentId: v.id("registryContributionPayments"),
+    pesapalTrackingId: v.string(),
+    pesapalMerchantReference: v.string(),
+    pesapalRedirectUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.paymentId, {
+      pesapalTrackingId: args.pesapalTrackingId,
+      pesapalMerchantReference: args.pesapalMerchantReference,
+      pesapalRedirectUrl: args.pesapalRedirectUrl,
+    });
+  },
+});
+
+export const getPendingContributionPayment = internalQuery({
+  args: { paymentId: v.id("registryContributionPayments") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.paymentId);
+  },
+});
+
+/**
+ * Public-facing status check used by the frontend's polling fallback.
+ */
+export const getContributionPaymentStatus = query({
+  args: { paymentId: v.id("registryContributionPayments") },
+  handler: async (ctx, args) => {
+    const payment = await ctx.db.get(args.paymentId);
+    return payment ? { status: payment.status } : null;
+  },
+});
+
+/**
+ * Confirms a contribution payment once Pesapal reports it as completed.
+ * Idempotent: a payment already marked "completed" is not reapplied.
+ */
+export const completeContributionPayment = internalMutation({
+  args: { paymentId: v.id("registryContributionPayments") },
+  handler: async (ctx, args) => {
+    const payment = await ctx.db.get(args.paymentId);
+    if (!payment || payment.status === "completed") {
+      return { success: false };
+    }
+
+    if (payment.productId === "virtual-packaging") {
+      await ctx.db.patch(payment.registryId, {
+        packagingStatus: "purchased",
+        packagingPurchasedBy: {
+          name: payment.contributorName,
+          date: new Date().toISOString(),
+          email: payment.contributorEmail,
+        },
+      });
+    } else {
+      const prodId = payment.productId as any;
+      const registryItem = await ctx.db
+        .query("registryItems")
+        .withIndex("by_registry_and_product", (q) =>
+          q.eq("registryId", payment.registryId).eq("productId", prodId)
+        )
+        .first();
+
+      if (registryItem) {
+        const rawProduct = await ctx.db.get(prodId);
+        const product = rawProduct ? normalizeProductPrice(rawProduct) : null;
+
+        const currentContributions = registryItem.contributions || [];
+        const newContributions = [
+          ...currentContributions,
+          {
+            name: payment.contributorName,
+            amount: payment.amount,
+            date: new Date().toISOString(),
+            email: payment.contributorEmail,
+          },
+        ];
+
+        const totalContributed = newContributions.reduce((acc, c) => acc + c.amount, 0);
+        const isFullyPaid = product ? totalContributed >= product.price : false;
+
+        await ctx.db.patch(registryItem._id, {
+          contributions: newContributions,
+          status: isFullyPaid ? "purchased" : "available",
+        });
+      }
+    }
+
+    await ctx.db.patch(args.paymentId, { status: "completed" });
+    return { success: true };
+  },
+});
+
+export const failContributionPayment = internalMutation({
+  args: { paymentId: v.id("registryContributionPayments") },
+  handler: async (ctx, args) => {
+    const payment = await ctx.db.get(args.paymentId);
+    if (!payment || payment.status === "completed") return;
+    await ctx.db.patch(args.paymentId, { status: "failed" });
   },
 });

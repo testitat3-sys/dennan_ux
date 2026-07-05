@@ -6,18 +6,20 @@ import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import RegistryHeader from '../components/registry/RegistryHeader';
 import RegistryCategoryGroup from '../components/registry/RegistryCategoryGroup';
-import GroupGiftingModal from '../components/registry/GroupGiftingModal';
 import AddEventModal from '../components/registry/AddEventModal';
 import DeleteConfirmModal from '../components/registry/DeleteConfirmModal';
-import SuggestionProductCard from '../components/registry/SuggestionProductCard';
+import SuggestionProductCard from '../components/products/SuggestionProductCard';
+import RegistrySuggestionRail from '../components/registry/RegistrySuggestionRail';
+import ContributionModal from '../components/registry/ContributionModal';
+import PesapalPaymentModal from '../components/checkout/PesapalPaymentModal';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
-import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
+import ProductCardSkeleton from '../components/products/ProductCardSkeleton';
 import Toast from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Text from '../components/ui/Text';
 import ContributorsModal from '../components/registry/ContributorsModal';
-import PackagingCard from '../components/registry/PackagingCard';
+import NotifySignupModal from '../components/registry/NotifySignupModal';
 import { ShoppingBag, Plus, Trash2, ArrowRight } from 'lucide-react';
 import './RegistryPage.css';
 import SearchStrip from '../components/home/SearchStrip';
@@ -31,11 +33,9 @@ const RegistryPage = () => {
     loading,
     addToRegistry,
     toggleMustHave,
-    confirmContribution,
     markAsPurchased,
     updatePrivacy,
     removeFromRegistry,
-    updatePackaging,
     removePackaging
   } = useRegistry();
 
@@ -47,17 +47,11 @@ const RegistryPage = () => {
   const [activeTab, setActiveTab] = useState('registry'); // registry, thank-you
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pendingPayment, setPendingPayment] = useState(null); // { redirectUrl, paymentId, item, amount }
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isContributorsModalOpen, setIsContributorsModalOpen] = useState(false);
   const [seenContributorsModal, setSeenContributorsModal] = useState([]);
-  const selectedPackaging = useMemo(() => {
-    if (registryProfile?.selectedPackagingPattern && registryProfile?.selectedPackagingColor) {
-      return {
-        pattern: registryProfile.selectedPackagingPattern,
-        color: registryProfile.selectedPackagingColor
-      };
-    }
-    return null;
-  }, [registryProfile]);
+  const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -74,7 +68,7 @@ const RegistryPage = () => {
     if (!searchQuery.trim()) {
       const stageFilter = convexUser?.stage || 'newborn';
       const stageProducts = available.filter(p => p.stage === stageFilter);
-      return stageProducts.length > 0 ? stageProducts.slice(0, 4) : available.slice(0, 4);
+      return stageProducts.length > 0 ? stageProducts.slice(0, 8) : available.slice(0, 8);
     }
 
     return available.filter(p =>
@@ -148,24 +142,25 @@ const RegistryPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleConfirmContribution = (itemId, contribution) => {
-    confirmContribution(itemId, contribution.name, contribution.amount);
-    const item = registryItems.find(i => i.id === itemId || i.productId === itemId);
-    if (item) {
-      // Optimistically mark this contribution index as seen in localStorage to prevent double toasting
-      const contribIdx = item.contributions?.length || 0;
-      const expectedId = `contrib-${itemId}-${contribIdx}`;
-      try {
-        const stored = localStorage.getItem('dennan_seen_contributions');
-        const seen = stored ? JSON.parse(stored) : [];
-        if (!seen.includes(expectedId)) {
-          localStorage.setItem('dennan_seen_contributions', JSON.stringify([...seen, expectedId]));
-        }
-      } catch (e) {}
+  const handlePaymentInitiated = ({ redirectUrl, paymentId, item, amount }) => {
+    setPendingPayment({ redirectUrl, paymentId, item, amount });
+    setIsPaymentModalOpen(true);
+  };
 
-      setToastMessage(`UGX ${contribution.amount.toLocaleString()} contributed towards "${item.name}"!`);
+  const handlePaymentSuccess = () => {
+    setIsPaymentModalOpen(false);
+    if (pendingPayment) {
+      setToastMessage(`UGX ${pendingPayment.amount.toLocaleString()} contributed towards "${pendingPayment.item.name}"!`);
       setShowToast(true);
     }
+    setPendingPayment(null);
+  };
+
+  const handlePaymentFailure = () => {
+    setIsPaymentModalOpen(false);
+    setToastMessage('Payment did not go through. Please try again.');
+    setShowToast(true);
+    setPendingPayment(null);
   };
 
   const showHeaderToast = (message) => {
@@ -285,81 +280,10 @@ const RegistryPage = () => {
     }
   };
 
-  // Box assignment logic matching products to box sizes (S, M, L, XL)
-  const boxesBreakdown = useMemo(() => {
-    let S = 0, M = 0, L = 0, XL = 0;
-    const actualItems = registryItems.filter(item => item.productId !== 'virtual-packaging');
-    
-    for (const item of actualItems) {
-      const name = (item.name || "").toLowerCase();
-      const category = (item.category || "").toLowerCase();
-      const price = item.price || 0;
-
-      if (price > 500000 || category.includes("travel") || name.includes("stroller") || name.includes("pram") || name.includes("car seat") || name.includes("high chair") || name.includes("cot") || name.includes("crib") || name.includes("hamper") || name.includes("playard")) {
-        XL++;
-      } else if (price > 150000 || category.includes("nursery") || name.includes("set") || name.includes("pack") || name.includes("bag") || name.includes("backpack") || name.includes("nest") || name.includes("lounger") || name.includes("carrier") || name.includes("gym") || name.includes("blender") || name.includes("processor") || name.includes("steriliser") || name.includes("pump") || name.includes("tub") || name.includes("bathtub") || name.includes("seat")) {
-        L++;
-      } else if (price > 30000 || name.includes("blanket") || name.includes("sheet") || name.includes("towel") || name.includes("bottle") || name.includes("warmer") || name.includes("toy") || name.includes("book") || name.includes("cushion") || name.includes("pillow") || name.includes("diaper")) {
-        M++;
-      } else {
-        S++;
-      }
-    }
-    return { S, M, L, XL };
-  }, [registryItems]);
-
-  const boxesBreakdownText = useMemo(() => {
-    const parts = [];
-    if (boxesBreakdown.S > 0) parts.push(`${boxesBreakdown.S} S Box${boxesBreakdown.S > 1 ? 'es' : ''}`);
-    if (boxesBreakdown.M > 0) parts.push(`${boxesBreakdown.M} M Box${boxesBreakdown.M > 1 ? 'es' : ''}`);
-    if (boxesBreakdown.L > 0) parts.push(`${boxesBreakdown.L} L Wrapper${boxesBreakdown.L > 1 ? 's' : ''}`);
-    if (boxesBreakdown.XL > 0) parts.push(`${boxesBreakdown.XL} XL Hamper${boxesBreakdown.XL > 1 ? 's' : ''}`);
-    return parts.join(', ') || 'No packaging needed';
-  }, [boxesBreakdown]);
-
-  const handleSelectPackaging = (pattern, color) => {
-    updatePackaging(pattern, color);
-    const themeName = {
-      stripe: 'Stripe Envelope Theme',
-      dots: 'Classic Dotted Box Theme',
-      chevron: 'Premium Chevron Gift Box Theme',
-      grid: 'Deluxe Grid Hamper Theme'
-    }[pattern] || 'Custom wrapper';
-    
-    setToastMessage(`"${themeName}" wrapper selected for your items!`);
+  const handleNotifySignupSuccess = () => {
+    setToastMessage("You're on the list! We'll email you when Gift Wrapping launches.");
     setShowToast(true);
   };
-
-  const packagingOptions = useMemo(() => {
-    const basePrice = (boxesBreakdown.S * 5000) + (boxesBreakdown.M * 10000) + (boxesBreakdown.L * 18000) + (boxesBreakdown.XL * 35000);
-    
-    return [
-      {
-        name: 'Stripe Envelope Theme',
-        description: 'Clean diagonal stripes on premium wrapping paper.',
-        price: Math.round(basePrice * 1.0),
-        patternType: 'stripe'
-      },
-      {
-        name: 'Classic Dotted Box Theme',
-        description: 'Sophisticated dotted pattern on premium textured paper.',
-        price: Math.round(basePrice * 1.1),
-        patternType: 'dots'
-      },
-      {
-        name: 'Premium Chevron Gift Box Theme',
-        description: 'Textured chevron pattern on heavyweight matte boards.',
-        price: Math.round(basePrice * 1.2),
-        patternType: 'chevron'
-      },
-      {
-        name: 'Deluxe Grid Hamper Theme',
-        description: 'Luxe woven grid design with double-satin ribbons.',
-        price: Math.round(basePrice * 1.3),
-        patternType: 'grid'
-      }
-    ];
-  }, [boxesBreakdown]);
 
   // Live reactive notifications & catch-up for offline contributions
   useEffect(() => {
@@ -811,52 +735,25 @@ const RegistryPage = () => {
                     onRemove={handleInitiateRemove}
                   />
 
-                  {/* Gift Packaging Section */}
+                  {/* Gift Wrapping Section */}
                   <section className="category-group packaging-section" style={{ borderTop: '1px dashed var(--surface-container-high)', marginTop: 'var(--space-12)', paddingTop: 'var(--space-10)' }}>
-                    <div className="category-header" style={{ marginBottom: 'var(--space-4)' }}>
-                      <div>
-                        <h2 className="headline-md" style={{ fontFamily: 'var(--font-editorial)', margin: 0 }}>Gift Packaging</h2>
-                        <Text variant="body-sm" color="secondary" style={{ fontWeight: 300, marginTop: 'var(--space-1)' }}>
-                          Choose a premium wrapping theme. The system automatically sizes and combines wrappers for your items.
+                    <div className="gift-wrapping-banner">
+                      <div className="gift-wrapping-banner__image">
+                        <img src="/new_assets/gifting.png" alt="Gift wrapping" />
+                      </div>
+                      <div className="gift-wrapping-banner__content">
+                        <span className="gift-wrapping-banner__badge">Gift Wrapping</span>
+                        <Text variant="body-lg" color="secondary" style={{ marginTop: 'var(--space-3)' }}>
+                          Beautiful wrapping for birthdays, baby showers, and more. Soon you'll be able to personalise them with your own heartfelt message.
                         </Text>
+                        <Button
+                          variant="primary"
+                          onClick={() => setIsNotifyModalOpen(true)}
+                          style={{ marginTop: 'var(--space-4)' }}
+                        >
+                          Notify Me
+                        </Button>
                       </div>
-                    </div>
-
-                    {registryItems.filter(item => item.productId !== 'virtual-packaging').length > 0 && (
-                      <div className="packaging-breakdown-banner" style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'space-between', 
-                        background: 'var(--surface-container-low)', 
-                        padding: 'var(--space-4) var(--space-6)', 
-                        borderRadius: 'var(--radius-lg)', 
-                        marginBottom: 'var(--space-6)', 
-                        border: '1px dashed var(--surface-container-high)',
-                        color: 'var(--text-secondary)'
-                      }}>
-                        <div>
-                          <Text variant="label-md" color="primary" style={{ fontWeight: 600, display: 'block', marginBottom: '2px' }}>Intelligent Packaging Match</Text>
-                          <Text variant="body-sm" color="secondary">Your registry items require: <strong style={{ color: 'var(--text-primary)' }}>{boxesBreakdownText}</strong></Text>
-                        </div>
-                        <span className="badge" style={{ background: 'var(--surface-container-high)', color: 'var(--text-primary)', fontWeight: 600, padding: 'var(--space-1) var(--space-3)', borderRadius: 'var(--radius-pill)', fontSize: '0.8rem' }}>
-                          {registryItems.filter(item => item.productId !== 'virtual-packaging').length} Items
-                        </span>
-                      </div>
-                    )}
-                    
-                    <div className="items-grid">
-                      {packagingOptions.map(option => (
-                        <PackagingCard
-                          key={option.patternType}
-                          name={option.name}
-                          description={option.description}
-                          price={option.price}
-                          patternType={option.patternType}
-                          isSelected={selectedPackaging?.pattern === option.patternType}
-                          onSelect={handleSelectPackaging}
-                          initialColor={selectedPackaging?.pattern === option.patternType ? selectedPackaging.color : 'pink'}
-                        />
-                      ))}
                     </div>
                   </section>
                 </>
@@ -993,23 +890,17 @@ const RegistryPage = () => {
               </div>
             </div>
 
-            {/* Search Results / Curated Suggestions Grid */}
-            <div className="registry-search-results-grid">
-              {displayedSearchProducts.length > 0 ? (
-                displayedSearchProducts.map(product => (
-                  <SuggestionProductCard
-                    key={product.id || product._id}
-                    product={product}
-                    onAddToRegistry={handleAddToRegistry}
-                    isGridItem={true}
-                  />
-                ))
-              ) : (
-                <div style={{ gridColumn: '1 / -1', padding: 'var(--space-8) 0', textAlign: 'center', color: 'var(--text-tertiary)', fontFamily: 'var(--font-sans)' }}>
-                  No matching products found. Try searching for "crib", "stroller", or "backpack".
-                </div>
-              )}
-            </div>
+            {/* Suggested Products Rail: horizontal scroll on desktop, 2-col/first-4 grid on mobile */}
+            {displayedSearchProducts.length > 0 ? (
+              <RegistrySuggestionRail
+                products={displayedSearchProducts}
+                onAddToRegistry={handleAddToRegistry}
+              />
+            ) : (
+              <div style={{ padding: 'var(--space-8) 0', textAlign: 'center', color: 'var(--text-tertiary)', fontFamily: 'var(--font-sans)' }}>
+                No matching products found. Try searching for "crib", "stroller", or "backpack".
+              </div>
+            )}
           </section>
         </div>
         </div>
@@ -1030,11 +921,24 @@ const RegistryPage = () => {
         seenContributorsModal={seenContributorsModal}
       />
 
-      <GroupGiftingModal
+      <ContributionModal
         item={selectedItem}
+        registryId={registryProfile?.id}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onConfirm={handleConfirmContribution}
+        onPaymentInitiated={handlePaymentInitiated}
+      />
+
+      <PesapalPaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        redirectUrl={pendingPayment?.redirectUrl}
+        orderId={pendingPayment?.paymentId}
+        statusEndpoint="contribution-status?paymentId="
+        successStatuses={['completed']}
+        failureStatuses={['failed']}
+        onSuccess={handlePaymentSuccess}
+        onFailure={handlePaymentFailure}
       />
 
       <AddEventModal
@@ -1048,6 +952,16 @@ const RegistryPage = () => {
           }
           setIsAddEventOpen(false);
         }}
+      />
+
+      <NotifySignupModal
+        isOpen={isNotifyModalOpen}
+        onClose={() => setIsNotifyModalOpen(false)}
+        onSuccess={handleNotifySignupSuccess}
+        convexUser={convexUser}
+        source="registry_gift_wrapping"
+        title="Get notified when Gift Wrapping launches"
+        subtext="Leave your details and we'll email you the moment premium gift wrapping is ready."
       />
 
       {/* Floating notifications */}
