@@ -2,7 +2,7 @@ import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 // 84 new products from convex_products.json with actual_data = true
-const NEW_PRODUCTS = [
+export const NEW_PRODUCTS = [
   {
     "name": "Tommee Tippee Insulated Bottle Bags",
     "brand": "Tommee Tippee",

@@ -1,7 +1,7 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-const CLOSE_MATCHES_PRODUCTS = [
+export const CLOSE_MATCHES_PRODUCTS = [
   {
     "name": "Aptamil Multigrain & Berry Cereal and Banana",
     "brand": "Aptamil",

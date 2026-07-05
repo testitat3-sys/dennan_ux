@@ -96,7 +96,13 @@ export default defineSchema({
     churnRisk: v.optional(v.number()),
     engagementScore: v.optional(v.number()),
     recentlyViewed: v.optional(v.array(v.id("products"))), // Capped array of recently viewed product IDs
-  }).index("email", ["email"]),
+    password: v.optional(v.string()),
+    accountRole: v.optional(v.union(v.literal("staff"), v.literal("admin"))),
+    customerNotes: v.optional(v.string()),
+    isWalkIn: v.optional(v.boolean()),
+  })
+    .index("email", ["email"])
+    .index("by_accountRole", ["accountRole"]),
 
   testLinks: defineTable({
     email: v.string(),
@@ -411,16 +417,23 @@ export default defineSchema({
     status: v.union(
       v.literal("pending_payment"),
       v.literal("preparing"),
+      v.literal("packing"),
       v.literal("dispatched"),
       v.literal("delivered"),
       v.literal("cancelled"),
-      v.literal("failed")
+      v.literal("failed"),
+      v.literal("returned"),
+      v.literal("partially_returned")
     ),
     paymentMethod: v.string(), // "momo" | "card"
     momoPhone: v.optional(v.string()), // Ugandan mobile money number
     deliveryAddress: v.object({
       name: v.string(),
       zone: v.string(),
+      deliveryFee: v.optional(v.number()),
+      lat: v.optional(v.number()),
+      lng: v.optional(v.number()),
+      distance: v.optional(v.number()),
     }),
     subtotal: v.number(),      // Server-calculated sum of product price * quantity
     discountAmount: v.number(), // Recalculated savings based on coupon
@@ -431,7 +444,34 @@ export default defineSchema({
     pesapalMerchantReference: v.optional(v.string()),
     pesapalRedirectUrl: v.optional(v.string()),
     createdAt: v.number(),
-  }).index("by_user", ["userId"]),
+    
+    // Staff/Fulfillment fields
+    claimedBy: v.optional(v.id("users")),
+    claimedAt: v.optional(v.number()),
+    dispatchedAt: v.optional(v.number()),
+    deliveryPersonName: v.optional(v.string()),
+    riderPhone: v.optional(v.string()),
+    expectedDeliveryTime: v.optional(v.number()),
+    timeToClaim: v.optional(v.number()),
+    timeToDispatch: v.optional(v.number()),
+    timeToDeliver: v.optional(v.number()),
+    history: v.optional(
+      v.array(
+        v.object({
+          status: v.string(),
+          timestamp: v.number(),
+          note: v.string(),
+        })
+      )
+    ),
+    completedAt: v.optional(v.number()),
+    failedAt: v.optional(v.number()),
+    isOnline: v.optional(v.boolean()),
+    isWalkIn: v.optional(v.boolean()),
+    note: v.optional(v.string()),
+    cardOrderId: v.optional(v.string()),
+  }).index("by_user", ["userId"])
+    .index("by_claimedBy", ["claimedBy"]),
 
   orderItems: defineTable({
     orderId: v.id("orders"),
@@ -619,12 +659,16 @@ export default defineSchema({
   deliveryZones: defineTable({
     name: v.string(),
     timeMinutes: v.number(),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
   }).index("by_name", ["name"]),
 
   deliveryLandmarks: defineTable({
     name: v.string(),
     sub: v.string(),
     zone: v.string(),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
   }),
 
   // ─── Customer Personalisation & Automation ──────────────────────────────
@@ -714,6 +758,48 @@ export default defineSchema({
   })
     .index("by_product", ["productId"])
     .index("by_type_score", ["type", "score"]),
+
+  staffSessions: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    expiresAt: v.number(),
+  }).index("by_token", ["token"])
+    .index("by_userId", ["userId"]),
+
+  returns: defineTable({
+    orderId: v.id("orders"),
+    returnedItems: v.array(
+      v.object({
+        productId: v.id("products"),
+        name: v.string(),
+        quantity: v.number(),
+        unitPrice: v.number(),
+      })
+    ),
+    refundAmount: v.number(),
+    note: v.optional(v.string()),
+    staffId: v.id("users"),
+    staffName: v.string(),
+    createdAt: v.number(),
+  }).index("by_order", ["orderId"]),
+
+  customerActivities: defineTable({
+    customerId: v.id("users"),
+    orderId: v.optional(v.id("orders")),
+    type: v.union(v.literal("note"), v.literal("call"), v.literal("meeting"), v.literal("email"), v.literal("other")),
+    note: v.string(),
+    scheduledDate: v.optional(v.string()),
+    scheduledTime: v.optional(v.string()),
+    priority: v.optional(v.union(v.literal("low"), v.literal("normal"), v.literal("high"))),
+    status: v.union(v.literal("pending"), v.literal("completed"), v.literal("cancelled")),
+    staffId: v.id("users"),
+    staffName: v.string(),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_customerId", ["customerId"])
+    .index("by_scheduledDate", ["scheduledDate"])
+    .index("by_status", ["status"])
+    .index("by_orderId", ["orderId"]),
 });
 
 

@@ -1,61 +1,91 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import AfterSignIn from './pages/AfterSignIn';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { StaffAuthProvider, useStaffAuth } from './hooks/useStaffAuth';
+import StaffLogin from './pages/StaffLogin';
+import AdminDashboard from './pages/AdminDashboard';
+import StaffDashboard from './pages/StaffDashboard';
 
-// Redirect handler for storefront paths accessed on admin app
-function StorefrontRedirect() {
-  const location = useLocation();
+function MainRouter() {
+  const { user, isLoading } = useStaffAuth();
 
-  useEffect(() => {
-    const storefrontUrl = "http://localhost:5173" + location.pathname + location.search + location.hash;
-    console.log(`[Admin App] Redirecting storefront route to: ${storefrontUrl}`);
-    window.location.replace(storefrontUrl);
-  }, [location]);
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        background: '#0b0f19',
+        color: '#9ca3af'
+      }}>
+        <div style={{
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          border: '3px solid rgba(255,255,255,0.05)',
+          borderTopColor: '#d35097',
+          animation: 'spin 1s linear infinite',
+          marginBottom: '1rem'
+        }} />
+        <span>Authenticating staff portal...</span>
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      fontSize: '1.125rem',
-      color: '#6b7280'
-    }}>
-      Redirecting to storefront…
-    </div>
+    <Routes>
+      {/* Public Route */}
+      <Route path="/login" element={user ? <Navigate to="/" replace /> : <StaffLogin />} />
+
+      {/* Protected Dashboard Gate */}
+      <Route path="/" element={
+        !user ? (
+          <Navigate to="/login" replace />
+        ) : user.accountRole === "admin" ? (
+          <AdminDashboard />
+        ) : user.accountRole === "staff" ? (
+          <StaffDashboard />
+        ) : (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            background: '#0b0f19',
+            color: '#ef4444',
+            textAlign: 'center',
+            padding: '2rem'
+          }}>
+            <h2>Access Denied</h2>
+            <p style={{ color: '#9ca3af', marginTop: '0.5rem' }}>You do not have administrative or staff privileges.</p>
+          </div>
+        )
+      } />
+
+      {/* Catch-all fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
 function App() {
   return (
     <Router>
-      <Routes>
-        {/* Admin auth callback handler */}
-        <Route path="/after-signin" element={<AfterSignIn />} />
-
-        {/* Dashboard placeholder */}
-        <Route path="/" element={
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontSize: '1.5rem',
-            fontWeight: '500',
-            color: '#374151'
-          }}>
-            Admin portal coming soon
-          </div>
-        } />
-
-        {/* Catch-all storefront route redirector */}
-        <Route path="*" element={<StorefrontRedirect />} />
-      </Routes>
+      <StaffAuthProvider>
+        <MainRouter />
+      </StaffAuthProvider>
     </Router>
   );
 }
 
 export default App;
+

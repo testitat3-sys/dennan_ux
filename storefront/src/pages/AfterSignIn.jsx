@@ -119,16 +119,7 @@ export default function AfterSignIn() {
         console.error(`[AfterSignIn.jsx] Failed to merge guest wishlist:`, err);
       }
 
-      if (user.isAdmin) {
-        console.log(`[AfterSignIn.jsx] Admin user — redirecting to /admin`);
-        if (window.location.port === "5173") {
-          console.log("[AfterSignIn.jsx] Development environment - redirecting to localhost:5174");
-          window.location.replace("http://localhost:5174/");
-        } else {
-          navigate("/admin", { replace: true });
-        }
-        return;
-      }
+
 
       // Preserve destination target page (e.g. /registry, /dashboard)
       const savedRedirectPath = localStorage.getItem('dennan_redirect_after_login');

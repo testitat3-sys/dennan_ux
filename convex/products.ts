@@ -1,5 +1,6 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { verifyStaffSession } from "./staffAuth";
 
 // Reusable product field validators matching the products schema
 const productFieldsValidator = {
@@ -297,5 +298,131 @@ export const addReview = mutation({
     });
 
     return { success: true, reviewId };
+  },
+});
+
+export const getProductsForPOS = query({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    const products = await ctx.db
+      .query("products")
+      .collect();
+
+    // Return only active and kept products
+    return products.filter((p) => p.isActive && shouldKeepProduct(p));
+  },
+});
+
+export const getStockList = query({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const products = await ctx.db
+      .query("products")
+      .collect();
+
+    // Filter to keep only actual data and return inventory details
+    return products
+      .filter(shouldKeepProduct)
+      .map((p) => ({
+        id: p._id,
+        name: p.name,
+        sku: p.sku,
+        barcode: p.barcode,
+        inventory: p.inventory ?? 0,
+        costPrice: p.costPrice ?? 0,
+        reorderPoint: p.reorderPoint ?? 0,
+      }));
+  },
+});
+
+export const adjustStock = mutation({
+  args: {
+    token: v.string(),
+    productId: v.id("products"),
+    delta: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const product = await ctx.db.get(args.productId);
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    const currentInventory = product.inventory ?? 0;
+    const newInventory = currentInventory + args.delta;
+    if (newInventory < 0) {
+      throw new Error(`Inventory cannot be negative (current: ${currentInventory}, delta: ${args.delta})`);
+    }
+
+    await ctx.db.patch(args.productId, {
+      inventory: newInventory,
+    });
+
+    return { success: true, newInventory };
+  },
+});
+
+export const setDiscount = mutation({
+  args: {
+    token: v.string(),
+    productId: v.id("products"),
+    discountPrice: v.number(),
+    discountExpiry: v.number(), // Unix timestamp (ms)
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const product = await ctx.db.get(args.productId);
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    const originalPrice = product.originalPrice ?? product.price;
+    const now = Date.now();
+    const isDiscountActive = args.discountPrice > 0 && args.discountExpiry > now;
+    const price = isDiscountActive ? args.discountPrice : originalPrice;
+    const wasPrice = isDiscountActive ? originalPrice : undefined;
+
+    await ctx.db.patch(args.productId, {
+      discountPrice: args.discountPrice,
+      discountExpiry: args.discountExpiry,
+      price,
+      wasPrice,
+    });
+
+    return { success: true };
+  },
+});
+
+export const getDiscountList = query({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const products = await ctx.db
+      .query("products")
+      .collect();
+
+    // Filter to keep only those with an active or pending discount
+    const now = Date.now();
+    return products
+      .filter(shouldKeepProduct)
+      .filter(
+        (p) =>
+          p.discountPrice !== undefined &&
+          p.discountPrice > 0 &&
+          (p.discountExpiry === undefined || p.discountExpiry > now)
+      );
   },
 });

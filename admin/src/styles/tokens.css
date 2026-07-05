@@ -1,0 +1,126 @@
+@font-face {
+  font-family: 'Trimen Drawing Demo';
+  src: url('/fonts/Trimen Drawing Demo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Antipasto';
+  src: url('/fonts/Antipasto_regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Antipasto ExtraBold';
+  src: url('/fonts/Antipasto_extrabold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS — extracted from dennan_landing_page_react/src/index.css :root
+   block. Only CSS custom properties are carried over (colors, spacing, radius,
+   shadow, fonts). Font faces are declared above so `--font-sans` correctly
+   resolves to 'Antipasto'.
+ ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Surface colors */
+  --surface: #ffffff;
+  --surface-container-low: #faf9f8;
+  --surface-container: #f4f2f0;
+  --surface-container-high: #ede9e5;
+  --surface-container-highest: #e5e0db;
+
+  /* Brand colors */
+  --color-brand-primary: #d35097;
+  --color-brand-primary-dark: #a63e74;
+  --color-brand-primary-light: #f07fb8;
+  --color-brand-primary-bg: color-mix(in srgb, #d35097 12%, #ffffff);
+  --color-brand-secondary: #832c7a;
+  --color-brand-accent: #e1d328;
+
+  /* Accent / Anchor */
+  --color-anchor: #111111;
+  --color-on-primary: #ffffff;
+
+  /* Text colors */
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-tertiary: #888888;
+
+  /* Support colors */
+  --color-support-green: #7fa93e;
+  --color-support-red: #e53e3e;
+  --color-support-blue: #3b7dd8;
+
+  /* Shadows */
+  --shadow-ambient: 0 2px 18px rgba(0, 0, 0, 0.06);
+  --shadow-deep: 0 10px 44px rgba(0, 0, 0, 0.13);
+  --shadow-primary: 0 0 0 3px color-mix(in srgb, var(--color-brand-primary) 22%, transparent);
+  --shadow-secondary: 0 2px 0 0 color-mix(in srgb, var(--color-brand-primary) 25%, transparent);
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 24px rgba(0, 0, 0, 0.05);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl: 28px;
+  --radius-3xl: 32px;
+  --radius-full: 9999px;
+  --radius-pill: 9999px;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 72px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Fonts */
+  --font-sans: 'Antipasto', 'Plus Jakarta Sans', sans-serif;
+  --font-editorial: 'Trimen Drawing Demo', sans-serif;
+  --font-body-heavy: 'Antipasto ExtraBold', 'Antipasto', sans-serif;
+
+  /* Additional Spacing Variables */
+  --space-0-75: 3px;
+  --space-1-5: 6px;
+  --space-2-5: 10px;
+  --space-3-5: 14px;
+  --space-7: 28px;
+  --space-9: 36px;
+  --space-20: 80px;
+
+  /* Typography Sizing Variables */
+  --display-lg: clamp(38px, 5.2vw, 62px);
+  --headline-md: clamp(24px, 3vw, 34px);
+  --headline-sm: clamp(20px, 2.5vw, 24px);
+  --title-lg: 22px;
+  --title-md: 18px;
+  --title-sm: 16px;
+  --body-md: 19px;
+  --body-sm: 16px;
+  --body-xs: 14px;
+  --label-md: 13px;
+  --label-sm: 13.5px;
+  --label-xs: 10.5px;
+}

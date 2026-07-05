@@ -25,10 +25,11 @@ export const viewer = query({
 export const getUserByEmail = query({
   args: { email: v.union(v.string(), v.null()) },
   handler: async (ctx, args) => {
-    if (!args.email) return null;
+    const email = args.email;
+    if (!email) return null;
     return await ctx.db
       .query("users")
-      .withIndex("email", (q) => q.eq("email", args.email))
+      .withIndex("email", (q) => q.eq("email", email))
       .unique();
   },
 });
@@ -364,7 +365,9 @@ export const recalculateUserBehavioralPreferences = internalMutation({
     const categoryCounts: Record<string, number> = {};
     for (const entry of productsList) {
       const cat = entry.product.category;
-      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+      if (cat) {
+        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+      }
     }
     const sortedCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
     const preferredCategories = sortedCategories.slice(0, 3);
@@ -373,7 +376,9 @@ export const recalculateUserBehavioralPreferences = internalMutation({
     const brandCounts: Record<string, number> = {};
     for (const entry of productsList) {
       const brand = entry.product.brand; // string
-      brandCounts[brand] = (brandCounts[brand] || 0) + 1;
+      if (brand) {
+        brandCounts[brand] = (brandCounts[brand] || 0) + 1;
+      }
     }
     const sortedBrands = Object.keys(brandCounts).sort((a, b) => brandCounts[b] - brandCounts[a]);
     const topBrandNames = sortedBrands.slice(0, 3);
