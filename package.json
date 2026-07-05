@@ -14,6 +14,7 @@
     "dev:all": "concurrently \"npm run dev:convex\" \"npm run dev:storefront\" \"npm run dev:admin\"",
     "build:storefront": "npx convex deploy && npm run build -w storefront",
     "build:admin": "npx convex deploy && npm run build -w admin",
+    "build": "echo \"Error: Run build for specific workspace (e.g., 'npm run build:storefront') or configure the Root Directory in Vercel/hosting provider to 'storefront' or 'admin'.\" && exit 1",
     "lint": "eslint ."
   },
   "dependencies": {
