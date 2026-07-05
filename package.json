@@ -3,24 +3,24 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "storefront",
+    "admin"
+  ],
   "scripts": {
-    "dev": "vite",
-    "dev:all": "concurrently \"npm run dev\" \"npx convex dev\"",
-    "build": "npx convex deploy && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "convex:dev": "convex dev"
+    "dev:storefront": "npm run dev -w storefront",
+    "dev:admin": "npm run dev -w admin",
+    "dev:convex": "convex dev",
+    "dev:all": "concurrently \"npm run dev:convex\" \"npm run dev:storefront\" \"npm run dev:admin\"",
+    "build:storefront": "npx convex deploy && npm run build -w storefront",
+    "build:admin": "npx convex deploy && npm run build -w admin",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@auth/core": "^0.37.0",
     "@convex-dev/auth": "^0.0.92",
-    "@mapbox/search-js-react": "^1.5.1",
     "convex": "^1.37.0",
     "jose": "^6.2.3",
-    "lucide-react": "^1.14.0",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "react-router-dom": "^7.14.2",
     "resend": "^6.12.2"
   },
   "devDependencies": {
