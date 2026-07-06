@@ -121,15 +121,19 @@ export default function StaffDashboard() {
 
   const [posSearch, setPosSearch] = useState("");
   const [cart, setCart] = useState([]);
+  const [voucherCartItems, setVoucherCartItems] = useState([]);
+  const [showVoucherModal, setShowVoucherModal] = useState(false);
   const [posCustomer, setPosCustomer] = useState({
     name: "",
     phone: "",
     email: "",
     note: ""
   });
-  const [paymentMethod, setPaymentMethod] = useState("physical"); // "physical" | "momo" | "card"
-  const [momoPhone, setMomoPhone] = useState("");
-  const [cardOrderId, setCardOrderId] = useState("");
+  const [tenders, setTenders] = useState([
+    { tempId: "default", method: "physical", amount: 0, momoPhone: "", cardOrderId: "", voucherCode: "" }
+  ]);
+  const [voucherValidation, setVoucherValidation] = useState({});
+  const [issuedVouchers, setIssuedVouchers] = useState([]);
   const [scheduleReminder, setScheduleReminder] = useState(false);
   const [reminderType, setReminderType] = useState("call");
   const [reminderDate, setReminderDate] = useState("");
@@ -183,12 +187,16 @@ export default function StaffDashboard() {
     }).filter(Boolean));
   };
 
+  const removeVoucherCartItem = (tempId) => {
+    setVoucherCartItems(prev => prev.filter(item => item.tempId !== tempId));
+  };
+
   const resetPosForm = () => {
     setCart([]);
+    setVoucherCartItems([]);
+    setTenders([{ tempId: "default", method: "physical", amount: 0, momoPhone: "", cardOrderId: "", voucherCode: "" }]);
+    setVoucherValidation({});
     setPosCustomer({ name: "", phone: "", email: "", note: "" });
-    setPaymentMethod("physical");
-    setMomoPhone("");
-    setCardOrderId("");
     setScheduleReminder(false);
     setReminderType("call");
     setReminderDate("");
@@ -197,22 +205,41 @@ export default function StaffDashboard() {
     setReminderPriority("normal");
   };
 
+  const handleAddTender = () => {
+    setTenders(prev => [
+      ...prev,
+      {
+        tempId: Math.random().toString(36).substr(2, 9),
+        method: "physical",
+        amount: 0,
+        momoPhone: "",
+        cardOrderId: "",
+        voucherCode: ""
+      }
+    ]);
+  };
+
+  const handleRemoveTender = (tempId) => {
+    setTenders(prev => prev.filter(t => t.tempId !== tempId));
+  };
+
+  const handleUpdateTender = (tempId, field, value) => {
+    setTenders(prev => prev.map(t => {
+      if (t.tempId === tempId) {
+        return { ...t, [field]: value };
+      }
+      return t;
+    }));
+  };
+
   const handleCheckout = async (e) => {
     e.preventDefault();
-    if (cart.length === 0) {
+    if (cart.length === 0 && voucherCartItems.length === 0) {
       setCheckoutError("Cart is empty.");
       return;
     }
     if (!posCustomer.name.trim()) {
       setCheckoutError("Customer name is required.");
-      return;
-    }
-    if (paymentMethod === "momo" && !momoPhone.trim()) {
-      setCheckoutError("Mobile money phone number is required.");
-      return;
-    }
-    if (paymentMethod === "card" && !cardOrderId.trim()) {
-      setCheckoutError("Card Order ID is required for card payments.");
       return;
     }
     if (scheduleReminder && !reminderDate) {
@@ -224,6 +251,59 @@ export default function StaffDashboard() {
       return;
     }
 
+    // Validate voucher items
+    const now = Date.now();
+    for (const vItem of voucherCartItems) {
+      if (vItem.amount <= 0) {
+        setCheckoutError("Gift voucher amount must be positive.");
+        return;
+      }
+      if (vItem.expiresAt <= now) {
+        setCheckoutError("Gift voucher expiry date must be in the future.");
+        return;
+      }
+    }
+
+    // Validate tenders total
+    const totalTendersAmount = tenders.reduce((sum, t) => sum + t.amount, 0);
+    if (totalTendersAmount !== cartSubtotal) {
+      setCheckoutError(`Tender total (UGX ${totalTendersAmount.toLocaleString()}) must match cart total (UGX ${cartSubtotal.toLocaleString()}).`);
+      return;
+    }
+
+    // Validate voucher tenders
+    for (const tender of tenders) {
+      if (tender.method === "voucher") {
+        if (!tender.voucherCode) {
+          setCheckoutError("Please specify the voucher code.");
+          return;
+        }
+        const validation = voucherValidation[tender.voucherCode];
+        if (!validation) {
+          setCheckoutError("Voucher validation in progress...");
+          return;
+        }
+        if (!validation.found) {
+          setCheckoutError(`Voucher ${tender.voucherCode} not found.`);
+          return;
+        }
+        if (!validation.redeemable) {
+          setCheckoutError(`Voucher ${tender.voucherCode} is not redeemable.`);
+          return;
+        }
+        if (validation.remainingBalance < tender.amount) {
+          setCheckoutError(`Voucher ${tender.voucherCode} has insufficient balance (Remaining: UGX ${validation.remainingBalance.toLocaleString()}).`);
+          return;
+        }
+      } else if (tender.method === "momo" && !tender.momoPhone?.trim()) {
+        setCheckoutError("Mobile money phone number is required for all MoMo tenders.");
+        return;
+      } else if (tender.method === "card" && !tender.cardOrderId?.trim()) {
+        setCheckoutError("Card Order ID is required for all card tenders.");
+        return;
+      }
+    }
+
     setCheckoutError("");
     setIsCheckoutSubmitting(true);
 
@@ -233,30 +313,48 @@ export default function StaffDashboard() {
         quantity: item.quantity
       }));
 
-      await createPhysicalOrderMutation({
+      const paymentsPayload = tenders.map(t => ({
+        method: t.method,
+        amount: t.amount,
+        momoPhone: t.method === "momo" ? t.momoPhone.trim() : undefined,
+        cardOrderId: t.method === "card" ? t.cardOrderId.trim() : undefined,
+        voucherCode: t.method === "voucher" ? t.voucherCode.trim().toUpperCase() : undefined
+      }));
+
+      const voucherItemsPayload = voucherCartItems.map(item => ({
+        amount: item.amount,
+        expiresAt: item.expiresAt,
+        recipientName: item.recipientName || undefined,
+        recipientEmail: item.recipientEmail || undefined
+      }));
+
+      const result = await createPhysicalOrderMutation({
         token,
         customerName: posCustomer.name.trim(),
         phone: posCustomer.phone.trim() || undefined,
         email: posCustomer.email.trim() || undefined,
         items: itemsPayload,
-        paymentMethod,
-        momoPhone: paymentMethod === "momo" ? momoPhone.trim() : undefined,
-        cardOrderId: paymentMethod === "card" ? cardOrderId.trim() : undefined,
+        payments: paymentsPayload,
+        voucherItems: voucherItemsPayload.length > 0 ? voucherItemsPayload : undefined,
         note: posCustomer.note.trim() || undefined,
         reminder: scheduleReminder
           ? {
-              type: reminderType,
-              note: reminderNote.trim(),
-              scheduledDate: reminderDate,
-              scheduledTime: reminderTime || undefined,
-              priority: reminderPriority
-            }
+            type: reminderType,
+            note: reminderNote.trim(),
+            scheduledDate: reminderDate,
+            scheduledTime: reminderTime || undefined,
+            priority: reminderPriority
+          }
           : undefined
       });
 
+      setIssuedVouchers(result.issuedVouchers || []);
       setCheckoutSuccess(true);
       resetPosForm();
-      setTimeout(() => setCheckoutSuccess(false), 5000);
+      setTimeout(() => {
+        setCheckoutSuccess(false);
+        setIssuedVouchers([]);
+      }, 10000);
     } catch (err) {
       setCheckoutError("Checkout failed: " + err.message);
     } finally {
@@ -271,7 +369,18 @@ export default function StaffDashboard() {
   // --- TAB 4: CALENDAR / REMINDERS ---
   const dueActivities = useQuery(api.customerActivities.getDueActivities, { token, currentDate: todayStr });
 
-  const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0) +
+    voucherCartItems.reduce((sum, item) => sum + item.amount, 0);
+
+  const tendersRemainingToPay = cartSubtotal - tenders.reduce((sum, t) => sum + t.amount, 0);
+
+  React.useEffect(() => {
+    if (tenders.length === 1) {
+      setTenders(prev => [
+        { ...prev[0], amount: cartSubtotal }
+      ]);
+    }
+  }, [cartSubtotal, tenders.length]);
 
   const initials = (name) => (name || "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
 
@@ -306,14 +415,14 @@ export default function StaffDashboard() {
               onClick={() => setActiveTab("orders")}
             >
               <ClipboardList size={18} />
-              <span>Orders Queue</span>
+              <span>Online Orders</span>
             </button>
             <button
               className={`sidebar-nav-item ${activeTab === "pos" ? "is-active" : ""}`}
               onClick={() => setActiveTab("pos")}
             >
               <ShoppingCart size={18} />
-              <span>Walk-in POS</span>
+              <span>Physical Orders</span>
             </button>
             <button
               className={`sidebar-nav-item ${activeTab === "customers" ? "is-active" : ""}`}
@@ -514,6 +623,34 @@ export default function StaffDashboard() {
                     </div>
                   ) : (
                     <div className="pos-products-grid">
+                      {/* Permanent Sell Gift Voucher tile */}
+                      <button
+                        key="gift-voucher-tile"
+                        onClick={() => setShowVoucherModal(true)}
+                        disabled={isCheckoutSubmitting}
+                        type="button"
+                        style={{
+                          background: "linear-gradient(135deg, var(--surface-container-low), var(--surface-container))",
+                          border: "1px dashed var(--color-brand-primary)",
+                          borderRadius: "var(--radius-lg)",
+                          padding: "var(--space-3)",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          height: "172px"
+                        }}
+                      >
+                        <div style={{ width: "100%", height: "90px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "var(--radius-md)", background: "rgba(99, 102, 241, 0.1)", color: "var(--color-brand-primary)" }}>
+                          <Sparkles size={36} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>Sell Gift Voucher</div>
+                          <div style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>Free-form amount</div>
+                        </div>
+                      </button>
+
                       {filteredPosProducts.map(p => {
                         const inStock = p.inventory === undefined || p.inventory > 0;
                         const cartItem = cart.find(item => item.id === p._id);
@@ -568,17 +705,40 @@ export default function StaffDashboard() {
                 {/* Cart Drawer and Checkout Info */}
                 <div style={{ position: "sticky", top: "20px" }}>
                   {checkoutSuccess && (
-                    <div className="form-error is-visible" style={{ background: "rgba(34,197,94,0.08)", color: "#16a34a", marginBottom: "var(--space-3)" }}>
-                      <Sparkles size={16} />
-                      <span>Physical order processed successfully!</span>
+                    <div className="form-error is-visible" style={{ background: "rgba(34,197,94,0.08)", color: "#16a34a", marginBottom: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-2)", alignItems: "flex-start" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Sparkles size={16} />
+                        <span>Physical order processed successfully!</span>
+                      </div>
+                      {issuedVouchers.length > 0 && (
+                        <div style={{ width: "100%", marginTop: "var(--space-2)", paddingTop: "var(--space-2)", borderTop: "1px solid rgba(34,197,94,0.2)" }}>
+                          <div style={{ fontSize: "11px", fontWeight: 700, marginBottom: "var(--space-1)" }}>Issued Gift Vouchers:</div>
+                          {issuedVouchers.map((v, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(34,197,94,0.1)", padding: "var(--space-2)", borderRadius: "var(--radius-sm)", marginBottom: "var(--space-1)", width: "100%" }}>
+                              <span style={{ fontSize: "12px", fontFamily: "monospace", fontWeight: 700 }}>{v.code} (UGX {v.amount.toLocaleString()})</span>
+                              <button
+                                type="button"
+                                className="btn btn--ghost btn--sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(v.code);
+                                  alert("Copied code to clipboard!");
+                                }}
+                                style={{ padding: "2px 6px", fontSize: "10px", height: "auto" }}
+                              >
+                                Copy
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                   {checkoutError && <div className="form-error is-visible">{checkoutError}</div>}
 
-                  {cart.length === 0 ? (
+                  {cart.length === 0 && voucherCartItems.length === 0 ? (
                     <div className="empty-state">
                       <div className="empty-title">Cart is empty.</div>
-                      <div className="empty-sub">Tap products to add them.</div>
+                      <div className="empty-sub">Tap products or Sell Gift Voucher to add them.</div>
                     </div>
                   ) : (
                     <form onSubmit={handleCheckout} className="pos-checkout-form">
@@ -600,6 +760,29 @@ export default function StaffDashboard() {
                             </div>
                             <div style={{ fontSize: "13px", fontWeight: 700, minWidth: "90px", textAlign: "right" }}>
                               UGX {(item.price * item.quantity).toLocaleString()}
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Gift Voucher Cart Items */}
+                        {voucherCartItems.map(item => (
+                          <div key={item.tempId} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", padding: "var(--space-2) 0", borderBottom: "1px solid var(--surface-container-highest)" }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
+                                <Sparkles size={14} style={{ color: "var(--color-brand-primary)" }} /> Gift Voucher
+                              </div>
+                              <div style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>
+                                Expiry: {new Date(item.expiresAt).toLocaleDateString()}
+                                {item.recipientEmail && ` · To: ${item.recipientName || item.recipientEmail}`}
+                              </div>
+                            </div>
+                            <div>
+                              <button type="button" className="btn btn--stepper" onClick={() => removeVoucherCartItem(item.tempId)}>
+                                <X size={12} />
+                              </button>
+                            </div>
+                            <div style={{ fontSize: "13px", fontWeight: 700, minWidth: "90px", textAlign: "right" }}>
+                              UGX {item.amount.toLocaleString()}
                             </div>
                           </div>
                         ))}
@@ -656,68 +839,117 @@ export default function StaffDashboard() {
                         />
                       </div>
 
-                      <div className="form-group">
-                        <label className="form-label">Payment Method</label>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-2)" }}>
+                      {/* Split payment control */}
+                      <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <label className="form-label" style={{ margin: 0 }}>Payments / Tenders</label>
                           <button
                             type="button"
-                            className={`btn btn--sm ${paymentMethod === "physical" ? "btn--primary" : "btn--secondary"}`}
-                            onClick={() => setPaymentMethod("physical")}
+                            className="btn btn--secondary btn--sm"
+                            onClick={handleAddTender}
                             disabled={isCheckoutSubmitting}
-                            style={{ padding: "8px 4px", fontSize: "12px", minWidth: 0 }}
+                            style={{ height: "28px", padding: "0 8px", fontSize: "11px" }}
                           >
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}><Banknote size={12} /> Cash</span>
+                            + Add Tender
                           </button>
-                          <button
-                            type="button"
-                            className={`btn btn--sm ${paymentMethod === "momo" ? "btn--primary" : "btn--secondary"}`}
-                            onClick={() => setPaymentMethod("momo")}
-                            disabled={isCheckoutSubmitting}
-                            style={{ padding: "8px 4px", fontSize: "12px", minWidth: 0 }}
-                          >
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}><Smartphone size={12} /> MoMo</span>
-                          </button>
-                          <button
-                            type="button"
-                            className={`btn btn--sm ${paymentMethod === "card" ? "btn--primary" : "btn--secondary"}`}
-                            onClick={() => setPaymentMethod("card")}
-                            disabled={isCheckoutSubmitting}
-                            style={{ padding: "8px 4px", fontSize: "12px", minWidth: 0 }}
-                          >
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}><CreditCard size={12} /> Card</span>
-                          </button>
+                        </div>
+
+                        {tenders.map((tender, index) => (
+                          <div key={tender.tempId} style={{ background: "var(--surface-container)", padding: "var(--space-3)", borderRadius: "var(--radius-md)", border: "1px solid var(--surface-container-highest)", position: "relative" }}>
+                            {tenders.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTender(tender.tempId)}
+                                style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", color: "var(--text-tertiary)", cursor: "pointer" }}
+                              >
+                                <X size={14} />
+                              </button>
+                            )}
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)", marginBottom: "var(--space-2)", marginTop: tenders.length > 1 ? "12px" : "0" }}>
+                              {/* Method Select */}
+                              <div>
+                                <label className="form-label" style={{ fontSize: "11px" }}>Method</label>
+                                <select
+                                  className="form-input"
+                                  value={tender.method}
+                                  onChange={(e) => handleUpdateTender(tender.tempId, "method", e.target.value)}
+                                  disabled={isCheckoutSubmitting}
+                                  style={{ padding: "0 8px", height: "36px", fontSize: "12px" }}
+                                >
+                                  <option value="physical">Cash</option>
+                                  <option value="momo">Mobile Money (MoMo)</option>
+                                  <option value="card">Card</option>
+                                  <option value="voucher">Gift Voucher</option>
+                                </select>
+                              </div>
+
+                              {/* Amount input */}
+                              <div>
+                                <label className="form-label" style={{ fontSize: "11px" }}>Amount (UGX)</label>
+                                <input
+                                  type="number"
+                                  className="form-input"
+                                  value={tender.amount || ""}
+                                  onChange={(e) => handleUpdateTender(tender.tempId, "amount", parseFloat(e.target.value) || 0)}
+                                  disabled={isCheckoutSubmitting}
+                                  style={{ height: "36px", fontSize: "12px" }}
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            {/* Conditional inputs */}
+                            {tender.method === "momo" && (
+                              <div className="form-group" style={{ margin: 0, marginTop: "var(--space-2)" }}>
+                                <label className="form-label" style={{ fontSize: "11px" }}>MoMo Phone</label>
+                                <input
+                                  type="tel"
+                                  className="form-input"
+                                  placeholder="e.g. +256701..."
+                                  value={tender.momoPhone || ""}
+                                  onChange={(e) => handleUpdateTender(tender.tempId, "momoPhone", e.target.value)}
+                                  disabled={isCheckoutSubmitting}
+                                  required
+                                  style={{ height: "36px", fontSize: "12px" }}
+                                />
+                              </div>
+                            )}
+
+                            {tender.method === "card" && (
+                              <div className="form-group" style={{ margin: 0, marginTop: "var(--space-2)" }}>
+                                <label className="form-label" style={{ fontSize: "11px" }}>Card Order ID</label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  placeholder="e.g. terminal reference"
+                                  value={tender.cardOrderId || ""}
+                                  onChange={(e) => handleUpdateTender(tender.tempId, "cardOrderId", e.target.value)}
+                                  disabled={isCheckoutSubmitting}
+                                  required
+                                  style={{ height: "36px", fontSize: "12px" }}
+                                />
+                              </div>
+                            )}
+
+                            {tender.method === "voucher" && (
+                              <VoucherTenderInput
+                                token={token}
+                                tender={tender}
+                                isCheckoutSubmitting={isCheckoutSubmitting}
+                                onUpdate={(field, val) => handleUpdateTender(tender.tempId, field, val)}
+                                onValidationUpdate={(code, res) => setVoucherValidation(prev => ({ ...prev, [code]: res }))}
+                              />
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Remaining to pay readout */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderRadius: "var(--radius-md)", background: tendersRemainingToPay === 0 ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", color: tendersRemainingToPay === 0 ? "#16a34a" : "#ef4444", fontSize: "12px", fontWeight: 700 }}>
+                          <span>{tendersRemainingToPay >= 0 ? "Remaining to pay" : "Overpaid"}</span>
+                          <span>UGX {Math.abs(tendersRemainingToPay).toLocaleString()}</span>
                         </div>
                       </div>
-
-                      {paymentMethod === "momo" && (
-                        <div className="form-group">
-                          <label className="form-label">Mobile Money Phone</label>
-                          <input
-                            type="tel"
-                            className="form-input"
-                            placeholder="e.g. +256701..."
-                            value={momoPhone}
-                            onChange={(e) => setMomoPhone(e.target.value)}
-                            disabled={isCheckoutSubmitting}
-                            required
-                          />
-                        </div>
-                      )}
-
-                      {paymentMethod === "card" && (
-                        <div className="form-group">
-                          <label className="form-label">Card Order ID (from terminal receipt)</label>
-                          <input
-                            type="text"
-                            className="form-input"
-                            placeholder="e.g. terminal reference number"
-                            value={cardOrderId}
-                            onChange={(e) => setCardOrderId(e.target.value)}
-                            disabled={isCheckoutSubmitting}
-                            required
-                          />
-                        </div>
-                      )}
 
                       <div className="form-group">
                         <label className="toggle-container" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
@@ -897,6 +1129,182 @@ export default function StaffDashboard() {
             // Convex automatically updates queries when state changes!
           }}
         />
+      )}
+
+      {/* Sell Gift Voucher Modal */}
+      {showVoucherModal && (
+        <div className="modal-overlay is-open">
+          <div className="modal" style={{ maxWidth: "450px" }}>
+            <div className="modal-header">
+              <div>
+                <h2 className="modal-title">Sell Gift Voucher</h2>
+                <span className="modal-subtitle">Add a custom value voucher to cart</span>
+              </div>
+              <button className="modal-close" onClick={() => setShowVoucherModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body" style={{ padding: "var(--space-4)" }}>
+              <div className="form-group">
+                <label className="form-label">Voucher Value (UGX)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="e.g. 50000"
+                  id="voucher-amount-input"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Expiry Date</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  id="voucher-expiry-input"
+                  defaultValue={(() => {
+                    const d = new Date();
+                    d.setFullYear(d.getFullYear() + 1); // 1 year default
+                    return d.toISOString().split("T")[0];
+                  })()}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Recipient Name (Optional)</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Jane Doe"
+                  id="voucher-recipient-name-input"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Recipient Email (Optional)</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  placeholder="e.g. jane@domain.com"
+                  id="voucher-recipient-email-input"
+                />
+              </div>
+              <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
+                <button
+                  type="button"
+                  className="btn btn--secondary btn--full-width"
+                  onClick={() => setShowVoucherModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--primary btn--full-width"
+                  onClick={() => {
+                    const amountVal = parseFloat(document.getElementById("voucher-amount-input").value);
+                    const expiryVal = document.getElementById("voucher-expiry-input").value;
+                    const recipientNameVal = document.getElementById("voucher-recipient-name-input").value.trim();
+                    const recipientEmailVal = document.getElementById("voucher-recipient-email-input").value.trim();
+
+                    if (!amountVal || amountVal <= 0) {
+                      alert("Please enter a valid amount");
+                      return;
+                    }
+                    if (!expiryVal) {
+                      alert("Please select an expiry date");
+                      return;
+                    }
+
+                    const expiresAtMs = new Date(expiryVal).getTime();
+                    if (expiresAtMs <= Date.now()) {
+                      alert("Expiry date must be in the future");
+                      return;
+                    }
+
+                    setVoucherCartItems(prev => [
+                      ...prev,
+                      {
+                        tempId: Math.random().toString(36).substr(2, 9),
+                        amount: amountVal,
+                        expiresAt: expiresAtMs,
+                        recipientName: recipientNameVal || undefined,
+                        recipientEmail: recipientEmailVal || undefined
+                      }
+                    ]);
+                    setShowVoucherModal(false);
+                  }}
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VoucherTenderInput({ token, tender, isCheckoutSubmitting, onUpdate, onValidationUpdate }) {
+  const [codeInputValue, setCodeInputValue] = React.useState(tender.voucherCode || "");
+
+  // Debounce/sync the input value to the tender state
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      onUpdate("voucherCode", codeInputValue.trim().toUpperCase());
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [codeInputValue]);
+
+  const lookupResult = useQuery(
+    api.giftVouchers.lookupVoucher,
+    tender.voucherCode ? { token, code: tender.voucherCode } : "skip"
+  );
+
+  React.useEffect(() => {
+    if (lookupResult) {
+      onValidationUpdate(tender.voucherCode, lookupResult);
+      if (lookupResult.found && lookupResult.redeemable) {
+        if (tender.amount > lookupResult.remainingBalance) {
+          onUpdate("amount", lookupResult.remainingBalance);
+        }
+      }
+    }
+  }, [lookupResult, tender.voucherCode, tender.amount]);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-2)" }}>
+      <div>
+        <label className="form-label" style={{ fontSize: "11px" }}>Voucher Code</label>
+        <input
+          type="text"
+          className="form-input"
+          placeholder="GV-XXXX-XXXX"
+          value={codeInputValue}
+          onChange={(e) => setCodeInputValue(e.target.value)}
+          disabled={isCheckoutSubmitting}
+          required
+          style={{ height: "36px", fontSize: "12px", textTransform: "uppercase" }}
+        />
+      </div>
+
+      {tender.voucherCode && (
+        <div style={{ fontSize: "11px", fontWeight: 600 }}>
+          {lookupResult === undefined ? (
+            <span style={{ color: "var(--text-tertiary)" }}>Verifying voucher code...</span>
+          ) : !lookupResult.found ? (
+            <span style={{ color: "#ef4444" }}>Voucher not found</span>
+          ) : !lookupResult.redeemable ? (
+            <span style={{ color: "#ef4444" }}>
+              Voucher is not redeemable (Status: {lookupResult.status.toUpperCase()}, Balance: UGX {lookupResult.remainingBalance.toLocaleString()})
+            </span>
+          ) : (
+            <span style={{ color: "#16a34a" }}>
+              Redeemable Balance: <strong>UGX {lookupResult.remainingBalance.toLocaleString()}</strong>
+              {lookupResult.remainingBalance < tender.amount && (
+                <span style={{ display: "block", color: "#eab308" }}>Amount clamped to available balance!</span>
+              )}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );

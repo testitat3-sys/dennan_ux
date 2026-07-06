@@ -1,10 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { REAL_BRANDS } from '../../constants/brandsData';
 import './BrandsBanner.css';
 
-const BrandsBanner = ({ brands }) => {
-  if (!brands) return null;
-
+const BrandsBanner = () => {
   return (
     <section className="brands-banner" aria-labelledby="brands-banner-heading">
       <div className="section__header">
@@ -13,11 +12,17 @@ const BrandsBanner = ({ brands }) => {
       
       <div className="brands-banner__track-wrap">
         <div className="brands-banner__track">
-          {brands.map((brand, i) => (
+          {REAL_BRANDS.map((brand, i) => (
             <Link key={i} to={`/brand/${brand.id}`} className="brand-item">
               <div className="brand-item__logo">
-                <img src={brand.logo} alt={`${brand.name} Logo`} />
-                <span className="brand-item__discount">{brand.discount}</span>
+                {brand.logo ? (
+                  <img src={brand.logo} alt={`${brand.name} Logo`} />
+                ) : (
+                  <div className="brand-item__monogram">{brand.name.charAt(0)}</div>
+                )}
+                {brand.maxDiscount > 0 && (
+                  <span className="brand-item__discount">-{brand.maxDiscount}%</span>
+                )}
               </div>
               <h3 className="brand-item__name">{brand.name}</h3>
             </Link>
@@ -29,4 +34,5 @@ const BrandsBanner = ({ brands }) => {
 };
 
 export default BrandsBanner;
+
 

@@ -148,3 +148,29 @@
   .brand-item__discount { top: calc(-1 * var(--space-1-5)); left: calc(-1 * var(--space-1-5)); font-size: var(--label-md); }
 }
 
+.brand-item__monogram {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-editorial);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--color-brand-primary);
+  background: var(--surface-container-high);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  user-select: none;
+  border: 1px solid var(--surface-container-highest);
+  transition: all 0.4s ease;
+}
+
+.brand-item:hover .brand-item__monogram {
+  background: var(--surface);
+  color: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
+  transform: scale(1.05);
+}
+
+

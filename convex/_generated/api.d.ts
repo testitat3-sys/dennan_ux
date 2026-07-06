@@ -16,6 +16,7 @@ import type * as coupons from "../coupons.js";
 import type * as customerActivities from "../customerActivities.js";
 import type * as data from "../data.js";
 import type * as emails from "../emails.js";
+import type * as giftVouchers from "../giftVouchers.js";
 import type * as http from "../http.js";
 import type * as inspect from "../inspect.js";
 import type * as migrations from "../migrations.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   customerActivities: typeof customerActivities;
   data: typeof data;
   emails: typeof emails;
+  giftVouchers: typeof giftVouchers;
   http: typeof http;
   inspect: typeof inspect;
   migrations: typeof migrations;

@@ -6,6 +6,7 @@ import { normalizeProductPrice, shouldKeepProduct } from "./products";
 import { internal } from "./_generated/api";
 import { paginationOptsValidator } from "convex/server";
 import { verifyStaffSession } from "./staffAuth";
+import { generateUniqueVoucherCode } from "./giftVouchers";
 
 export const placeOrder = mutation({
   args: {
@@ -363,6 +364,12 @@ export const getOrdersForStaff = query({
         .withIndex("by_order", (q) => q.eq("orderId", order._id))
         .collect();
 
+      // Fetch matching orderPayments
+      const payments = await ctx.db
+        .query("orderPayments")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+
       // Resolve claimant name
       let claimantName = null;
       if (order.claimedBy) {
@@ -376,6 +383,7 @@ export const getOrdersForStaff = query({
         customerEmail: customer?.email,
         customerPhone: customer?.phone,
         items,
+        payments,
         claimantName,
       });
     }
@@ -404,6 +412,11 @@ export const getOrderDetailById = query({
       .withIndex("by_order", (q) => q.eq("orderId", order._id))
       .collect();
 
+    const payments = await ctx.db
+      .query("orderPayments")
+      .withIndex("by_order", (q) => q.eq("orderId", order._id))
+      .collect();
+
     let claimantName = null;
     if (order.claimedBy) {
       const claimant = await ctx.db.get(order.claimedBy);
@@ -416,6 +429,7 @@ export const getOrderDetailById = query({
       customerEmail: customer?.email,
       customerPhone: customer?.phone,
       items,
+      payments,
       claimantName,
     };
   },
@@ -740,9 +754,25 @@ export const createPhysicalOrder = mutation({
         quantity: v.number(),
       })
     ),
-    paymentMethod: v.union(v.literal("physical"), v.literal("momo"), v.literal("card")),
-    momoPhone: v.optional(v.string()),
-    cardOrderId: v.optional(v.string()),
+    payments: v.array(
+      v.object({
+        method: v.union(v.literal("physical"), v.literal("momo"), v.literal("card"), v.literal("voucher")),
+        amount: v.number(),
+        momoPhone: v.optional(v.string()),
+        cardOrderId: v.optional(v.string()),
+        voucherCode: v.optional(v.string()),
+      })
+    ),
+    voucherItems: v.optional(
+      v.array(
+        v.object({
+          amount: v.number(),
+          expiresAt: v.number(),
+          recipientName: v.optional(v.string()),
+          recipientEmail: v.optional(v.string()),
+        })
+      )
+    ),
     note: v.optional(v.string()),
     reminder: v.optional(
       v.object({
@@ -758,16 +788,23 @@ export const createPhysicalOrder = mutation({
     // Gated: Staff or Admin
     const { user: staffUser } = await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
 
-    if (args.items.length === 0) {
-      throw new Error("Cannot create order with zero items");
+    if (args.items.length === 0 && (!args.voucherItems || args.voucherItems.length === 0)) {
+      throw new Error("Cannot create order with zero items and zero vouchers");
     }
 
-    if (args.paymentMethod === "card" && !args.cardOrderId?.trim()) {
-      throw new Error("Card Order ID is required for card payments");
-    }
+    const now = Date.now();
 
-    if (args.paymentMethod === "momo" && !args.momoPhone?.trim()) {
-      throw new Error("Mobile money phone number is required for MoMo payments");
+    // Per-tender validation
+    for (const p of args.payments) {
+      if (p.method === "card" && !p.cardOrderId?.trim()) {
+        throw new Error("Card Order ID is required for card payments");
+      }
+      if (p.method === "momo" && !p.momoPhone?.trim()) {
+        throw new Error("Mobile money phone number is required for MoMo payments");
+      }
+      if (p.method === "voucher" && !p.voucherCode?.trim()) {
+        throw new Error("Voucher code is required for voucher payments");
+      }
     }
 
     // 1. Resolve or create user
@@ -808,7 +845,7 @@ export const createPhysicalOrder = mutation({
     for (const item of args.items) {
       const rawProduct = await ctx.db.get(item.productId);
       if (!rawProduct || !rawProduct.isActive) {
-        throw new Error(`Product ${item.productId} is not active or does not exist`);
+        throw new Error("Product is not active or does not exist");
       }
       const product = normalizeProductPrice(rawProduct);
 
@@ -835,14 +872,81 @@ export const createPhysicalOrder = mutation({
       });
     }
 
+    // 2b. Add voucher items to subtotal
+    if (args.voucherItems) {
+      for (const vItem of args.voucherItems) {
+        if (vItem.amount <= 0) {
+          throw new Error("Voucher amount must be greater than zero");
+        }
+        if (vItem.expiresAt <= now) {
+          throw new Error("Voucher expiry date must be in the future");
+        }
+        computedSubtotal += vItem.amount;
+      }
+    }
+
+    // Validate payment total
+    const totalPayments = args.payments.reduce((sum, p) => sum + p.amount, 0);
+    if (totalPayments !== computedSubtotal) {
+      throw new Error(`Payment total mismatch: paid UGX ${totalPayments.toLocaleString()} but total is UGX ${computedSubtotal.toLocaleString()}`);
+    }
+
+    // Validate and pre-process voucher redemptions
+    const resolvedPayments = [];
+    for (const p of args.payments) {
+      if (p.method === "voucher") {
+        const code = p.voucherCode!.trim().toUpperCase();
+        const voucher = await ctx.db
+          .query("giftVouchers")
+          .withIndex("by_code", (q) => q.eq("code", code))
+          .first();
+        if (!voucher) {
+          throw new Error(`Voucher with code ${code} not found`);
+        }
+        if (voucher.status !== "active") {
+          throw new Error(`Voucher ${code} is not active (status: ${voucher.status})`);
+        }
+        if (now > voucher.expiresAt) {
+          throw new Error(`Voucher ${code} has expired`);
+        }
+        if (voucher.remainingBalance < p.amount) {
+          throw new Error(`Voucher ${code} has insufficient balance. Remaining: UGX ${voucher.remainingBalance.toLocaleString()}, requested: UGX ${p.amount.toLocaleString()}`);
+        }
+
+        resolvedPayments.push({
+          method: "voucher" as const,
+          amount: p.amount,
+          voucherId: voucher._id,
+          voucherCode: code,
+        });
+      } else {
+        resolvedPayments.push({
+          method: p.method,
+          amount: p.amount,
+          momoPhone: p.momoPhone,
+          cardOrderId: p.cardOrderId,
+        });
+      }
+    }
+
     // 3. Create the physical store order
-    const now = Date.now();
+    // Populate scalar fields for backward compatibility
+    let paymentMethodSummary: string = "mixed";
+    let momoPhoneSummary: string | undefined = undefined;
+    let cardOrderIdSummary: string | undefined = undefined;
+
+    if (args.payments.length === 1) {
+      paymentMethodSummary = args.payments[0].method;
+      momoPhoneSummary = args.payments[0].momoPhone;
+      cardOrderIdSummary = args.payments[0].cardOrderId;
+    }
+
     const orderId = await ctx.db.insert("orders", {
       userId: customerUser._id,
       status: "delivered", // Delivered immediately
-      paymentMethod: args.paymentMethod,
-      momoPhone: args.paymentMethod === "momo" ? args.momoPhone : undefined,
-      cardOrderId: args.paymentMethod === "card" ? args.cardOrderId : undefined,
+      paymentMethod: paymentMethodSummary,
+      momoPhone: momoPhoneSummary,
+      cardOrderId: cardOrderIdSummary,
       note: args.note,
       deliveryAddress: {
         name: args.customerName,
@@ -867,7 +971,40 @@ export const createPhysicalOrder = mutation({
       ],
     });
 
-    // 4. Create order items
+    // 4. Update voucher balances, create redemptions, and create order payments
+    for (const rp of resolvedPayments) {
+      if (rp.method === "voucher") {
+        const voucher = await ctx.db.get(rp.voucherId!);
+        if (!voucher) throw new Error("Voucher not found during redemption");
+        const newBalance = voucher.remainingBalance - rp.amount;
+        const status = newBalance === 0 ? "depleted" : "active";
+        await ctx.db.patch(voucher._id, {
+          remainingBalance: newBalance,
+          status,
+        });
+
+        await ctx.db.insert("voucherRedemptions", {
+          voucherId: voucher._id,
+          orderId,
+          amount: rp.amount,
+          balanceAfter: newBalance,
+          redeemedAt: now,
+          staffId: staffUser._id,
+        });
+      }
+
+      await ctx.db.insert("orderPayments", {
+        orderId,
+        method: rp.method,
+        amount: rp.amount,
+        momoPhone: rp.momoPhone,
+        cardOrderId: rp.cardOrderId,
+        voucherId: rp.voucherId,
+        voucherCode: rp.voucherCode,
+      });
+    }
+
+    // 5. Create order items
     for (const item of itemsToOrder) {
       await ctx.db.insert("orderItems", {
         orderId,
@@ -878,7 +1015,34 @@ export const createPhysicalOrder = mutation({
       });
     }
 
-    // 5. Save checkout note as a completed CRM activity and update customerNotes if provided
+    // 6. Sell/issue gift vouchers (if any)
+    const issuedVouchers = [];
+    if (args.voucherItems) {
+      for (const vItem of args.voucherItems) {
+        const code = await generateUniqueVoucherCode(ctx);
+        await ctx.db.insert("giftVouchers", {
+          code,
+          originalAmount: vItem.amount,
+          remainingBalance: vItem.amount,
+          expiresAt: vItem.expiresAt,
+          status: "active",
+          issuedOrderId: orderId,
+          recipientName: vItem.recipientName,
+          recipientEmail: vItem.recipientEmail,
+          purchaserUserId: customerUser._id,
+          createdAt: now,
+          createdByStaffId: staffUser._id,
+        });
+
+        issuedVouchers.push({
+          code,
+          amount: vItem.amount,
+          expiresAt: vItem.expiresAt,
+        });
+      }
+    }
+
+    // 7. Save checkout note as a completed CRM activity and update customerNotes if provided
     if (args.note?.trim()) {
       const checkoutNoteClean = args.note.trim();
       await ctx.db.insert("customerActivities", {
@@ -898,7 +1062,7 @@ export const createPhysicalOrder = mutation({
       });
     }
 
-    // 6. Schedule a follow-up reminder, if requested
+    // 8. Schedule a follow-up reminder, if requested
     if (args.reminder) {
       await ctx.db.insert("customerActivities", {
         customerId: customerUser._id,
@@ -915,7 +1079,7 @@ export const createPhysicalOrder = mutation({
       });
     }
 
-    return { success: true, orderId };
+    return { success: true, orderId, issuedVouchers };
   },
 });
 

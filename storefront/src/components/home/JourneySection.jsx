@@ -7,7 +7,7 @@ const JourneySection = ({ stages }) => {
   if (!stages) return null;
 
   return (
-    <section className="section journey-section" aria-labelledby="journey-heading">
+    <section id="journey-section" className="section journey-section" aria-labelledby="journey-heading">
       <div className="section__header">
         <Text role="label-sm" as="p" color="brand-primary" className="section__eyebrow">
           Personalised for you

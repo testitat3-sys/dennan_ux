@@ -183,7 +183,7 @@ export default function AdminDashboard() {
               onClick={() => setActiveTab("customers")}
             >
               <Users size={18} />
-              <span>Customers CRM</span>
+              <span>Customers</span>
             </button>
             <button
               className={`sidebar-nav-item ${activeTab === "calendar" ? "is-active" : ""}`}

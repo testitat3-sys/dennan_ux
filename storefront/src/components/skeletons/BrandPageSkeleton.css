@@ -1,0 +1,5 @@
+/* BrandPageSkeleton styles */
+.brand-page-skel {
+  background: var(--surface);
+  min-height: 100vh;
+}

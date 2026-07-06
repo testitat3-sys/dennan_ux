@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import ProductCard from '../components/products/ProductCard';
@@ -12,6 +12,7 @@ import Page from '../components/ui/Page';
 import CardGrid from '../components/ui/CardGrid';
 import Card from '../components/ui/Card';
 import Text from '../components/ui/Text';
+import PLPSkeleton from '../components/skeletons/PLPSkeleton';
 import './PLP.css';
 
 const COLLECTIONS_METADATA = {
@@ -221,54 +222,9 @@ const PLP = () => {
   }, [stageId, collectionId, activeFilters, query, allProducts, loading]);
 
   if (loading) {
-    return (
-      <Page noPaddingTop={true} padding="inset" bottomSpacing="loose" aria-hidden="true">
-        <Page.Section as="header" fullBleed className="plp__hero plp__hero--skeleton">
-          <div className="plp__hero-bg skeleton-shimmer" style={{ background: 'var(--surface-container-high, #ede9e5)', height: '100%' }} />
-          <div className="plp__hero-content">
-            <div className="plp__hero-shape" aria-hidden="true" />
-            <div className="skeleton-title skeleton-shimmer" style={{ height: '40px', width: '280px', borderRadius: 'var(--radius-md)', marginBottom: '16px' }} />
-            <div className="skeleton-subtext skeleton-shimmer" style={{ height: '20px', width: '100%', maxWidth: '420px', borderRadius: 'var(--radius-sm)' }} />
-          </div>
-        </Page.Section>
-
-        <Page.Section className="plp__search-wrap">
-          <div className="skeleton-shimmer" style={{ height: '56px', borderRadius: 'var(--radius-pill)', background: 'var(--surface-container-low)' }} />
-        </Page.Section>
-
-        <Page.Section className="plp__container">
-          <aside className="plp__sidebar">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div className="skeleton-shimmer" style={{ height: '18px', width: '80px', borderRadius: '4px', background: 'var(--surface-container-high)' }} />
-                <div className="skeleton-shimmer" style={{ height: '14px', width: '120px', borderRadius: '4px', background: 'var(--surface-container-high)' }} />
-                <div className="skeleton-shimmer" style={{ height: '14px', width: '100px', borderRadius: '4px', background: 'var(--surface-container-high)' }} />
-                <div className="skeleton-shimmer" style={{ height: '14px', width: '130px', borderRadius: '4px', background: 'var(--surface-container-high)' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div className="skeleton-shimmer" style={{ height: '18px', width: '60px', borderRadius: '4px', background: 'var(--surface-container-high)' }} />
-                <div className="skeleton-shimmer" style={{ height: '14px', width: '110px', borderRadius: '4px', background: 'var(--surface-container-high)' }} />
-                <div className="skeleton-shimmer" style={{ height: '14px', width: '90px', borderRadius: '4px', background: 'var(--surface-container-high)' }} />
-              </div>
-            </div>
-          </aside>
-
-          <section className="plp__content">
-            <div className="plp__toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div className="skeleton-shimmer" style={{ height: '14px', width: '140px', borderRadius: '4px', background: 'var(--surface-container-high)' }} />
-              <div className="skeleton-shimmer" style={{ height: '14px', width: '90px', borderRadius: '4px', background: 'var(--surface-container-high)' }} />
-            </div>
-
-            <CardGrid columns={3} mobileColumns={2} gap="default" className="plp__grid">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
-              ))}
-            </CardGrid>
-          </section>
-        </Page.Section>
-      </Page>
-    );
+    return <PLPSkeleton />;
   }
+
 
   // Resolve page header and lifestyle banner details
   const isCollectionView = !!collectionId;
@@ -313,6 +269,18 @@ const PLP = () => {
   
   const tiers = TIERS_LIST;
 
+  // Build breadcrumb trail based on route type
+  const breadcrumbs = isCollectionView
+    ? [
+        { label: 'Home', href: '/' },
+        { label: 'Collections', href: null },
+        { label: viewData.title || collectionId, href: null },
+      ]
+    : [
+        { label: 'Home', href: '/' },
+        { label: viewData.title || stageId, href: null },
+      ];
+
   return (
     <Page noPaddingTop={true} padding="inset" bottomSpacing="loose">
       <Page.Section as="header" fullBleed className={`plp__hero ${isCollectionView ? 'plp__hero--banner' : ''}`}>
@@ -321,6 +289,21 @@ const PLP = () => {
         </div>
         <div className="plp__hero-content">
           <div className="plp__hero-shape" aria-hidden="true"></div>
+
+          {/* Breadcrumbs — mobile only (desktop hidden via CSS) */}
+          <nav className="plp__breadcrumbs" aria-label="Breadcrumb">
+            {breadcrumbs.map((crumb, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <span className="plp__breadcrumb-sep" aria-hidden="true">›</span>}
+                {crumb.href ? (
+                  <Link to={crumb.href} className="plp__breadcrumb-link">{crumb.label}</Link>
+                ) : (
+                  <span className="plp__breadcrumb-current">{crumb.label}</span>
+                )}
+              </React.Fragment>
+            ))}
+          </nav>
+
           <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
             <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
               <Text 
@@ -340,10 +323,16 @@ const PLP = () => {
               </Text>
             </Card>
           </Card>
+
+          {/* Search bar embedded in hero — visible on mobile only */}
+          <div className="plp__hero-search">
+            <SearchStrip initialQuery={query} />
+          </div>
         </div>
       </Page.Section>
 
-      <Page.Section className="plp__search-wrap">
+      {/* Search strip below hero — visible on desktop only */}
+      <Page.Section className="plp__search-wrap plp__search-wrap--desktop">
         <SearchStrip initialQuery={query} />
       </Page.Section>
 
@@ -430,15 +419,17 @@ const PLP = () => {
               <div className="plp__toolbar">
                 <Text role="body-sm" color="tertiary" className="plp__count">{filteredProducts.length} products found</Text>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-                  <Button 
-                    variant="secondary" 
-                    size="sm"
+                  <button 
                     className="plp__mobile-filter-btn" 
                     onClick={() => setIsMobileFilterOpen(true)}
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>}
+                    aria-label={`Filter products${activeFilters.length > 0 ? `, ${activeFilters.length} active` : ''}`}
                   >
-                    Filter {activeFilters.length > 0 && `(${activeFilters.length})`}
-                  </Button>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+                    <span className="plp__mobile-filter-label">Filter</span>
+                    {activeFilters.length > 0 && (
+                      <span className="plp__mobile-filter-badge">{activeFilters.length}</span>
+                    )}
+                  </button>
                   <Text role="body-sm" color="secondary" className="plp__sort">
                     Sort by: <Text role="title-sm" color="primary" as="span" className="plp__sort-val">{isCollectionView ? 'Curated' : 'Recommended'}</Text>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: 'var(--space-1)' }}>

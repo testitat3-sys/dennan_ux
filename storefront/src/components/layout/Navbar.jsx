@@ -7,7 +7,23 @@ import { useUser } from '../../context/UserContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import Button from '../ui/Button';
+import { REAL_BRANDS } from '../../constants/brandsData';
 
+// Partition REAL_BRANDS dynamically
+const discountedBrands = REAL_BRANDS.filter(b => b.maxDiscount > 0).map(b => ({
+  text: b.name,
+  href: `/brand/${b.id}`
+}));
+
+const popularBrands = REAL_BRANDS.filter(b => b.maxDiscount === 0 && b.count >= 4).map(b => ({
+  text: b.name,
+  href: `/brand/${b.id}`
+}));
+
+const exploreBrands = REAL_BRANDS.filter(b => b.maxDiscount === 0 && b.count < 4).map(b => ({
+  text: b.name,
+  href: `/brand/${b.id}`
+}));
 
 const navData = [
   {
@@ -59,10 +75,9 @@ const navData = [
     menu: {
       featured: { image: '/assets/hero.webp', alt: 'Most Loved Brands', title: 'Most Loved Brands', link: '#', linkText: 'View All' },
       columns: [
-        { title: 'Featured', links: [{ text: 'Tommee Tippee', href: '/brand/tommee-tippee' }, { text: 'Nuby', href: '/brand/nuby' }, { text: 'Philips Avent', href: '/brand/philips-avent' }, { text: 'Skip Hop', href: '/brand/skip-hop' }] },
-        { title: 'Nursery', links: [{ text: 'Snuz', href: '/brand/snuz' }, { text: 'Mamas & Papas', href: '/brand/mamas-and-papas' }, { text: 'Silver Cross', href: '/brand/silver-cross' }, { text: 'Cybex', href: '/brand/cybex' }] },
-        { title: 'Feeding', links: [{ text: 'Beaba', href: '/brand/beaba' }, { text: 'Haakaa', href: '/brand/haakaa' }, { text: 'Medela', href: '/brand/medela' }, { text: 'Stokke', href: '/brand/stokke' }] },
-        { title: 'Explore', links: [{ text: 'New Arrivals', href: '#' }, { text: 'Brand Directory', href: '#' }, { text: 'Sustainability', href: '#' }] }
+        { title: 'Discounted', links: discountedBrands },
+        { title: 'Popular', links: popularBrands },
+        { title: 'Explore', links: exploreBrands }
       ]
     }
   },

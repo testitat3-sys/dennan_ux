@@ -21,6 +21,23 @@ const Hero = ({ content }) => {
     }
   };
 
+  const handleBrowse = (e) => {
+    if (!user) {
+      e.preventDefault();
+      if (window.location.pathname === '/') {
+        const element = document.getElementById('journey-section');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+          window.history.pushState(null, '', '#journey-section');
+        }
+      } else {
+        navigate('/#journey-section');
+      }
+    } else {
+      navigate('/category/all');
+    }
+  };
+
   const getIcon = (icon) => {
     if (icon === 'instagram') {
       return <><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></>;
@@ -52,7 +69,7 @@ const Hero = ({ content }) => {
             Start with your stage
           </Button>
           <Button 
-            to="/category/all" 
+            onClick={handleBrowse} 
             variant="ghost"
             icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
             iconPosition="right"

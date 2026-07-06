@@ -804,6 +804,44 @@ export default defineSchema({
     .index("by_scheduledDate", ["scheduledDate"])
     .index("by_status", ["status"])
     .index("by_orderId", ["orderId"]),
+
+  giftVouchers: defineTable({
+    code: v.string(),
+    originalAmount: v.number(),
+    remainingBalance: v.number(),
+    expiresAt: v.number(),
+    status: v.union(v.literal("active"), v.literal("depleted"), v.literal("expired"), v.literal("cancelled")),
+    issuedOrderId: v.id("orders"),
+    recipientName: v.optional(v.string()),
+    recipientEmail: v.optional(v.string()),
+    purchaserUserId: v.optional(v.id("users")),
+    createdAt: v.number(),
+    createdByStaffId: v.id("users"),
+  })
+    .index("by_code", ["code"])
+    .index("by_issuedOrderId", ["issuedOrderId"]),
+
+  voucherRedemptions: defineTable({
+    voucherId: v.id("giftVouchers"),
+    orderId: v.id("orders"),
+    amount: v.number(),
+    balanceAfter: v.number(),
+    redeemedAt: v.number(),
+    staffId: v.id("users"),
+  })
+    .index("by_voucher", ["voucherId"])
+    .index("by_order", ["orderId"]),
+
+  orderPayments: defineTable({
+    orderId: v.id("orders"),
+    method: v.union(v.literal("physical"), v.literal("momo"), v.literal("card"), v.literal("voucher")),
+    amount: v.number(),
+    momoPhone: v.optional(v.string()),
+    cardOrderId: v.optional(v.string()),
+    voucherId: v.optional(v.id("giftVouchers")),
+    voucherCode: v.optional(v.string()),
+  })
+    .index("by_order", ["orderId"]),
 });
 
 

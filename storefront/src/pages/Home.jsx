@@ -14,10 +14,17 @@ import { getHomepageData } from '../services/api';
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import HomeSkeleton from '../components/home/HomeSkeleton';
+import MobileHomeSkeleton from '../components/skeletons/MobileHomeSkeleton';
 
 const Home = () => {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Live Convex queries for products, stages, tiers, reels
   const liveProducts = useQuery(api.data.getProducts);
@@ -74,10 +81,19 @@ const Home = () => {
       Array.from(grid.children).forEach((child) => child.classList.add('stagger-target'));
       observer.observe(grid);
     });
+
+    if (window.location.hash === '#journey-section') {
+      const element = document.getElementById('journey-section');
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
   }, [loading]);
 
   if (loading) {
-    return <HomeSkeleton />;
+    return isMobile ? <MobileHomeSkeleton /> : <HomeSkeleton />;
   }
 
   const mostLovedProducts = liveProducts.filter(p => p.isMostLoved).slice(0, 8);
@@ -87,7 +103,8 @@ const Home = () => {
     <>
       <Hero content={restData.hero} />
       <SearchStrip />
-      <BrandsBanner brands={restData.brands} />
+      <BrandsBanner />
+
 
 
       <ProductSection

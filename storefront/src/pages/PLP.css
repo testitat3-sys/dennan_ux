@@ -4,8 +4,8 @@
   height: 45vh;
   min-height: 400px;
   display: flex;
-  align-items: center;
-  padding: var(--space-16) var(--space-8);
+  align-items: flex-end;
+  padding: var(--space-16) var(--space-8) var(--space-8);
   overflow: hidden;
   background: var(--color-anchor);
   /* fallback */
@@ -49,7 +49,11 @@
   position: relative;
   z-index: 2;
   max-width: 600px;
+  width: 100%;
   animation: fadeUp 0.8s ease forwards;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .plp__hero-shape {
@@ -79,11 +83,60 @@
   max-width: 45ch;
 }
 
+/* ─── BREADCRUMBS ────────────────────────────────────────────────── */
+.plp__breadcrumbs {
+  display: none; /* hidden on desktop */
+  align-items: center;
+  gap: var(--space-1-5);
+  flex-wrap: wrap;
+  order: -1; /* appears before title */
+}
+
+.plp__breadcrumb-link,
+.plp__breadcrumb-sep,
+.plp__breadcrumb-current {
+  font-size: var(--label-md);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.plp__breadcrumb-link {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.plp__breadcrumb-link:hover {
+  color: #ffffff;
+}
+
+.plp__breadcrumb-sep {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: var(--body-xs);
+}
+
+.plp__breadcrumb-current {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ─── HERO-EMBEDDED SEARCH (mobile only) ────────────────────────── */
+.plp__hero-search {
+  display: none; /* shown via mobile media query */
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
 /* ─── SEARCH SECTION ────────────────────────────────────────────── */
 .plp__search-wrap {
   position: relative;
   z-index: 10;
+}
 
+/* Desktop-only: hidden on mobile since search is embedded in hero */
+.plp__search-wrap--desktop {
+  display: block;
 }
 
 /* ─── MAIN LAYOUT ────────────────────────────────────────────────── */
@@ -224,8 +277,29 @@
 @media (max-width: 640px) {
   .plp__hero {
     height: auto;
-    min-height: 300px;
-    padding: var(--space-12) var(--space-6);
+    min-height: 220px;
+    padding: var(--space-8) var(--space-5) var(--space-6);
+    align-items: flex-end;
+  }
+
+  /* Smaller title on mobile */
+  .plp__hero-title {
+    font-size: var(--headline-md) !important;
+  }
+
+  /* Show breadcrumbs on mobile */
+  .plp__breadcrumbs {
+    display: flex;
+  }
+
+  /* Show search inside hero on mobile */
+  .plp__hero-search {
+    display: block;
+  }
+
+  /* Hide the below-hero search strip on mobile */
+  .plp__search-wrap--desktop {
+    display: none;
   }
 }
 
@@ -238,16 +312,17 @@
   .plp__mobile-filter-btn {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-1-5);
     background: var(--surface-container-low);
     border: 1px solid var(--surface-container-high);
     border-radius: var(--radius-pill);
-    padding: var(--space-2-5) var(--space-5);
+    padding: var(--space-2) var(--space-3);
     font-size: var(--body-sm);
     font-weight: 600;
     color: var(--text-primary);
     cursor: pointer;
     transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    position: relative;
   }
 
   .plp__mobile-filter-btn:hover {
@@ -262,6 +337,34 @@
   .plp__toolbar {
     gap: var(--space-4);
   }
+}
+
+/* Icon-only on small screens — hide the label text */
+@media (max-width: 640px) {
+  .plp__mobile-filter-label {
+    display: none;
+  }
+
+  .plp__mobile-filter-btn {
+    padding: var(--space-2) var(--space-2-5);
+  }
+}
+
+/* Active filter count badge */
+.plp__mobile-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-primary);
+  color: #ffffff;
+  font-size: var(--label-md);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  line-height: 1;
 }
 
 /* ─── MOBILE SEARCH WRAP SPACING ──────────────────────────────────── */

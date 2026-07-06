@@ -131,12 +131,36 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, token }
             )}
 
             <div className="customer-info-box">
-              <h4 className="flex-center gap-sm"><CreditCard size={16} /> Payment ({order.paymentMethod.toUpperCase()})</h4>
-              {order.paymentMethod === "card" && order.cardOrderId && (
-                <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Card Order ID: <strong>{order.cardOrderId}</strong></p>
-              )}
-              {order.paymentMethod === "momo" && order.momoPhone && (
-                <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>MoMo Phone: <strong>{order.momoPhone}</strong></p>
+              <h4 className="flex-center gap-sm"><CreditCard size={16} /> Payment Info</h4>
+              {order.isWalkIn && order.payments && order.payments.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>
+                  {order.payments.map((p, idx) => {
+                    const methodLabels = {
+                      physical: "Cash",
+                      momo: "Mobile Money",
+                      card: "Card",
+                      voucher: "Gift Voucher",
+                    };
+                    return (
+                      <div key={idx} style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
+                        <strong>{methodLabels[p.method] || p.method}</strong>: UGX {p.amount.toLocaleString()}
+                        {p.method === "momo" && p.momoPhone && ` (${p.momoPhone})`}
+                        {p.method === "card" && p.cardOrderId && ` (ID: ${p.cardOrderId})`}
+                        {p.method === "voucher" && p.voucherCode && ` (Code: ${p.voucherCode})`}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: "13px", marginBottom: "6px" }}>Method: <strong>{order.paymentMethod?.toUpperCase()}</strong></div>
+                  {order.paymentMethod === "card" && order.cardOrderId && (
+                    <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Card Order ID: <strong>{order.cardOrderId}</strong></p>
+                  )}
+                  {order.paymentMethod === "momo" && order.momoPhone && (
+                    <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>MoMo Phone: <strong>{order.momoPhone}</strong></p>
+                  )}
+                </>
               )}
               <div className="price-preview-row">
                 <span>Subtotal</span>

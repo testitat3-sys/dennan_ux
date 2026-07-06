@@ -1,0 +1,258 @@
+/* MobileHomeSkeleton styles */
+
+.mobile-home-skeleton {
+  padding: 0 var(--space-4) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  background: var(--surface);
+}
+
+.skel-m-hero {
+  padding: var(--space-8) 0 var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.skel-m-hero__title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.skel-m-hero__line {
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-container-high);
+}
+
+.skel-m-hero__subcopy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-2);
+}
+
+.skel-m-hero__sub-line {
+  height: 12px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-container-high);
+}
+
+.skel-m-hero__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+.skel-m-hero__btn-primary {
+  height: 48px;
+  width: 100%;
+  max-width: 280px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-gallery-black, #111111);
+}
+
+.skel-m-hero__btn-ghost {
+  height: 16px;
+  width: 120px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-container-high);
+}
+
+/* 1b. Heritage / Stats Cards Skeleton Styles */
+.skel-m-heritage-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 450px;
+  margin: var(--space-8) auto 0;
+  box-sizing: border-box;
+}
+
+.skel-m-heritage-card {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  background: var(--color-gallery-white);
+  border: 1px solid var(--surface-container);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  gap: var(--space-5);
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+}
+
+.skel-m-heritage-card__left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.skel-m-heritage-card__icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--surface-container-high);
+  margin-bottom: var(--space-1);
+}
+
+.skel-m-heritage-card__stat {
+  height: 24px;
+  width: 70px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-container-high);
+}
+
+.skel-m-heritage-card__label {
+  height: 10px;
+  width: 50px;
+  border-radius: var(--radius-xs, 2px);
+  background-color: var(--surface-container-high);
+}
+
+.skel-m-heritage-card__right {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.skel-m-heritage-card__desc {
+  height: 32px;
+  width: 90%;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-container-high);
+}
+
+.skel-m-brands {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.skel-m-brands__header {
+  display: flex;
+  justify-content: center;
+}
+
+.skel-m-brands__track {
+  display: flex;
+  gap: var(--space-4);
+  overflow: hidden;
+}
+
+.skel-m-brand-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 80px;
+}
+
+.skel-m-brand-logo {
+  height: 60px;
+  width: 80px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-container-high);
+}
+
+.skel-m-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.skel-m-section__header {
+  display: flex;
+  flex-direction: column;
+}
+
+.skel-m-eyebrow {
+  height: 10px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-container-high);
+}
+
+.skel-m-title {
+  height: 18px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-container-high);
+}
+
+.skel-m-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.skel-m-journey-list {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.skel-m-journey-card {
+  height: 180px;
+  flex: 1;
+  border-radius: var(--radius-md);
+  background-color: var(--surface-container-high);
+}
+
+.skel-m-tier-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.skel-m-tier-card {
+  display: flex;
+  gap: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--surface-container);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  align-items: center;
+}
+
+.skel-m-tier-card__image {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-container-high);
+  flex-shrink: 0;
+}
+
+.skel-m-tier-card__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Reusing plp shimmer styles */
+@keyframes m-home-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-container-high) 25%,
+    color-mix(in srgb, var(--color-brand-primary) 5%, var(--surface)) 50%,
+    var(--surface-container-high) 75%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: m-home-shimmer 1.6s infinite linear !important;
+}

@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
-import BrandHeader from '../components/brand/BrandHeader';
-import StageNavRail from '../components/brand/StageNavRail';
-import BrandStory from '../components/brand/BrandStory';
-import ProductSection from '../components/home/ProductSection';
+import ProductCard from '../components/products/ProductCard';
 import SearchStrip from '../components/home/SearchStrip';
 import QuickViewModal from '../components/products/QuickViewModal';
 import Toast from '../components/ui/Toast';
-import ProductCardSkeleton from '../components/products/ProductCardSkeleton';
 import Button from '../components/ui/Button';
 import Page from '../components/ui/Page';
-import Card from '../components/ui/Card';
 import CardGrid from '../components/ui/CardGrid';
+import Card from '../components/ui/Card';
 import Text from '../components/ui/Text';
+import BrandPageSkeleton from '../components/skeletons/BrandPageSkeleton';
+import './PLP.css';
 import './BrandPage.css';
+
+
+const TIERS_LIST = ['Essentials', 'Must-Haves', 'Luxuries'];
 
 const BrandPage = () => {
   const { brandId } = useParams();
@@ -24,109 +25,73 @@ const BrandPage = () => {
   // Fetch live brand metadata and associated products from Convex
   const brand = useQuery(api.brands.getBrandBySlug, { slug: brandId || '' });
 
-  const [activeStage, setActiveStage] = useState('all');
+  const [activeFilters, setActiveFilters] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const handleAddToCart = (product) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
-  };
+  const loading = brand === undefined;
 
-  const handleModalSuccess = (product) => {
-    setToastMessage(`${product.name} added to cart`);
-    setShowToast(true);
-  };
+  // Clear sidebar filters whenever the brand changes
+  useEffect(() => {
+    setActiveFilters([]);
+  }, [brandId]);
 
   // Scroll to top on brand mount/change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [brandId]);
 
-  // Handle product stage filtering when brand data or active stage changes
+  // Client-side filtering logic matching PLP.jsx
   useEffect(() => {
-    if (!brand) return;
+    if (loading || !brand || !brand.products) return;
+
+    let results = [...brand.products];
     
-    const products = brand.products || [];
-    
-    if (activeStage === 'all') {
-      setFilteredProducts(products);
-    } else {
-      // Map frontend stages from StageNavRail.jsx to database stage fields
-      // StageNavRail has: all, newborn, toddler, maternity
-      // Database products has stage values: newborn, kid, mother
-      let targetStage = activeStage;
-      if (activeStage === 'toddler') {
-        targetStage = 'kid';
-      } else if (activeStage === 'maternity') {
-        targetStage = 'mother';
-      }
-      
-      setFilteredProducts(products.filter(p => p.stage === targetStage));
+    // Apply active sidebar filters: AND across categories/tiers, OR within them
+    const activeCategories = activeFilters.filter(f => !TIERS_LIST.includes(f));
+    const activeTiers = activeFilters.filter(f => TIERS_LIST.includes(f));
+
+    if (activeCategories.length > 0) {
+      results = results.filter(p => activeCategories.includes(p.category));
     }
-  }, [activeStage, brand]);
 
-  // Loading skeleton state (when brand query is undefined)
-  if (brand === undefined) {
-    return (
-      <Page className="brand-page brand-page--loading" aria-hidden="true">
-        {/* 1. Header Skeleton */}
-        <Page.Section fullBleed className="brand-header brand-header--skeleton">
-          <div className="brand-header__banner skeleton-shimmer" style={{ height: '400px' }}></div>
-          <div className="brand-header__content">
-            <div className="brand-header__identity">
-              <div className="brand-header__logo-container skeleton-shimmer"></div>
-              <div className="brand-header__info">
-                <div className="skeleton-shimmer" style={{ width: '220px', height: '36px', borderRadius: 'var(--radius-md)', marginBottom: '12px' }}></div>
-                <div className="skeleton-shimmer" style={{ width: '80%', maxWidth: '380px', height: '18px', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}></div>
-                <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-                  <div className="skeleton-shimmer" style={{ width: '110px', height: '26px', borderRadius: 'var(--radius-pill)' }}></div>
-                  <div className="skeleton-shimmer" style={{ width: '130px', height: '26px', borderRadius: 'var(--radius-pill)' }}></div>
-                </div>
-              </div>
-            </div>
-            <div className="brand-header__actions">
-              <div className="skeleton-shimmer" style={{ width: '130px', height: '42px', borderRadius: 'var(--radius-md)' }}></div>
-              <div className="skeleton-shimmer" style={{ width: '160px', height: '42px', borderRadius: 'var(--radius-md)' }}></div>
-            </div>
-          </div>
-        </Page.Section>
+    if (activeTiers.length > 0) {
+      results = results.filter(p => {
+        if (!p.tier) return false;
+        const pl = p.tier.toLowerCase();
+        return activeTiers.some(t => {
+          const tl = t.toLowerCase();
+          return tl === pl || (tl === 'must-haves' && pl === 'musthaves') || (tl === 'musthaves' && pl === 'must-haves');
+        });
+      });
+    }
+    
+    setFilteredProducts(results);
+  }, [activeFilters, brand, loading]);
 
-        {/* 2. Overlapping Search Strip Skeleton */}
-        <Page.Section className="search-strip search-strip--skeleton" style={{ paddingTop: 'var(--space-4)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div className="skeleton-shimmer" style={{ width: '200px', height: '14px', margin: '0 auto var(--space-4)', borderRadius: 'var(--radius-sm)' }}></div>
-          <div className="skeleton-shimmer" style={{ height: '56px', width: '100%', maxWidth: '680px', margin: '0 auto var(--space-5)', borderRadius: 'var(--radius-pill)', background: 'var(--surface-container-low)' }}></div>
-          <div className="search-suggestions" style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center', width: '100%' }}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="skeleton-shimmer" style={{ width: '120px', height: '32px', borderRadius: 'var(--radius-pill)', background: 'var(--surface-container-low)' }}></div>
-            ))}
-          </div>
-        </Page.Section>
-
-        {/* 3. Main content area skeleton */}
-        <Page.Section className="brand-page__main" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 var(--space-6)' }}>
-          {/* Nav Rail tabs skeleton */}
-          <div className="skeleton-tabs" style={{ display: 'flex', gap: 'var(--space-6)', borderBottom: '2px solid var(--surface-container)', padding: 'var(--space-4) 0', marginBottom: 'var(--space-10)' }}>
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="skeleton-shimmer" style={{ width: '80px', height: '18px', borderRadius: 'var(--radius-sm)' }}></div>
-            ))}
-          </div>
-
-          {/* Product Grid Skeleton */}
-          <div className="skeleton-products" style={{ marginBottom: 'var(--space-16)' }}>
-            <div className="skeleton-shimmer" style={{ width: '180px', height: '24px', borderRadius: 'var(--radius-sm)', marginBottom: '24px' }}></div>
-            <CardGrid className="plp__grid">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <ProductCardSkeleton key={i} />
-              ))}
-            </CardGrid>
-          </div>
-        </Page.Section>
-      </Page>
+  const toggleFilter = (filter) => {
+    setActiveFilters(prev => 
+      prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
     );
+  };
+
+  const handleAddToCart = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleModalSuccess = (product, isWishlist = false) => {
+    setToastMessage(isWishlist ? `${product.name} bookmarked to wishlist` : `${product.name} added to cart`);
+    setShowToast(true);
+  };
+
+  // Loading skeleton state
+  if (loading) {
+    return <BrandPageSkeleton />;
   }
 
   // Fallback state if brand doesn't exist in our database (null)
@@ -152,49 +117,208 @@ const BrandPage = () => {
     );
   }
 
+  // Derive categories dynamically from the brand's products
+  const categories = brand.products 
+    ? [...new Set(brand.products.map(p => p.category).filter(Boolean))]
+    : [];
+
+  const tiers = TIERS_LIST;
+
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: 'Brands', href: null },
+    { label: brand.name, href: null },
+  ];
+
   return (
-    <Page noPaddingTop className="brand-page">
-      <Page.Section fullBleed noPadding>
-        <BrandHeader brand={brand} />
-      </Page.Section>
-      <Page.Section>
-        <SearchStrip />
-      </Page.Section>
-      
-      <Page.Section className="brand-page__main" spacing="tight">
-        <StageNavRail 
-          activeStage={activeStage} 
-          onStageChange={setActiveStage} 
-        />
-        
-        <ProductSection 
-          products={filteredProducts}
-          onAddToCart={handleAddToCart}
-        />
+    <Page noPaddingTop={true} padding="inset" bottomSpacing="loose" className="brand-page">
+      {/* Brand Hero Banner */}
+      <Page.Section as="header" fullBleed className="plp__hero plp__hero--banner">
+        <div className="plp__hero-bg">
+          <img src={brand.banner || 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=1200'} alt={brand.name} />
+        </div>
+        <div className="plp__hero-content">
+          <div className="plp__hero-shape" aria-hidden="true"></div>
+
+          {/* Breadcrumbs - mobile only (hidden on desktop via CSS) */}
+          <nav className="plp__breadcrumbs" aria-label="Breadcrumb">
+            {breadcrumbs.map((crumb, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <span className="plp__breadcrumb-sep" aria-hidden="true">›</span>}
+                {crumb.href ? (
+                  <Link to={crumb.href} className="plp__breadcrumb-link">{crumb.label}</Link>
+                ) : (
+                  <span className="plp__breadcrumb-current">{crumb.label}</span>
+                )}
+              </React.Fragment>
+            ))}
+          </nav>
+
+          <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+              <Text 
+                role="display-lg" 
+                color="#ffffff" 
+                className="plp__hero-title" 
+              >
+                {brand.name}
+              </Text>
+            </Card>
+            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+              <Text 
+                role="body-sm" 
+                color="rgba(255, 255, 255, 0.9)" 
+                className="plp__hero-subtext"
+              >
+                {brand.mission || (brand.story && brand.story.content) || `High-quality essentials from ${brand.name}.`}
+              </Text>
+            </Card>
+          </Card>
+
+          {/* Search bar inside hero on mobile */}
+          <div className="plp__hero-search">
+            <SearchStrip />
+          </div>
+        </div>
       </Page.Section>
 
-      <Page.Section spacing="loose" fullBleed>
-        <BrandStory story={brand.story} banner={brand.banner} />
+      {/* Search strip below hero on desktop */}
+      <Page.Section className="plp__search-wrap plp__search-wrap--desktop">
+        <SearchStrip />
       </Page.Section>
-      
-      <Page.Section spacing="loose" className="brand-page__bundles">
-        <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} className="brand-page__bundles-header">
-          <Card.Header align="center">
-            <Text variant="headline-md" as="h2" className="brand-page__bundles-title">Curated Bundles</Text>
-            <Text variant="body-sm" className="brand-page__bundles-subtitle">Shop the look with one click.</Text>
-          </Card.Header>
-        </Card>
-        {/* Bundle placeholder */}
-        <Card className="brand-page__bundle-card" variant="feature" layout="horizontal">
-          <img src="https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=1200" alt="Bundle" className="brand-page__bundle-img" />
-          <Card.Body className="brand-page__bundle-info">
-            <Text variant="headline-md" as="h3">The Newborn Starter Set</Text>
-            <Text variant="body-sm">Includes: 6 Bottles, Sterilizer, Bottle Warmer, and Soothers.</Text>
-            <Button variant="hero" fullWidth>
-              Add Bundle to Cart — UGX 149,000
-            </Button>
-          </Card.Body>
-        </Card>
+
+      <Page.Section className="plp__container">
+        {/* Sidebar Filters */}
+        <aside className="plp__sidebar">
+          <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+            {categories.length > 0 && (
+              <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePaddingHorizontal={true}>
+                <Card.Header style={{ marginBottom: 'var(--space-4)' }}>
+                  <Text role="label-md" color="primary" className="filter-group__title">Categories</Text>
+                </Card.Header>
+                <Card.Body>
+                  <ul className="filter-list">
+                    {categories.map(cat => {
+                      const isActive = activeFilters.includes(cat);
+                      return (
+                        <li 
+                          key={cat} 
+                          className={`filter-item ${isActive ? 'is-active' : ''}`}
+                          onClick={() => toggleFilter(cat)}
+                        >
+                          <div className="filter-item__checkbox">
+                            {isActive && (
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <polyline points="20 6 9 17 4 12"/>
+                              </svg>
+                            )}
+                          </div>
+                          <Text 
+                            role={isActive ? "title-sm" : "body-sm"} 
+                            color={isActive ? "primary" : "secondary"} 
+                            className="filter-item__label"
+                          >
+                            {cat}
+                          </Text>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </Card.Body>
+              </Card>
+            )}
+
+            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePaddingHorizontal={true}>
+              <Card.Header style={{ marginBottom: 'var(--space-4)' }}>
+                <Text role="label-md" color="primary" className="filter-group__title">Tiers</Text>
+              </Card.Header>
+              <Card.Body>
+                <ul className="filter-list">
+                  {tiers.map(tier => {
+                    const isActive = activeFilters.some(f => f.toLowerCase() === tier.toLowerCase());
+                    return (
+                      <li 
+                        key={tier} 
+                        className={`filter-item ${isActive ? 'is-active' : ''}`}
+                        onClick={() => toggleFilter(tier)}
+                      >
+                        <div className="filter-item__checkbox">
+                          {isActive && (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                          )}
+                        </div>
+                        <Text 
+                          role={isActive ? "title-sm" : "body-sm"} 
+                          color={isActive ? "primary" : "secondary"} 
+                          className="filter-item__label"
+                        >
+                          {tier}
+                        </Text>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Card.Body>
+            </Card>
+          </Card>
+        </aside>
+
+        {/* Product Grid section */}
+        <section className="plp__content">
+          <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+              <div className="plp__toolbar">
+                <Text role="body-sm" color="tertiary" className="plp__count">{filteredProducts.length} products found</Text>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                  <button 
+                    className="plp__mobile-filter-btn" 
+                    onClick={() => setIsMobileFilterOpen(true)}
+                    aria-label={`Filter products${activeFilters.length > 0 ? `, ${activeFilters.length} active` : ''}`}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+                    <span className="plp__mobile-filter-label">Filter</span>
+                    {activeFilters.length > 0 && (
+                      <span className="plp__mobile-filter-badge">{activeFilters.length}</span>
+                    )}
+                  </button>
+                  <Text role="body-sm" color="secondary" className="plp__sort">
+                    Sort by: <Text role="title-sm" color="primary" as="span" className="plp__sort-val">Recommended</Text>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: 'var(--space-1)' }}>
+                      <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                  </Text>
+                </div>
+              </div>
+            </Card>
+
+            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+              <CardGrid columns={3} mobileColumns={2} gap="default" className="plp__grid">
+                {filteredProducts.map(product => (
+                  <ProductCard 
+                    key={product._id || product.id} 
+                    product={product} 
+                    onAddToCart={handleAddToCart}
+                  />
+                ))}
+              </CardGrid>
+            </Card>
+            
+            {filteredProducts.length === 0 && (
+              <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+                <div className="plp__empty">
+                  <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+                    <Text role="body-lg" color="secondary">No products match your current filters.</Text>
+                  </Card>
+                  <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveFilters([])}>Clear all filters</Button>
+                  </Card>
+                </div>
+              </Card>
+            )}
+          </Card>
+        </section>
       </Page.Section>
 
       {selectedProduct && (
@@ -211,9 +335,118 @@ const BrandPage = () => {
         message={toastMessage} 
         onClose={() => setShowToast(false)} 
       />
+
+      {/* Mobile Bottom Sheet Filter Drawer */}
+      <div className={`plp__filter-drawer ${isMobileFilterOpen ? 'is-open' : ''}`} role="dialog" aria-modal="true">
+        <div className="plp__filter-drawer-overlay" onClick={() => setIsMobileFilterOpen(false)} />
+        <div className="plp__filter-drawer-content">
+          <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePaddingHorizontal={true} className="plp__filter-drawer-header">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <Text role="headline-sm" as="h3" color="primary">Filter Products</Text>
+                <Button 
+                  variant="ghost" 
+                  className="plp__filter-drawer-close" 
+                  aria-label="Close filters" 
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>}
+                />
+              </div>
+            </Card>
+            
+            <div className="plp__filter-drawer-body">
+              <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePaddingHorizontal={true}>
+                {categories.length > 0 && (
+                  <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true} className="filter-group">
+                    <Card.Header style={{ marginBottom: 'var(--space-4)' }}>
+                      <Text role="label-md" color="primary" className="filter-group__title">Categories</Text>
+                    </Card.Header>
+                    <Card.Body>
+                      <ul className="filter-list">
+                        {categories.map(cat => {
+                          const isActive = activeFilters.includes(cat);
+                          return (
+                            <li 
+                              key={cat} 
+                              className={`filter-item ${isActive ? 'is-active' : ''}`}
+                              onClick={() => toggleFilter(cat)}
+                            >
+                              <div className="filter-item__checkbox">
+                                {isActive && (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                  </svg>
+                                )}
+                              </div>
+                              <Text 
+                                role={isActive ? "title-sm" : "body-sm"} 
+                                color={isActive ? "primary" : "secondary"} 
+                                className="filter-item__label"
+                              >
+                                {cat}
+                              </Text>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </Card.Body>
+                  </Card>
+                )}
+              </Card>
+
+              <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePaddingHorizontal={true}>
+                <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true} className="filter-group">
+                  <Card.Header style={{ marginBottom: 'var(--space-4)' }}>
+                    <Text role="label-md" color="primary" className="filter-group__title">Tiers</Text>
+                  </Card.Header>
+                  <Card.Body>
+                    <ul className="filter-list">
+                      {tiers.map(tier => {
+                        const isActive = activeFilters.some(f => f.toLowerCase() === tier.toLowerCase());
+                        return (
+                          <li 
+                            key={tier} 
+                            className={`filter-item ${isActive ? 'is-active' : ''}`}
+                            onClick={() => toggleFilter(tier)}
+                          >
+                            <div className="filter-item__checkbox">
+                              {isActive && (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                  <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                              )}
+                            </div>
+                            <Text 
+                              role={isActive ? "title-sm" : "body-sm"} 
+                              color={isActive ? "primary" : "secondary"} 
+                              className="filter-item__label"
+                            >
+                              {tier}
+                            </Text>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </Card.Body>
+                </Card>
+              </Card>
+            </div>
+
+            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePaddingHorizontal={true} className="plp__filter-drawer-footer">
+              <div style={{ display: 'flex', gap: 'var(--space-4)', width: '100%' }}>
+                <Button variant="ghost" fullWidth onClick={() => { setActiveFilters([]); setIsMobileFilterOpen(false); }}>
+                  Clear All
+                </Button>
+                <Button variant="primary" fullWidth onClick={() => setIsMobileFilterOpen(false)}>
+                  Apply Filters
+                </Button>
+              </div>
+            </Card>
+          </Card>
+        </div>
+      </div>
     </Page>
   );
 };
 
 export default BrandPage;
-

@@ -336,7 +336,9 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     items: [
       { productId: productId1, quantity: 3 }, // 3x Bottles (inventory: 15 -> 12)
     ],
-    paymentMethod: "physical",
+    payments: [
+      { method: "physical", amount: 120000 }
+    ],
     note: "Cash payment received at counter",
   });
   expect(posOrderRes.success).toBe(true);
@@ -376,6 +378,183 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(posOrderDoc.isOnline).toBe(false);
   expect(posOrderDoc.claimedBy).toBe(staffLogin.user.id);
   expect(posOrderDoc.completedAt).toBeDefined();
+
+  // Test multi-tender order (cash + momo)
+  const posOrderResMulti = await t.mutation(api.orders.createPhysicalOrder, {
+    token: staffToken,
+    customerName: "Babirye Sarah",
+    phone: "+256780000003",
+    items: [
+      { productId: productId1, quantity: 2 }, // 2x Bottles = 80000
+    ],
+    payments: [
+      { method: "physical", amount: 30000 },
+      { method: "momo", amount: 50000, momoPhone: "+256770000123" }
+    ],
+    note: "Split payment cash and momo",
+  });
+  expect(posOrderResMulti.success).toBe(true);
+
+  // Verify correct orderPayments rows + paymentMethod: "mixed"
+  const multiOrderDoc = await t.run(async (ctx) => {
+    return await ctx.db.get(posOrderResMulti.orderId);
+  });
+  expect(multiOrderDoc.paymentMethod).toBe("mixed");
+
+  const multiPayments = await t.run(async (ctx) => {
+    return await ctx.db
+      .query("orderPayments")
+      .withIndex("by_order", (q) => q.eq("orderId", posOrderResMulti.orderId))
+      .collect();
+  });
+  expect(multiPayments.length).toBe(2);
+  expect(multiPayments.some((p) => p.method === "physical" && p.amount === 30000)).toBe(true);
+  expect(multiPayments.some((p) => p.method === "momo" && p.amount === 50000 && p.momoPhone === "+256770000123")).toBe(true);
+
+  // Test: tender sum mismatch throws error
+  await expect(
+    t.mutation(api.orders.createPhysicalOrder, {
+      token: staffToken,
+      customerName: "Babirye Sarah",
+      items: [{ productId: productId1, quantity: 1 }],
+      payments: [{ method: "physical", amount: 10000 }], // should be 40000
+    })
+  ).rejects.toThrow("Payment total mismatch");
+
+  // Test: voucher issuance
+  const oneYearFromNow = Date.now() + 365 * 24 * 60 * 60 * 1000;
+  const voucherOrderRes = await t.mutation(api.orders.createPhysicalOrder, {
+    token: staffToken,
+    customerName: "Kizza John",
+    items: [],
+    payments: [
+      { method: "physical", amount: 50000 }
+    ],
+    voucherItems: [
+      { amount: 50000, expiresAt: oneYearFromNow, recipientName: "Kizza John", recipientEmail: "kizza@example.com" }
+    ]
+  });
+  expect(voucherOrderRes.success).toBe(true);
+  expect(voucherOrderRes.issuedVouchers.length).toBe(1);
+  const issuedCode = voucherOrderRes.issuedVouchers[0].code;
+  expect(issuedCode).toMatch(/^GV-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+
+  // Test lookupVoucher query
+  const lookupRes = await t.query(api.giftVouchers.lookupVoucher, {
+    token: staffToken,
+    code: issuedCode,
+  });
+  expect(lookupRes.found).toBe(true);
+  expect(lookupRes.redeemable).toBe(true);
+  expect(lookupRes.remainingBalance).toBe(50000);
+  expect(lookupRes.status).toBe("active");
+
+  // Test: partial voucher redemption
+  const redeemOrderRes = await t.mutation(api.orders.createPhysicalOrder, {
+    token: staffToken,
+    customerName: "Kizza John",
+    items: [{ productId: productId2, quantity: 2 }], // 2x Wipes = 30000
+    payments: [
+      { method: "voucher", amount: 30000, voucherCode: issuedCode }
+    ]
+  });
+  expect(redeemOrderRes.success).toBe(true);
+
+  // Verify balance decrements correctly, audit trail recorded, status stays active
+  const lookupAfterPartial = await t.query(api.giftVouchers.lookupVoucher, {
+    token: staffToken,
+    code: issuedCode,
+  });
+  expect(lookupAfterPartial.remainingBalance).toBe(20000);
+  expect(lookupAfterPartial.status).toBe("active");
+
+  const redemptions = await t.run(async (ctx) => {
+    return await ctx.db.query("voucherRedemptions").collect();
+  });
+  expect(redemptions.length).toBe(1);
+  expect(redemptions[0].amount).toBe(30000);
+  expect(redemptions[0].balanceAfter).toBe(20000);
+
+  // Test: over-redemption attempt throws
+  await expect(
+    t.mutation(api.orders.createPhysicalOrder, {
+      token: staffToken,
+      customerName: "Kizza John",
+      items: [{ productId: productId2, quantity: 2 }], // 2x Wipes = 30000
+      payments: [
+        { method: "voucher", amount: 30000, voucherCode: issuedCode } // balance is 20000
+      ]
+    })
+  ).rejects.toThrow("insufficient balance");
+
+  // Test: full redemption -> status flips to depleted
+  const redeemOrderResFull = await t.mutation(api.orders.createPhysicalOrder, {
+    token: staffToken,
+    customerName: "Kizza John",
+    items: [{ productId: productId2, quantity: 1 }], // 1x Wipes = 15000
+    payments: [
+      { method: "voucher", amount: 15000, voucherCode: issuedCode }
+    ]
+  });
+  expect(redeemOrderResFull.success).toBe(true);
+
+  const lookupAfterFull = await t.query(api.giftVouchers.lookupVoucher, {
+    token: staffToken,
+    code: issuedCode,
+  });
+  expect(lookupAfterFull.remainingBalance).toBe(5000); // 20000 - 15000 = 5000
+
+  // Finish redeeming the rest
+  const redeemOrderResFinal = await t.mutation(api.orders.createPhysicalOrder, {
+    token: staffToken,
+    customerName: "Kizza John",
+    items: [{ productId: productId2, quantity: 1 }], // 1x Wipes = 15000
+    payments: [
+      { method: "voucher", amount: 5000, voucherCode: issuedCode },
+      { method: "physical", amount: 10000 }
+    ]
+  });
+  expect(redeemOrderResFinal.success).toBe(true);
+
+  const lookupAfterFinal = await t.query(api.giftVouchers.lookupVoucher, {
+    token: staffToken,
+    code: issuedCode,
+  });
+  expect(lookupAfterFinal.remainingBalance).toBe(0);
+  expect(lookupAfterFinal.status).toBe("depleted");
+  expect(lookupAfterFinal.redeemable).toBe(false);
+
+  // Test: expired voucher redemption attempt throws
+  const expiredVoucherId = await t.run(async (ctx) => {
+    return await ctx.db.insert("giftVouchers", {
+      code: "GV-EXP1-DATE",
+      originalAmount: 10000,
+      remainingBalance: 10000,
+      expiresAt: Date.now() - 10000, // past
+      status: "active",
+      issuedOrderId: posOrderRes.orderId,
+      createdAt: Date.now() - 20000,
+      createdByStaffId: staffLogin.user.id,
+    });
+  });
+
+  const lookupExpired = await t.query(api.giftVouchers.lookupVoucher, {
+    token: staffToken,
+    code: "GV-EXP1-DATE",
+  });
+  expect(lookupExpired.status).toBe("expired");
+  expect(lookupExpired.redeemable).toBe(false);
+
+  await expect(
+    t.mutation(api.orders.createPhysicalOrder, {
+      token: staffToken,
+      customerName: "Expired Test",
+      items: [{ productId: productId2, quantity: 1 }],
+      payments: [
+        { method: "voucher", amount: 15000, voucherCode: "GV-EXP1-DATE" }
+      ]
+    })
+  ).rejects.toThrow("expired");
 
   // ─── 7. Delivery Calculator Tests ───
   // We can insert some mock landmarks and zones
