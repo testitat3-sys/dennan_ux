@@ -42,16 +42,17 @@ export function StaffAuthProvider({ children }) {
   };
 
   const logout = async () => {
+    // Clear local session immediately so user is signed out instantly
+    localStorage.removeItem("staffToken");
+    setToken("");
+    setUser(null);
+
     try {
       if (token) {
         await logoutMutation({ token });
       }
     } catch (err) {
       console.error("[useStaffAuth] Logout mutation error:", err);
-    } finally {
-      localStorage.removeItem("staffToken");
-      setToken("");
-      setUser(null);
     }
   };
 

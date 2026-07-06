@@ -39,7 +39,7 @@ const MobileHomeSkeleton = () => {
       </section>
 
       {/* 2. Interactive Search Strip */}
-      <SearchStrip />
+      <SearchStrip className="search-strip--home" />
 
       {/* 3. Brands Banner Skeleton */}
       <section className="skel-m-brands">

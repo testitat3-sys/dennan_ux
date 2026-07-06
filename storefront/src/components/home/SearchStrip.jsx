@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import './SearchStrip.css';
 import { useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
@@ -43,13 +43,47 @@ const SearchStrip = ({
   showSuggestions = true,
   isMinimal = false,
   onChange = null,
-  onSubmit = null
+  onSubmit = null,
+  className = '',
+  products = null
 }) => {
   const [query, setQuery] = useState(initialQuery);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [localSuggestions, setLocalSuggestions] = useState(suggestions);
   const containerRef = useRef(null);
   const navigate = useNavigate();
+
+  const chipsToDisplay = useMemo(() => {
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return popularChips;
+    }
+
+    const counts = {};
+    products.forEach(p => {
+      if (p && p.tags && Array.isArray(p.tags)) {
+        p.tags.forEach(t => {
+          if (t && typeof t === 'object' && t.text) {
+            const text = t.text.trim();
+            if (text) {
+              counts[text] = (counts[text] || 0) + 1;
+            }
+          }
+        });
+      }
+    });
+
+    const sortedTags = Object.keys(counts)
+      .sort((a, b) => counts[b] - counts[a]);
+
+    if (sortedTags.length === 0) {
+      return popularChips;
+    }
+
+    return sortedTags.slice(0, 6).map((tag, index) => ({
+      text: tag,
+      accent: index === 0
+    }));
+  }, [products]);
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -144,7 +178,7 @@ const SearchStrip = ({
   };
 
   return (
-    <div className={`search-strip ${isMinimal ? 'search-strip--minimal' : ''}`} aria-label="AI-powered product search" style={isMinimal ? { padding: 0, animation: 'none', opacity: 1 } : {}}>
+    <div className={`search-strip ${className} ${isMinimal ? 'search-strip--minimal' : ''}`} aria-label="AI-powered product search" style={isMinimal ? { padding: 0, animation: 'none', opacity: 1 } : {}}>
       {showLabel && !isMinimal && (
         <span className="search-strip__label">Find exactly what you need</span>
       )}
@@ -206,7 +240,7 @@ const SearchStrip = ({
 
       {showSuggestions && !isMinimal && (
         <div className="search-suggestions" aria-label="Popular searches">
-          {popularChips.map((chip, i) => (
+          {chipsToDisplay.map((chip, i) => (
             <Button 
               key={i} 
               variant="secondary"

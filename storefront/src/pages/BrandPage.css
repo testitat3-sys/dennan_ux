@@ -3,6 +3,88 @@
   min-height: 100vh;
 }
 
+/* ─── Brand Hero — flat editorial typography, no banner image ──── */
+.brand-hero {
+  background: var(--surface-container-low);
+  border-bottom: 1px solid var(--surface-container-high);
+  padding: var(--space-16) var(--space-8) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.brand-hero__breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  flex-wrap: wrap;
+}
+
+.brand-hero__breadcrumb-link,
+.brand-hero__breadcrumb-sep,
+.brand-hero__breadcrumb-current {
+  font-size: var(--label-md);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.brand-hero__breadcrumb-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.brand-hero__breadcrumb-link:hover {
+  color: var(--color-brand-primary);
+}
+
+.brand-hero__breadcrumb-sep {
+  color: var(--text-tertiary);
+  font-size: var(--body-xs);
+}
+
+.brand-hero__breadcrumb-current {
+  color: var(--text-primary);
+}
+
+.brand-hero__title {
+  font-family: var(--font-editorial);
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.brand-hero__rule {
+  width: var(--space-16);
+  height: 2px;
+  background: var(--color-brand-primary);
+}
+
+.brand-hero__subtext {
+  max-width: 55ch;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .brand-hero {
+    padding: var(--space-6) var(--space-5);
+    gap: var(--space-2);
+  }
+
+  .brand-hero__title {
+    font-size: var(--headline-md) !important;
+  }
+
+  .brand-hero__rule,
+  .brand-hero__subtext {
+    display: none;
+  }
+}
+
 .brand-page__main {
   position: relative;
 }

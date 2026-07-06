@@ -24,23 +24,22 @@ These statistics are used to dynamically sort the **Most Loved Brands** section 
 | 9 | Cow & Gate | `cow-gate` | 10% | 5 | Infant formula & nutrition |
 | 10 | Hipp Organic | `hipp-organic` | 10% | 5 | Organic infant foods |
 | 11 | Aptamil | `aptamil` | 10% | 3 | Follow-on milks & cereals |
-| 12 | Friendly Organic | `friendly-organic` | 0% | 6 | Eco-friendly cleaning & care |
-| 13 | Mam | `mam` | 0% | 6 | Premium pacifiers & bottles |
-| 14 | Momcozy | `momcozy` | 0% | 6 | Nursing bras & wearable pumps |
-| 15 | Kiddylicious | `kiddylicious` | 0% | 5 | Toddler snacks & finger foods |
-| 16 | Avent | `avent` | 0% | 4 | Standard feeding items |
+| 12 | Philips Avent | `philips-avent` | 0% | 7 | Premium baby bottles & care |
+| 13 | Friendly Organic | `friendly-organic` | 0% | 6 | Eco-friendly cleaning & care |
+| 14 | Mam | `mam` | 0% | 6 | Premium pacifiers & bottles |
+| 15 | Momcozy | `momcozy` | 0% | 6 | Nursing bras & wearable pumps |
+| 16 | Kiddylicious | `kiddylicious` | 0% | 5 | Toddler snacks & finger foods |
 | 17 | Dr Brown's | `dr-browns` | 0% | 3 | Anti-colic bottles |
 | 18 | Kidilo | `kidilo` | 0% | 3 | Comfort strollers & swings |
-| 19 | Philips Avent | `philips-avent` | 0% | 3 | Premium baby bottles & care |
-| 20 | Lansinoh | `lansinoh` | 0% | 2 | Postpartum recovery & care |
-| 21 | Milton | `milton` | 0% | 2 | Sterilizing liquids & tablets |
-| 22 | Sunnozy | `sunnozy` | 0% | 1 | Comfort sleep & safety aids |
+| 19 | Lansinoh | `lansinoh` | 0% | 2 | Postpartum recovery & care |
+| 20 | Milton | `milton` | 0% | 2 | Sterilizing liquids & tablets |
+| 21 | Sunnozy | `sunnozy` | 0% | 1 | Comfort sleep & safety aids |
 
 ---
 
 ## Key Stats & Insights
 
-- **Total Unique Brands**: 22
+- **Total Unique Brands**: 21
 - **Top Discount Rate**: 50% (achieved by *Chicco* and *Nutmeg*)
 - **Most Populous Brand**: *Tommee Tippee* (32 products), followed by *Dalin* (21 products)
-- **Consolidation**: Legacy spellings/duplicates (e.g. `Dr Browns` and `Dr Brown's`) have been merged under `Dr Brown's` (`dr-browns`) for a cleaner customer navigation experience.
+- **Consolidation**: Legacy spellings/duplicates (e.g. `Dr Browns` under `Dr Brown's`, and `Avent` / `Philips Avent` under `Philips Avent`) have been merged for a cleaner customer navigation experience.

@@ -238,10 +238,18 @@ async function upsertSingleProduct(ctx: any, fields: any) {
 
 export const ONLY_FETCH_ACTUAL_DATA = true;
 
-export function shouldKeepProduct(product: any): boolean {
+export function shouldKeepProduct(product: any, includeStoreOnly: boolean = false): boolean {
   if (!product) return false;
   if (ONLY_FETCH_ACTUAL_DATA && product.actual_data !== true) {
     return false;
+  }
+  if (!includeStoreOnly) {
+    const isStoreOnly = product.specifications?.some(
+      (spec: any) => spec.label === "for-store-only" && spec.value === "true"
+    );
+    if (isStoreOnly) {
+      return false;
+    }
   }
   return true;
 }
@@ -321,7 +329,7 @@ export const getProductsForPOS = query({
       .collect();
 
     // Return only active and kept products
-    return products.filter((p) => p.isActive && shouldKeepProduct(p));
+    return products.filter((p) => p.isActive && shouldKeepProduct(p, true));
   },
 });
 
@@ -338,7 +346,7 @@ export const getStockList = query({
 
     // Filter to keep only actual data and return inventory details
     return products
-      .filter(shouldKeepProduct)
+      .filter((p) => shouldKeepProduct(p, true))
       .map((p) => ({
         id: p._id,
         name: p.name,
@@ -425,7 +433,7 @@ export const getDiscountList = query({
     // Filter to keep only those with an active or pending discount
     const now = Date.now();
     return products
-      .filter(shouldKeepProduct)
+      .filter((p) => shouldKeepProduct(p, true))
       .filter(
         (p) =>
           p.discountPrice !== undefined &&

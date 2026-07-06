@@ -252,9 +252,9 @@ const PLP = () => {
     setShowToast(true);
   };
 
-  // Derive categories for the sidebar based on the current stage/collection context
-  const categories = allProducts 
-    ? [...new Set(allProducts.filter(p => {
+  // Derive page-specific products based on the stage/collection context
+  const pageProducts = allProducts 
+    ? allProducts.filter(p => {
         if (collectionId) {
           if (collectionId === 'curated-picks') return p.isCuratedForYou || p.isCurated;
           if (collectionId === 'most-loved') return p.isMostLoved;
@@ -263,8 +263,13 @@ const PLP = () => {
           if (collectionId === 'luxuries') return p.isLuxury;
           return true;
         }
-        return p.stage === stageId;
-      }).map(p => p.category))]
+        return stageId === 'all' ? true : p.stage === stageId;
+      })
+    : [];
+
+  // Derive categories for the sidebar based on the current stage/collection context
+  const categories = pageProducts.length > 0
+    ? [...new Set(pageProducts.map(p => p.category).filter(Boolean))]
     : [];
   
   const tiers = TIERS_LIST;
@@ -326,14 +331,14 @@ const PLP = () => {
 
           {/* Search bar embedded in hero — visible on mobile only */}
           <div className="plp__hero-search">
-            <SearchStrip initialQuery={query} />
+            <SearchStrip initialQuery={query} products={pageProducts} />
           </div>
         </div>
       </Page.Section>
 
       {/* Search strip below hero — visible on desktop only */}
       <Page.Section className="plp__search-wrap plp__search-wrap--desktop">
-        <SearchStrip initialQuery={query} />
+        <SearchStrip initialQuery={query} products={pageProducts} />
       </Page.Section>
 
       <Page.Section className="plp__container">

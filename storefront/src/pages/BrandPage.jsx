@@ -132,59 +132,43 @@ const BrandPage = () => {
 
   return (
     <Page noPaddingTop={true} padding="inset" bottomSpacing="loose" className="brand-page">
-      {/* Brand Hero Banner */}
-      <Page.Section as="header" fullBleed className="plp__hero plp__hero--banner">
-        <div className="plp__hero-bg">
-          <img src={brand.banner || 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=1200'} alt={brand.name} />
-        </div>
-        <div className="plp__hero-content">
-          <div className="plp__hero-shape" aria-hidden="true"></div>
+      {/* Brand Hero — flat editorial typography, no banner image */}
+      <Page.Section as="header" fullBleed className="brand-hero">
+        <nav className="brand-hero__breadcrumbs" aria-label="Breadcrumb">
+          {breadcrumbs.map((crumb, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <span className="brand-hero__breadcrumb-sep" aria-hidden="true">›</span>}
+              {crumb.href ? (
+                <Link to={crumb.href} className="brand-hero__breadcrumb-link">{crumb.label}</Link>
+              ) : (
+                <span className="brand-hero__breadcrumb-current">{crumb.label}</span>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
 
-          {/* Breadcrumbs - mobile only (hidden on desktop via CSS) */}
-          <nav className="plp__breadcrumbs" aria-label="Breadcrumb">
-            {breadcrumbs.map((crumb, i) => (
-              <React.Fragment key={i}>
-                {i > 0 && <span className="plp__breadcrumb-sep" aria-hidden="true">›</span>}
-                {crumb.href ? (
-                  <Link to={crumb.href} className="plp__breadcrumb-link">{crumb.label}</Link>
-                ) : (
-                  <span className="plp__breadcrumb-current">{crumb.label}</span>
-                )}
-              </React.Fragment>
-            ))}
-          </nav>
+        <Text
+          role="display-lg"
+          as="h1"
+          className="brand-hero__title"
+        >
+          {brand.name}
+        </Text>
 
-          <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-              <Text 
-                role="display-lg" 
-                color="#ffffff" 
-                className="plp__hero-title" 
-              >
-                {brand.name}
-              </Text>
-            </Card>
-            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-              <Text 
-                role="body-sm" 
-                color="rgba(255, 255, 255, 0.9)" 
-                className="plp__hero-subtext"
-              >
-                {brand.mission || (brand.story && brand.story.content) || `High-quality essentials from ${brand.name}.`}
-              </Text>
-            </Card>
-          </Card>
+        <div className="brand-hero__rule" aria-hidden="true"></div>
 
-          {/* Search bar inside hero on mobile */}
-          <div className="plp__hero-search">
-            <SearchStrip />
-          </div>
-        </div>
+        <Text
+          role="body-sm"
+          color="secondary"
+          className="brand-hero__subtext"
+        >
+          {brand.mission || (brand.story && brand.story.content) || `High-quality essentials from ${brand.name}.`}
+        </Text>
       </Page.Section>
 
-      {/* Search strip below hero on desktop */}
-      <Page.Section className="plp__search-wrap plp__search-wrap--desktop">
-        <SearchStrip />
+      {/* Search strip — shown on both desktop and mobile, right after the hero */}
+      <Page.Section className="plp__search-wrap">
+        <SearchStrip products={brand?.products} />
       </Page.Section>
 
       <Page.Section className="plp__container">

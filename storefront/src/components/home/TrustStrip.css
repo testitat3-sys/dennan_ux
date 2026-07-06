@@ -29,11 +29,11 @@
 
 .trust-item__title {
   font-family: var(--font-sans);
-  font-size: var(--body-sm);
+  font-size: var(--title-sm);
   font-weight: 600;
 }
 .trust-item__sub {
-  font-size: var(--label-md);
+  font-size: var(--body-sm);
   color: var(--text-tertiary);
   max-width: 24ch;
 }

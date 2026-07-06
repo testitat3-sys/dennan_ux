@@ -1156,3 +1156,272 @@ export const adminGetOverviewStats = query({
   },
 });
 
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  physical: "Cash",
+  momo: "Mobile Money",
+  card: "Card",
+  voucher: "Gift Voucher",
+};
+
+// For a single order, returns its attributed {method, amount} tenders: real
+// orderPayments rows if any exist, else a single fallback tender built from
+// the order's summary paymentMethod/grandTotal fields.
+function attributeOrderPayments(
+  order: any,
+  paymentsByOrderId: Map<string, { method: string; amount: number }[]>
+): { method: string; amount: number }[] {
+  const payments = paymentsByOrderId.get(order._id.toString());
+  if (payments && payments.length > 0) {
+    return payments.map((p) => ({ method: p.method, amount: p.amount }));
+  }
+  return [{ method: order.paymentMethod, amount: order.grandTotal }];
+}
+
+export const adminGetDailySalesDashboard = query({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // 1. Verify caller is admin
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const completedStatuses = ["delivered", "returned", "partially_returned"];
+
+    // 2. Fetch all orders + all order payments once
+    const allOrders = await ctx.db.query("orders").collect();
+    const allOrderPayments = await ctx.db.query("orderPayments").collect();
+    const paymentsByOrderId = new Map<string, typeof allOrderPayments>();
+    for (const payment of allOrderPayments) {
+      const key = payment.orderId.toString();
+      const existing = paymentsByOrderId.get(key);
+      if (existing) {
+        existing.push(payment);
+      } else {
+        paymentsByOrderId.set(key, [payment]);
+      }
+    }
+
+    // 3. Day boundaries (server-local midnight), last 7 days including today
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const dayMs = 24 * 60 * 60 * 1000;
+    const dayRanges: { dateStr: string; start: number; end: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const start = startOfToday.getTime() - i * dayMs;
+      dayRanges.push({
+        dateStr: new Date(start).toISOString().slice(0, 10),
+        start,
+        end: start + dayMs,
+      });
+    }
+
+    const computeDayStats = (start: number, end: number) => {
+      const ordersInRange = allOrders.filter((o: any) => o.createdAt >= start && o.createdAt < end);
+      const completedInRange = ordersInRange.filter((o: any) => completedStatuses.includes(o.status));
+      const revenue = completedInRange.reduce((sum: number, o: any) => sum + o.grandTotal, 0);
+      return { ordersPlaced: ordersInRange.length, revenue, completedInRange };
+    };
+
+    // 4. Today's overview
+    const todayRange = dayRanges[dayRanges.length - 1];
+    const todayStats = computeDayStats(todayRange.start, todayRange.end);
+
+    // 5. Payment breakdown for today's completed orders (combine orderPayments + fallback to summary field)
+    const breakdownMap = new Map<string, { method: string; amount: number; count: number }>();
+    for (const order of todayStats.completedInRange) {
+      const tenders = attributeOrderPayments(order, paymentsByOrderId);
+      for (const t of tenders) {
+        const existing = breakdownMap.get(t.method);
+        if (existing) {
+          existing.amount += t.amount;
+          existing.count += 1;
+        } else {
+          breakdownMap.set(t.method, { method: t.method, amount: t.amount, count: 1 });
+        }
+      }
+    }
+    const paymentBreakdown = Array.from(breakdownMap.values())
+      .map((b) => ({ ...b, label: PAYMENT_METHOD_LABELS[b.method] || b.method }))
+      .sort((a, b) => b.amount - a.amount);
+
+    // 6. 7-day trend
+    const trend = dayRanges.map(({ dateStr, start, end }) => {
+      const { ordersPlaced, revenue } = computeDayStats(start, end);
+      return { date: dateStr, ordersPlaced, revenue };
+    });
+
+    // 7. Today's staff leaderboard (same shape/logic as adminGetOverviewStats, scoped to today)
+    const staffMembers = await ctx.db
+      .query("users")
+      .withIndex("by_accountRole")
+      .collect();
+
+    const staffMap = new Map<string, { name: string; email: string; ordersCompletedCount: number; salesCompletedAmount: number }>();
+    for (const member of staffMembers) {
+      staffMap.set(member._id.toString(), {
+        name: member.name || "Unnamed Staff",
+        email: member.email || "",
+        ordersCompletedCount: 0,
+        salesCompletedAmount: 0,
+      });
+    }
+
+    for (const order of todayStats.completedInRange) {
+      if (order.claimedBy) {
+        const staffIdStr = order.claimedBy.toString();
+        const stats = staffMap.get(staffIdStr);
+        if (stats) {
+          stats.ordersCompletedCount += 1;
+          stats.salesCompletedAmount += order.grandTotal;
+        } else {
+          const claimant = await ctx.db.get(order.claimedBy);
+          staffMap.set(staffIdStr, {
+            name: claimant?.name || "Unnamed Staff",
+            email: claimant?.email || "",
+            ordersCompletedCount: 1,
+            salesCompletedAmount: order.grandTotal,
+          });
+        }
+      }
+    }
+
+    const leaderboard = Array.from(staffMap.values())
+      .filter((s) => s.ordersCompletedCount > 0)
+      .sort((a, b) => b.ordersCompletedCount - a.ordersCompletedCount);
+
+    return {
+      today: {
+        ordersPlaced: todayStats.ordersPlaced,
+        revenue: todayStats.revenue,
+      },
+      paymentBreakdown,
+      trend,
+      leaderboard,
+    };
+  },
+});
+
+// Parses a "YYYY-MM-DD" string into a server-local midnight timestamp.
+function parseDateStrToMs(dateStr: string): number {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setHours(0, 0, 0, 0);
+  return dt.getTime();
+}
+
+function toDateStr(ms: number): string {
+  const dt = new Date(ms);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export const adminGetSalesMetrics = query({
+  args: {
+    token: v.string(),
+    startDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
+    endDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
+    paymentMethod: v.optional(v.string()), // "physical"|"momo"|"card"|"voucher"
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const completedStatuses = ["delivered", "returned", "partially_returned"];
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    // 1. Fetch all orders + all order payments once
+    const allOrders = await ctx.db.query("orders").collect();
+    const allOrderPayments = await ctx.db.query("orderPayments").collect();
+    const paymentsByOrderId = new Map<string, typeof allOrderPayments>();
+    for (const payment of allOrderPayments) {
+      const key = payment.orderId.toString();
+      const existing = paymentsByOrderId.get(key);
+      if (existing) {
+        existing.push(payment);
+      } else {
+        paymentsByOrderId.set(key, [payment]);
+      }
+    }
+
+    // 2. Resolve the date range (default: last 30 days including today)
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayMs = startOfToday.getTime();
+
+    const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
+    const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
+
+    // 3. Filter to completed orders within range
+    const ordersInRange = allOrders.filter(
+      (o: any) =>
+        o.createdAt >= rangeStartMs && o.createdAt < rangeEndMs && completedStatuses.includes(o.status)
+    );
+
+    // 4. Attribute tenders per order, applying the payment-method filter (if any)
+    const computeAggregate = (orders: any[]) => {
+      const byMethodMap = new Map<string, { method: string; amount: number; count: number }>();
+      const distinctOrderIds = new Set<string>();
+      let totalSales = 0;
+
+      for (const order of orders) {
+        let tenders = attributeOrderPayments(order, paymentsByOrderId);
+        if (args.paymentMethod) {
+          tenders = tenders.filter((t) => t.method === args.paymentMethod);
+        }
+        if (tenders.length === 0) continue;
+
+        distinctOrderIds.add(order._id.toString());
+        for (const t of tenders) {
+          totalSales += t.amount;
+          const existing = byMethodMap.get(t.method);
+          if (existing) {
+            existing.amount += t.amount;
+            existing.count += 1;
+          } else {
+            byMethodMap.set(t.method, { method: t.method, amount: t.amount, count: 1 });
+          }
+        }
+      }
+
+      return { totalSales, orderCount: distinctOrderIds.size, byMethodMap };
+    };
+
+    const overall = computeAggregate(ordersInRange);
+    const byPaymentMethod = Array.from(overall.byMethodMap.values())
+      .map((b) => ({ ...b, label: PAYMENT_METHOD_LABELS[b.method] || b.method }))
+      .sort((a, b) => b.amount - a.amount);
+    const aov = overall.orderCount > 0 ? Math.round(overall.totalSales / overall.orderCount) : 0;
+
+    // 5. Time series, bucketed by day (<=62 days) or week otherwise
+    const totalRangeDays = Math.round((rangeEndMs - rangeStartMs) / dayMs);
+    const bucketGranularity: "day" | "week" = totalRangeDays <= 62 ? "day" : "week";
+    const bucketMs = bucketGranularity === "day" ? dayMs : 7 * dayMs;
+
+    const series: { date: string; total: number; byMethod: Record<string, number> }[] = [];
+    for (let bucketStart = rangeStartMs; bucketStart < rangeEndMs; bucketStart += bucketMs) {
+      const bucketEnd = Math.min(bucketStart + bucketMs, rangeEndMs);
+      const bucketOrders = ordersInRange.filter(
+        (o: any) => o.createdAt >= bucketStart && o.createdAt < bucketEnd
+      );
+      const bucketAgg = computeAggregate(bucketOrders);
+      const byMethod: Record<string, number> = {};
+      for (const b of bucketAgg.byMethodMap.values()) {
+        byMethod[b.method] = b.amount;
+      }
+      series.push({ date: toDateStr(bucketStart), total: bucketAgg.totalSales, byMethod });
+    }
+
+    return {
+      totalSales: overall.totalSales,
+      orderCount: overall.orderCount,
+      aov,
+      byPaymentMethod,
+      series,
+      bucketGranularity,
+      rangeStart: toDateStr(rangeStartMs),
+      rangeEnd: toDateStr(rangeEndMs - dayMs),
+    };
+  },
+});
+

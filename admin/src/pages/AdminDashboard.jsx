@@ -6,6 +6,7 @@ import CustomerActivityModal from "../components/CustomerActivityModal";
 import OrderDetailModal from "../components/OrderDetailModal";
 import RemindersWidget from "../components/RemindersWidget";
 import CalendarPanel from "../components/CalendarPanel";
+import SalesMetricsPanel from "../components/SalesMetricsPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import {
   LayoutDashboard,
@@ -22,6 +23,7 @@ import {
   LogOut,
   ChevronRight,
   DollarSign,
+  BarChart3,
   Calendar as CalendarIcon
 } from "lucide-react";
 
@@ -158,6 +160,13 @@ export default function AdminDashboard() {
               <span>Overview</span>
             </button>
             <button
+              className={`sidebar-nav-item ${activeTab === "metrics" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("metrics")}
+            >
+              <BarChart3 size={18} />
+              <span>Sales Metrics</span>
+            </button>
+            <button
               className={`sidebar-nav-item ${activeTab === "stock" ? "is-active" : ""}`}
               onClick={() => setActiveTab("stock")}
             >
@@ -205,7 +214,7 @@ export default function AdminDashboard() {
                 <span className="sidebar-user-role">{user?.accountRole?.toUpperCase()}</span>
               </div>
             </div>
-            <button className="logout-btn" onClick={logout}>
+            <button className="logout-btn" onClick={logout} type="button">
               <LogOut size={16} />
               <span>Sign Out</span>
             </button>
@@ -649,6 +658,11 @@ export default function AdminDashboard() {
           {/* TAB 6: CALENDAR / REMINDERS */}
           {activeTab === "calendar" && (
             <CalendarPanel token={token} onOpenOrder={setPendingOrderId} />
+          )}
+
+          {/* TAB 7: SALES METRICS */}
+          {activeTab === "metrics" && (
+            <SalesMetricsPanel token={token} />
           )}
         </main>
       </div>

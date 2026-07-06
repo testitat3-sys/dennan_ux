@@ -41,7 +41,7 @@ const HomeSkeleton = () => {
       </section>
 
       {/* 2. Interactive Search Strip (Rendered fully for instant action!) */}
-      <SearchStrip />
+      <SearchStrip className="search-strip--home" />
 
       {/* 3. Brands Banner Skeleton */}
       <section className="skeleton-brands-banner">

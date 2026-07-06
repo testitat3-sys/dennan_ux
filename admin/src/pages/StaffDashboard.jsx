@@ -451,7 +451,7 @@ export default function StaffDashboard() {
                 <span className="sidebar-user-role">{user?.accountRole?.toUpperCase()}</span>
               </div>
             </div>
-            <button className="logout-btn" onClick={logout}>
+            <button className="logout-btn" onClick={logout} type="button">
               <LogOut size={16} />
               <span>Sign Out</span>
             </button>

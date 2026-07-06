@@ -27,7 +27,7 @@ export const staticData = {
       {
         id: 3,
         icon: "instagram",
-        stat: "267k+",
+        stat: "330k+",
         statClass: "green",
         label: "Parents",
         desc: "Growing daily community."
@@ -39,21 +39,21 @@ export const staticData = {
       id: 1,
       icon: "clock",
       type: "blue",
-      title: "12 years",
+      title: "13 years",
       sub: "Started in 2013, we’ve supported parents for over 12 years."
     },
     {
       id: 2,
       icon: "tiktok",
       type: "secondary",
-      title: "184,000 followers",
+      title: "183,000 followers",
       sub: "We’ve been liked over 1 million times on TikTok."
     },
     {
       id: 3,
       icon: "instagram",
       type: "primary",
-      title: "84,000 followers",
+      title: "82,000 followers",
       sub: "We’ve been viewed hundreds of thousands of times on Instagram."
     },
     {

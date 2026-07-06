@@ -55,7 +55,7 @@ export const CLOSE_MATCHES_PRODUCTS = [
   },
   {
     "name": "Avent Manual Breast Pump",
-    "brand": "Avent",
+    "brand": "Philips Avent",
     "slug": "avent-manual-breast-pump",
     "barcode": "2017480",
     "price": 190000,
@@ -90,7 +90,7 @@ export const CLOSE_MATCHES_PRODUCTS = [
     "specifications": [
       {
         "label": "Brand",
-        "value": "Avent"
+        "value": "Philips Avent"
       },
       {
         "label": "hidden",
@@ -102,7 +102,7 @@ export const CLOSE_MATCHES_PRODUCTS = [
   },
   {
     "name": "Avent Natural Fast Flow Teats",
-    "brand": "Avent",
+    "brand": "Philips Avent",
     "slug": "avent-natural-fast-flow-teats",
     "barcode": "2017486",
     "price": 45000,
@@ -142,7 +142,7 @@ export const CLOSE_MATCHES_PRODUCTS = [
       },
       {
         "label": "Brand",
-        "value": "Avent"
+        "value": "Philips Avent"
       },
       {
         "label": "hidden",
@@ -154,7 +154,7 @@ export const CLOSE_MATCHES_PRODUCTS = [
   },
   {
     "name": "Avent Natural Flow Bottles",
-    "brand": "Avent",
+    "brand": "Philips Avent",
     "size": "260ml",
     "slug": "avent-natural-flow-bottles",
     "barcode": "2017481",
@@ -190,7 +190,7 @@ export const CLOSE_MATCHES_PRODUCTS = [
       },
       {
         "label": "Brand",
-        "value": "Avent"
+        "value": "Philips Avent"
       },
       {
         "label": "Size",
@@ -206,7 +206,7 @@ export const CLOSE_MATCHES_PRODUCTS = [
   },
   {
     "name": "Avent Natural Flow Bottles",
-    "brand": "Avent",
+    "brand": "Philips Avent",
     "size": "125ml",
     "slug": "avent-natural-flow-bottles-1",
     "barcode": "2017482",
@@ -242,7 +242,7 @@ export const CLOSE_MATCHES_PRODUCTS = [
       },
       {
         "label": "Brand",
-        "value": "Avent"
+        "value": "Philips Avent"
       },
       {
         "label": "Size",

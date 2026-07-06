@@ -1,0 +1,40 @@
+.sales-metrics-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.sales-metrics-segment-group {
+  display: flex;
+  gap: var(--space-1);
+  background: var(--surface-container-low);
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
+}
+
+.sales-metrics-date-range {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.sales-metrics-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5);
+  margin-bottom: var(--space-8);
+}
+
+.sales-metrics-chart-card {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: 0 2px 12px var(--shadow-ambient);
+}
+
+@media (max-width: 900px) {
+  .sales-metrics-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}

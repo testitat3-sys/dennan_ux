@@ -31,6 +31,7 @@ import type * as seedCloseMatches from "../seedCloseMatches.js";
 import type * as seedProduction from "../seedProduction.js";
 import type * as seedProducts from "../seedProducts.js";
 import type * as staffAuth from "../staffAuth.js";
+import type * as storeOnlyProducts from "../storeOnlyProducts.js";
 import type * as users from "../users.js";
 import type * as wishlist from "../wishlist.js";
 
@@ -64,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   seedProduction: typeof seedProduction;
   seedProducts: typeof seedProducts;
   staffAuth: typeof staffAuth;
+  storeOnlyProducts: typeof storeOnlyProducts;
   users: typeof users;
   wishlist: typeof wishlist;
 }>;

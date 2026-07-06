@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Hero from '../components/home/Hero';
 import SearchStrip from '../components/home/SearchStrip';
 import BrandsBanner from '../components/home/BrandsBanner';
+import GiftingBanner from '../components/home/GiftingBanner';
 import ProductSection from '../components/home/ProductSection';
 import JourneySection from '../components/home/JourneySection';
 import TierSection from '../components/home/TierSection';
@@ -99,12 +100,18 @@ const Home = () => {
   const mostLovedProducts = liveProducts.filter(p => p.isMostLoved).slice(0, 8);
   const curatedProducts = liveProducts.filter(p => p.isCuratedForYou).slice(0, 4);
 
+  const modifiedStages = liveStages?.map(stage => 
+    stage.type === 'mother' 
+      ? { ...stage, heroImage: '/new_assets/stage_expectant.webp' } 
+      : stage
+  );
+
   return (
     <>
       <Hero content={restData.hero} />
-      <SearchStrip />
+      <SearchStrip className="search-strip--home" />
       <BrandsBanner />
-
+      <GiftingBanner href="/registry" />
 
 
       <ProductSection
@@ -117,7 +124,7 @@ const Home = () => {
         onAddToCart={handleAddToCart}
       />
 
-      <JourneySection stages={liveStages} />
+      <JourneySection stages={modifiedStages} />
       <TierSection tiers={liveTiers} />
 
       <ProductSection

@@ -29,7 +29,7 @@ export const getProducts = query({
     let results = await products.collect();
     
     // Only return products matching the central filter
-    results = results.filter(shouldKeepProduct);
+    results = results.filter((p) => shouldKeepProduct(p));
     
     if (args.category) {
       results = results.filter(p => p.category === args.category);
