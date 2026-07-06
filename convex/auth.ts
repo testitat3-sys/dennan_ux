@@ -20,8 +20,8 @@ export const { auth, signIn, signOut, store } = convexAuth({
         // Gmail proxies all images and cannot reach localhost. For development, we fall back
         // to a public GitHub raw URL so the logo renders perfectly during local testing!
         const logoUrl = process.env.SITE_URL
-          ? `${frontendOrigin}/dennan_logo_2.svg`
-          : "https://raw.githubusercontent.com/lordinmayiga/Dennan_ux/main/public/dennan_logo_2.svg";
+          ? `${frontendOrigin}/dennan_logo_final_compressed.png`
+          : "https://raw.githubusercontent.com/lordinmayiga/Dennan_ux/main/public/dennan_logo_final_compressed.png";
 
         // Style guidelines & copies based on user boarding status
         const subject = isNewUser

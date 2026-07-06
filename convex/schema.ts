@@ -29,7 +29,12 @@ export default defineSchema({
       )
     ),
     momoPhone: v.optional(v.string()),
-    deliveryLocations: v.optional(v.array(v.object({ name: v.string(), zone: v.string() }))),
+    deliveryLocations: v.optional(v.array(v.object({
+      name: v.string(),
+      zone: v.string(),
+      lat: v.optional(v.number()),
+      lng: v.optional(v.number()),
+    }))),
 
     // ==========================================
     // NEW PERSONALISATION & AUTOMATION FIELDS
@@ -438,6 +443,7 @@ export default defineSchema({
       lat: v.optional(v.number()),
       lng: v.optional(v.number()),
       distance: v.optional(v.number()),
+      etaMinutes: v.optional(v.number()),
     }),
     subtotal: v.number(),      // Server-calculated sum of product price * quantity
     discountAmount: v.number(), // Recalculated savings based on coupon
@@ -665,6 +671,12 @@ export default defineSchema({
     timeMinutes: v.number(),
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
+    // Fee-calculation fields (optional so existing rows remain valid; see convex/delivery.ts)
+    keywords: v.optional(v.array(v.string())),
+    baseDistanceKm: v.optional(v.number()),
+    baseFee: v.optional(v.number()),
+    minFee: v.optional(v.number()),
+    maxFee: v.optional(v.number()),
   }).index("by_name", ["name"]),
 
   deliveryLandmarks: defineTable({

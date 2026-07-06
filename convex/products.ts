@@ -379,13 +379,33 @@ export const adjustStock = mutation({
       throw new Error(`Inventory cannot be negative (current: ${currentInventory}, delta: ${args.delta})`);
     }
 
-    await ctx.db.patch(args.productId, {
-      inventory: newInventory,
-    });
+    const productsToUpdate = [product];
+    if (product.barcode) {
+      const matchingProducts = await ctx.db
+        .query("products")
+        .withIndex("by_barcode", (q: any) => q.eq("barcode", product.barcode))
+        .collect();
+      const seenIds = new Set([product._id]);
+      for (const p of matchingProducts) {
+        if (!seenIds.has(p._id)) {
+          seenIds.add(p._id);
+          productsToUpdate.push(p);
+        }
+      }
+    }
 
-    return { success: true, newInventory };
+    for (const pToUpdate of productsToUpdate) {
+      const currentInv = pToUpdate.inventory ?? 0;
+      const newInv = Math.max(0, currentInv + args.delta);
+      await ctx.db.patch(pToUpdate._id, {
+        inventory: newInv,
+      });
+    }
+
+    return { success: true, newInventory: Math.max(0, newInventory) };
   },
 });
+
 
 export const setDiscount = mutation({
   args: {

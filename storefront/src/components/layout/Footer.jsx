@@ -7,13 +7,14 @@ const Footer = () => {
       <div className="footer__grid">
         <div>
           <a href="/" className="footer__logo-link">
-            <img src="/dennan_logo_2.svg" alt="Dennan Kids Logo" className="footer__logo" style={{ filter: 'brightness(0) invert(0.33)' }} />
+            <img src="/dennan_logo_final_compressed.png" alt="Dennan Kids Logo" className="footer__logo" style={{ filter: 'brightness(0) invert(0.33)' }} />
           </a>
           <p className="footer__brand-copy">
-            Dennan Baby To Kids is Uganda’s number one distributor in the baby and kids market, currently with five physical stores within Kampala and an online presence.
+            Dennan Baby To Kids is Uganda’s number one distributor in the baby and kids market, currently with 2 branches within Kampala and an online presence.
             <br /><br />
-            Founded in 2015, we identified an opportunity for a one-stop shopping place for parents and parents-to-be by stocking a wide variety of high-quality, unique, and trusted brands imported from the UK, Turkey, Dubai, China, Vietnam, and the USA.
+            Founded in 2013, we identified an opportunity for a one-stop shopping place for parents and parents-to-be by stocking a wide variety of high-quality, unique, and trusted brands imported from the UK, Turkey, Dubai, China, Vietnam, and the USA.
           </p>
+
         </div>
 
         <div>

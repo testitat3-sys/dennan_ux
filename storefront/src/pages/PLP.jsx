@@ -163,6 +163,15 @@ const PLP = () => {
     if (loading || !allProducts) return;
 
     let results = [...allProducts];
+
+    // Filter developer product: show ONLY on developer queries, hide otherwise
+    const isDevQuery = query && ['500', 'developer', 'dev', 'dev-product', 'developer-product', 'developer product'].includes(query.toLowerCase().trim());
+    if (isDevQuery) {
+      results = results.filter(p => p.slug === 'developer-product');
+    } else {
+      results = results.filter(p => p.slug !== 'developer-product');
+    }
+
     
     // 1. Filter by collection or stage
     if (collectionId) {
@@ -193,7 +202,8 @@ const PLP = () => {
           p.name.toLowerCase().includes(lowQuery) || 
           p.category.toLowerCase().includes(lowQuery) ||
           p.description?.toLowerCase().includes(lowQuery) ||
-          (p.tier && p.tier.toLowerCase().includes(lowQuery))
+          (p.tier && p.tier.toLowerCase().includes(lowQuery)) ||
+          p.tags?.some(t => t.text.toLowerCase().includes(lowQuery))
         );
       }
     }

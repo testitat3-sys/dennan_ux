@@ -15,6 +15,7 @@ import type * as cart from "../cart.js";
 import type * as coupons from "../coupons.js";
 import type * as customerActivities from "../customerActivities.js";
 import type * as data from "../data.js";
+import type * as delivery from "../delivery.js";
 import type * as emails from "../emails.js";
 import type * as giftVouchers from "../giftVouchers.js";
 import type * as http from "../http.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   coupons: typeof coupons;
   customerActivities: typeof customerActivities;
   data: typeof data;
+  delivery: typeof delivery;
   emails: typeof emails;
   giftVouchers: typeof giftVouchers;
   http: typeof http;

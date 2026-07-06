@@ -140,6 +140,11 @@ const SearchStrip = ({
     setIsDropdownOpen(true);
   };
 
+  const isDeveloperQuery = (q) => {
+    const norm = q.toLowerCase().trim();
+    return ['500', 'developer', 'dev', 'dev-product', 'developer-product', 'developer product'].includes(norm);
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (onSubmit) {
@@ -148,6 +153,12 @@ const SearchStrip = ({
     }
 
     const normalizedQuery = query.toLowerCase().trim();
+    if (isDeveloperQuery(normalizedQuery)) {
+      navigate('/product/developer-product');
+      setIsDropdownOpen(false);
+      return;
+    }
+
     if (SEARCH_SHORTCUTS[normalizedQuery]) {
       navigate(SEARCH_SHORTCUTS[normalizedQuery]);
       setIsDropdownOpen(false);
@@ -171,11 +182,16 @@ const SearchStrip = ({
       if (onSubmit) {
         onSubmit(item.text);
       } else {
-        navigate(`/category/all?q=${encodeURIComponent(item.text)}`);
+        if (isDeveloperQuery(item.text)) {
+          navigate('/product/developer-product');
+        } else {
+          navigate(`/category/all?q=${encodeURIComponent(item.text)}`);
+        }
       }
     }
     setIsDropdownOpen(false);
   };
+
 
   return (
     <div className={`search-strip ${className} ${isMinimal ? 'search-strip--minimal' : ''}`} aria-label="AI-powered product search" style={isMinimal ? { padding: 0, animation: 'none', opacity: 1 } : {}}>

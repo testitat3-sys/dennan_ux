@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import SmartAddressSearch from './SmartAddressSearch';
-import { getKampalaETA } from '../../utils/deliveryUtils';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Text from '../ui/Text';
+import { formatPrice } from '../../utils/priceUtils';
 import './LocationModal.css';
 
-const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipConfirmation = false }) => {
+const LocationModal = ({ isOpen, onClose, onConfirm, onEstimate, deliveryData = null, skipConfirmation = false }) => {
   const [active, setActive] = useState(false);
   const [selection, setSelection] = useState(null);
   const [isEstimating, setIsEstimating] = useState(false);
-  const [revealedETA, setRevealedETA] = useState(null);
+  const [quote, setQuote] = useState(null);
 
-  const zones = deliveryData?.zones || {};
   const landmarks = deliveryData?.landmarks || [];
   const history = deliveryData?.history || [];
 
@@ -23,7 +22,7 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipCo
       // Reset state when opening
       setSelection(null);
       setIsEstimating(false);
-      setRevealedETA(null);
+      setQuote(null);
       return () => {
         clearTimeout(timer);
         document.body.style.overflow = 'unset';
@@ -33,7 +32,7 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipCo
     }
   }, [isOpen]);
 
-  const handleSelectAddress = (item) => {
+  const handleSelectAddress = async (item) => {
     setSelection(item);
 
     if (skipConfirmation) {
@@ -43,19 +42,22 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipCo
     }
 
     setIsEstimating(true);
-    setRevealedETA(null);
+    setQuote(null);
 
-    // Mock the "Instant Reveal" loading state (0.5s)
-    setTimeout(() => {
-      const eta = getKampalaETA(item.zone, zones);
-      setRevealedETA(eta);
+    try {
+      const result = await onEstimate(item);
+      setQuote(result);
+    } catch (error) {
+      console.error('Error fetching delivery quote:', error);
+      setQuote({ outOfBounds: true });
+    } finally {
       setIsEstimating(false);
-    }, 600);
+    }
   };
 
   const handleConfirm = () => {
-    if (selection && revealedETA) {
-      onConfirm(selection, revealedETA);
+    if (selection && quote && !quote.outOfBounds) {
+      onConfirm(selection, quote);
       onClose();
     }
   };
@@ -75,10 +77,10 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipCo
         </div>
 
         <div className="location-modal-content">
-          {!revealedETA && !isEstimating && (
+          {!quote && !isEstimating && (
             <div className="search-section">
-              <SmartAddressSearch 
-                onSelectAddress={handleSelectAddress} 
+              <SmartAddressSearch
+                onSelectAddress={handleSelectAddress}
                 landmarks={landmarks}
                 history={history}
               />
@@ -93,12 +95,32 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipCo
             </div>
           )}
 
-          {(isEstimating || revealedETA) && (
-            <div className={`reveal-section ${revealedETA ? 'is-revealed' : ''}`}>
+          {(isEstimating || quote) && (
+            <div className={`reveal-section ${quote ? 'is-revealed' : ''}`}>
               {isEstimating ? (
                 <div className="reveal-loader">
                   <div className="spinner"></div>
                   <Text role="body-sm" color="secondary">Calculating route...</Text>
+                </div>
+              ) : quote.outOfBounds ? (
+                <div className="reveal-oob">
+                  <div className="delivery-oob-banner">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <Text role="body-md" as="p">
+                      Sorry, this location is too far away for delivery. We only deliver up to Entebbe/Gayaza outskirts (approx 42km road distance).
+                    </Text>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    fullWidth
+                    onClick={() => { setQuote(null); setSelection(null); }}
+                  >
+                    Change Location
+                  </Button>
                 </div>
               ) : (
                 <div className="reveal-success">
@@ -109,26 +131,33 @@ const LocationModal = ({ isOpen, onClose, onConfirm, deliveryData = null, skipCo
                   </div>
                   <Text role="title-lg" as="h3" className="reveal-message">Great! We can reach you in</Text>
                   <Text role="display-lg" as="div" color="anchor" className="reveal-timer">
-                    {revealedETA.travelTime} <Text role="headline-sm" as="span" color="secondary" className="timer-unit">mins</Text>
+                    {quote.etaMinutes} <Text role="headline-sm" as="span" color="secondary" className="timer-unit">mins</Text>
                   </Text>
-                  <Text role="body-sm" color="secondary" className="reveal-subtext">Estimated arrival by {revealedETA.timeString}</Text>
-                  
+                  <Text role="body-sm" color="secondary" className="reveal-subtext">
+                    Estimated arrival by {new Date(Date.now() + quote.etaMinutes * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+
+                  <div className="delivery-quote-breakdown">
+                    <span className="delivery-zone-badge">{quote.zone}</span>
+                    <Text role="body-md" as="span" color="primary">Delivery fee: {formatPrice(quote.deliveryFee)}</Text>
+                  </div>
+
                   <div className="selection-preview">
                     <Text role="label-sm" color="tertiary" className="preview-label">Delivering to</Text>
                     <Text role="body-lg" color="primary" className="preview-value">{selection.name}</Text>
                   </div>
 
-                  <Button 
+                  <Button
                     variant="primary"
                     fullWidth
                     onClick={handleConfirm}
                   >
                     Confirm
                   </Button>
-                  <Button 
+                  <Button
                     variant="ghost"
                     fullWidth
-                    onClick={() => { setRevealedETA(null); setSelection(null); }}
+                    onClick={() => { setQuote(null); setSelection(null); }}
                   >
                     Change Location
                   </Button>

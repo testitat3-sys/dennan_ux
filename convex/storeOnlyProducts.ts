@@ -1,5 +1,5 @@
 import { mutation } from "./_generated/server";
-import productsToUpload from "./storeOnlyProductsTemp.json";
+import productsToUpload from "./storeOnlyProductsData.json";
 
 export const upload = mutation({
   args: {},

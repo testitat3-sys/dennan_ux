@@ -119,12 +119,32 @@ export const processReturn = mutation({
     // 7. Restock inventory
     for (const retItem of args.returnedItems) {
       const product = await ctx.db.get(retItem.productId);
-      if (product && product.inventory !== undefined) {
-        await ctx.db.patch(product._id, {
-          inventory: product.inventory + retItem.quantity,
-        });
+      if (product) {
+        const productsToUpdate = [product];
+        if (product.barcode) {
+          const matchingProducts = await ctx.db
+            .query("products")
+            .withIndex("by_barcode", (q: any) => q.eq("barcode", product.barcode))
+            .collect();
+          const seenIds = new Set([product._id]);
+          for (const p of matchingProducts) {
+            if (!seenIds.has(p._id)) {
+              seenIds.add(p._id);
+              productsToUpdate.push(p);
+            }
+          }
+        }
+
+        for (const pToUpdate of productsToUpdate) {
+          if (pToUpdate.inventory !== undefined) {
+            await ctx.db.patch(pToUpdate._id, {
+              inventory: pToUpdate.inventory + retItem.quantity,
+            });
+          }
+        }
       }
     }
+
 
     return {
       success: true,

@@ -1,6 +1,6 @@
 export const staticData = {
   hero: {
-    headline: "Curated essentials for your baby's first years.",
+    headline: "Shop for baby, kid and mum care.",
     subcopy: "Curated checklists and essentials for expectant and new mothers — thoughtfully tiered so you always know what truly matters.",
     backgroundImage: "/assets/hero.webp",
     trending: {

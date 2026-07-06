@@ -139,18 +139,14 @@ const HomeSkeleton = () => {
 
       {/* 8. Reels Section */}
       <section className="section reels-section" style={{ marginTop: 'var(--space-12)' }}>
-        <div className="reels-section__header-row">
-          <div className="section__header">
+        <div className="reels-section__header-row" style={{ justifyContent: 'center' }}>
+          <div className="section__header" style={{ alignItems: 'center', textAlign: 'center' }}>
             <div className="skeleton-text skeleton-text--title skeleton-shimmer" style={{ width: '250px' }} />
             <div className="skeleton-text skeleton-text--subtitle skeleton-shimmer" style={{ width: '200px', height: '14px', marginTop: 'var(--space-1)' }} />
           </div>
         </div>
-        <div className="reels-carousel-container">
-          <div className="reels-carousel">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="skeleton-reel-card skeleton-shimmer" />
-            ))}
-          </div>
+        <div className="reels-single-container">
+          <div className="reel-single-wrapper skeleton-shimmer" style={{ background: 'var(--skeleton-base)' }} />
         </div>
       </section>
 

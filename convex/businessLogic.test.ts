@@ -575,38 +575,143 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     });
   });
 
-  // Case A: Coordinates passed directly (Ntinda area, ~5.2 km from Kampala Central)
+  // Case A: Coordinates passed directly, close to the Ntinda hub. Ntinda's min/max fee
+  // clamp is flat at 5000, so the fee is deterministic regardless of the exact distance.
   const calcDirect = await t.run(async (ctx) => {
     const { calculateDeliveryFeeAndDistance } = await import("./orders");
     return await calculateDeliveryFeeAndDistance(ctx, "Ntinda", undefined, 0.3541, 32.6105);
   });
   expect(calcDirect.distance).toBeDefined();
-  expect(calcDirect.distance).toBeGreaterThan(4);
-  expect(calcDirect.distance).toBeLessThan(7);
-  expect(calcDirect.deliveryFee).toBe(3500); // 3-6 km range is 3500
+  expect(calcDirect.zone).toBe("Ntinda");
+  expect(calcDirect.deliveryFee).toBe(5000);
 
-  // Case B: Landmark matched from db (Lubowa Estate is ~7.1 km)
+  // Case B: Landmark matched from db (no direct coordinates) — resolves through the
+  // landmark's stored lat/lng and prices dynamically off the nearest matched zone.
   const calcLandmark = await t.run(async (ctx) => {
     const { calculateDeliveryFeeAndDistance } = await import("./orders");
     return await calculateDeliveryFeeAndDistance(ctx, "Lubowa", "Lubowa Estate");
   });
   expect(calcLandmark.distance).toBeDefined();
-  expect(calcLandmark.distance).toBeGreaterThan(6);
-  expect(calcLandmark.distance).toBeLessThan(9);
-  expect(calcLandmark.deliveryFee).toBe(5000); // 6-10 km range is 5000
+  expect(calcLandmark.distance).toBeGreaterThan(0);
+  expect(calcLandmark.deliveryFee).toBeGreaterThan(0);
 
-  // Case C: Fallback to zone name (Ntinda = 4000)
+  // Case C: No coordinates resolvable anywhere — falls back to pricing off the matched
+  // zone's base distance directly (Ntinda's clamp is flat at 5000).
   const calcZoneFallback = await t.run(async (ctx) => {
     const { calculateDeliveryFeeAndDistance } = await import("./orders");
     return await calculateDeliveryFeeAndDistance(ctx, "Ntinda", "Ntinda Market"); // coordinates not seeded
   });
-  expect(calcZoneFallback.distance).toBeUndefined();
-  expect(calcZoneFallback.deliveryFee).toBe(4000); // NTINDA zone fallback is 4000
+  expect(calcZoneFallback.zone).toBe("Ntinda");
+  expect(calcZoneFallback.deliveryFee).toBe(5000);
 
-  // Case D: Fallback to zone name (Kololo = 0)
-  const calcFreeFallback = await t.run(async (ctx) => {
+  // Case D: Zone-name-only fallback for Kololo — flat 5000 fee (the old "free Kololo"
+  // rule no longer applies; only the pesapal-test-product waiver grants free delivery).
+  const calcKololoFallback = await t.run(async (ctx) => {
     const { calculateDeliveryFeeAndDistance } = await import("./orders");
     return await calculateDeliveryFeeAndDistance(ctx, "Kololo");
   });
-  expect(calcFreeFallback.deliveryFee).toBe(0);
+  expect(calcKololoFallback.zone).toBe("Kololo");
+  expect(calcKololoFallback.deliveryFee).toBe(5000);
+
+  // Case E: Coordinates beyond the 35km max delivery radius must be hard-rejected,
+  // even if called directly (bypassing any frontend gate).
+  await expect(
+    t.run(async (ctx) => {
+      const { calculateDeliveryFeeAndDistance } = await import("./orders");
+      return await calculateDeliveryFeeAndDistance(ctx, "Somewhere Far", undefined, 1.5, 33.5);
+    })
+  ).rejects.toThrow("out of bounds");
+
+  // ─── 8. Developer Product & POS Stock Sync Tests ───
+  // A. Create two products with the same barcode
+  const [syncedProduct1, syncedProduct2] = await t.run(async (ctx) => {
+    const id1 = await ctx.db.insert("products", {
+      name: "Product Online",
+      brand: "Test",
+      slug: "product-online",
+      barcode: "sync-barcode-123",
+      price: 20000,
+      originalPrice: 20000,
+      isActive: true,
+      actual_data: true,
+      inventory: 15,
+      description: "Online version",
+      tags: [],
+      specifications: [],
+    });
+    const id2 = await ctx.db.insert("products", {
+      name: "Product Offline Only",
+      brand: "Test",
+      slug: "product-offline-only",
+      barcode: "sync-barcode-123",
+      price: 20000,
+      originalPrice: 20000,
+      isActive: true,
+      actual_data: true,
+      inventory: 15,
+      description: "Offline version",
+      tags: [],
+      specifications: [{ label: "for-store-only", value: "true" }],
+    });
+    return [id1, id2];
+  });
+
+  // B. Run createPhysicalOrder (walk-in POS) and check both inventories decrement in sync
+  const posSyncRes = await t.mutation(api.orders.createPhysicalOrder, {
+    token: staffToken,
+    customerName: "Sync Test Customer",
+    items: [
+      { productId: syncedProduct2, quantity: 3 } // Buy offline product
+    ],
+    payments: [
+      { method: "physical", amount: 60000 }
+    ]
+  });
+  expect(posSyncRes.success).toBe(true);
+
+  // Check both inventories are decremented by 3
+  const [posStock1, posStock2] = await t.run(async (ctx) => {
+    const p1 = await ctx.db.get(syncedProduct1);
+    const p2 = await ctx.db.get(syncedProduct2);
+    return [p1?.inventory, p2?.inventory];
+  });
+  expect(posStock1).toBe(12);
+  expect(posStock2).toBe(12);
+
+  // C. Run processReturn and check both inventories increment in sync
+  const returnSyncRes = await t.mutation(api.returns.processReturn, {
+    token: staffToken,
+    orderId: posSyncRes.orderId,
+    returnedItems: [
+      { productId: syncedProduct2, quantity: 1 } // Return 1
+    ],
+    refundAmount: 20000,
+    note: "Sync return test"
+  });
+  expect(returnSyncRes.success).toBe(true);
+
+  const [retStock1, retStock2] = await t.run(async (ctx) => {
+    const p1 = await ctx.db.get(syncedProduct1);
+    const p2 = await ctx.db.get(syncedProduct2);
+    return [p1?.inventory, p2?.inventory];
+  });
+  expect(retStock1).toBe(13);
+  expect(retStock2).toBe(13);
+
+  // D. Run adjustStock and check both inventories adjust in sync
+  const adjustSyncRes = await t.mutation(api.products.adjustStock, {
+    token: adminToken,
+    productId: syncedProduct1,
+    delta: 5 // Adjust online product
+  });
+  expect(adjustSyncRes.success).toBe(true);
+
+  const [adjStock1, adjStock2] = await t.run(async (ctx) => {
+    const p1 = await ctx.db.get(syncedProduct1);
+    const p2 = await ctx.db.get(syncedProduct2);
+    return [p1?.inventory, p2?.inventory];
+  });
+  expect(adjStock1).toBe(18);
+  expect(adjStock2).toBe(18);
 });
+

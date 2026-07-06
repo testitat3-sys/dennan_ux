@@ -233,7 +233,12 @@ export const updateProfile = mutation({
     ),
     interests: v.optional(v.array(v.string())),
     momoPhone: v.optional(v.union(v.string(), v.null())),
-    deliveryLocations: v.optional(v.array(v.object({ name: v.string(), zone: v.string() }))),
+    deliveryLocations: v.optional(v.array(v.object({
+      name: v.string(),
+      zone: v.string(),
+      lat: v.optional(v.number()),
+      lng: v.optional(v.number()),
+    }))),
     dob: v.optional(v.union(v.string(), v.null())),
     gender: v.optional(v.union(v.literal("male"), v.literal("female"), v.literal("unspecified"))),
     preferredContact: v.optional(v.union(v.literal("email"), v.literal("sms"), v.literal("whatsapp"), v.literal("push"))),

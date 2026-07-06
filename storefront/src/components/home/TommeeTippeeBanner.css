@@ -1,0 +1,64 @@
+/* ─── TOMMEE TIPPEE BANNER ─────────────────────────────────────────── */
+.tommee-banner {
+  margin: 0;
+  padding: var(--space-10) var(--layout-inset);
+}
+
+.tommee-banner__link {
+  display: block;
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+  outline-offset: 4px;
+  transition: transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1),
+              box-shadow 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+}
+
+.tommee-banner__link:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+}
+
+.tommee-banner__link:focus-visible {
+  outline: 3px solid var(--color-brand-primary);
+}
+
+.tommee-banner__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* Subtle darkening overlay on hover for interactivity feedback */
+.tommee-banner__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.35s ease;
+  pointer-events: none;
+}
+
+.tommee-banner__link:hover .tommee-banner__overlay {
+  background: rgba(0, 0, 0, 0.07);
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .tommee-banner {
+    padding: var(--space-6) 0; /* edge-to-edge full bleed on mobile */
+  }
+
+  .tommee-banner__link {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .tommee-banner__link:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}

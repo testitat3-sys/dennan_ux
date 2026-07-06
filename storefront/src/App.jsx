@@ -13,6 +13,7 @@ import PaymentCallbackPage from './pages/PaymentCallbackPage';
 import PDP from './pages/PDP';
 import DesignSystemPage from './pages/DesignSystemPage';
 import ComingSoonPage from './pages/ComingSoonPage';
+import AboutPage from './pages/AboutPage';
 import AuthPage from './pages/AuthPage';
 import AfterSignIn from './pages/AfterSignIn';
 import ProfilePage from './pages/ProfilePage';
@@ -82,7 +83,7 @@ function App() {
           <Route path="/design-system" element={<DesignSystemPage />} />
           
           {/* Unimplemented placeholder routes */}
-          <Route path="/about" element={<ComingSoonPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/safety" element={<ComingSoonPage />} />
           <Route path="/support" element={<ComingSoonPage />} />
           <Route path="/faq" element={<ComingSoonPage />} />

@@ -50,7 +50,7 @@ const PDP = () => {
 
   useEffect(() => {
     if (allProducts && productId) {
-      const foundProduct = allProducts.find(p => p.id === parseInt(productId) || p._id === productId);
+      const foundProduct = allProducts.find(p => p.id === parseInt(productId) || p._id === productId || p.slug === productId);
       if (foundProduct) {
         setProduct(foundProduct);
         setActiveImageIndex(0); // Reset to first image on product switch

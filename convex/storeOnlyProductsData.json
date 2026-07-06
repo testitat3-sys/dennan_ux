@@ -1,0 +1,3771 @@
+[
+  {
+    "name": "Tommee Tippee Closer To Nature 2Pc 260Ml Bottles Boxed",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-closer-to-nature-2pc-260ml-bottles-boxed",
+    "barcode": "2017359",
+    "price": 65000,
+    "originalPrice": 65000,
+    "discountPrice": 58500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Avent Natural Flow 1Pc 260Mls",
+    "brand": "Generic",
+    "slug": "avent-natural-flow-1pc-260mls",
+    "barcode": "201741000",
+    "price": 35000,
+    "originalPrice": 35000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Cow & Gate Baby Rice 100G",
+    "brand": "Cow & Gate",
+    "slug": "cow-gate-baby-rice-100g",
+    "barcode": "201741013",
+    "price": 30000,
+    "originalPrice": 30000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Breast Pads (40Pcs)",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-breast-pads-40pcs",
+    "barcode": "201741037",
+    "price": 35000,
+    "originalPrice": 35000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Closer To Nature Starter Set 9Pc",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-closer-to-nature-starter-set-9pc",
+    "barcode": "201741041",
+    "price": 185000,
+    "originalPrice": 185000,
+    "discountPrice": 166500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Any Time Soother (0-6)",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-any-time-soother-0-6",
+    "barcode": "201741049",
+    "price": 35000,
+    "originalPrice": 35000,
+    "discountPrice": 28000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Digital Sound Monitor",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-digital-sound-monitor",
+    "barcode": "201741050",
+    "price": 380000,
+    "originalPrice": 380000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Complete Starter Kit/Feeding Set",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-complete-starter-kit-feeding-set",
+    "barcode": "201741051",
+    "price": 780000,
+    "originalPrice": 780000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Dr Browns Options Twin Pack 270Ml",
+    "brand": "Generic",
+    "slug": "dr-browns-options-twin-pack-270ml",
+    "barcode": "201741055",
+    "price": 75000,
+    "originalPrice": 75000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Aptamil Organic Baby Rice",
+    "brand": "Aptamil",
+    "slug": "aptamil-organic-baby-rice",
+    "barcode": "201741173",
+    "price": 35000,
+    "originalPrice": 35000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Motorola Digital Monitor",
+    "brand": "Generic",
+    "slug": "motorola-digital-monitor",
+    "barcode": "201741195",
+    "price": 300000,
+    "originalPrice": 300000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Manual Breast Pump",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-manual-breast-pump",
+    "barcode": "2017462",
+    "price": 155000,
+    "originalPrice": 155000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Breast Milk Storage Bags(36)",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-breast-milk-storage-bags-36",
+    "barcode": "2017466",
+    "price": 50000,
+    "originalPrice": 50000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Avent Teats Natual Flow T4 Teats 3M+",
+    "brand": "Generic",
+    "slug": "avent-teats-natual-flow-t4-teats-3m",
+    "barcode": "2017487",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Lissidoll Baby Seat Trainer",
+    "brand": "Generic",
+    "slug": "lissidoll-baby-seat-trainer",
+    "barcode": "201801143",
+    "price": 85000,
+    "originalPrice": 85000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Advanced Anticolic 2Pc Teats 6M+",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-advanced-anticolic-2pc-teats-6m",
+    "barcode": "201801297",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Nuk Mini Ice Lolly Set 9M+",
+    "brand": "Generic",
+    "slug": "nuk-mini-ice-lolly-set-9m",
+    "barcode": "201801303",
+    "price": 35000,
+    "originalPrice": 35000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Natural Start Bottles 6Pc",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-natural-start-bottles-6pc",
+    "barcode": "20180146",
+    "price": 195000,
+    "originalPrice": 195000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Crocs Mult",
+    "brand": "Generic",
+    "slug": "kids-crocs-mult",
+    "barcode": "201801678",
+    "price": 20000,
+    "originalPrice": 20000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Child Anti Lost Strap",
+    "brand": "Generic",
+    "slug": "child-anti-lost-strap",
+    "barcode": "201801870",
+    "price": 20000,
+    "originalPrice": 20000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Munchkin Snack Collation/Catcher Cup 12M+",
+    "brand": "Munchkin",
+    "slug": "munchkin-snack-collation-catcher-cup-12m",
+    "barcode": "201802483",
+    "price": 30000,
+    "originalPrice": 30000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Munchkin Latch Teats 3M+",
+    "brand": "Munchkin",
+    "slug": "munchkin-latch-teats-3m",
+    "barcode": "20180426",
+    "price": 20000,
+    "originalPrice": 20000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Jj Adjustable Nursing Pillow",
+    "brand": "Generic",
+    "slug": "jj-adjustable-nursing-pillow",
+    "barcode": "20180574",
+    "price": 95000,
+    "originalPrice": 95000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Character Crocs/Baby Crocs",
+    "brand": "Generic",
+    "slug": "kids-character-crocs-baby-crocs",
+    "barcode": "20180585",
+    "price": 30000,
+    "originalPrice": 30000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Rubber Cot Changing Mat",
+    "brand": "Generic",
+    "slug": "rubber-cot-changing-mat",
+    "barcode": "20180637",
+    "price": 35000,
+    "originalPrice": 35000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Clty13 Carteliebe Body Support",
+    "brand": "Generic",
+    "slug": "clty13-carteliebe-body-support",
+    "barcode": "20180862",
+    "price": 32000,
+    "originalPrice": 32000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Londony/Kids Knee Pad",
+    "brand": "Generic",
+    "slug": "londony-kids-knee-pad",
+    "barcode": "201901344",
+    "price": 12000,
+    "originalPrice": 12000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Sunnozy 3pc sweatpants",
+    "brand": "Generic",
+    "slug": "sunnozy-3pc-sweatpants",
+    "barcode": "201901476",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Carterliebe /Sunnozy 2Pc Burp Cloth",
+    "brand": "Generic",
+    "slug": "carterliebe-sunnozy-2pc-burp-cloth",
+    "barcode": "201901491",
+    "price": 22000,
+    "originalPrice": 22000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee fun style/air/fun friend soother 2pc 0-6m",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-fun-style-air-fun-friend-soother-2pc-0-6m",
+    "barcode": "201901648",
+    "price": 35000,
+    "originalPrice": 35000,
+    "discountPrice": 28000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Mama And Papa 3Pc Sleepsuit 01 S-1Yr & Above Nuetral",
+    "brand": "Generic",
+    "slug": "kids-mama-and-papa-3pc-sleepsuit-01-s-1yr-above-nuetral",
+    "barcode": "201902199",
+    "price": 65000,
+    "originalPrice": 65000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Disposable Panties 6Pc  01 S-6 Nuetral",
+    "brand": "Generic",
+    "slug": "kids-disposable-panties-6pc-01-s-6-nuetral",
+    "barcode": "201902200",
+    "price": 7000,
+    "originalPrice": 7000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Aimama Hip Seat Carrier 09",
+    "brand": "Generic",
+    "slug": "kids-aimama-hip-seat-carrier-09",
+    "barcode": "201902394",
+    "price": 85000,
+    "originalPrice": 85000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids 470 Baby Jem Spiral Safety Wristband 470 S-0-24M Nuetral",
+    "brand": "Generic",
+    "slug": "kids-470-baby-jem-spiral-safety-wristband-470-s-0-24m-nuetral",
+    "barcode": "201902489",
+    "price": 30000,
+    "originalPrice": 30000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Carterliebe  Sunnozy 3Pc Shortsleeved Bodysuit",
+    "brand": "Generic",
+    "slug": "carterliebe-sunnozy-3pc-shortsleeved-bodysuit",
+    "barcode": "201902923",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Super Steam Electric Steriliser Without Bottles 03",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-super-steam-electric-steriliser-without-bottles-03",
+    "barcode": "201903360",
+    "price": 380000,
+    "originalPrice": 380000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Hudson Baby Scratch Mittens 3Pc",
+    "brand": "Generic",
+    "slug": "hudson-baby-scratch-mittens-3pc",
+    "barcode": "20190375",
+    "price": 30000,
+    "originalPrice": 30000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Nursing Pillow C-Type Mult",
+    "brand": "Generic",
+    "slug": "nursing-pillow-c-type-mult",
+    "barcode": "20190563",
+    "price": 75000,
+    "originalPrice": 75000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Sunnozy /Carteliebe 5Pc Shortsleeved Bodysuit",
+    "brand": "Generic",
+    "slug": "sunnozy-carteliebe-5pc-shortsleeved-bodysuit",
+    "barcode": "202001145",
+    "price": 50000,
+    "originalPrice": 50000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Sunnozy /Carterliebe/Baby Gear 3Pc Longsleeved Bodysuit",
+    "brand": "Generic",
+    "slug": "sunnozy-carterliebe-baby-gear-3pc-longsleeved-bodysuit",
+    "barcode": "202001146",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Glove Kids Munch Mitt Baby Teething Mitten",
+    "brand": "Generic",
+    "slug": "glove-kids-munch-mitt-baby-teething-mitten",
+    "barcode": "202001315",
+    "price": 20000,
+    "originalPrice": 20000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Munchkin Bristle Bottle Brush",
+    "brand": "Munchkin",
+    "slug": "munchkin-bristle-bottle-brush",
+    "barcode": "202001351",
+    "price": 35000,
+    "originalPrice": 35000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Sunnozy cltw036/cltw041/cltw047 10pc washcloths",
+    "brand": "Generic",
+    "slug": "sunnozy-cltw036-cltw041-cltw047-10pc-washcloths",
+    "barcode": "202001854",
+    "price": 25000,
+    "originalPrice": 25000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Sunnozy  3Pc Sleeveless Bodysuit",
+    "brand": "Generic",
+    "slug": "sunnozy-3pc-sleeveless-bodysuit",
+    "barcode": "202001874",
+    "price": 40000,
+    "originalPrice": 40000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids 2003/4008/Kz07 Foldable Play Mat",
+    "brand": "Generic",
+    "slug": "kids-2003-4008-kz07-foldable-play-mat",
+    "barcode": "202001876",
+    "price": 90000,
+    "originalPrice": 90000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids 730 Dream On Me Bed 730",
+    "brand": "Generic",
+    "slug": "kids-730-dream-on-me-bed-730",
+    "barcode": "20200398",
+    "price": 1150000,
+    "originalPrice": 1150000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby 08104/08105/08106/08107/08209 3 In 1 Swing & Bassinet",
+    "brand": "Generic",
+    "slug": "baby-08104-08105-08106-08107-08209-3-in-1-swing-bassinet",
+    "barcode": "20200652",
+    "price": 340000,
+    "originalPrice": 340000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Bi Bio Organic Baby Bodystocking 1Pc 68442",
+    "brand": "Generic",
+    "slug": "bi-bio-organic-baby-bodystocking-1pc-68442",
+    "barcode": "20200817",
+    "price": 15000,
+    "originalPrice": 15000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Nuby Fresh Food Feeders 4M+ 6M+",
+    "brand": "Nuby",
+    "slug": "nuby-fresh-food-feeders-4m-6m",
+    "barcode": "20200855",
+    "price": 30000,
+    "originalPrice": 30000,
+    "discountPrice": 25500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Medela 2-Phase Swing Flex Breast Pump",
+    "brand": "Medela",
+    "slug": "medela-2-phase-swing-flex-breast-pump",
+    "barcode": "20200861",
+    "price": 650000,
+    "originalPrice": 650000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Medela Cooler Bag With 4 Bottles",
+    "brand": "Medela",
+    "slug": "medela-cooler-bag-with-4-bottles",
+    "barcode": "20200862",
+    "price": 185000,
+    "originalPrice": 185000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Medela breastfeeding store & feed",
+    "brand": "Medela",
+    "slug": "medela-breastfeeding-store-feed",
+    "barcode": "20200864",
+    "price": 120000,
+    "originalPrice": 120000,
+    "discountPrice": 96000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Double Electric Breast Pump",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-double-electric-breast-pump",
+    "barcode": "202102412",
+    "price": 1000000,
+    "originalPrice": 1000000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Nuk New Nuk Baby Gentle Cleanser 500Ml",
+    "brand": "Generic",
+    "slug": "nuk-new-nuk-baby-gentle-cleanser-500ml",
+    "barcode": "202102438",
+    "price": 35000,
+    "originalPrice": 35000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Nuk 2Pc Teats 6-18M",
+    "brand": "Generic",
+    "slug": "nuk-2pc-teats-6-18m",
+    "barcode": "20210308",
+    "price": 22000,
+    "originalPrice": 22000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Milton Antibacterial Hand Sanitiser 50Ml",
+    "brand": "Generic",
+    "slug": "milton-antibacterial-hand-sanitiser-50ml",
+    "barcode": "20210318",
+    "price": 25000,
+    "originalPrice": 25000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Closer To Nature 150Ml Bottle 1Pc",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-closer-to-nature-150ml-bottle-1pc",
+    "barcode": "20210322",
+    "price": 35000,
+    "originalPrice": 35000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Munchkin Mini Steriliser Portable Uv Sanitiser",
+    "brand": "Munchkin",
+    "slug": "munchkin-mini-steriliser-portable-uv-sanitiser",
+    "barcode": "20210813",
+    "price": 85000,
+    "originalPrice": 85000,
+    "discountPrice": 68000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby Jem 520 Nail Scissors And Cutter 2Pc",
+    "brand": "Generic",
+    "slug": "baby-jem-520-nail-scissors-and-cutter-2pc",
+    "barcode": "20220143",
+    "price": 25000,
+    "originalPrice": 25000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Avent Bottle Steriliser Advanced And Store",
+    "brand": "Generic",
+    "slug": "avent-bottle-steriliser-advanced-and-store",
+    "barcode": "20220172",
+    "price": 550000,
+    "originalPrice": 550000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Closer To Nature Advanced Anti-Colic Starter Set 9Pc",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-closer-to-nature-advanced-anti-colic-starter-set-9pc",
+    "barcode": "20220225",
+    "price": 210000,
+    "originalPrice": 210000,
+    "discountPrice": 189000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Medela Breast Shell 2Pc",
+    "brand": "Medela",
+    "slug": "medela-breast-shell-2pc",
+    "barcode": "20220232",
+    "price": 70000,
+    "originalPrice": 70000,
+    "discountPrice": 56000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids School Backpack 3Pc With 3D Pictures & Removable Wheels",
+    "brand": "Generic",
+    "slug": "kids-school-backpack-3pc-with-3d-pictures-removable-wheels",
+    "barcode": "20220307",
+    "price": 85000,
+    "originalPrice": 85000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Baby Travel Cot P02/T-701L",
+    "brand": "Generic",
+    "slug": "kids-baby-travel-cot-p02-t-701l",
+    "barcode": "20220371",
+    "price": 500000,
+    "originalPrice": 500000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids B9485/B484/08039/08038/08037) 6 In 1 Deluxe Multfunctional Bassinet",
+    "brand": "Generic",
+    "slug": "kids-b9485-b484-08039-08038-08037-6-in-1-deluxe-multfunctional-bassinet",
+    "barcode": "20220391",
+    "price": 360000,
+    "originalPrice": 360000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Defne Bodystocking",
+    "brand": "Generic",
+    "slug": "defne-bodystocking",
+    "barcode": "20220652",
+    "price": 15000,
+    "originalPrice": 15000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Sunnozy C0t3d60/63 3Pc Booties Mitten & Hat",
+    "brand": "Generic",
+    "slug": "sunnozy-c0t3d60-63-3pc-booties-mitten-hat",
+    "barcode": "20220729",
+    "price": 25000,
+    "originalPrice": 25000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Sunnozy toy with blanket xybl28",
+    "brand": "Generic",
+    "slug": "sunnozy-toy-with-blanket-xybl28",
+    "barcode": "202301318",
+    "price": 60000,
+    "originalPrice": 60000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Sunnozy toy with blanket xybl29",
+    "brand": "Generic",
+    "slug": "sunnozy-toy-with-blanket-xybl29",
+    "barcode": "202301319",
+    "price": 60000,
+    "originalPrice": 60000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Sunnozy washcloths 4pc cltw53",
+    "brand": "Generic",
+    "slug": "sunnozy-washcloths-4pc-cltw53",
+    "barcode": "202301320",
+    "price": 25000,
+    "originalPrice": 25000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kikka Boo Tritn Sippy Cup With A Straw 300Ml 12M+",
+    "brand": "Generic",
+    "slug": "kikka-boo-tritn-sippy-cup-with-a-straw-300ml-12m",
+    "barcode": "20230190",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Dora The Explora School Bag 1689",
+    "brand": "Generic",
+    "slug": "kids-dora-the-explora-school-bag-1689",
+    "barcode": "2023092",
+    "price": 75000,
+    "originalPrice": 75000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Super Star Insulated Straw Bottle 266Ml 12Ml+",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-super-star-insulated-straw-bottle-266ml-12ml",
+    "barcode": "2024021",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Co-Sleeper & Bassinet Mult.",
+    "brand": "Generic",
+    "slug": "kids-co-sleeper-bassinet-mult",
+    "barcode": "20240338",
+    "price": 350000,
+    "originalPrice": 350000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby Formular 1 Baby Walker",
+    "brand": "Generic",
+    "slug": "baby-formular-1-baby-walker",
+    "barcode": "20240349",
+    "price": 185000,
+    "originalPrice": 185000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids School Bag With Removable Wheels 16030",
+    "brand": "Generic",
+    "slug": "kids-school-bag-with-removable-wheels-16030",
+    "barcode": "2024037",
+    "price": 85000,
+    "originalPrice": 85000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby Sweaters Mult.",
+    "brand": "Generic",
+    "slug": "baby-sweaters-mult",
+    "barcode": "20240406",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Colorland Baby Hats And Glooves Cld-Nhg-001-K",
+    "brand": "Generic",
+    "slug": "colorland-baby-hats-and-glooves-cld-nhg-001-k",
+    "barcode": "20240439",
+    "price": 50000,
+    "originalPrice": 50000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Umbrella (84)",
+    "brand": "Generic",
+    "slug": "kids-umbrella-84",
+    "barcode": "20240460",
+    "price": 35000,
+    "originalPrice": 35000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Happy Swam Umbrella (3)/H5313",
+    "brand": "Generic",
+    "slug": "kids-happy-swam-umbrella-3-h5313",
+    "barcode": "20240461",
+    "price": 35000,
+    "originalPrice": 35000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids School Bag Medium 1402/1429/1420/",
+    "brand": "Generic",
+    "slug": "kids-school-bag-medium-1402-1429-1420",
+    "barcode": "2024050",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Character Medium Umbrella",
+    "brand": "Generic",
+    "slug": "kids-character-medium-umbrella",
+    "barcode": "20240513",
+    "price": 30000,
+    "originalPrice": 30000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Uuyp Grooming Kit (75)",
+    "brand": "Generic",
+    "slug": "kids-uuyp-grooming-kit-75",
+    "barcode": "20240523",
+    "price": 25000,
+    "originalPrice": 25000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids School Bag Polka 1024 & 8009-1",
+    "brand": "Generic",
+    "slug": "kids-school-bag-polka-1024-8009-1",
+    "barcode": "2024054",
+    "price": 60000,
+    "originalPrice": 60000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Open Zip School Bag B3506",
+    "brand": "Generic",
+    "slug": "kids-open-zip-school-bag-b3506",
+    "barcode": "2024055",
+    "price": 180000,
+    "originalPrice": 180000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids School Bag 8291",
+    "brand": "Generic",
+    "slug": "kids-school-bag-8291",
+    "barcode": "2024056",
+    "price": 75000,
+    "originalPrice": 75000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids School Bag 3Pc With A Lunch Bag 318001/318002",
+    "brand": "Generic",
+    "slug": "kids-school-bag-3pc-with-a-lunch-bag-318001-318002",
+    "barcode": "2024057",
+    "price": 75000,
+    "originalPrice": 75000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids School Bag With 3 Pockets Behind 8855",
+    "brand": "Generic",
+    "slug": "kids-school-bag-with-3-pockets-behind-8855",
+    "barcode": "2024058",
+    "price": 55000,
+    "originalPrice": 55000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Colorland Diaper Bag Cld-Bp240",
+    "brand": "Generic",
+    "slug": "colorland-diaper-bag-cld-bp240",
+    "barcode": "20240597",
+    "price": 120000,
+    "originalPrice": 120000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby 2.4 Ghz Digital Wireless Video Baby Monitor",
+    "brand": "Generic",
+    "slug": "baby-2-4-ghz-digital-wireless-video-baby-monitor",
+    "barcode": "20240691",
+    "price": 450000,
+    "originalPrice": 450000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids 6Pc Receiving Sheets New",
+    "brand": "Generic",
+    "slug": "kids-6pc-receiving-sheets-new",
+    "barcode": "20240692",
+    "price": 75000,
+    "originalPrice": 75000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Boon Growl/Prance Silicone Teether",
+    "brand": "Generic",
+    "slug": "boon-growl-prance-silicone-teether",
+    "barcode": "20240694",
+    "price": 40000,
+    "originalPrice": 40000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Dr Browns Soft Spout Transition Cup 180Ml",
+    "brand": "Generic",
+    "slug": "dr-browns-soft-spout-transition-cup-180ml",
+    "barcode": "20240695",
+    "price": 40000,
+    "originalPrice": 40000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Dr Browns Cheers 360 Training Cup 200Ml 6M+",
+    "brand": "Generic",
+    "slug": "dr-browns-cheers-360-training-cup-200ml-6m",
+    "barcode": "20240696",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Ngtt Easy Grip Bottle 240Ml",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-ngtt-easy-grip-bottle-240ml",
+    "barcode": "20240797",
+    "price": 35000,
+    "originalPrice": 35000,
+    "discountPrice": 28000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Bella Mama Postpartum Pads 1Pc",
+    "brand": "Generic",
+    "slug": "bella-mama-postpartum-pads-1pc",
+    "barcode": "20240841",
+    "price": 25000,
+    "originalPrice": 25000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Kids Fashion Sunglass (64)",
+    "brand": "Generic",
+    "slug": "kids-kids-fashion-sunglass-64",
+    "barcode": "202501019",
+    "price": 10000,
+    "originalPrice": 10000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Kids Fashion Sunglasses (65)",
+    "brand": "Generic",
+    "slug": "kids-kids-fashion-sunglasses-65",
+    "barcode": "202501025",
+    "price": 15000,
+    "originalPrice": 15000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Kids Fashion Sunglasses 2Pc (1)",
+    "brand": "Generic",
+    "slug": "kids-kids-fashion-sunglasses-2pc-1",
+    "barcode": "202501026",
+    "price": 15000,
+    "originalPrice": 15000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee Sports Bottle 300Ml",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-sports-bottle-300ml",
+    "barcode": "20250136",
+    "price": 22000,
+    "originalPrice": 22000,
+    "discountPrice": 17600,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Hugs And Hugs Kisses Plus Lolipo Fs986",
+    "brand": "Generic",
+    "slug": "kids-hugs-and-hugs-kisses-plus-lolipo-fs986",
+    "barcode": "20250169",
+    "price": 25000,
+    "originalPrice": 25000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Baby Activity Gym And Ball Pit 668-42",
+    "brand": "Generic",
+    "slug": "kids-baby-activity-gym-and-ball-pit-668-42",
+    "barcode": "20250190",
+    "price": 150000,
+    "originalPrice": 150000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Sunshine/Good Mum Bed And Bag",
+    "brand": "Generic",
+    "slug": "kids-sunshine-good-mum-bed-and-bag",
+    "barcode": "20250253",
+    "price": 85000,
+    "originalPrice": 85000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Londony /Good Baby Blanket 1Pc",
+    "brand": "Generic",
+    "slug": "londony-good-baby-blanket-1pc",
+    "barcode": "20250478",
+    "price": 50000,
+    "originalPrice": 50000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kidilo Baby High Chair E-560",
+    "brand": "Generic",
+    "slug": "kidilo-baby-high-chair-e-560",
+    "barcode": "20250569",
+    "price": 220000,
+    "originalPrice": 220000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Momcozy Single Wearable S9 Pro Breast Pump",
+    "brand": "Generic",
+    "slug": "momcozy-single-wearable-s9-pro-breast-pump",
+    "barcode": "20250639",
+    "price": 400000,
+    "originalPrice": 400000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Momcozy Double Mobile Style Breast Pump-M6",
+    "brand": "Generic",
+    "slug": "momcozy-double-mobile-style-breast-pump-m6",
+    "barcode": "20250640",
+    "price": 1000000,
+    "originalPrice": 1000000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby Activity Play Gym And Ball Pit 5 Ways 668-34",
+    "brand": "Generic",
+    "slug": "baby-activity-play-gym-and-ball-pit-5-ways-668-34",
+    "barcode": "20250651",
+    "price": 160000,
+    "originalPrice": 160000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Rascals 1(54 Nappies)",
+    "brand": "Generic",
+    "slug": "rascals-1-54-nappies",
+    "barcode": "20250652",
+    "price": 43500,
+    "originalPrice": 43500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Rascals 2(48 Nappies)",
+    "brand": "Generic",
+    "slug": "rascals-2-48-nappies",
+    "barcode": "20250653",
+    "price": 43500,
+    "originalPrice": 43500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Rascals 3(44 Nappies)",
+    "brand": "Generic",
+    "slug": "rascals-3-44-nappies",
+    "barcode": "20250654",
+    "price": 43500,
+    "originalPrice": 43500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Rascals 4(36 Nappies)",
+    "brand": "Generic",
+    "slug": "rascals-4-36-nappies",
+    "barcode": "20250655",
+    "price": 43500,
+    "originalPrice": 43500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Bebe Favor /Sunnozy Baby Receiving Blanket Clbl47/Clbl36/Xybl26",
+    "brand": "Generic",
+    "slug": "bebe-favor-sunnozy-baby-receiving-blanket-clbl47-clbl36-xybl26",
+    "barcode": "20250656",
+    "price": 50000,
+    "originalPrice": 50000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kidilo Baby High Chair 8100",
+    "brand": "Generic",
+    "slug": "kidilo-baby-high-chair-8100",
+    "barcode": "20250660",
+    "price": 320000,
+    "originalPrice": 320000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kidilo Baby High Chair 8166",
+    "brand": "Generic",
+    "slug": "kidilo-baby-high-chair-8166",
+    "barcode": "20250661",
+    "price": 320000,
+    "originalPrice": 320000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby Algo Baby Fruit & Vegetable Nibllers 3M+",
+    "brand": "Generic",
+    "slug": "baby-algo-baby-fruit-vegetable-nibllers-3m",
+    "barcode": "20250664",
+    "price": 15000,
+    "originalPrice": 15000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby Piano Gym Mat 9951B",
+    "brand": "Generic",
+    "slug": "baby-piano-gym-mat-9951b",
+    "barcode": "20250670",
+    "price": 120000,
+    "originalPrice": 120000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby Food Processer/Blender",
+    "brand": "Generic",
+    "slug": "baby-food-processer-blender",
+    "barcode": "20250683",
+    "price": 250000,
+    "originalPrice": 250000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Black School Bag 2128-3",
+    "brand": "Generic",
+    "slug": "kids-black-school-bag-2128-3",
+    "barcode": "2025070",
+    "price": 80000,
+    "originalPrice": 80000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Fluorescent Sand Baby Socks 3Pc",
+    "brand": "Generic",
+    "slug": "fluorescent-sand-baby-socks-3pc",
+    "barcode": "20250704",
+    "price": 20000,
+    "originalPrice": 20000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Fluorescent Sand Body Stocking",
+    "brand": "Generic",
+    "slug": "fluorescent-sand-body-stocking",
+    "barcode": "20250705",
+    "price": 20000,
+    "originalPrice": 20000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby Glove Fashion Booties A2114",
+    "brand": "Generic",
+    "slug": "baby-glove-fashion-booties-a2114",
+    "barcode": "20250706",
+    "price": 25000,
+    "originalPrice": 25000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Baby Life Is Beautiful Cloth Booties A2115-1",
+    "brand": "Generic",
+    "slug": "baby-life-is-beautiful-cloth-booties-a2115-1",
+    "barcode": "20250707",
+    "price": 25000,
+    "originalPrice": 25000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Fluorescent Sand Socks 1Pc",
+    "brand": "Generic",
+    "slug": "fluorescent-sand-socks-1pc",
+    "barcode": "20250746",
+    "price": 12000,
+    "originalPrice": 12000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Shein Rain Coat With A Mask",
+    "brand": "Generic",
+    "slug": "kids-shein-rain-coat-with-a-mask",
+    "barcode": "2025088",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Charactr Round Raincoat",
+    "brand": "Generic",
+    "slug": "kids-charactr-round-raincoat",
+    "barcode": "2025091",
+    "price": 30000,
+    "originalPrice": 30000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Kids Character Raincoat 2Pc",
+    "brand": "Generic",
+    "slug": "kids-character-raincoat-2pc",
+    "barcode": "2025093",
+    "price": 50000,
+    "originalPrice": 50000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Dalin Light Oil Spray 200Ml",
+    "brand": "Dalin",
+    "slug": "dalin-light-oil-spray-200ml",
+    "barcode": "2026039",
+    "price": 28000,
+    "originalPrice": 28000,
+    "discountPrice": 23800,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Dalin Cotton Buds 100Pc",
+    "brand": "Dalin",
+    "slug": "dalin-cotton-buds-100pc",
+    "barcode": "2026043",
+    "price": 10000,
+    "originalPrice": 10000,
+    "discountPrice": 8500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Dalin Cotton Buds 60Pc",
+    "brand": "Dalin",
+    "slug": "dalin-cotton-buds-60pc",
+    "barcode": "2026044",
+    "price": 8000,
+    "originalPrice": 8000,
+    "discountPrice": 6800,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Friendly Organic Fabric Softener Lavender",
+    "brand": "Friendly Organic",
+    "slug": "friendly-organic-fabric-softener-lavender",
+    "barcode": "2026050",
+    "price": 45000,
+    "originalPrice": 45000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Farlin Baby Clothes Wash 1000Ml",
+    "brand": "Generic",
+    "slug": "farlin-baby-clothes-wash-1000ml",
+    "barcode": "2026053",
+    "price": 50000,
+    "originalPrice": 50000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Rascals 5(32 Nappies)",
+    "brand": "Generic",
+    "slug": "rascals-5-32-nappies",
+    "barcode": "2026054",
+    "price": 43500,
+    "originalPrice": 43500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Rascals 6(30 Nappies)",
+    "brand": "Generic",
+    "slug": "rascals-6-30-nappies",
+    "barcode": "2026055",
+    "price": 43500,
+    "originalPrice": 43500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Dalin Baby Shampoo & Bodywash 200Ml",
+    "brand": "Dalin",
+    "slug": "dalin-baby-shampoo-bodywash-200ml",
+    "barcode": "2026060",
+    "price": 15000,
+    "originalPrice": 15000,
+    "discountPrice": 12750,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Okus Nursing Bra Mult.",
+    "brand": "Generic",
+    "slug": "okus-nursing-bra-mult",
+    "barcode": "2026064",
+    "price": 55000,
+    "originalPrice": 55000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Tommee Tippee In-Bra Wearable Breast Pump",
+    "brand": "Tommee Tippee",
+    "slug": "tommee-tippee-in-bra-wearable-breast-pump",
+    "barcode": "2026070",
+    "price": 1200000,
+    "originalPrice": 1200000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Momcozy S9 Pro Double Wearable Breast Pump",
+    "brand": "Generic",
+    "slug": "momcozy-s9-pro-double-wearable-breast-pump",
+    "barcode": "2026071",
+    "price": 650000,
+    "originalPrice": 650000,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  },
+  {
+    "name": "Hipp Organic Banana&Plum Porridge 7M+ 200G",
+    "brand": "Hipp Organic",
+    "slug": "hipp-organic-banana-plum-porridge-7m-200g",
+    "barcode": "2026083",
+    "price": 35000,
+    "originalPrice": 35000,
+    "discountPrice": 31500,
+    "description": "Physical store only product.",
+    "isActive": true,
+    "actual_data": true,
+    "inventory": 50,
+    "stage": "newborn",
+    "tier": "essentials",
+    "category": "Baby Play and Safety Gear",
+    "specifications": [
+      {
+        "label": "for-store-only",
+        "value": "true"
+      }
+    ],
+    "tags": [
+      {
+        "type": "general",
+        "text": "Store Only"
+      }
+    ]
+  }
+]

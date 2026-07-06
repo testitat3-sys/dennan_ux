@@ -1,5 +1,6 @@
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
+import type { QueryCtx, MutationCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { validateCouponInternal } from "./coupons";
 import { normalizeProductPrice, shouldKeepProduct } from "./products";
@@ -7,8 +8,45 @@ import { internal } from "./_generated/api";
 import { paginationOptsValidator } from "convex/server";
 import { verifyStaffSession } from "./staffAuth";
 import { generateUniqueVoucherCode } from "./giftVouchers";
+import { computeDeliveryQuote, computeDeliveryQuoteByName } from "./delivery";
+
+async function syncStockDeductionByBarcode(
+  ctx: MutationCtx,
+  product: any,
+  quantity: number
+) {
+  const productsToUpdate = [product];
+  if (product.barcode) {
+    const matchingProducts = await ctx.db
+      .query("products")
+      .withIndex("by_barcode", (q: any) => q.eq("barcode", product.barcode))
+      .collect();
+    const seenIds = new Set([product._id]);
+    for (const p of matchingProducts) {
+      if (!seenIds.has(p._id)) {
+        seenIds.add(p._id);
+        productsToUpdate.push(normalizeProductPrice(p));
+      }
+    }
+  }
+
+  for (const pToUpdate of productsToUpdate) {
+    if (pToUpdate.inventory !== undefined) {
+      const newInventory = Math.max(0, pToUpdate.inventory - quantity);
+      await ctx.db.patch(pToUpdate._id, {
+        inventory: newInventory,
+        unitsSold: (pToUpdate.unitsSold || 0) + quantity,
+      });
+    } else {
+      await ctx.db.patch(pToUpdate._id, {
+        unitsSold: (pToUpdate.unitsSold || 0) + quantity,
+      });
+    }
+  }
+}
 
 export const placeOrder = mutation({
+
   args: {
     paymentMethod: v.string(),
     momoPhone: v.optional(v.string()),
@@ -17,6 +55,7 @@ export const placeOrder = mutation({
       zone: v.string(),
       lat: v.optional(v.number()),
       lng: v.optional(v.number()),
+      distance: v.optional(v.number()), // client-reported road distance; only ever used inside a sanity-check window, never trusted directly
     }),
     couponCode: v.optional(v.string()),
   },
@@ -48,21 +87,15 @@ export const placeOrder = mutation({
       }
       const product = normalizeProductPrice(rawProduct);
 
-      if (product.slug === "pesapal-test-product") {
+      if (product.slug === "pesapal-test-product" || product.slug === "developer-product") {
         hasTestProduct = true;
       }
 
       // Deduct inventory atomically (if applicable) and increment units sold
-      const patches: { inventory?: number; unitsSold?: number } = {
-        unitsSold: (product.unitsSold || 0) + item.quantity,
-      };
-      if (product.inventory !== undefined) {
-        if (product.inventory < item.quantity) {
-          throw new Error(`Inadequate inventory for ${product.name}. Only ${product.inventory} left.`);
-        }
-        patches.inventory = product.inventory - item.quantity;
+      if (product.inventory !== undefined && product.inventory < item.quantity) {
+        throw new Error(`Inadequate inventory for ${product.name}. Only ${product.inventory} left.`);
       }
-      await ctx.db.patch(product._id, patches);
+      await syncStockDeductionByBarcode(ctx, product, item.quantity);
 
       computedSubtotal += product.price * item.quantity;
       itemsToOrder.push({
@@ -98,17 +131,22 @@ export const placeOrder = mutation({
 
     // 4. Calculate Delivery Fee authoritatively
     let deliveryFee = 0;
-    let distance = undefined;
+    let distance: number | undefined = undefined;
+    let resolvedZone = args.deliveryAddress.zone;
+    let etaMinutes: number | undefined = undefined;
     if (!hasTestProduct) {
       const feeRes = await calculateDeliveryFeeAndDistance(
         ctx,
         args.deliveryAddress.zone,
         args.deliveryAddress.name,
         args.deliveryAddress.lat,
-        args.deliveryAddress.lng
+        args.deliveryAddress.lng,
+        args.deliveryAddress.distance
       );
       deliveryFee = feeRes.deliveryFee;
       distance = feeRes.distance;
+      resolvedZone = feeRes.zone;
+      etaMinutes = feeRes.etaMinutes;
     }
 
     const grandTotal = computedSubtotal - discountAmount + deliveryFee;
@@ -121,8 +159,10 @@ export const placeOrder = mutation({
       momoPhone: args.momoPhone,
       deliveryAddress: {
         ...args.deliveryAddress,
+        zone: resolvedZone,
         deliveryFee,
         distance,
+        etaMinutes,
       },
       subtotal: computedSubtotal,
       discountAmount,
@@ -260,80 +300,48 @@ export const getOrderStatusById = internalQuery({
   },
 });
 
-// ─── Zone-based Delivery Fee Calculator and Haversine Distance helper ───
-
-function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Radius of Earth in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-const WAREHOUSE_COORDS = { lat: 0.3136, lng: 32.5811 }; // Kampala Central/Warehouse
+// ─── Zone-based Delivery Fee Calculator ─────────────────────────────────────
+// Thin wrapper around the single authoritative calculation in convex/delivery.ts,
+// so placeOrder/adminCreateOrder can never be handed a fee the client made up.
 
 export async function calculateDeliveryFeeAndDistance(
-  ctx: any,
+  ctx: QueryCtx | MutationCtx,
   zoneName: string,
   landmarkName?: string,
   userLat?: number,
-  userLng?: number
-): Promise<{ distance: number | undefined; deliveryFee: number }> {
-  // If coordinates are explicitly provided by the user, calculate distance directly
-  if (userLat !== undefined && userLng !== undefined) {
-    const distance = haversineDistance(WAREHOUSE_COORDS.lat, WAREHOUSE_COORDS.lng, userLat, userLng);
-    const deliveryFee = resolveFeeByDistance(distance);
-    return { distance, deliveryFee };
-  }
+  userLng?: number,
+  clientDistanceKm?: number
+): Promise<{ distance: number | undefined; deliveryFee: number; zone: string; etaMinutes: number | undefined }> {
+  let lat = userLat;
+  let lng = userLng;
 
-  // If a landmark is provided, look it up in the database to see if it has coordinates
-  if (landmarkName) {
+  // If no direct coordinates, try resolving them from a matching stored landmark
+  if ((lat === undefined || lng === undefined) && landmarkName) {
     const landmarks = await ctx.db.query("deliveryLandmarks").collect();
-    const match = landmarks.find(
-      (l: any) => l.name.toLowerCase() === landmarkName.toLowerCase()
-    );
-
-    if (match && match.lat !== undefined && match.lng !== undefined) {
-      const distance = haversineDistance(WAREHOUSE_COORDS.lat, WAREHOUSE_COORDS.lng, match.lat, match.lng);
-      const deliveryFee = resolveFeeByDistance(distance);
-      return { distance, deliveryFee };
+    const match = landmarks.find((l) => l.name.toLowerCase() === landmarkName.toLowerCase());
+    if (match?.lat !== undefined && match?.lng !== undefined) {
+      lat = match.lat;
+      lng = match.lng;
     }
   }
 
-  // Fallback to zone-based fees if coordinates are missing/unresolved
-  const cleanZone = zoneName?.toLowerCase() || "";
-  if (cleanZone === "kololo" || cleanZone === "kampala central" || cleanZone === "central") {
-    return { distance: undefined, deliveryFee: 0 };
+  if (lat !== undefined && lng !== undefined) {
+    const quote = await computeDeliveryQuote(ctx, {
+      lat,
+      lng,
+      addressText: landmarkName ?? zoneName,
+      clientDistanceKm,
+    });
+    if (quote.outOfBounds) {
+      throw new ConvexError("Delivery location is out of bounds (too far)");
+    }
+    return { distance: quote.distanceKm, deliveryFee: quote.deliveryFee, zone: quote.zone as string, etaMinutes: quote.etaMinutes ?? undefined };
   }
 
-  const zoneFees: Record<string, number> = {
-    ntinda: 4000,
-    kiwatule: 4000,
-    buziga: 6000,
-    lubowa: 6000,
-    mukono: 10000,
-  };
-
-  const deliveryFee = zoneFees[cleanZone] ?? 5000; // default 5000 UGX
-  return { distance: undefined, deliveryFee };
-}
-
-function resolveFeeByDistance(distance: number): number {
-  if (distance < 3) {
-    return 2000;
-  } else if (distance < 6) {
-    return 3500;
-  } else if (distance < 10) {
-    return 5000;
-  } else {
-    return 7500;
-  }
+  // Legacy fallback: no coordinates resolvable anywhere (e.g. staff manual order entry
+  // with a bare zone name) — price off the matched zone's base distance directly.
+  const quote = await computeDeliveryQuoteByName(ctx, landmarkName ?? zoneName);
+  return { distance: quote.distanceKm, deliveryFee: quote.deliveryFee, zone: quote.zone as string, etaMinutes: quote.etaMinutes ?? undefined };
 }
 
 // ─── Order Fulfillment Endpoints ───
@@ -661,19 +669,10 @@ export const adminCreateOrder = mutation({
       }
       const product = normalizeProductPrice(rawProduct);
 
-      if (product.inventory !== undefined) {
-        if (product.inventory < item.quantity) {
-          throw new Error(`Inadequate inventory for ${product.name}. Only ${product.inventory} left.`);
-        }
-        await ctx.db.patch(product._id, {
-          inventory: product.inventory - item.quantity,
-          unitsSold: (product.unitsSold || 0) + item.quantity,
-        });
-      } else {
-        await ctx.db.patch(product._id, {
-          unitsSold: (product.unitsSold || 0) + item.quantity,
-        });
+      if (product.inventory !== undefined && product.inventory < item.quantity) {
+        throw new Error(`Inadequate inventory for ${product.name}. Only ${product.inventory} left.`);
       }
+      await syncStockDeductionByBarcode(ctx, product, item.quantity);
 
       computedSubtotal += product.price * item.quantity;
       itemsToOrder.push({
@@ -716,8 +715,10 @@ export const adminCreateOrder = mutation({
       paymentMethod: args.paymentMethod,
       deliveryAddress: {
         ...args.deliveryAddress,
+        zone: feeRes.zone,
         deliveryFee: feeRes.deliveryFee,
         distance: feeRes.distance,
+        etaMinutes: feeRes.etaMinutes,
       },
       subtotal: computedSubtotal,
       discountAmount,
@@ -849,19 +850,10 @@ export const createPhysicalOrder = mutation({
       }
       const product = normalizeProductPrice(rawProduct);
 
-      if (product.inventory !== undefined) {
-        if (product.inventory < item.quantity) {
-          throw new Error(`Inadequate inventory for ${product.name}. Only ${product.inventory} left.`);
-        }
-        await ctx.db.patch(product._id, {
-          inventory: product.inventory - item.quantity,
-          unitsSold: (product.unitsSold || 0) + item.quantity,
-        });
-      } else {
-        await ctx.db.patch(product._id, {
-          unitsSold: (product.unitsSold || 0) + item.quantity,
-        });
+      if (product.inventory !== undefined && product.inventory < item.quantity) {
+        throw new Error(`Inadequate inventory for ${product.name}. Only ${product.inventory} left.`);
       }
+      await syncStockDeductionByBarcode(ctx, product, item.quantity);
 
       computedSubtotal += product.price * item.quantity;
       itemsToOrder.push({

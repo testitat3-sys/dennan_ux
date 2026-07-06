@@ -56,6 +56,10 @@ const SmartAddressSearch = ({ onSelectAddress, landmarks = [], history = [] }) =
           input: query,
           sessionToken: sessionTokenRef.current,
           region: 'ug',
+          locationBias: {
+            center: { lat: 0.358253, lng: 32.618251 }, // Ntinda Complex fulfillment hub
+            radius: 50000, // 50km bias radius
+          },
         };
 
         const { suggestions } = await window.google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
@@ -110,7 +114,7 @@ const SmartAddressSearch = ({ onSelectAddress, landmarks = [], history = [] }) =
         address: place.formattedAddress,
         lat,
         lng,
-        zone: 'Default' // Keep default for ETA logic
+        // zone is resolved authoritatively by the backend delivery quote, not the client
       });
 
       // Reset the session token after a successful selection
@@ -123,11 +127,25 @@ const SmartAddressSearch = ({ onSelectAddress, landmarks = [], history = [] }) =
   const handleGetCurrentLocation = () => {
     setIsLocating(true);
     if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        // In a real app, we'd reverse geocode here
-        const mockLocation = { name: "Current Location (Kololo)", zone: "Kololo" };
-        setQuery(mockLocation.name);
-        onSelectAddress(mockLocation);
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        let name = "Current Location";
+
+        try {
+          if (window.google && window.google.maps) {
+            const geocoder = new window.google.maps.Geocoder();
+            const { results } = await geocoder.geocode({ location: { lat, lng } });
+            if (results && results[0]) {
+              name = results[0].formatted_address.split(',')[0];
+            }
+          }
+        } catch (error) {
+          console.error("Error reverse geocoding current location:", error);
+        }
+
+        setQuery(name);
+        onSelectAddress({ name, sub: 'Current Location', lat, lng });
         setIsLocating(false);
         setIsFocused(false);
       }, (error) => {

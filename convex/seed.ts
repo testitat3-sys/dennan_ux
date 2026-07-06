@@ -605,5 +605,61 @@ export const seedNewProducts = mutation({
   },
 });
 
+export const createDeveloperProduct = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_slug", (q) => q.eq("slug", "developer-product"))
+      .unique();
+
+    const fields = {
+      name: "Developer Product",
+      brand: "Developer",
+      slug: "developer-product",
+      barcode: "developer-product",
+      price: 500,
+      originalPrice: 500,
+      image: "https://picsum.photos/400/400?random=100",
+      stage: "newborn" as const,
+      tier: "essentials" as const,
+      category: "Baby Play and Safety Gear",
+      isActive: true,
+      actual_data: true,
+      inventory: 9999,
+      description: "Special developer product that bypasses delivery fee for local testing.",
+      tags: [{ type: "primary", text: "Developer" }],
+      specifications: [
+        { label: "Developer", value: "true" }
+      ],
+      unitsSold: 0,
+    };
+
+    if (existing) {
+      await ctx.db.patch(existing._id, fields);
+      return { success: true, productId: existing._id, status: "updated" };
+    } else {
+      const productId = await ctx.db.insert("products", fields);
+      return { success: true, productId, status: "created" };
+    }
+  },
+});
+
+export const updateHeroHeadline = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const hero = await ctx.db.query("hero").first();
+    if (hero) {
+      await ctx.db.patch(hero._id, {
+        headline: "Shop for baby, kid and mum care.",
+      });
+      return { success: true, status: "updated" };
+    }
+    return { success: false, status: "no_hero_found" };
+  },
+});
+
+
+
 
 

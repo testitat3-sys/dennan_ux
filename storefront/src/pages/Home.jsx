@@ -7,6 +7,7 @@ import GiftingBanner from '../components/home/GiftingBanner';
 import ProductSection from '../components/home/ProductSection';
 import JourneySection from '../components/home/JourneySection';
 import TierSection from '../components/home/TierSection';
+import TommeeTippeeBanner from '../components/home/TommeeTippeeBanner';
 import ReelsSection from '../components/home/ReelsSection';
 import TrustStrip from '../components/home/TrustStrip';
 import QuickViewModal from '../components/products/QuickViewModal';
@@ -27,11 +28,10 @@ const Home = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Live Convex queries for products, stages, tiers, reels
+  // Live Convex queries for products, stages, tiers
   const liveProducts = useQuery(api.data.getProducts);
   const liveStages = useQuery(api.data.getStages);
   const liveTiers = useQuery(api.data.getTiers);
-  const liveReels = useQuery(api.data.getReels);
 
   // REST data fallback for static design items (hero, brands banner, trust items)
   const [restData, setRestData] = useState(null);
@@ -61,7 +61,7 @@ const Home = () => {
     setShowToast(true);
   };
 
-  const loading = restLoading || !restData || liveProducts === undefined || liveStages === undefined || liveTiers === undefined || liveReels === undefined;
+  const loading = restLoading || !restData || liveProducts === undefined || liveStages === undefined || liveTiers === undefined;
 
   useEffect(() => {
     if (loading) return;
@@ -106,6 +106,19 @@ const Home = () => {
       : stage
   );
 
+  const modifiedTiers = liveTiers?.map(tier => {
+    if (tier.type === 'essentials') {
+      return { ...tier, image: '/new_assets/essentials.png' };
+    }
+    if (tier.type === 'musthaves') {
+      return { ...tier, image: '/new_assets/Must haves.png' };
+    }
+    if (tier.type === 'luxuries') {
+      return { ...tier, image: '/new_assets/luxuries.png' };
+    }
+    return tier;
+  });
+
   return (
     <>
       <Hero content={restData.hero} />
@@ -125,7 +138,8 @@ const Home = () => {
       />
 
       <JourneySection stages={modifiedStages} />
-      <TierSection tiers={liveTiers} />
+      <TommeeTippeeBanner />
+      <TierSection tiers={modifiedTiers} />
 
       <ProductSection
         title="Curated picks for your journey"
@@ -136,7 +150,7 @@ const Home = () => {
         onAddToCart={handleAddToCart}
       />
 
-      <ReelsSection reels={liveReels} />
+      <ReelsSection />
       <TrustStrip items={restData.trustItems} />
 
       {selectedProduct && (

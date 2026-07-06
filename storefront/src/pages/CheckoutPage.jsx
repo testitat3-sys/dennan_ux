@@ -9,7 +9,6 @@ import ReviewModal from '../components/checkout/ReviewModal';
 import PesapalPaymentModal from '../components/checkout/PesapalPaymentModal';
 import Toast from '../components/ui/Toast';
 import { useCart } from '../context/CartContext';
-import { getKampalaETA } from '../utils/deliveryUtils';
 import { getCheckoutData } from '../services/api';
 import { formatPrice } from '../utils/priceUtils';
 import Button from '../components/ui/Button';
@@ -194,12 +193,13 @@ const CheckoutPage = () => {
     if (!selectedAddress) {
       const defaultAddr = checkoutData?.delivery?.suggestions?.[0] || {
         name: "Developer Home Office",
-        zone: "Kololo"
+        zone: "Kololo",
+        deliveryFee: 5000,
       };
       setSelectedAddress(defaultAddr);
-      const calculatedETA = getKampalaETA(defaultAddr.zone);
-      setLockedETA(calculatedETA);
-      setRemainingTime(calculatedETA.travelTime);
+      const mockEta = formatEta(25);
+      setLockedETA(mockEta);
+      setRemainingTime(mockEta.travelTime);
     }
 
     // 2. Set mock order details
@@ -263,12 +263,13 @@ const CheckoutPage = () => {
     if (!selectedAddress) {
       const defaultAddr = checkoutData?.delivery?.suggestions?.[0] || {
         name: "Developer Home Office",
-        zone: "Kololo"
+        zone: "Kololo",
+        deliveryFee: 5000,
       };
       setSelectedAddress(defaultAddr);
-      const calculatedETA = getKampalaETA(defaultAddr.zone);
-      setLockedETA(calculatedETA);
-      setRemainingTime(calculatedETA.travelTime);
+      const mockEta = formatEta(25);
+      setLockedETA(mockEta);
+      setRemainingTime(mockEta.travelTime);
     }
 
     // 2. Build guest-like order details using the actual cart items
@@ -322,21 +323,55 @@ const CheckoutPage = () => {
     }
   }, [loading]);
 
-  const handleConfirmLocation = (address) => {
-    setSelectedAddress(address);
-    const calculatedETA = getKampalaETA(address.zone);
-    setLockedETA(calculatedETA);
+  // Fetches the authoritative fee/distance/ETA quote from the backend. Never trust a
+  // client-computed fee — this is the same calculation `placeOrder` re-verifies server-side.
+  const fetchDeliveryQuote = async (address) => {
+    if (address.lat != null && address.lng != null) {
+      return await convex.query(api.delivery.getDeliveryQuote, {
+        lat: address.lat,
+        lng: address.lng,
+        addressText: address.name,
+        itemCount: cartItems.length,
+      });
+    }
+    // Legacy saved address with no coordinates on file
+    return await convex.query(api.delivery.getDeliveryQuoteByName, {
+      zoneOrLandmarkName: address.zone || address.name,
+      itemCount: cartItems.length,
+    });
+  };
+
+  const formatEta = (etaMinutes) => ({
+    travelTime: etaMinutes,
+    timeString: new Date(Date.now() + etaMinutes * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  });
+
+  const handleConfirmLocation = async (address, quoteArg) => {
+    const quote = quoteArg || await fetchDeliveryQuote(address);
+    if (!quote || quote.outOfBounds) {
+      queueToast("Sorry, this location is out of our delivery range.", 'danger');
+      return;
+    }
+    setSelectedAddress({
+      ...address,
+      zone: quote.zone,
+      distanceKm: quote.distanceKm,
+      deliveryFee: quote.deliveryFee,
+      etaMinutes: quote.etaMinutes,
+    });
+    setLockedETA(formatEta(quote.etaMinutes));
     setShowLocationModal(false);
   };
 
-  // Recalculated Shipping Fee
+  // Recalculated Shipping Fee: the authoritative value already lives on selectedAddress
+  // (from the backend quote), except test/developer products always ship free.
   const deliveryFee = useMemo(() => {
     if (!selectedAddress) return 0;
-    const hasTestProduct = cartItems.some(item => item.slug === 'pesapal-test-product');
+    const hasTestProduct = cartItems.some(item => item.slug === 'pesapal-test-product' || item.slug === 'developer-product');
     if (hasTestProduct) return 0;
-    // FREE delivery for Kampala Central / Kololo, otherwise UGX 5,000 flat-rate
-    return (selectedAddress.zone === 'Kololo' || selectedAddress.zone === 'Kampala Central') ? 0 : 5000;
+    return selectedAddress.deliveryFee ?? 0;
   }, [selectedAddress, cartItems]);
+
 
   // Recalculated Coupon savings
   const discountAmount = useMemo(() => {
@@ -397,6 +432,9 @@ const CheckoutPage = () => {
         deliveryAddress: {
           name: selectedAddress.name,
           zone: selectedAddress.zone,
+          lat: selectedAddress.lat,
+          lng: selectedAddress.lng,
+          distance: selectedAddress.distanceKm,
         },
         couponCode: appliedCoupon ? appliedCoupon.coupon.code : undefined,
       };
@@ -966,6 +1004,7 @@ const CheckoutPage = () => {
         isOpen={showLocationModal}
         onClose={() => setShowLocationModal(false)}
         onConfirm={handleConfirmLocation}
+        onEstimate={fetchDeliveryQuote}
         deliveryData={checkoutData?.delivery}
       />
 

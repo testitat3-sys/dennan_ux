@@ -20,11 +20,17 @@ const MegaMenu = ({ isOpen, data, categoryType }) => {
           <ul className="mega-menu__list">
             {col.links.map((link, lIdx) => (
               <li key={lIdx}>
-                <Link to={link.href === '#' && ['mother', 'newborn', 'kid'].includes(categoryType) 
-                  ? `/category/${categoryType}?q=${encodeURIComponent(link.text)}` 
-                  : link.href}>
-                  {link.text}
-                </Link>
+                {link.href.startsWith('http') ? (
+                  <a href={link.href} target="_blank" rel="noopener noreferrer">
+                    {link.text}
+                  </a>
+                ) : (
+                  <Link to={link.href === '#' && ['mother', 'newborn', 'kid'].includes(categoryType)
+                    ? `/category/${categoryType}?q=${encodeURIComponent(link.text)}`
+                    : link.href}>
+                    {link.text}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
