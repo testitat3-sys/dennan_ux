@@ -145,8 +145,10 @@ const HomeSkeleton = () => {
             <div className="skeleton-text skeleton-text--subtitle skeleton-shimmer" style={{ width: '200px', height: '14px', marginTop: 'var(--space-1)' }} />
           </div>
         </div>
-        <div className="reels-single-container">
-          <div className="reel-single-wrapper skeleton-shimmer" style={{ background: 'var(--skeleton-base)' }} />
+        <div className="reels-container">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="reel-wrapper skeleton-shimmer" style={{ background: 'var(--skeleton-base)' }} />
+          ))}
         </div>
       </section>
 

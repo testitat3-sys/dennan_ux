@@ -93,7 +93,7 @@ const ProductCard = ({
                 {brand}
               </span>
             )}
-            {unitsSold !== undefined && unitsSold > 0 && (
+            {unitsSold !== undefined && unitsSold >= 10 && (
               <span className="tag tag--sales">
                 {formatUnitsSold(unitsSold)}
               </span>

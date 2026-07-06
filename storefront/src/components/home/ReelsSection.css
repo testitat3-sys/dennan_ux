@@ -6,23 +6,25 @@
 .reels-section__header-row {
   padding: 0 var(--layout-inset);
   display: flex;
-  justify-content: center; /* Center header content */
-  text-align: center;
+  justify-content: flex-start;
+  text-align: left;
   margin-bottom: var(--space-6);
 }
 
-.reels-single-container {
+/* 4 Reels Container - Grid layout for Desktop */
+.reels-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
   width: 100%;
+  max-width: var(--page-max-width, 1200px);
+  margin: 0 auto;
   padding: 0 var(--layout-inset);
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
-.reel-single-wrapper {
+.reel-wrapper {
   position: relative;
   width: 100%;
-  max-width: 340px;
   aspect-ratio: 9 / 16;
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -32,8 +34,8 @@
   transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s ease;
 }
 
-.reel-single-wrapper:hover {
-  transform: scale(1.01) translateY(-3px); /* Reduced scale and translateY */
+.reel-wrapper:hover {
+  transform: scale(1.01) translateY(-3px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
 }
 
@@ -85,12 +87,14 @@
   align-items: center;
   gap: var(--space-4);
   z-index: 5;
+  width: 100%;
+  padding: 0 var(--space-4);
 }
 
 /* Centered Play button */
 .reel-play-button {
   background: rgba(255, 255, 255, 0.95);
-  color: var(--color-brand-primary, #000);
+  color: var(--color-brand-primary, #d35097);
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
@@ -128,7 +132,7 @@
 
 .reel-center-shop-btn:hover {
   transform: translateY(-2px);
-  background: var(--color-brand-primary, #000);
+  background: var(--color-brand-primary, #d35097);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
@@ -138,4 +142,42 @@
   border: none;
   display: block;
 }
+
+/* ─── MOBILE ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Allow the section to not clip the scroll container's padding */
+  .reels-section {
+    overflow: visible;
+  }
+
+  .reels-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    /* scroll-padding ensures snapped cards respect the left inset */
+    scroll-padding-inline-start: var(--layout-inset);
+    gap: var(--space-4);
+    /* Left and right padding so cards never touch the screen edge */
+    padding: var(--space-2) var(--layout-inset) var(--space-6) var(--layout-inset);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    justify-content: flex-start;
+    /* Extend the scroll track to fill screen width without affecting layout */
+    box-sizing: border-box;
+  }
+
+  .reels-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .reel-wrapper {
+    flex: 0 0 260px;
+    scroll-snap-align: start;
+    transform: none;
+  }
+
+  .reel-wrapper:hover {
+    transform: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
 }
