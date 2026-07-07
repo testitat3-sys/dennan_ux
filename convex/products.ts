@@ -462,3 +462,117 @@ export const getDiscountList = query({
       );
   },
 });
+
+// ─── Admin Product Editing ─────────────────────────────────────────────────
+
+declare const process: {
+  env: Record<string, string | undefined>;
+};
+
+/**
+ * Generates a Cloudinary signed-upload payload so the browser can upload
+ * an image directly to Cloudinary without the API secret ever leaving the server.
+ */
+export const generateCloudinarySignature = mutation({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    if (!apiSecret || !apiKey || !cloudName) {
+      throw new Error("Cloudinary is not configured on the server.");
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const paramsToSign = `timestamp=${timestamp}`;
+    const msgBuffer = new TextEncoder().encode(paramsToSign + apiSecret);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const signature = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+    return { signature, timestamp, apiKey, cloudName };
+  },
+});
+
+/**
+ * Returns the full product document for the admin "Edit Product" page.
+ */
+export const getProductDetail = query({
+  args: {
+    token: v.string(),
+    productId: v.id("products"),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const product = await ctx.db.get(args.productId);
+    if (!product) {
+      throw new Error("Product not found");
+    }
+    return product;
+  },
+});
+
+/**
+ * Patches editable product details from the admin "Edit Product" page.
+ * `barcode` is intentionally not accepted here - it is locked and can never
+ * be changed through this mutation.
+ */
+export const updateProduct = mutation({
+  args: {
+    token: v.string(),
+    productId: v.id("products"),
+    name: v.optional(v.string()),
+    brand: v.optional(v.string()),
+    description: v.optional(v.string()),
+    price: v.optional(v.number()),
+    originalPrice: v.optional(v.number()),
+    costPrice: v.optional(v.number()),
+    reorderPoint: v.optional(v.number()),
+    image: v.optional(v.string()),
+    images: v.optional(v.array(v.string())),
+    category: v.optional(
+      v.union(
+        v.literal("Expectant and New Mom Essentials"),
+        v.literal("Newborn Essentials & Kids Apparel/Footwear"),
+        v.literal("Nursery and Furnishing"),
+        v.literal("Feeding/Nursing Essentials"),
+        v.literal("Bathing and Changing"),
+        v.literal("Baby Play and Safety Gear"),
+        v.literal("Travel Must-Haves")
+      )
+    ),
+    subCategory: v.optional(v.string()),
+    stage: v.optional(v.union(v.literal("mother"), v.literal("newborn"), v.literal("kid"))),
+    tier: v.optional(v.union(v.literal("essentials"), v.literal("musthaves"), v.literal("luxuries"))),
+    size: v.optional(v.string()),
+    color: v.optional(v.string()),
+    material: v.optional(v.string()),
+    pattern: v.optional(v.string()),
+    targetGender: v.optional(v.union(v.literal("boy"), v.literal("girl"), v.literal("unisex"))),
+    isActive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const { token, productId, ...fields } = args;
+    const product = await ctx.db.get(productId);
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    const patch: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      if (value !== undefined) {
+        patch[key] = value;
+      }
+    }
+
+    await ctx.db.patch(productId, patch);
+    return { success: true };
+  },
+});

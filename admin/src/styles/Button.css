@@ -491,6 +491,11 @@
 
 /* ─── SIZES ──────────────────────────────────────────────────────── */
 
+.btn--xs {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: 11px;
+}
+
 .btn--sm {
   padding: var(--space-2) var(--space-4);
   font-size: var(--label-sm);

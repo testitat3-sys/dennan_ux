@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
@@ -24,12 +25,16 @@ import {
   ChevronRight,
   DollarSign,
   BarChart3,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Pencil
 } from "lucide-react";
 
 export default function AdminDashboard() {
   const { user, token, logout } = useStaffAuth();
-  const [activeTab, setActiveTab] = useState("overview");
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(
+    () => new URLSearchParams(window.location.search).get("tab") || "overview"
+  );
 
   // CRM customer modal state
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -360,6 +365,7 @@ export default function AdminDashboard() {
                           <th>Inventory</th>
                           <th>Status</th>
                           <th style={{ width: "200px" }}>Stock Adjustment</th>
+                          <th style={{ width: "80px" }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -417,6 +423,15 @@ export default function AdminDashboard() {
                                     Apply
                                   </button>
                                 </div>
+                              </td>
+                              <td>
+                                <button
+                                  className="btn btn--secondary btn--sm"
+                                  onClick={() => navigate(`/admin/products/${product.id}`)}
+                                  title="Edit product details"
+                                >
+                                  <Pencil size={12} />
+                                </button>
                               </td>
                             </tr>
                           );

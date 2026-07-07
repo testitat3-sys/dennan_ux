@@ -40,13 +40,13 @@ export default function RemindersWidget({ token, onViewCalendar }) {
   const overflowCount = dueActivities.length - visible.length;
 
   return (
-    <div style={{ marginBottom: "var(--space-5)" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-3)" }}>
+    <div style={{ marginBottom: "var(--space-6)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-3-5)" }}>
         <h2 className="section-title" style={{ margin: 0 }}>Today's Reminders</h2>
         <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-tertiary)" }}>{dueActivities.length} due</span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "var(--space-3)" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "var(--space-4)" }}>
         {visible.map((act) => {
           const urgency = getUrgency(act.scheduledDate, todayStr);
           const style = urgencyStyles[urgency];
@@ -57,35 +57,35 @@ export default function RemindersWidget({ token, onViewCalendar }) {
                 borderLeft: `3px solid ${style.border}`,
                 background: style.bg,
                 borderRadius: "var(--radius-md)",
-                padding: "var(--space-3)",
+                padding: "var(--space-4)",
                 display: "flex",
                 flexDirection: "column",
-                gap: "6px"
+                gap: "var(--space-2)"
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11px", fontWeight: 700, color: style.color, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-1-5)", fontSize: "11px", fontWeight: 700, color: style.color, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                   {typeIcon[act.type] || <FileText size={13} />}
                   {style.label}
                 </span>
                 {priorityLabel[act.priority] && (
-                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#ef4444" }}>{priorityLabel[act.priority]}</span>
+                  <span style={{ fontSize: "10.5px", fontWeight: 700, color: "var(--color-support-red)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{priorityLabel[act.priority]}</span>
                 )}
               </div>
 
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)" }}>{act.customerName}</div>
-              <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{act.note}</div>
-              <div style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>
+              <div style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)" }}>{act.customerName}</div>
+              <div style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: "1.4" }}>{act.note}</div>
+              <div style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
                 {formatScheduledDate(act.scheduledDate)}{act.scheduledTime ? ` · ${act.scheduledTime}` : ""}
               </div>
 
-              <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+              <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-2-5)" }}>
                 {act.customerPhone && (
                   <a href={`tel:${act.customerPhone}`} className="btn btn--secondary btn--xs" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
                     <Phone size={12} /> Call Now
                   </a>
                 )}
-                <button type="button" className="btn btn--outline btn--xs" onClick={() => handleComplete(act._id)} style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <button type="button" className="btn btn--primary btn--xs" onClick={() => handleComplete(act._id)} style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   <CheckCircle size={12} /> Mark Done
                 </button>
               </div>
@@ -99,7 +99,7 @@ export default function RemindersWidget({ token, onViewCalendar }) {
           type="button"
           className="text-link-btn"
           onClick={onViewCalendar}
-          style={{ marginTop: "var(--space-2)", fontSize: "12px", fontWeight: 700, color: "var(--color-brand-primary)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          style={{ marginTop: "var(--space-3)", fontSize: "12px", fontWeight: 700, color: "var(--color-brand-primary)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
         >
           +{overflowCount} more — View calendar
         </button>
