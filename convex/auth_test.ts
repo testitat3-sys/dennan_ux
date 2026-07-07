@@ -14,7 +14,7 @@ export const storeLink = internalMutation({
   handler: async (ctx, args) => {
     // We only keep the latest link for each email to avoid clutter
     const existing = await ctx.db
-      .query("auth_links")
+      .query("testLinks")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .collect();
     
@@ -22,10 +22,10 @@ export const storeLink = internalMutation({
       await ctx.db.delete(doc._id);
     }
 
-    await ctx.db.insert("auth_links", {
+    await ctx.db.insert("testLinks", {
       email: args.email,
       url: args.url,
-      expires: args.expires,
+      expiresAt: args.expires,
     });
   },
 });
@@ -37,7 +37,7 @@ export const getLink = query({
   args: { email: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
-      .query("auth_links")
+      .query("testLinks")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .order("desc")
       .first();

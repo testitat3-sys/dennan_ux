@@ -3145,7 +3145,7 @@ export const runSeed = mutation({
     console.log(`[seedProducts.ts] Marked ${markedCount} existing products as actual_data = false.`);
 
     // 2. Import/upsert new products
-    for (const item of NEW_PRODUCTS) {
+    for (const item of NEW_PRODUCTS as any[]) {
       // Find if product with same barcode or slug already exists in DB
       let existing = null;
       if (item.barcode) {

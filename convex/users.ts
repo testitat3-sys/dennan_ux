@@ -210,6 +210,7 @@ export const saveOnboardingJourney = mutation({
       )
     ),
     username: v.optional(v.string()),
+    name: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await auth.getUserId(ctx);
@@ -226,9 +227,25 @@ export const saveOnboardingJourney = mutation({
     if (args.username !== undefined) {
       patch.username = args.username;
     }
+    if (args.name !== undefined) {
+      patch.name = args.name;
+    }
 
     await ctx.db.patch(userId, patch);
     console.log(`[convex/users.ts] saveOnboardingJourney - journey saved for user ID: ${userId}`);
+
+    // Update user's registries with the new owner name if provided
+    if (args.name) {
+      const registries = await ctx.db
+        .query("registries")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect();
+      for (const registry of registries) {
+        await ctx.db.patch(registry._id, { ownerName: args.name });
+        console.log(`[convex/users.ts] saveOnboardingJourney - registry ${registry._id} ownerName updated to ${args.name}`);
+      }
+    }
+
     return userId;
   },
 });

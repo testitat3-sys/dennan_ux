@@ -187,8 +187,8 @@ export const ensureRegistry = mutation({
 
       const defaultRegistryId = await ctx.db.insert("registries", {
         userId,
-        ownerName: user.name || "Sarah & Mike",
-        eventName: "Our Baby Registry",
+        ownerName: user.name || user.username || "My",
+        eventName: "My Baby Gifting",
         eventDate: defaultEventDate,
         message: "Thank you for supporting our nursery journey!",
         privacy: "public",
@@ -326,8 +326,8 @@ export const setEventType = mutation({
 
       const newId = await ctx.db.insert("registries", {
         userId,
-        ownerName: user?.name ?? "My Registry",
-        eventName: args.eventType + " Registry",
+        ownerName: user?.name || user?.username || "My",
+        eventName: args.eventType + " Gifting",
         eventDate: defaultDate,
         message: "",
         privacy: "public",
@@ -338,7 +338,7 @@ export const setEventType = mutation({
 
     await ctx.db.patch(registry._id, {
       eventType: args.eventType,
-      eventName: args.eventType + " Registry",
+      eventName: args.eventType + " Gifting",
     });
     return registry._id;
   },
@@ -408,8 +408,8 @@ export const addItem = mutation({
 
       const defaultRegistryId = await ctx.db.insert("registries", {
         userId,
-        ownerName: user?.name || "Sarah & Mike",
-        eventName: "Our Baby Registry",
+        ownerName: user?.name || user?.username || "My",
+        eventName: "My Baby Gifting",
         eventDate: defaultEventDate,
         message: "Thank you for supporting our nursery journey!",
         privacy: "public",

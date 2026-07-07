@@ -7,7 +7,7 @@ export const { auth, signIn, signOut, store } = convexAuth({
     Resend({
       apiKey: process.env.RESEND_API_KEY,
       from: "onboarding@resend.dev", // Replace with your verified sender
-      async sendVerificationRequest(params, ctx: any) {
+      async sendVerificationRequest(params: any, ctx?: any) {
         const { identifier: email, url } = params;
         console.log(`[convex/auth.ts] Resolving verification email for ${email}`);
 

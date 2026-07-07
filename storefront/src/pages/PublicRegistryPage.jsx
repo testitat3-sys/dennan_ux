@@ -118,10 +118,10 @@ const PublicRegistryPage = () => {
       <div className="public-registry-page">
         <div className="public-registry-error">
           <Text variant="headline-md" color="primary" style={{ fontFamily: 'var(--font-editorial)' }}>
-            Registry not available
+            Gifting not available
           </Text>
           <Text variant="body-lg" color="secondary">
-            This registry may be private or does not exist. Ask the owner for the correct link.
+            This gifting page may be private or does not exist. Ask the owner for the correct link.
           </Text>
         </div>
       </div>
@@ -130,8 +130,10 @@ const PublicRegistryPage = () => {
 
   const { profile, items } = registry;
   const displayTitle = profile.eventType
-    ? `${profile.eventType} Registry`
-    : profile.eventName || 'Registry';
+    ? `${profile.eventType} gifting`
+    : profile.eventName
+      ? profile.eventName.replace(/registry/i, 'gifting')
+      : 'gifting';
 
   const displayedItems = showAllItems ? items : items.slice(0, 4);
 
@@ -217,7 +219,7 @@ const PublicRegistryPage = () => {
         <Card hasBorder={false} hasShadow={true}>
           <Card.Header>
             <span className="public-registry-owner-label">
-              {profile.ownerName}'s Registry
+              {profile.ownerName}'s Gifting
             </span>
             <h1 className="public-registry-title">{displayTitle}</h1>
             {profile.message && (
@@ -268,7 +270,7 @@ const PublicRegistryPage = () => {
               icon={<Gift size={18} />}
               iconPosition="left"
             >
-              Contribute to Registry
+              Contribute to Gifting
             </Button>
           </div>
 

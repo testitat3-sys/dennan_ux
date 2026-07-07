@@ -27,6 +27,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   const [dueDate, setDueDate] = useState('');
   const [children, setChildren] = useState([{ id: Date.now(), dob: '', gender: 'unspecified' }]);
   const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
 
   // ── Email / auth state ──────────────────────────────────────────────────────
   const [email, setEmail] = useState('');
@@ -36,6 +37,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   const [capturedLink, setCapturedLink] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [emailError, setEmailError] = useState('');
+  const [isDirectLogin, setIsDirectLogin] = useState(false);
 
   // ── Modal mount animation state ─────────────────────────────────────────────
   const [isMounted, setIsMounted] = useState(false);
@@ -84,8 +86,12 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         } else {
           setChildren([{ id: Date.now(), dob: '', gender: 'unspecified' }]);
         }
+        setFirstName(user.name || '');
+        setUsername(user.username || '');
         setStep(1);
       } else {
+        setFirstName('');
+        setUsername('');
         setStep(1);
       }
     }
@@ -142,6 +148,12 @@ const OnboardingModal = ({ isOpen, onClose }) => {
     setStep(2);
   };
 
+  const handleDirectLoginClick = () => {
+    setIsDirectLogin(true);
+    localStorage.setItem('dennan_is_direct_login', 'true');
+    setStep(4);
+  };
+
   // ── Step 3: Journey details submit (Authenticated only) ─────────────────────
   const handleJourneySubmit = async () => {
     setEmailError('');
@@ -153,6 +165,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         dueDate: role === 'expecting' ? dueDate : undefined,
         children: role === 'parent' ? children.map(c => ({ dob: c.dob, gender: c.gender || 'unspecified' })) : undefined,
         username: username.trim() || undefined,
+        name: firstName.trim() || undefined,
       };
       console.log(`[OnboardingModal] Calling saveOnboardingJourney:`, payload);
       await saveJourney(payload);
@@ -163,6 +176,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         dueDate: payload.dueDate,
         children: payload.children,
         username: payload.username,
+        name: payload.name,
       });
 
       onClose();
@@ -208,6 +222,18 @@ const OnboardingModal = ({ isOpen, onClose }) => {
     setPending(true);
 
     try {
+      // Save profile details to localStorage before signing in
+      const profile = {
+        role,
+        dueDate: role === 'expecting' ? dueDate : undefined,
+        children: role === 'parent' ? children.map(c => ({ dob: c.dob, gender: c.gender || 'unspecified' })) : undefined,
+        username: username.trim(),
+        name: firstName.trim(),
+        _savedAt: Date.now()
+      };
+      localStorage.setItem('dennan_onboarding_profile', JSON.stringify(profile));
+      console.log(`[OnboardingModal] Saved onboarding journey details to localStorage:`, profile);
+
       console.log(`[OnboardingModal] Initiating signIn for ${email} (testMode: ${testMode})`);
       await signIn(testMode ? "test" : "resend", {
         email,
@@ -266,6 +292,10 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                   setSent(false);
                   setCapturedLink('');
                   setResendCooldown(0);
+                } else if (isDirectLogin && step === 4) {
+                  setIsDirectLogin(false);
+                  localStorage.removeItem('dennan_is_direct_login');
+                  setStep(1);
                 } else {
                   setStep(prev => prev - 1);
                 }
@@ -318,6 +348,15 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                   </div>
                   <span className="onboarding-card-label">I'm already a parent</span>
                   <span className="onboarding-card-sub">My child is here</span>
+                </Button>
+              </div>
+              <div style={{ marginTop: 'var(--space-6)', textAlign: 'center' }}>
+                <Button
+                  variant="link"
+                  onClick={handleDirectLoginClick}
+                  style={{ fontSize: '0.875rem' }}
+                >
+                  Already have an account? Login
                 </Button>
               </div>
             </div>
@@ -431,15 +470,27 @@ const OnboardingModal = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {/* Step 3: Choose Username */}
+          {/* Step 3: Choose Username & First Name */}
           {step === 3 && (
             <div className="onboarding-step">
-              <h2 className="onboarding-step-title">Choose your username</h2>
+              <h2 className="onboarding-step-title">Tell us about yourself</h2>
               <p className="onboarding-step-desc">
-                This will be your unique identity on Dennan, visible on your registry and shared collections.
+                Choose your first name and a username to personalise your Dennan experience.
               </p>
 
-              <div className="onboarding-date-section">
+              <div className="onboarding-date-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="date-input-group">
+                  <label className="date-label">First Name</label>
+                  <input
+                    type="text"
+                    className="onboarding-input"
+                    placeholder="e.g. Sarah"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+
                 <div className="date-input-group">
                   <label className="date-label">Username</label>
                   <input
@@ -465,7 +516,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                     variant="primary"
                     fullWidth
                     onClick={handleJourneySubmit}
-                    disabled={!username.trim() || pending}
+                    disabled={!username.trim() || !firstName.trim() || pending}
                     loading={pending}
                     icon={<ArrowRight size={18} />}
                     iconPosition="right"
@@ -477,7 +528,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                     variant="primary"
                     fullWidth
                     onClick={() => setStep(4)}
-                    disabled={!username.trim() || pending}
+                    disabled={!username.trim() || !firstName.trim() || pending}
                     icon={<ArrowRight size={18} />}
                     iconPosition="right"
                   >

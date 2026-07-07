@@ -26,7 +26,8 @@ import {
   DollarSign,
   BarChart3,
   Calendar as CalendarIcon,
-  Pencil
+  Pencil,
+  Plus
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -330,6 +331,13 @@ export default function AdminDashboard() {
                     <button className="stock-search-clear" onClick={() => setStockSearch("")}>×</button>
                   )}
                 </div>
+                <button
+                  className="btn btn--primary btn--sm"
+                  onClick={() => navigate("/admin/products/new")}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                >
+                  <Plus size={14} /> New Product
+                </button>
               </div>
 
               {stockList === undefined ? (

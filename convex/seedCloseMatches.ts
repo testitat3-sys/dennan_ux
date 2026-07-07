@@ -2552,7 +2552,7 @@ export const runSeed = mutation({
     let insertedCount = 0;
     let updatedCount = 0;
 
-    for (const item of CLOSE_MATCHES_PRODUCTS) {
+    for (const item of CLOSE_MATCHES_PRODUCTS as any[]) {
       let existing = null;
 
       if (item.barcode) {

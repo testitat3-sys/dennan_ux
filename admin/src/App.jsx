@@ -5,6 +5,7 @@ import StaffLogin from './pages/StaffLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 import AdminProductEdit from './pages/AdminProductEdit';
+import AdminProductCreate from './pages/AdminProductCreate';
 
 function MainRouter() {
   const { user, isLoading } = useStaffAuth();
@@ -69,6 +70,17 @@ function MainRouter() {
             <h2>Access Denied</h2>
             <p style={{ color: '#9ca3af', marginTop: '0.5rem' }}>You do not have administrative or staff privileges.</p>
           </div>
+        )
+      } />
+
+      {/* Protected Admin Product Create */}
+      <Route path="/admin/products/new" element={
+        !user ? (
+          <Navigate to="/login" replace />
+        ) : user.accountRole === "admin" ? (
+          <AdminProductCreate />
+        ) : (
+          <Navigate to="/" replace />
         )
       } />
 

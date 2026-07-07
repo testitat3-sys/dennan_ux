@@ -1,7 +1,6 @@
 import { action, internalAction, internalMutation, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
-import { getAuthUserId } from "@convex-dev/auth/server";
 
 export function getPesapalBaseUrl() {
   const env = process.env.PESAPAL_ENV || "sandbox";
@@ -84,21 +83,17 @@ export const initiatePayment = action({
     orderId: v.id("orders"),
     frontendUrl: v.string(),
   },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
-
-    // 1. Get order details via internal query/mutation or db (Wait, actions can't use db directly without runQuery)
-    // We should create an internal query to get order details
-    const order = await ctx.runQuery(internal.orders.getOrderForPayment, { orderId: args.orderId });
+  handler: async (ctx, args): Promise<{ redirectUrl: string }> => {
+    // No auth requirement: this action only ever reads billing details from the
+    // order's own userId (see below), never the caller's identity, so it works
+    // identically for authenticated orders and guest-created orders.
+    const order: any = await ctx.runQuery(internal.orders.getOrderForPayment, { orderId: args.orderId });
     if (!order) {
       throw new Error("Order not found");
     }
 
-    // 2. Get user details
-    const user = await ctx.runQuery(internal.users.getUserProfile, { userId });
+    // 2. Get user details (the order's own customer, not the caller)
+    const user: any = await ctx.runQuery(internal.users.getUserProfile, { userId: order.userId });
     
     // 3. Get token
     const token = await getPesapalToken();
@@ -116,7 +111,7 @@ export const initiatePayment = action({
     // Pesapal requires amounts in local currency, Uganda shillings typically don't have decimals, but pesapal expects a decimal amount.
     const amount = order.grandTotal;
 
-    const requestBody = {
+    const requestBody: any = {
       id: order._id,
       currency: "UGX",
       amount: amount,
@@ -140,7 +135,7 @@ export const initiatePayment = action({
       }
     };
 
-    const response = await fetch(`${getPesapalBaseUrl()}/Transactions/SubmitOrderRequest`, {
+    const response: any = await fetch(`${getPesapalBaseUrl()}/Transactions/SubmitOrderRequest`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -156,7 +151,7 @@ export const initiatePayment = action({
       throw new Error(`Failed to submit order to Pesapal: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data: any = await response.json();
     
     if (data.error) {
        throw new Error(`Pesapal Error: ${data.error.message}`);

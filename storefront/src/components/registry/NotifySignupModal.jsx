@@ -57,6 +57,7 @@ const NotifySignupModal = ({
 
   const [isMounted, setIsMounted] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const [hasPrefilled, setHasPrefilled] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -65,13 +66,16 @@ const NotifySignupModal = ({
       document.body.style.overflow = 'hidden';
 
       // Pre-fill from known user details when available
-      const { firstName: fn, lastName: ln } = splitName(convexUser?.name);
-      setEmail(convexUser?.email || '');
-      setFirstName(fn);
-      setLastName(ln);
-      setPhone(convexUser?.phone || convexUser?.momoPhone || '');
-      setStage(mapUserStage(convexUser?.stage));
-      setErrors({});
+      if (convexUser && !hasPrefilled) {
+        const { firstName: fn, lastName: ln } = splitName(convexUser.name);
+        setEmail(prev => prev || convexUser.email || '');
+        setFirstName(prev => prev || fn);
+        setLastName(prev => prev || ln);
+        setPhone(prev => prev || convexUser.phone || convexUser.momoPhone || '');
+        setStage(prev => prev || mapUserStage(convexUser.stage));
+        setErrors({});
+        setHasPrefilled(true);
+      }
 
       return () => clearTimeout(t);
     } else {
@@ -80,9 +84,10 @@ const NotifySignupModal = ({
         setIsMounted(false);
       }, 300);
       document.body.style.overflow = '';
+      setHasPrefilled(false); // reset on close
       return () => clearTimeout(t);
     }
-  }, [isOpen, convexUser]);
+  }, [isOpen, convexUser, hasPrefilled]);
 
   if (!isMounted) return null;
 

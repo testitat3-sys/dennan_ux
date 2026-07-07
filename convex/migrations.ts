@@ -67,7 +67,7 @@ export const backfillLegacyProducts = mutation({
       }
 
       // 4. Map category to strict union values if it doesn't match already
-      const currentCategory = product.category;
+      const currentCategory = product.category || "";
       if (!ALLOWED_CATEGORIES.has(currentCategory)) {
         const mapped = CATEGORY_MAP[currentCategory.toLowerCase()];
         if (mapped) {

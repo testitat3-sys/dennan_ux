@@ -576,3 +576,107 @@ export const updateProduct = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Creates a brand new product from the admin "Create Product" page.
+ * Unlike updateProduct, barcode is required here and checked for uniqueness -
+ * this is the primary manual-entry path, so duplicate barcodes are rejected
+ * outright rather than tolerated the way ERP ingestion tolerates them.
+ */
+export const createProduct = mutation({
+  args: {
+    token: v.string(),
+    name: v.string(),
+    brand: v.string(),
+    barcode: v.string(),
+    description: v.string(),
+    originalPrice: v.number(),
+    price: v.optional(v.number()),
+    category: v.union(
+      v.literal("Expectant and New Mom Essentials"),
+      v.literal("Newborn Essentials & Kids Apparel/Footwear"),
+      v.literal("Nursery and Furnishing"),
+      v.literal("Feeding/Nursing Essentials"),
+      v.literal("Bathing and Changing"),
+      v.literal("Baby Play and Safety Gear"),
+      v.literal("Travel Must-Haves")
+    ),
+    stage: v.union(v.literal("mother"), v.literal("newborn"), v.literal("kid")),
+    tier: v.union(v.literal("essentials"), v.literal("musthaves"), v.literal("luxuries")),
+    targetGender: v.union(v.literal("boy"), v.literal("girl"), v.literal("unisex")),
+    subCategory: v.optional(v.string()),
+    size: v.optional(v.string()),
+    color: v.optional(v.string()),
+    material: v.optional(v.string()),
+    pattern: v.optional(v.string()),
+    costPrice: v.optional(v.number()),
+    reorderPoint: v.optional(v.number()),
+    image: v.optional(v.string()),
+    images: v.optional(v.array(v.string())),
+    isActive: v.boolean(),
+    isStoreOnly: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_barcode", (q) => q.eq("barcode", args.barcode))
+      .unique();
+    if (existing) {
+      throw new Error(`A product with barcode "${args.barcode}" already exists.`);
+    }
+
+    if (!args.isStoreOnly && !args.image) {
+      throw new Error("Customer-facing products require a primary image.");
+    }
+
+    const baseSlug = slugify(args.name);
+    let slug = baseSlug;
+    let counter = 1;
+    while (
+      await ctx.db
+        .query("products")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .unique()
+    ) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    const specifications = args.isStoreOnly
+      ? [{ label: "for-store-only", value: "true" }]
+      : [];
+
+    const productId = await ctx.db.insert("products", {
+      name: args.name,
+      brand: args.brand,
+      barcode: args.barcode,
+      slug,
+      description: args.description,
+      originalPrice: args.originalPrice,
+      price: args.price ?? args.originalPrice,
+      category: args.category,
+      stage: args.stage,
+      tier: args.tier,
+      targetGender: args.targetGender,
+      subCategory: args.subCategory,
+      size: args.size,
+      color: args.color,
+      material: args.material,
+      pattern: args.pattern,
+      costPrice: args.costPrice,
+      reorderPoint: args.reorderPoint,
+      image: args.image,
+      images: args.images ?? [],
+      isActive: args.isActive,
+      actual_data: true,
+      tags: [],
+      specifications,
+      inventory: 0,
+      unitsSold: 0,
+    });
+
+    return { success: true, productId };
+  },
+});

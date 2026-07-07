@@ -35,7 +35,7 @@ export const getProducts = query({
       results = results.filter(p => p.category === args.category);
     }
     if (args.tier) {
-      results = results.filter(p => p.tier.toLowerCase() === args.tier?.toLowerCase());
+      results = results.filter(p => p.tier && p.tier.toLowerCase() === args.tier?.toLowerCase());
     }
     if (args.stage) {
       results = results.filter(p => p.stage === args.stage);

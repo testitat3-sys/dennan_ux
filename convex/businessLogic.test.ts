@@ -215,7 +215,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     paginationOpts: { numItems: 10, cursor: null },
   });
   expect(staffOrders.page.length).toBeGreaterThanOrEqual(1);
-  const orderDoc = staffOrders.page.find((o: any) => o._id === orderId);
+  const orderDoc: any = staffOrders.page.find((o: any) => o._id === orderId);
   expect(orderDoc).toBeDefined();
   expect(orderDoc.status).toBe("preparing");
   expect(orderDoc.customerName).toBe("Nakamya Olivia");
@@ -227,7 +227,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     orderId,
   });
 
-  const claimedOrder = await t.run(async (ctx) => {
+  const claimedOrder: any = await t.run(async (ctx) => {
     return await ctx.db.get(orderId);
   });
   expect(claimedOrder.status).toBe("packing");
@@ -246,7 +246,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     expectedDeliveryTime: deliveryTime,
   });
 
-  const dispatchedOrder = await t.run(async (ctx) => {
+  const dispatchedOrder: any = await t.run(async (ctx) => {
     return await ctx.db.get(orderId);
   });
   expect(dispatchedOrder.status).toBe("dispatched");
@@ -260,7 +260,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     orderId,
   });
 
-  const completedOrder = await t.run(async (ctx) => {
+  const completedOrder: any = await t.run(async (ctx) => {
     return await ctx.db.get(orderId);
   });
   expect(completedOrder.status).toBe("delivered");
@@ -283,7 +283,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(returnRes.status).toBe("partially_returned");
 
   // Verify order status updated to partially_returned
-  const returnedOrderDoc = await t.run(async (ctx) => {
+  const returnedOrderDoc: any = await t.run(async (ctx) => {
     return await ctx.db.get(orderId);
   });
   expect(returnedOrderDoc.status).toBe("partially_returned");
@@ -308,7 +308,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(returnRes2.status).toBe("returned");
 
   // Verify order status updated to returned
-  const returnedOrderDoc2 = await t.run(async (ctx) => {
+  const returnedOrderDoc2: any = await t.run(async (ctx) => {
     return await ctx.db.get(orderId);
   });
   expect(returnedOrderDoc2.status).toBe("returned");
@@ -370,7 +370,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(stockListAfterPos.find((s: any) => s.id === productId1)?.inventory).toBe(12);
 
   // Verify physical order was created as delivered immediately
-  const posOrderDoc = await t.run(async (ctx) => {
+  const posOrderDoc: any = await t.run(async (ctx) => {
     return await ctx.db.get(posOrderRes.orderId);
   });
   expect(posOrderDoc.status).toBe("delivered");
@@ -396,7 +396,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(posOrderResMulti.success).toBe(true);
 
   // Verify correct orderPayments rows + paymentMethod: "mixed"
-  const multiOrderDoc = await t.run(async (ctx) => {
+  const multiOrderDoc: any = await t.run(async (ctx) => {
     return await ctx.db.get(posOrderResMulti.orderId);
   });
   expect(multiOrderDoc.paymentMethod).toBe("mixed");

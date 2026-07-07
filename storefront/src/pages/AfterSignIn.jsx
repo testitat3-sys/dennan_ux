@@ -125,6 +125,9 @@ export default function AfterSignIn() {
       const savedRedirectPath = localStorage.getItem('dennan_redirect_after_login');
       const targetDestination = savedRedirectPath || "/dashboard";
 
+      const isDirectLogin = localStorage.getItem('dennan_is_direct_login') === 'true';
+      localStorage.removeItem('dennan_is_direct_login');
+
       // ── Reconcile Cached pre-auth onboarding details ─────────────────────
       const localProfile = readLocalProfile();
       if (localProfile) {
@@ -135,6 +138,7 @@ export default function AfterSignIn() {
             dueDate: localProfile.dueDate,
             children: localProfile.children,
             username: localProfile.username,
+            name: localProfile.name,
           });
           console.log(`[AfterSignIn.jsx] Pre-auth journey details saved to database`);
           
@@ -143,6 +147,8 @@ export default function AfterSignIn() {
             role: localProfile.role,
             dueDate: localProfile.dueDate,
             children: localProfile.children,
+            username: localProfile.username,
+            name: localProfile.name,
           });
           clearLocalProfile();
           localStorage.removeItem('dennan_redirect_after_login');
@@ -154,19 +160,22 @@ export default function AfterSignIn() {
       }
 
       // ── Check if they already have journey data ──────────────────────────
-      const hasJourneyData = user.role && (user.dueDate || (user.children && user.children.length > 0));
+      const hasJourneyData = user.isOnboarded || (user.role && (user.dueDate || (user.children && user.children.length > 0)));
+      const redirectTarget = (isDirectLogin && hasJourneyData) ? "/profile" : targetDestination;
 
       if (hasJourneyData) {
-        console.log(`[AfterSignIn.jsx] Already has journey data — redirecting to ${targetDestination}`);
+        console.log(`[AfterSignIn.jsx] Already has journey data — redirecting to ${redirectTarget}`);
         login({
           email: user.email,
           role: user.role,
           dueDate: user.dueDate,
           children: user.children,
+          username: user.username,
+          name: user.name,
         });
         clearLocalProfile(); // clean up any stale local data
         localStorage.removeItem('dennan_redirect_after_login');
-        navigate(targetDestination, { replace: true });
+        navigate(redirectTarget, { replace: true });
         return;
       } else {
         // ── Missing journey data — take them through the rest of onboarding ────

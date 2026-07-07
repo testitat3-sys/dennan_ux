@@ -18,8 +18,8 @@ export const initiateContributionPayment = action({
     amount: v.number(),
     frontendUrl: v.string(),
   },
-  handler: async (ctx, args) => {
-    const paymentId = await ctx.runMutation(internal.registry.createPendingContributionPayment, {
+  handler: async (ctx, args): Promise<{ redirectUrl: string; paymentId: any }> => {
+    const paymentId: any = await ctx.runMutation(internal.registry.createPendingContributionPayment, {
       registryId: args.registryId,
       productId: args.productId,
       contributorName: args.contributorName,

@@ -64,16 +64,18 @@ export const seedData = mutation({
             name,
             brand,
             slug,
+            barcode: `BAR-${slug.toUpperCase()}`,
             price,
             wasPrice,
             originalPrice: wasPrice ?? price,
             image,
             images,
-            stage,
-            tier,
-            category,
+            stage: stage as any,
+            tier: tier as any,
+            category: category as any,
             isCurated,
             isMostLoved,
+            actual_data: false,
             description: faker.commerce.productDescription(),
             tags: [
               { type: "primary", text: faker.commerce.productAdjective() },
@@ -544,12 +546,13 @@ export const createTestProduct = mutation({
       name: "Pesapal Test Product",
       brand: "Test Brand",
       slug: "pesapal-test-product",
+      barcode: "pesapal-test-product",
       price: 1000,
       originalPrice: 1000,
       image: "https://picsum.photos/400/400?random=999",
       stage: "newborn",
       tier: "essentials",
-      category: "Test",
+      category: "Baby Play and Safety Gear",
       isCurated: true,
       description: "A 1000 UGX product for testing Pesapal payments.",
       tags: [{ type: "primary", text: "Test" }],
@@ -557,6 +560,7 @@ export const createTestProduct = mutation({
       isActive: true,
       inventory: 1000,
       unitsSold: 0,
+      actual_data: true,
     });
     return { success: true, productId };
   }
@@ -613,7 +617,7 @@ export const createDeveloperProduct = mutation({
       .withIndex("by_slug", (q) => q.eq("slug", "developer-product"))
       .unique();
 
-    const fields = {
+    const fields: any = {
       name: "Developer Product",
       brand: "Developer",
       slug: "developer-product",

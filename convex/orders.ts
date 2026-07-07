@@ -241,6 +241,217 @@ export const placeOrder = mutation({
   },
 });
 
+export const placeGuestOrder = mutation({
+
+  args: {
+    guestName: v.string(),
+    guestEmail: v.string(),
+    guestPhone: v.string(),
+    items: v.array(
+      v.object({
+        productId: v.id("products"),
+        quantity: v.number(),
+        size: v.optional(v.string()),
+      })
+    ),
+    paymentMethod: v.string(),
+    momoPhone: v.optional(v.string()),
+    deliveryAddress: v.object({
+      name: v.string(),
+      zone: v.string(),
+      lat: v.optional(v.number()),
+      lng: v.optional(v.number()),
+      distance: v.optional(v.number()),
+    }),
+    couponCode: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    if (args.items.length === 0) {
+      throw new Error("Cannot place an order with an empty cart");
+    }
+
+    // 1. Resolve or create the guest customer user document (same pattern as
+    // createPhysicalOrder's walk-in customer resolution below).
+    let guestUser = null;
+
+    if (args.guestPhone) {
+      const allUsers = await ctx.db.query("users").collect();
+      guestUser = allUsers.find((u) => u.phone === args.guestPhone) || null;
+    }
+
+    if (!guestUser && args.guestEmail) {
+      guestUser = await ctx.db
+        .query("users")
+        .withIndex("email", (q) => q.eq("email", args.guestEmail))
+        .first();
+    }
+
+    if (!guestUser) {
+      const newUserId = await ctx.db.insert("users", {
+        name: args.guestName,
+        phone: args.guestPhone,
+        email: args.guestEmail,
+        isWalkIn: true,
+        isOnboarded: true,
+      });
+      guestUser = await ctx.db.get(newUserId);
+    }
+
+    if (!guestUser) {
+      throw new Error("Failed to resolve or create guest customer");
+    }
+    const guestUserId = guestUser._id;
+
+    // 2. Validate stock/pricing directly from the DB using client-provided item
+    // references (guest carts are never persisted server-side, unlike the
+    // authenticated cartItems table used by placeOrder).
+    let computedSubtotal = 0;
+    const itemsToOrder = [];
+    let hasTestProduct = false;
+
+    for (const item of args.items) {
+      const rawProduct = await ctx.db.get(item.productId);
+      if (!rawProduct || !rawProduct.isActive || !shouldKeepProduct(rawProduct)) {
+        throw new Error(`Product ${item.productId} is no longer available.`);
+      }
+      const product = normalizeProductPrice(rawProduct);
+
+      if (product.slug === "pesapal-test-product" || product.slug === "developer-product") {
+        hasTestProduct = true;
+      }
+
+      if (product.inventory !== undefined && product.inventory < item.quantity) {
+        throw new Error(`Inadequate inventory for ${product.name}. Only ${product.inventory} left.`);
+      }
+      await syncStockDeductionByBarcode(ctx, product, item.quantity);
+
+      computedSubtotal += product.price * item.quantity;
+      itemsToOrder.push({
+        productId: item.productId,
+        productName: product.name,
+        size: item.size,
+        quantity: item.quantity,
+        unitPrice: product.price,
+        stage: product.stage,
+        image: product.image,
+      });
+    }
+
+    // 3. Server-side coupon validation
+    let discountAmount = 0;
+    let appliedCoupon = undefined;
+
+    if (args.couponCode) {
+      const couponResult = await validateCouponInternal(ctx, args.couponCode, computedSubtotal);
+      if (couponResult.valid && couponResult.coupon) {
+        discountAmount = couponResult.discountAmount;
+        appliedCoupon = couponResult.coupon.code;
+
+        await ctx.db.patch(couponResult.coupon._id, {
+          usageCount: couponResult.coupon.usageCount + 1,
+        });
+      } else {
+        throw new Error(`Failed to apply coupon: ${couponResult.error}`);
+      }
+    }
+
+    // 4. Authoritative delivery fee
+    let deliveryFee = 0;
+    let distance: number | undefined = undefined;
+    let resolvedZone = args.deliveryAddress.zone;
+    let etaMinutes: number | undefined = undefined;
+    if (!hasTestProduct) {
+      const feeRes = await calculateDeliveryFeeAndDistance(
+        ctx,
+        args.deliveryAddress.zone,
+        args.deliveryAddress.name,
+        args.deliveryAddress.lat,
+        args.deliveryAddress.lng,
+        args.deliveryAddress.distance
+      );
+      deliveryFee = feeRes.deliveryFee;
+      distance = feeRes.distance;
+      resolvedZone = feeRes.zone;
+      etaMinutes = feeRes.etaMinutes;
+    }
+
+    const grandTotal = computedSubtotal - discountAmount + deliveryFee;
+
+    // 5. Create the order, tied to the resolved guest user
+    const orderId = await ctx.db.insert("orders", {
+      userId: guestUserId,
+      status: "pending_payment",
+      paymentMethod: args.paymentMethod,
+      momoPhone: args.momoPhone,
+      deliveryAddress: {
+        ...args.deliveryAddress,
+        zone: resolvedZone,
+        deliveryFee,
+        distance,
+        etaMinutes,
+      },
+      subtotal: computedSubtotal,
+      discountAmount,
+      deliveryFee,
+      grandTotal,
+      couponApplied: appliedCoupon,
+      createdAt: Date.now(),
+    });
+
+    // 6. Line item snapshots
+    for (const item of itemsToOrder) {
+      await ctx.db.insert("orderItems", {
+        orderId,
+        productId: item.productId,
+        productName: item.productName,
+        size: item.size,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      });
+    }
+
+    // 7. Award loyalty points to the resolved guest user, so a returning guest
+    // (or a later account signup with a matching email) doesn't lose them.
+    const earnedPoints = Math.floor(grandTotal / 1000);
+    if (earnedPoints > 0) {
+      const currentPoints = guestUser.loyaltyPoints || 0;
+      const newPoints = currentPoints + earnedPoints;
+
+      let loyaltyTier = guestUser.loyaltyTier || "bronze";
+      if (newPoints >= 500) {
+        loyaltyTier = "platinum";
+      } else if (newPoints >= 250) {
+        loyaltyTier = "gold";
+      } else if (newPoints >= 100) {
+        loyaltyTier = "silver";
+      }
+
+      await ctx.db.patch(guestUserId, {
+        loyaltyPoints: newPoints,
+        loyaltyTier,
+      });
+
+      await ctx.db.insert("loyaltyTransactions", {
+        userId: guestUserId,
+        points: earnedPoints,
+        type: "earned",
+        description: `Earned from purchase (Order #${orderId})`,
+        createdAt: Date.now(),
+      });
+    }
+
+    return {
+      success: true,
+      orderId,
+      grandTotal,
+      subtotal: computedSubtotal,
+      discountAmount,
+      deliveryFee,
+      items: itemsToOrder,
+    };
+  },
+});
+
 export const getOrderForPayment = internalQuery({
   args: { orderId: v.id("orders") },
   handler: async (ctx, args) => {

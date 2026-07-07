@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useConvex, useQuery, useMutation, useConvexAuth, useAction } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import CheckoutStepper from '../components/checkout/CheckoutStepper';
@@ -23,6 +23,7 @@ const CheckoutPage = () => {
   const { isAuthenticated } = useConvexAuth();
   const user = useQuery(api.users.viewer);
   const convexPlaceOrder = useMutation(api.orders.placeOrder);
+  const placeGuestOrder = useMutation(api.orders.placeGuestOrder);
   const updateProfileMutation = useMutation(api.users.updateProfile);
   const initiatePayment = useAction(api.pesapal.initiatePayment);
 
@@ -52,19 +53,6 @@ const CheckoutPage = () => {
     message: '',
     variant: 'success'
   });
-
-  // Tracks whether CheckoutPage is still mounted, so async/delayed callbacks
-  // (e.g. the simulated guest checkout timer) can't act on a page the user has left.
-  const isMountedRef = useRef(true);
-  const guestConfirmTimerRef = useRef(null);
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-      if (guestConfirmTimerRef.current) {
-        clearTimeout(guestConfirmTimerRef.current);
-      }
-    };
-  }, []);
 
   const queueToast = (message, variant = 'success') => {
     setToastQueue(prev => [...prev, { message, variant }]);
@@ -98,13 +86,18 @@ const CheckoutPage = () => {
   const [isValidPhone, setIsValidPhone] = useState(false);
   const [phoneError, setPhoneError] = useState('');
 
+  // Guest contact details (only collected/required when !isAuthenticated)
+  const [guestName, setGuestName] = useState(() => localStorage.getItem('dennan_guest_name') || '');
+  const [guestEmail, setGuestEmail] = useState(() => localStorage.getItem('dennan_guest_email') || '');
+  const [guestPhone, setGuestPhone] = useState(() => localStorage.getItem('dennan_guest_phone') || '');
+
   // Coupon / Promo Code states
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
-  // Completed order snapshot returned from the backend (or simulated for guests)
+  // Completed order snapshot returned from the backend
   const [placedOrderDetails, setPlacedOrderDetails] = useState(null);
 
   // 1. Fetch auxiliary static checkout data (delivery zones, rider profile)
@@ -186,6 +179,31 @@ const CheckoutPage = () => {
       setPhoneError('Must start with 77, 78, 76 (MTN) or 70, 75, 74 (Airtel), followed by 7 digits.');
     }
   }, [momoPhone, selectedPayment]);
+
+  useEffect(() => {
+    localStorage.setItem('dennan_guest_name', guestName);
+  }, [guestName]);
+
+  useEffect(() => {
+    localStorage.setItem('dennan_guest_email', guestEmail);
+  }, [guestEmail]);
+
+  useEffect(() => {
+    localStorage.setItem('dennan_guest_phone', guestPhone);
+  }, [guestPhone]);
+
+  const isValidUgPhone = (num) => /^(77|78|76|70|75|74)\d{7}$/.test((num || '').replace(/\s+/g, ''));
+
+  // Guest contact form validity: name + email always required, phone required
+  // only when paying by card (momoPhone above already doubles as the contact
+  // number when paying by mobile money, so we don't ask twice).
+  const isGuestFormValid = () => {
+    if (isAuthenticated) return true;
+    const nameOk = guestName.trim().length > 0;
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim());
+    const phoneOk = selectedPayment === 'momo' ? isValidPhone : isValidUgPhone(guestPhone);
+    return nameOk && emailOk && phoneOk;
+  };
 
   // Developer Mode Helpers
   const handleDevMockConfirm = () => {
@@ -411,6 +429,29 @@ const CheckoutPage = () => {
     }
   };
 
+  // Submits an already-created order to Pesapal and opens the in-page payment
+  // modal. Shared by both the authenticated and guest checkout paths, since
+  // both always pay via momo/card once they have a real orderId.
+  const initiatePaymentAndOpenModal = async (orderId, items) => {
+    console.log('[CheckoutPage] initiating payment for order', orderId);
+    const paymentResult = await initiatePayment({
+      orderId,
+      frontendUrl: window.location.origin
+    });
+    console.log('[CheckoutPage] initiatePayment result', paymentResult);
+    if (paymentResult && paymentResult.redirectUrl) {
+      console.log('[CheckoutPage] opening payment modal with redirectUrl', paymentResult.redirectUrl);
+      setPendingOrderId(orderId);
+      setPendingOrderItems(items);
+      setPesapalRedirectUrl(paymentResult.redirectUrl);
+      setShowPaymentModal(true);
+      return true;
+    }
+    console.error('[CheckoutPage] initiatePayment returned no redirectUrl, cannot proceed to payment', paymentResult);
+    queueToast("We couldn't start the payment process. Please try again.", 'danger');
+    return false;
+  };
+
   // Order Placement submission
   const handlePlaceOrder = async () => {
     if (!cartItems || cartItems.length === 0) {
@@ -423,104 +464,69 @@ const CheckoutPage = () => {
       return;
     }
 
+    if (!isAuthenticated && !isGuestFormValid()) {
+      queueToast("Please fill in your name, email and phone number to continue.", 'danger');
+      return;
+    }
+
     setIsProcessing(true);
     console.log('[CheckoutPage] handlePlaceOrder started', { selectedPayment, isAuthenticated });
     try {
-      const orderPayload = {
-        paymentMethod: selectedPayment,
-        momoPhone: selectedPayment === 'momo' ? `+256${momoPhone.replace(/\s+/g, '')}` : undefined,
-        deliveryAddress: {
-          name: selectedAddress.name,
-          zone: selectedAddress.zone,
-          lat: selectedAddress.lat,
-          lng: selectedAddress.lng,
-          distance: selectedAddress.distanceKm,
-        },
-        couponCode: appliedCoupon ? appliedCoupon.coupon.code : undefined,
+      const deliveryAddress = {
+        name: selectedAddress.name,
+        zone: selectedAddress.zone,
+        lat: selectedAddress.lat,
+        lng: selectedAddress.lng,
+        distance: selectedAddress.distanceKm,
       };
+      const appliedCouponCode = appliedCoupon ? appliedCoupon.coupon.code : undefined;
+      const momoPhoneFormatted = selectedPayment === 'momo' ? `+256${momoPhone.replace(/\s+/g, '')}` : undefined;
+
+      const orderItemsForModal = cartItems.map(item => ({
+        productName: item.name,
+        size: item.size || "Standard",
+        quantity: item.quantity,
+        unitPrice: item.price,
+        image: item.image,
+        stage: item.stage || "Newborn",
+        productId: item._id || item.id
+      }));
 
       if (isAuthenticated) {
         // Logged-in users: execute secure backend order transaction and save order to DB
-        const result = await convexPlaceOrder(orderPayload);
+        const result = await convexPlaceOrder({
+          paymentMethod: selectedPayment,
+          momoPhone: momoPhoneFormatted,
+          deliveryAddress,
+          couponCode: appliedCouponCode,
+        });
         console.log('[CheckoutPage] convexPlaceOrder result', result);
         if (result.success) {
-          // Cart is cleared only once payment is confirmed (see handlePaymentSuccess / fallback below)
-
-          // Open secure Pesapal payment gateway in-page for MOMO and card payments
-          if (selectedPayment === 'momo' || selectedPayment === 'card') {
-            console.log('[CheckoutPage] initiating payment for order', result.orderId);
-            const paymentResult = await initiatePayment({
-              orderId: result.orderId,
-              frontendUrl: window.location.origin
-            });
-            console.log('[CheckoutPage] initiatePayment result', paymentResult);
-            if (paymentResult && paymentResult.redirectUrl) {
-              console.log('[CheckoutPage] opening payment modal with redirectUrl', paymentResult.redirectUrl);
-              setPendingOrderId(result.orderId);
-              setPendingOrderItems(cartItems.map(item => ({
-                productName: item.name,
-                size: item.size || "Standard",
-                quantity: item.quantity,
-                unitPrice: item.price,
-                image: item.image,
-                stage: item.stage || "Newborn",
-                productId: item._id || item.id
-              })));
-              setPesapalRedirectUrl(paymentResult.redirectUrl);
-              setShowPaymentModal(true);
-              return;
-            } else {
-              console.error('[CheckoutPage] initiatePayment returned no redirectUrl, cannot proceed to payment', paymentResult);
-              queueToast("We couldn't start the payment process. Please try again.", 'danger');
-              return;
-            }
-          }
-
-          // No online payment step required for this method (e.g. cash on delivery)
-          clearCart();
-          setPlacedOrderDetails(result);
-          setIsOrderConfirmed(true);
-          if (isAuthenticated && user && !user.preferredContact) {
-            setShowPrefPrompt(true);
-          }
-          queueToast(`Your order was successfully confirmed. Arriving in ${remainingTime || lockedETA?.travelTime} mins!`, 'success');
-
-          const points = Math.floor(result.grandTotal / 1000);
-          if (points > 0) {
-            queueToast(`✨ You've earned +${points} Dennan Loyalty Points! They have been credited to your profile.`, 'success');
-          }
+          // Cart is cleared only once payment is confirmed (see handlePaymentSuccess)
+          const opened = await initiatePaymentAndOpenModal(result.orderId, orderItemsForModal);
+          if (opened) return;
         }
       } else {
-        // Guest checkout flow: simulate order success in order confirmation page while respecting live hydrated prices
-        guestConfirmTimerRef.current = setTimeout(() => {
-          if (!isMountedRef.current) return; // user navigated away before the simulated confirmation fired
-          const guestResult = {
-            success: true,
-            orderId: "guest-" + Math.random().toString(36).substr(2, 9),
-            grandTotal: grandTotal,
-            subtotal: subtotal,
-            discountAmount: discountAmount,
-            deliveryFee: deliveryFee,
-            items: cartItems.map(item => ({
-              productName: item.name,
-              size: item.size,
-              quantity: item.quantity,
-              unitPrice: item.price,
-              image: item.image,
-              stage: item.stage || "Newborn",
-              productId: item._id || item.id
-            }))
-          };
-          setPlacedOrderDetails(guestResult);
-          clearCart(); // clear guest cart local storage
-          setIsOrderConfirmed(true);
-          queueToast(`Your order was successfully confirmed. Arriving in ${remainingTime || lockedETA?.travelTime} mins!`, 'success');
-          
-          const points = Math.floor(guestResult.grandTotal / 1000);
-          if (points > 0) {
-            queueToast(`✨ You've earned +${points} Dennan Loyalty Points! Create an account next time to save them.`, 'success');
-          }
-        }, 1500);
+        // Guest checkout: real order + real Pesapal payment, no account required.
+        const result = await placeGuestOrder({
+          guestName: guestName.trim(),
+          guestEmail: guestEmail.trim(),
+          guestPhone: `+256${(selectedPayment === 'momo' ? momoPhone : guestPhone).replace(/\s+/g, '')}`,
+          items: cartItems.map(item => ({
+            productId: item._id || item.id,
+            quantity: item.quantity,
+            size: item.size,
+          })),
+          paymentMethod: selectedPayment,
+          momoPhone: momoPhoneFormatted,
+          deliveryAddress,
+          couponCode: appliedCouponCode,
+        });
+        console.log('[CheckoutPage] placeGuestOrder result', result);
+        if (result.success) {
+          const opened = await initiatePaymentAndOpenModal(result.orderId, orderItemsForModal);
+          if (opened) return;
+        }
       }
     } catch (err) {
       console.error("Payment failed:", err);
@@ -621,10 +627,70 @@ const CheckoutPage = () => {
               </Card>
             </Page.Section>
 
+            {/* Guest Contact Details Section (unauthenticated shoppers only) */}
+            {!isAuthenticated && (
+              <Page.Section className="checkout-section">
+                <div className="section-header">
+                  <Text role="label-md" as="span" color="brand-primary-dark" className="section-number">2</Text>
+                  <Text role="headline-md" as="h2" className="section-title">Your Details</Text>
+                </div>
+
+                <Card isHoverable={false} className="guest-contact-card">
+                  <Card.Body style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      <Text role="label-md" as="span" className="momo-label">Name</Text>
+                      <div className="momo-input-wrapper">
+                        <input
+                          type="text"
+                          className="momo-input"
+                          placeholder="Jane Doe"
+                          value={guestName}
+                          onChange={(e) => setGuestName(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      <Text role="label-md" as="span" className="momo-label">Email Address</Text>
+                      <div className="momo-input-wrapper">
+                        <input
+                          type="email"
+                          className="momo-input"
+                          placeholder="jane@example.com"
+                          value={guestEmail}
+                          onChange={(e) => setGuestEmail(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    {selectedPayment === 'card' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                        <Text role="label-md" as="span" className="momo-label">Phone Number</Text>
+                        <div className="momo-input-wrapper">
+                          <div className="momo-prefix">
+                            <Text role="body-lg" as="span" className="ug-flag">🇺🇬</Text>
+                            <Text role="body-lg" as="span">+256</Text>
+                          </div>
+                          <input
+                            type="tel"
+                            className={`momo-input ${guestPhone ? (isValidUgPhone(guestPhone) ? 'is-valid' : 'is-invalid') : ''}`}
+                            placeholder="772 123456"
+                            value={guestPhone}
+                            onChange={(e) => setGuestPhone(e.target.value.replace(/[^0-9\s]/g, ''))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <Text role="label-sm" as="p" color="tertiary" style={{ marginTop: 'var(--space-1)' }}>
+                      We'll use these details to confirm your order and send delivery updates.
+                    </Text>
+                  </Card.Body>
+                </Card>
+              </Page.Section>
+            )}
+
             {/* Payment Method Section */}
             <Page.Section className="checkout-section">
               <div className="section-header">
-                <Text role="label-md" as="span" color="brand-primary-dark" className="section-number">2</Text>
+                <Text role="label-md" as="span" color="brand-primary-dark" className="section-number">{isAuthenticated ? 2 : 3}</Text>
                 <Text role="headline-md" as="h2" className="section-title">Payment Method</Text>
               </div>
 
@@ -803,7 +869,7 @@ const CheckoutPage = () => {
                   fullWidth
                   loading={isProcessing}
                   onClick={handlePlaceOrder}
-                  disabled={!selectedAddress || (selectedPayment === 'momo' && !isValidPhone)}
+                  disabled={!selectedAddress || (selectedPayment === 'momo' && !isValidPhone) || (!isAuthenticated && !isGuestFormValid())}
                 >
                   Complete Payment
                 </Button>
