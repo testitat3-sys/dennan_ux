@@ -15,7 +15,26 @@ export const viewer = query({
     }
     const user = await ctx.db.get(userId);
     console.log(`[convex/users.ts] Viewer query - user found: ${!!user}, onboarded: ${user?.isOnboarded}, admin: ${user?.isAdmin}`);
-    return user;
+    if (!user) {
+      return null;
+    }
+
+    // Dynamically calculate user stage matching the frontend UserContext calculation
+    let stage: "mother" | "newborn" | "kid" | undefined = undefined;
+    if (user.role === 'expecting') {
+      stage = 'mother';
+    } else if (user.role === 'parent' && user.children && user.children.length > 0) {
+      const today = new Date();
+      const birthdays = user.children.map((c: any) => new Date(c.dob).getTime());
+      const youngestTime = Math.max(...birthdays);
+      const youngest = new Date(youngestTime);
+      const diffTime = today.getTime() - youngest.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const monthsOld = Math.floor(diffDays / 30.44);
+      stage = monthsOld >= 6 ? 'kid' : 'newborn';
+    }
+
+    return { ...user, stage };
   },
 });
 

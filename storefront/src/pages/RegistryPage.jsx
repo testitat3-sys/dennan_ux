@@ -959,7 +959,8 @@ const RegistryPage = () => {
         onClose={() => setIsNotifyModalOpen(false)}
         onSuccess={handleNotifySignupSuccess}
         convexUser={convexUser}
-        source="registry_gift_wrapping"
+        source="gift-wrapping-sign-up"
+        specifications={["gift-wrapping-sign-up"]}
         title="Get notified when Gift Wrapping launches"
         subtext="Leave your details and we'll email you the moment premium gift wrapping is ready."
       />

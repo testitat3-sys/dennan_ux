@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { TrendingUp, CheckCircle, DollarSign } from "lucide-react";
 import { getTodayStr } from "../utils/reminderHelpers";
+import PaymentMethodDetailModal from "./PaymentMethodDetailModal";
 import "../styles/SalesMetrics.css";
 
 const METHOD_COLORS = {
@@ -54,12 +55,13 @@ function formatDisplayDate(dateStr) {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
-export default function SalesMetricsPanel({ token }) {
+export default function SalesMetricsPanel({ token, onOpenOrder }) {
   const todayStr = getTodayStr();
   const [datePreset, setDatePreset] = useState("30d");
   const [customStart, setCustomStart] = useState(addDays(todayStr, -29));
   const [customEnd, setCustomEnd] = useState(todayStr);
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
+  const [selectedMethod, setSelectedMethod] = useState(null);
 
   const { startDate, endDate } = useMemo(() => {
     switch (datePreset) {
@@ -242,7 +244,11 @@ export default function SalesMetricsPanel({ token }) {
               </thead>
               <tbody>
                 {metrics.byPaymentMethod.map((m) => (
-                  <tr key={m.method}>
+                  <tr
+                    key={m.method}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => setSelectedMethod({ method: m.method, label: m.label })}
+                  >
                     <td><strong>{m.label}</strong></td>
                     <td>UGX {m.amount.toLocaleString()}</td>
                     <td>{m.count}</td>
@@ -254,6 +260,16 @@ export default function SalesMetricsPanel({ token }) {
           </div>
         </>
       )}
+
+      <PaymentMethodDetailModal
+        method={selectedMethod?.method || null}
+        methodLabel={selectedMethod?.label}
+        startDate={startDate}
+        endDate={endDate}
+        token={token}
+        onClose={() => setSelectedMethod(null)}
+        onOpenOrder={onOpenOrder}
+      />
     </div>
   );
 }

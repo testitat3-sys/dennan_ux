@@ -38,6 +38,7 @@ const NotifySignupModal = ({
   onSuccess,
   convexUser,
   source = 'registry_coming_soon',
+  specifications,
   title = 'Get notified at launch',
   subtext = "Leave your details and we'll email you the moment the Registry is ready.",
 }) => {
@@ -111,6 +112,7 @@ const NotifySignupModal = ({
         phone: phone.trim(),
         stage,
         source,
+        specifications,
       });
       onSuccess && onSuccess();
       onClose();

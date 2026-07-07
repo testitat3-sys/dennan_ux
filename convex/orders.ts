@@ -1155,18 +1155,29 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   voucher: "Gift Voucher",
 };
 
-// For a single order, returns its attributed {method, amount} tenders: real
-// orderPayments rows if any exist, else a single fallback tender built from
-// the order's summary paymentMethod/grandTotal fields.
+// For a single order, returns its attributed tenders: real orderPayments rows
+// if any exist (with their method-specific detail fields), else a single
+// fallback tender built from the order's summary paymentMethod/grandTotal fields.
 function attributeOrderPayments(
   order: any,
-  paymentsByOrderId: Map<string, { method: string; amount: number }[]>
-): { method: string; amount: number }[] {
+  paymentsByOrderId: Map<string, { method: string; amount: number; momoPhone?: string; cardOrderId?: string; voucherCode?: string }[]>
+): { method: string; amount: number; momoPhone?: string; cardOrderId?: string; voucherCode?: string }[] {
   const payments = paymentsByOrderId.get(order._id.toString());
   if (payments && payments.length > 0) {
-    return payments.map((p) => ({ method: p.method, amount: p.amount }));
+    return payments.map((p) => ({
+      method: p.method,
+      amount: p.amount,
+      momoPhone: p.momoPhone,
+      cardOrderId: p.cardOrderId,
+      voucherCode: p.voucherCode,
+    }));
   }
-  return [{ method: order.paymentMethod, amount: order.grandTotal }];
+  return [{
+    method: order.paymentMethod,
+    amount: order.grandTotal,
+    momoPhone: order.momoPhone,
+    cardOrderId: order.cardOrderId,
+  }];
 }
 
 export const adminGetDailySalesDashboard = query({
@@ -1414,6 +1425,98 @@ export const adminGetSalesMetrics = query({
       rangeStart: toDateStr(rangeStartMs),
       rangeEnd: toDateStr(rangeEndMs - dayMs),
     };
+  },
+});
+
+export const adminGetPaymentMethodTransactions = query({
+  args: {
+    token: v.string(),
+    startDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
+    endDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
+    paymentMethod: v.string(), // "physical"|"momo"|"card"|"voucher"
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const completedStatuses = ["delivered", "returned", "partially_returned"];
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    // 1. Fetch all orders + all order payments once
+    const allOrders = await ctx.db.query("orders").collect();
+    const allOrderPayments = await ctx.db.query("orderPayments").collect();
+    const paymentsByOrderId = new Map<string, typeof allOrderPayments>();
+    for (const payment of allOrderPayments) {
+      const key = payment.orderId.toString();
+      const existing = paymentsByOrderId.get(key);
+      if (existing) {
+        existing.push(payment);
+      } else {
+        paymentsByOrderId.set(key, [payment]);
+      }
+    }
+
+    // 2. Resolve the date range (default: last 30 days including today)
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayMs = startOfToday.getTime();
+
+    const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
+    const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
+
+    // 3. Filter to completed orders within range
+    const ordersInRange = allOrders.filter(
+      (o: any) =>
+        o.createdAt >= rangeStartMs && o.createdAt < rangeEndMs && completedStatuses.includes(o.status)
+    );
+
+    // 4. Attribute tenders per order, keep only ones matching the requested method
+    type Row = {
+      orderId: any;
+      createdAt: number;
+      userId: any;
+      amount: number;
+      momoPhone?: string;
+      cardOrderId?: string;
+      voucherCode?: string;
+    };
+    const rows: Row[] = [];
+    for (const order of ordersInRange) {
+      const tenders = attributeOrderPayments(order, paymentsByOrderId).filter(
+        (t) => t.method === args.paymentMethod
+      );
+      for (const t of tenders) {
+        rows.push({
+          orderId: order._id,
+          createdAt: order.createdAt,
+          userId: order.userId,
+          amount: t.amount,
+          momoPhone: t.momoPhone,
+          cardOrderId: t.cardOrderId,
+          voucherCode: t.voucherCode,
+        });
+      }
+    }
+
+    // 5. Batch-resolve customer names
+    const distinctUserIds = Array.from(new Set(rows.map((r) => r.userId.toString())));
+    const users = await Promise.all(distinctUserIds.map((id) => ctx.db.get(id as any)));
+    const nameByUserId = new Map<string, string>();
+    distinctUserIds.forEach((id, idx) => {
+      nameByUserId.set(id, (users[idx] as any)?.name || "Unnamed Customer");
+    });
+
+    // 6. Sort most recent first
+    rows.sort((a, b) => b.createdAt - a.createdAt);
+
+    return rows.map((r) => ({
+      orderId: r.orderId,
+      createdAt: r.createdAt,
+      customerName: nameByUserId.get(r.userId.toString()) || "Unnamed Customer",
+      amount: r.amount,
+      momoPhone: r.momoPhone,
+      cardOrderId: r.cardOrderId,
+      voucherCode: r.voucherCode,
+    }));
   },
 });
 

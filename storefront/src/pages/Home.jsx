@@ -122,7 +122,7 @@ const Home = () => {
   return (
     <>
       <Hero content={restData.hero} />
-      <SearchStrip className="search-strip--home" />
+      <SearchStrip className="search-strip--home" products={liveProducts} />
       <BrandsBanner />
       <GiftingBanner href="/registry" />
 

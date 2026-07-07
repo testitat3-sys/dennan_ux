@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import './SearchStrip.css';
 import { useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
+import { useQuery } from 'convex/react';
+import { api } from "@convex/_generated/api";
 
 const suggestions = [
   { text: 'Newborn essentials checklist', sub: '18 curated products', type: 'checklist' },
@@ -52,6 +54,61 @@ const SearchStrip = ({
   const [localSuggestions, setLocalSuggestions] = useState(suggestions);
   const containerRef = useRef(null);
   const navigate = useNavigate();
+
+  const allBrands = useQuery(api.data.getBrands) || [];
+
+  const navigateToTag = (tagText) => {
+    const textLower = tagText.toLowerCase().trim();
+
+    // 1. Check if it matches a brand name or slug
+    const matchedBrand = allBrands.find(b => 
+      b.name.toLowerCase() === textLower || 
+      b.slug.toLowerCase() === textLower
+    );
+    if (matchedBrand) {
+      navigate(`/brand/${matchedBrand.slug}`);
+      return;
+    }
+
+    // 2. Check if it matches a stage/category
+    if (textLower === 'mother' || textLower === 'expectant' || textLower === 'expecting' || textLower === 'pregnancy' || textLower === 'expecting mother') {
+      navigate('/category/mother');
+      return;
+    }
+    if (textLower === 'newborn' || textLower === 'baby') {
+      navigate('/category/newborn');
+      return;
+    }
+    if (textLower === 'toddler' || textLower === 'kid' || textLower === 'kids' || textLower === 'child') {
+      navigate('/category/kid');
+      return;
+    }
+
+    // 3. Check if it matches a collection
+    if (textLower === 'essentials') {
+      navigate('/collection/essentials');
+      return;
+    }
+    if (textLower === 'musthaves' || textLower === 'must-haves' || textLower === 'must haves') {
+      navigate('/collection/must-haves');
+      return;
+    }
+    if (textLower === 'luxuries' || textLower === 'luxury') {
+      navigate('/collection/luxuries');
+      return;
+    }
+    if (textLower === 'most loved' || textLower === 'most-loved') {
+      navigate('/collection/most-loved');
+      return;
+    }
+    if (textLower === 'curated' || textLower === 'curated picks' || textLower === 'curated-picks') {
+      navigate('/collection/curated-picks');
+      return;
+    }
+
+    // 4. Default to search/filter page
+    navigate(`/category/all?q=${encodeURIComponent(tagText)}`);
+  };
 
   const chipsToDisplay = useMemo(() => {
     if (!products || !Array.isArray(products) || products.length === 0) {
@@ -137,7 +194,7 @@ const SearchStrip = ({
       onSubmit(text);
       return;
     }
-    setIsDropdownOpen(true);
+    navigateToTag(text);
   };
 
   const isDeveloperQuery = (q) => {

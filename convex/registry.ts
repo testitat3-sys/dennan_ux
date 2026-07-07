@@ -721,9 +721,16 @@ export const submitNotifySignup = mutation({
       )
     ),
     source: v.string(),
+    specifications: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const userId = await auth.getUserId(ctx);
+
+    const specifications = args.specifications ?? (
+      (args.source === "gift-wrapping-sign-up" || args.source === "registry_gift_wrapping")
+        ? ["gift-wrapping-sign-up"]
+        : undefined
+    );
 
     await ctx.db.insert("registryNotifySignups", {
       userId: userId ?? undefined,
@@ -733,6 +740,7 @@ export const submitNotifySignup = mutation({
       phone: args.phone,
       stage: args.stage,
       source: args.source,
+      specifications,
       createdAt: Date.now(),
     });
 

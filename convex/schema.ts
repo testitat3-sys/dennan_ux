@@ -528,6 +528,7 @@ export default defineSchema({
       )
     ),
     source: v.string(), // e.g. "registry_coming_soon"
+    specifications: v.optional(v.array(v.string())),
     createdAt: v.number(),
   }).index("by_user", ["userId"]).index("by_email", ["email"]),
 

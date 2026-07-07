@@ -17,6 +17,7 @@ import CardGrid from '../components/ui/CardGrid';
 import PredictiveFeed from '../components/dashboard/PredictiveFeed';
 import QuickViewModal from '../components/products/QuickViewModal';
 import Toast from '../components/ui/Toast';
+import NotifySignupModal from '../components/registry/NotifySignupModal';
 
 import { getDashboardData } from '../services/api';
 import './Dashboard.css';
@@ -33,6 +34,12 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
+
+  const handleNotifySignupSuccess = () => {
+    setToastMessage("You're on the list! We'll email you when Gift Wrapping launches.");
+    setShowToast(true);
+  };
 
   const stageInfo = getStageInfo();
 
@@ -265,6 +272,36 @@ const Dashboard = () => {
                       </Button>
                     </Card.Actions>
                   </Card>
+
+                  {/* Gift Wrapping Card */}
+                  <Card variant="default" hasBorder={false} className="gift-wrapping-card" style={{ backgroundColor: 'color-mix(in srgb, var(--color-brand-primary), transparent 94%)' }}>
+                    <Card.Header style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      <span style={{ 
+                        display: 'inline-block',
+                        fontFamily: 'var(--font-sans)', 
+                        fontSize: 'var(--label-xs)', 
+                        color: 'var(--color-brand-primary)', 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '0.08em', 
+                        fontWeight: '700' 
+                      }}>
+                        Premium Gifting
+                      </span>
+                      <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: 'var(--headline-sm)', color: 'var(--text-primary)', margin: 0 }}>
+                        Gift Wrapping
+                      </h3>
+                    </Card.Header>
+                    <Card.Body>
+                      <p style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--body-sm)', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+                        Beautiful wrapping for birthdays, baby showers, and more. Soon you'll be able to personalise them with your own heartfelt message.
+                      </p>
+                    </Card.Body>
+                    <Card.Actions>
+                      <Button variant="primary" onClick={() => setIsNotifyModalOpen(true)} style={{ width: '100%' }}>
+                        Notify Me
+                      </Button>
+                    </Card.Actions>
+                  </Card>
                 </div>
               </div>
             </Page.Section>
@@ -287,6 +324,17 @@ const Dashboard = () => {
         isOpen={showToast} 
         message={toastMessage} 
         onClose={() => setShowToast(false)} 
+      />
+
+      <NotifySignupModal
+        isOpen={isNotifyModalOpen}
+        onClose={() => setIsNotifyModalOpen(false)}
+        onSuccess={handleNotifySignupSuccess}
+        convexUser={convexUser}
+        source="gift-wrapping-sign-up"
+        specifications={["gift-wrapping-sign-up"]}
+        title="Get notified when Gift Wrapping launches"
+        subtext="Leave your details and we'll email you the moment premium gift wrapping is ready."
       />
     </div>
   );

@@ -49,6 +49,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/signup" element={<AuthPage />} />
           <Route path="/after-signin" element={<AfterSignIn />} />
           <Route path="/onboarding" element={<OnboardingRoute />} />
           

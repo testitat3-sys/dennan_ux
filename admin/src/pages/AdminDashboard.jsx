@@ -662,7 +662,7 @@ export default function AdminDashboard() {
 
           {/* TAB 7: SALES METRICS */}
           {activeTab === "metrics" && (
-            <SalesMetricsPanel token={token} />
+            <SalesMetricsPanel token={token} onOpenOrder={setPendingOrderId} />
           )}
         </main>
       </div>
