@@ -18,7 +18,7 @@ const ReelsSection = () => {
     <section className="section reels-section" aria-labelledby="reels-heading">
       <div className="reels-section__header-row">
         <div className="section__header">
-          <h2 className="section__title" id="reels-heading">Reel fans, reel vibes</h2>
+          <h2 className="section__title" id="reels-heading">Product Videos</h2>
           <p className="section__subtitle">Watch it, love it, buy it in one tap.</p>
         </div>
       </div>

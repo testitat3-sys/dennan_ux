@@ -136,9 +136,11 @@
 @media (max-width: 768px) {
   .brands-banner { padding: var(--space-12) 0; }
   .brands-banner .section__header { padding: 0 var(--space-4); }
-  .brands-banner__track-wrap { padding: 0 var(--space-4); }
+  .brands-banner__track-wrap { padding: 0; }
   .brands-banner__track { gap: var(--space-4); }
   .brand-item { min-width: 140px; }
+  .brand-item:first-child { margin-left: var(--layout-inset); }
+  .brand-item:last-child { margin-right: var(--layout-inset); }
   .brand-item__logo { width: 140px; height: 70px; }
   .brand-item__logo img { max-width: 110px; max-height: 40px; }
   .brand-item__discount { top: calc(-1 * var(--space-1-5)); left: calc(-1 * var(--space-1-5)); font-size: var(--label-md); }

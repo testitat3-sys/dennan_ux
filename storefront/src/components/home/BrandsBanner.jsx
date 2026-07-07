@@ -24,7 +24,6 @@ const BrandsBanner = () => {
                   <span className="brand-item__discount">-{brand.maxDiscount}%</span>
                 )}
               </div>
-              <h3 className="brand-item__name">{brand.name}</h3>
             </Link>
           ))}
         </div>

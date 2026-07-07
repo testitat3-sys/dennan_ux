@@ -48,7 +48,7 @@ const Footer = () => {
       </div>
 
       <div className="footer__bottom">
-        <span>© {new Date().getFullYear()} Denan Kids. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Denan Kids. Designed with love.</span>
         <span>Designed with intention.</span>
       </div>
     </footer>

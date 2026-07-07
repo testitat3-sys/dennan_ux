@@ -61,7 +61,7 @@ export const staticData = {
       icon: "users",
       type: "yellow",
       title: "Too much love",
-      sub: "267,000+ people follow our journey."
+      sub: "330,000+ people follow our journey."
     }
   ],
   dashboard: {
