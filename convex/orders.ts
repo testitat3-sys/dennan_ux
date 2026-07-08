@@ -152,9 +152,10 @@ export const placeOrder = mutation({
     const grandTotal = computedSubtotal - discountAmount + deliveryFee;
 
     // 5. Create the Order securely
+    const isCod = args.paymentMethod === "cod";
     const orderId = await ctx.db.insert("orders", {
       userId,
-      status: "pending_payment",
+      status: isCod ? "pending_cod" : "pending_payment",
       paymentMethod: args.paymentMethod,
       momoPhone: args.momoPhone,
       deliveryAddress: {
@@ -239,6 +240,7 @@ export const placeOrder = mutation({
       discountAmount,
       deliveryFee,
       items: itemsToOrder,
+      isCod,
     };
   },
 });
@@ -380,9 +382,10 @@ export const placeGuestOrder = mutation({
     const grandTotal = computedSubtotal - discountAmount + deliveryFee;
 
     // 5. Create the order, tied to the resolved guest user
+    const isCod = args.paymentMethod === "cod";
     const orderId = await ctx.db.insert("orders", {
       userId: guestUserId,
-      status: "pending_payment",
+      status: isCod ? "pending_cod" : "pending_payment",
       paymentMethod: args.paymentMethod,
       momoPhone: args.momoPhone,
       deliveryAddress: {
@@ -448,6 +451,7 @@ export const placeGuestOrder = mutation({
       success: true,
       orderId,
       grandTotal,
+      isCod,
       subtotal: computedSubtotal,
       discountAmount,
       deliveryFee,

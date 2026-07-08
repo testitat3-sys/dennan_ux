@@ -9,7 +9,6 @@
  */
 
 import type * as auth from "../auth.js";
-import type * as auth_test from "../auth_test.js";
 import type * as brands from "../brands.js";
 import type * as cart from "../cart.js";
 import type * as coupons from "../coupons.js";
@@ -45,7 +44,6 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  auth_test: typeof auth_test;
   brands: typeof brands;
   cart: typeof cart;
   coupons: typeof coupons;

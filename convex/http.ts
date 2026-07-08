@@ -39,16 +39,6 @@ http.route({
   }),
 });
 
-http.route({
-  path: "/api/save-test-link",
-  method: "POST",
-    handler: httpAction(async (ctx, req) => {
-      const { email, url } = await req.json();
-      console.log(`[convex/http.ts] POST /api/save-test-link for ${email}`);
-      await ctx.runMutation(internal.users.saveTestLink, { email, url });
-      return new Response(null, { status: 200 });
-    }),
-});
 
 http.route({
   path: "/api/pesapal/ipn",

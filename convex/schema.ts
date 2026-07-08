@@ -425,6 +425,7 @@ export default defineSchema({
     userId: v.id("users"),
     status: v.union(
       v.literal("pending_payment"),
+      v.literal("pending_cod"),
       v.literal("preparing"),
       v.literal("packing"),
       v.literal("dispatched"),
@@ -434,7 +435,7 @@ export default defineSchema({
       v.literal("returned"),
       v.literal("partially_returned")
     ),
-    paymentMethod: v.string(), // "momo" | "card"
+    paymentMethod: v.string(), // "momo" | "card" | "cod"
     momoPhone: v.optional(v.string()), // Ugandan mobile money number
     deliveryAddress: v.object({
       name: v.string(),

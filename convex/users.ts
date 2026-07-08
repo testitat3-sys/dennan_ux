@@ -85,54 +85,6 @@ export const ensureUserFields = mutation({
   },
 });
 
-/**
- * Save a test link (internal).
- */
-export const saveTestLink = internalMutation({
-  args: { email: v.string(), url: v.string() },
-  handler: async (ctx, args) => {
-    console.log(`[convex/users.ts] saveTestLink - Saving link for ${args.email}`);
-    // Delete any existing links for this email to keep it clean
-    const existing = await ctx.db
-      .query("testLinks")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
-      .collect();
-    
-    if (existing.length > 0) {
-      console.log(`[convex/users.ts] saveTestLink - Cleaning up ${existing.length} old links`);
-      for (const doc of existing) {
-        await ctx.db.delete(doc._id);
-      }
-    }
-
-    await ctx.db.insert("testLinks", {
-      email: args.email,
-      url: args.url,
-      expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
-    });
-    console.log(`[convex/users.ts] saveTestLink - Link saved successfully`);
-  },
-});
-
-/**
- * Get the latest test link for an email.
- */
-export const getTestLink = query({
-  args: { email: v.string() },
-  handler: async (ctx, args) => {
-    const link = await ctx.db
-      .query("testLinks")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
-      .order("desc")
-      .first();
-
-    if (!link || link.expiresAt < Date.now()) {
-      return null;
-    }
-
-    return link.url;
-  },
-});
 
 /**
  * Check whether an email already has a confirmed (onboarded) account.

@@ -20,6 +20,7 @@ const STAGES = [
 function stageIndexForStatus(status) {
   switch (status) {
     case "pending_payment":
+    case "pending_cod":
     case "preparing":
       return 0;
     case "packing":

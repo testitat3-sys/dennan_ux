@@ -185,6 +185,7 @@ const CheckoutPage = () => {
       return;
     }
 
+
     const cleanNum = momoPhone.replace(/\s+/g, '');
     if (!cleanNum) {
       setIsValidPhone(false);
@@ -218,8 +219,7 @@ const CheckoutPage = () => {
   const isValidUgPhone = (num) => /^(77|78|76|70|75|74)\d{7}$/.test((num || '').replace(/\s+/g, ''));
 
   // Guest contact form validity: name + email always required, phone required
-  // only when paying by card (momoPhone above already doubles as the contact
-  // number when paying by mobile money, so we don't ask twice).
+  // when paying by card or COD (momoPhone doubles as contact for momo orders).
   const isGuestFormValid = () => {
     if (isAuthenticated) return true;
     const nameOk = guestName.trim().length > 0;
@@ -525,8 +525,8 @@ const CheckoutPage = () => {
         setGuestEmailError('');
       }
 
-      // 4. Guest Phone (required only when selected payment is card)
-      if (selectedPayment === 'card') {
+      // 4. Guest Phone (required when paying by card or COD)
+      if (selectedPayment === 'card' || selectedPayment === 'cod') {
         const cleanPhone = guestPhone.replace(/\s+/g, '');
         if (!cleanPhone) {
           setGuestPhoneError('Please enter your phone number.');
@@ -604,7 +604,8 @@ const CheckoutPage = () => {
     }
 
     setIsProcessing(true);
-    console.log('[CheckoutPage] handlePlaceOrder started', { selectedPayment, isAuthenticated });
+    const isCodOrder = selectedPayment === 'cod';
+    console.log('[CheckoutPage] handlePlaceOrder started', { selectedPayment, isAuthenticated, isCodOrder });
     try {
       const deliveryAddress = {
         name: selectedAddress.name,
@@ -636,16 +637,25 @@ const CheckoutPage = () => {
         });
         console.log('[CheckoutPage] convexPlaceOrder result', result);
         if (result.success) {
+          if (isCodOrder) {
+            // COD: skip Pesapal, confirm order immediately
+            clearCart();
+            setPlacedOrderDetails({ ...result, items: orderItemsForModal, paymentMethod: 'cod' });
+            setIsOrderConfirmed(true);
+            queueToast(`Order placed! Please have ${formatPrice(result.grandTotal)} ready for cash payment on delivery.`, 'success');
+            return;
+          }
           // Cart is cleared only once payment is confirmed (see handlePaymentSuccess)
           const opened = await initiatePaymentAndOpenModal(result.orderId, orderItemsForModal);
           if (opened) return;
         }
       } else {
         // Guest checkout: real order + real Pesapal payment, no account required.
+        const guestContactPhone = selectedPayment === 'momo' ? momoPhone : guestPhone;
         const result = await placeGuestOrder({
           guestName: guestName.trim(),
           guestEmail: guestEmail.trim(),
-          guestPhone: `+256${(selectedPayment === 'momo' ? momoPhone : guestPhone).replace(/\s+/g, '')}`,
+          guestPhone: `+256${guestContactPhone.replace(/\s+/g, '')}`,
           items: cartItems.map(item => ({
             productId: item._id || item.id,
             quantity: item.quantity,
@@ -658,6 +668,14 @@ const CheckoutPage = () => {
         });
         console.log('[CheckoutPage] placeGuestOrder result', result);
         if (result.success) {
+          if (isCodOrder) {
+            // COD: skip Pesapal, confirm order immediately
+            clearCart();
+            setPlacedOrderDetails({ ...result, items: orderItemsForModal, paymentMethod: 'cod' });
+            setIsOrderConfirmed(true);
+            queueToast(`Order placed! Please have ${formatPrice(result.grandTotal)} ready for cash payment on delivery.`, 'success');
+            return;
+          }
           const opened = await initiatePaymentAndOpenModal(result.orderId, orderItemsForModal);
           if (opened) return;
         }
@@ -821,7 +839,7 @@ const CheckoutPage = () => {
                         </Text>
                       )}
                     </div>
-                    {selectedPayment === 'card' && (
+                    {(selectedPayment === 'card' || selectedPayment === 'cod') && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                         <Text role="label-md" as="span" className="momo-label">Phone Number</Text>
                         <div className={`momo-input-wrapper ${showErrors && guestPhoneError ? 'is-invalid' : ''}`}>
@@ -936,6 +954,44 @@ const CheckoutPage = () => {
                     </div>
                   </Card.Body>
                 </Card>
+
+                {/* Cash on Delivery Panel */}
+                <Card
+                  isHoverable={true}
+                  className={`payment-option ${selectedPayment === 'cod' ? 'is-active' : ''}`}
+                  style={selectedPayment === 'cod' ? { borderColor: 'var(--color-brand-primary)' } : {}}
+                  onClick={() => setSelectedPayment('cod')}
+                >
+                  <Card.Body style={{ flexDirection: 'row', alignItems: 'center', width: '100%', gap: 'var(--space-5)', padding: 0 }}>
+                    <div className={`option-radio ${selectedPayment === 'cod' ? 'checked' : ''}`}>
+                      <div className="radio-inner"></div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--card-gap-xs)', flex: 1 }}>
+                      <Text role="title-sm" as="span" className="option-name">Pay on Delivery (Cash)</Text>
+                      <Text role="body-sm" as="span" className="option-desc">Pay cash when your order arrives at your door.</Text>
+                    </div>
+                    <div className="option-brand-icons">
+                      <Text role="label-sm" as="span" style={{ color: 'var(--color-brand-primary-dark)', background: 'var(--color-brand-primary-light, #fdf2f8)', border: '1px solid var(--color-brand-primary)', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 700 }}>CASH</Text>
+                    </div>
+                  </Card.Body>
+
+                  {selectedPayment === 'cod' && (
+                    <Card
+                      hasBorder={false}
+                      hasShadow={false}
+                      hasBackground={false}
+                      removePaddingHorizontal={true}
+                      className="momo-input-container"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Card.Body>
+                        <Text role="label-sm" as="p" color="tertiary" className="momo-helper-text" style={{ marginTop: 0 }}>
+                          🛵 Our rider will collect payment on arrival. Please have the exact amount ready.
+                        </Text>
+                      </Card.Body>
+                    </Card>
+                  )}
+                </Card>
               </div>
             </Page.Section>
           </div>
@@ -1041,7 +1097,7 @@ const CheckoutPage = () => {
                   loading={isProcessing}
                   onClick={handlePlaceOrder}
                 >
-                  Complete Payment
+                  {selectedPayment === 'cod' ? 'Place Order' : 'Complete Payment'}
                 </Button>
 
                 <Text role="label-sm" as="p" color="tertiary" className="secure-text">
@@ -1085,6 +1141,11 @@ const CheckoutPage = () => {
                         <Text role="body-lg" as="p" color="secondary" className="eta-countdown">
                           Our rider is dispatched. Arriving in approximately {remainingTime} minutes.
                         </Text>
+                        {placedOrderDetails?.paymentMethod === 'cod' && (
+                          <Text role="label-sm" as="p" color="support-red" style={{ marginTop: 'var(--space-3)', fontWeight: 600 }}>
+                            💵 Please have <strong>{formatPrice(placedOrderDetails?.grandTotal || grandTotal)}</strong> in cash ready for the rider.
+                          </Text>
+                        )}
                       </Card.Body>
                     </Card>
                   </Card.Body>

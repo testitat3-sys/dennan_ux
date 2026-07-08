@@ -4,7 +4,7 @@ import { useUser } from '../../context/UserContext';
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { Mail, ArrowRight, ArrowLeft, Loader2, Baby, Heart, Plus } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft, Baby, Heart, Plus } from 'lucide-react';
 import Button from './Button';
 import './OnboardingModal.css';
 
@@ -33,8 +33,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [pending, setPending] = useState(false);
-  const [testMode, setTestMode] = useState(true);
-  const [capturedLink, setCapturedLink] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [emailError, setEmailError] = useState('');
   const [isDirectLogin, setIsDirectLogin] = useState(false);
@@ -43,8 +41,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [active, setActive] = useState(false);
 
-  // ── Polling for test link ───────────────────────────────────────────────────
-  const link = useQuery(api.users.getTestLink, testMode && sent ? { email } : "skip");
 
   // ── Date Boundary Calculations ─────────────────────────────────────────────
   const today = new Date();
@@ -73,7 +69,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
     if (isOpen && !initialized.current) {
       initialized.current = true;
       setSent(false);
-      setCapturedLink('');
       setResendCooldown(0);
       setEmailError('');
 
@@ -117,14 +112,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
-
-  // ── Capture test link ───────────────────────────────────────────────────────
-  useEffect(() => {
-    if (link) {
-      console.log(`[OnboardingModal] Captured test link for ${email}: ${link}`);
-      setCapturedLink(link);
-    }
-  }, [link, email]);
 
   // ── Resend cooldown timer ───────────────────────────────────────────────────
   useEffect(() => {
@@ -234,8 +221,8 @@ const OnboardingModal = ({ isOpen, onClose }) => {
       localStorage.setItem('dennan_onboarding_profile', JSON.stringify(profile));
       console.log(`[OnboardingModal] Saved onboarding journey details to localStorage:`, profile);
 
-      console.log(`[OnboardingModal] Initiating signIn for ${email} (testMode: ${testMode})`);
-      await signIn(testMode ? "test" : "resend", {
+      console.log(`[OnboardingModal] Initiating signIn for ${email}`);
+      await signIn("resend", {
         email,
         redirectTo: "/after-signin"
       });
@@ -252,7 +239,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
     if (resendCooldown > 0) return;
     setPending(true);
     try {
-      await signIn(testMode ? "test" : "resend", {
+      await signIn("resend", {
         email,
         redirectTo: "/after-signin"
       });
@@ -266,7 +253,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
 
   const handleBack = () => {
     setSent(false);
-    setCapturedLink('');
     setResendCooldown(0);
   };
 
@@ -573,19 +559,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '1rem 0', justifyContent: 'flex-start' }}>
-                      <input
-                        type="checkbox"
-                        id="testModeModal"
-                        checked={testMode}
-                        onChange={(e) => setTestMode(e.target.checked)}
-                        style={{ width: 'auto', margin: 0 }}
-                      />
-                      <label htmlFor="testModeModal" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                        Test Mode: Receive link here
-                      </label>
-                    </div>
-
                     <Button
                       type="submit"
                       variant="primary"
@@ -630,32 +603,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                       Entered the wrong email? Click here to change it
                     </Button>
                   </div>
-
-                  {testMode && (
-                    <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '12px', border: '1px dashed var(--primary)', background: 'var(--surface-container-low)' }}>
-                      {!capturedLink ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--primary)' }}>
-                          <Loader2 className="animate-spin" size={16} />
-                          <span>Capturing link...</span>
-                        </div>
-                      ) : (
-                        <div>
-                          <p style={{ fontSize: '0.75rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
-                            Test Link Captured:
-                          </p>
-                          <Button
-                            as="a"
-                            href={capturedLink}
-                            variant="primary"
-                            fullWidth
-                            size="sm"
-                          >
-                            Login Directly
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
             </div>

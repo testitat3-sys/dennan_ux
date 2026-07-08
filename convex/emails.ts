@@ -21,7 +21,7 @@ export const send = action({
     const resend = new Resend(resendApiKey);
 
     const { data, error } = await resend.emails.send({
-      from: args.from ?? "onboarding@resend.dev",
+      from: args.from ?? "Dennan <login@mail.dennan.ug>",
       to: [args.to],
       subject: args.subject,
       text: args.text,
