@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useConvex, useQuery, useMutation, useConvexAuth, useAction } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import CheckoutStepper from '../components/checkout/CheckoutStepper';
@@ -54,6 +54,20 @@ const CheckoutPage = () => {
     message: '',
     variant: 'success'
   });
+
+  // Validation States
+  const [addressError, setAddressError] = useState('');
+  const [guestNameError, setGuestNameError] = useState('');
+  const [guestEmailError, setGuestEmailError] = useState('');
+  const [guestPhoneError, setGuestPhoneError] = useState('');
+  const [showErrors, setShowErrors] = useState(false);
+
+  // Form refs for scrolling & focusing
+  const addressSectionRef = useRef(null);
+  const guestNameRef = useRef(null);
+  const guestEmailRef = useRef(null);
+  const guestPhoneRef = useRef(null);
+  const momoPhoneRef = useRef(null);
 
   const queueToast = (message, variant = 'success') => {
     setToastQueue(prev => [...prev, { message, variant }]);
@@ -461,6 +475,123 @@ const CheckoutPage = () => {
     return false;
   };
 
+  const validateForm = () => {
+    let isValid = true;
+    let firstErrorRef = null;
+    let firstErrorMessage = '';
+
+    // 1. Delivery Address
+    if (!selectedAddress) {
+      setAddressError('Please select a delivery location.');
+      if (isValid) {
+        firstErrorRef = addressSectionRef;
+        firstErrorMessage = 'Please select a delivery location.';
+      }
+      isValid = false;
+    } else {
+      setAddressError('');
+    }
+
+    // Guest details validation
+    if (!isAuthenticated) {
+      // 2. Guest Name
+      if (!guestName.trim()) {
+        setGuestNameError('Please enter your name.');
+        if (isValid) {
+          firstErrorRef = guestNameRef;
+          firstErrorMessage = 'Please enter your name.';
+        }
+        isValid = false;
+      } else {
+        setGuestNameError('');
+      }
+
+      // 3. Guest Email
+      if (!guestEmail.trim()) {
+        setGuestEmailError('Please enter your email address.');
+        if (isValid) {
+          firstErrorRef = guestEmailRef;
+          firstErrorMessage = 'Please enter your email address.';
+        }
+        isValid = false;
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
+        setGuestEmailError('Please enter a valid email address.');
+        if (isValid) {
+          firstErrorRef = guestEmailRef;
+          firstErrorMessage = 'Please enter a valid email address.';
+        }
+        isValid = false;
+      } else {
+        setGuestEmailError('');
+      }
+
+      // 4. Guest Phone (required only when selected payment is card)
+      if (selectedPayment === 'card') {
+        const cleanPhone = guestPhone.replace(/\s+/g, '');
+        if (!cleanPhone) {
+          setGuestPhoneError('Please enter your phone number.');
+          if (isValid) {
+            firstErrorRef = guestPhoneRef;
+            firstErrorMessage = 'Please enter your phone number.';
+          }
+          isValid = false;
+        } else if (!isValidUgPhone(guestPhone)) {
+          setGuestPhoneError('Must start with 77, 78, 76 (MTN) or 70, 75, 74 (Airtel), followed by 7 digits.');
+          if (isValid) {
+            firstErrorRef = guestPhoneRef;
+            firstErrorMessage = 'Please enter a valid Ugandan phone number.';
+          }
+          isValid = false;
+        } else {
+          setGuestPhoneError('');
+        }
+      } else {
+        setGuestPhoneError('');
+      }
+    }
+
+    // 5. Mobile Money Phone
+    if (selectedPayment === 'momo') {
+      const cleanNum = momoPhone.replace(/\s+/g, '');
+      if (!cleanNum) {
+        setPhoneError('Please enter your mobile money number.');
+        if (isValid) {
+          firstErrorRef = momoPhoneRef;
+          firstErrorMessage = 'Please enter your mobile money number.';
+        }
+        isValid = false;
+      } else {
+        const isValidUG = /^(77|78|76|70|75|74)\d{7}$/.test(cleanNum);
+        if (!isValidUG) {
+          setPhoneError('Must start with 77, 78, 76 (MTN) or 70, 75, 74 (Airtel), followed by 7 digits.');
+          if (isValid) {
+            firstErrorRef = momoPhoneRef;
+            firstErrorMessage = 'Must start with 77, 78, 76 (MTN) or 70, 75, 74 (Airtel), followed by 7 digits.';
+          }
+          isValid = false;
+        } else {
+          setPhoneError('');
+        }
+      }
+    }
+
+    if (!isValid) {
+      setShowErrors(true);
+      if (firstErrorMessage) {
+        queueToast(firstErrorMessage, 'danger');
+      }
+      
+      if (firstErrorRef && firstErrorRef.current) {
+        firstErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          firstErrorRef.current?.focus?.();
+        }, 100);
+      }
+    }
+
+    return isValid;
+  };
+
   // Order Placement submission
   const handlePlaceOrder = async () => {
     if (!cartItems || cartItems.length === 0) {
@@ -468,13 +599,7 @@ const CheckoutPage = () => {
       return;
     }
 
-    if (!selectedAddress) {
-      setShowLocationModal(true);
-      return;
-    }
-
-    if (!isAuthenticated && !isGuestFormValid()) {
-      queueToast("Please fill in your name, email and phone number to continue.", 'danger');
+    if (!validateForm()) {
       return;
     }
 
@@ -601,41 +726,48 @@ const CheckoutPage = () => {
         <div className="checkout-container">
           <div className="checkout-main">
             {/* Delivery Location Section */}
-            <Page.Section className="checkout-section">
-              <div className="section-header">
-                <Text role="label-md" as="span" color="brand-primary-dark" className="section-number">1</Text>
-                <Text role="headline-md" as="h2" className="section-title">Delivery Location</Text>
-              </div>
+            <div ref={addressSectionRef}>
+              <Page.Section className="checkout-section">
+                <div className="section-header">
+                  <Text role="label-md" as="span" color="brand-primary-dark" className="section-number">1</Text>
+                  <Text role="headline-md" as="h2" className="section-title">Delivery Location</Text>
+                </div>
 
-              <Card isHoverable={true} className="delivery-card">
-                {selectedAddress ? (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 'var(--space-4)' }}>
-                    <Card.Body>
-                      <Text role="title-lg" as="h3" className="delivery-name">{selectedAddress.name}</Text>
-                      <Text role="body-sm" as="p" className="delivery-zone">Zone: {selectedAddress.zone}</Text>
-                      <Text role="body-sm" as="p" color="tertiary" className="delivery-eta-hint">
-                        <Clock size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                        Delivery ETA: <Text role="body-sm" as="strong" color="tertiary">{lockedETA?.travelTime} mins</Text> ({lockedETA?.timeString})
-                      </Text>
+                <Card isHoverable={true} className={`delivery-card ${showErrors && addressError ? 'address-card-error' : ''}`}>
+                  {selectedAddress ? (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 'var(--space-4)' }}>
+                      <Card.Body>
+                        <Text role="title-lg" as="h3" className="delivery-name">{selectedAddress.name}</Text>
+                        <Text role="body-sm" as="p" className="delivery-zone">Zone: {selectedAddress.zone}</Text>
+                        <Text role="body-sm" as="p" color="tertiary" className="delivery-eta-hint">
+                          <Clock size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                          Delivery ETA: <Text role="body-sm" as="strong" color="tertiary">{lockedETA?.travelTime} mins</Text> ({lockedETA?.timeString})
+                        </Text>
+                      </Card.Body>
+                      <Card.Actions>
+                        <Button variant="outline-brand" size="sm" onClick={() => setShowLocationModal(true)}>
+                          Change
+                        </Button>
+                      </Card.Actions>
+                    </div>
+                  ) : (
+                    <Card.Body align="center">
+                      <Text role="body-lg" as="p">Where should we deliver your order?</Text>
+                      <Card.Actions align="center">
+                        <Button variant="soft" onClick={() => setShowLocationModal(true)}>
+                          Select Delivery Address
+                        </Button>
+                      </Card.Actions>
                     </Card.Body>
-                    <Card.Actions>
-                      <Button variant="outline-brand" size="sm" onClick={() => setShowLocationModal(true)}>
-                        Change
-                      </Button>
-                    </Card.Actions>
-                  </div>
-                ) : (
-                  <Card.Body align="center">
-                    <Text role="body-lg" as="p">Where should we deliver your order?</Text>
-                    <Card.Actions align="center">
-                      <Button variant="soft" onClick={() => setShowLocationModal(true)}>
-                        Select Delivery Address
-                      </Button>
-                    </Card.Actions>
-                  </Card.Body>
+                  )}
+                </Card>
+                {showErrors && addressError && (
+                  <Text role="label-md" as="p" color="support-red" style={{ marginTop: 'var(--space-2)', display: 'block' }}>
+                    {addressError}
+                  </Text>
                 )}
-              </Card>
-            </Page.Section>
+              </Page.Section>
+            </div>
 
             {/* Guest Contact Details Section (unauthenticated shoppers only) */}
             {!isAuthenticated && (
@@ -649,44 +781,71 @@ const CheckoutPage = () => {
                   <Card.Body style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                       <Text role="label-md" as="span" className="momo-label">Name</Text>
-                      <div className="momo-input-wrapper">
+                      <div className={`momo-input-wrapper ${showErrors && guestNameError ? 'is-invalid' : ''}`}>
                         <input
+                          ref={guestNameRef}
                           type="text"
                           className="momo-input"
                           placeholder="Jane Doe"
                           value={guestName}
-                          onChange={(e) => setGuestName(e.target.value)}
+                          onChange={(e) => {
+                            setGuestName(e.target.value);
+                            if (guestNameError) setGuestNameError('');
+                          }}
                         />
                       </div>
+                      {showErrors && guestNameError && (
+                        <Text role="label-md" as="p" color="support-red" style={{ marginTop: 'var(--space-1)' }}>
+                          {guestNameError}
+                        </Text>
+                      )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                       <Text role="label-md" as="span" className="momo-label">Email Address</Text>
-                      <div className="momo-input-wrapper">
+                      <div className={`momo-input-wrapper ${showErrors && guestEmailError ? 'is-invalid' : ''}`}>
                         <input
+                          ref={guestEmailRef}
                           type="email"
                           className="momo-input"
                           placeholder="jane@example.com"
                           value={guestEmail}
-                          onChange={(e) => setGuestEmail(e.target.value)}
+                          onChange={(e) => {
+                            setGuestEmail(e.target.value);
+                            if (guestEmailError) setGuestEmailError('');
+                          }}
                         />
                       </div>
+                      {showErrors && guestEmailError && (
+                        <Text role="label-md" as="p" color="support-red" style={{ marginTop: 'var(--space-1)' }}>
+                          {guestEmailError}
+                        </Text>
+                      )}
                     </div>
                     {selectedPayment === 'card' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                         <Text role="label-md" as="span" className="momo-label">Phone Number</Text>
-                        <div className="momo-input-wrapper">
+                        <div className={`momo-input-wrapper ${showErrors && guestPhoneError ? 'is-invalid' : ''}`}>
                           <div className="momo-prefix">
                             <Text role="label-sm" as="span" className="ug-flag">UG</Text>
                             <Text role="body-lg" as="span">+256</Text>
                           </div>
                           <input
+                            ref={guestPhoneRef}
                             type="tel"
                             className={`momo-input ${guestPhone ? (isValidUgPhone(guestPhone) ? 'is-valid' : 'is-invalid') : ''}`}
                             placeholder="772 123456"
                             value={guestPhone}
-                            onChange={(e) => setGuestPhone(e.target.value.replace(/[^0-9\s]/g, ''))}
+                            onChange={(e) => {
+                              setGuestPhone(e.target.value.replace(/[^0-9\s]/g, ''));
+                              if (guestPhoneError) setGuestPhoneError('');
+                            }}
                           />
                         </div>
+                        {showErrors && guestPhoneError && (
+                          <Text role="label-md" as="p" color="support-red" style={{ marginTop: 'var(--space-1)' }}>
+                            {guestPhoneError}
+                          </Text>
+                        )}
                       </div>
                     )}
                     <Text role="label-sm" as="p" color="tertiary" style={{ marginTop: 'var(--space-1)' }}>
@@ -737,12 +896,13 @@ const CheckoutPage = () => {
                     >
                       <Card.Body>
                         <Text role="label-md" as="span" className="momo-label">Phone Number</Text>
-                        <div className="momo-input-wrapper">
+                        <div className={`momo-input-wrapper ${showErrors && phoneError ? 'is-invalid' : ''}`}>
                           <div className="momo-prefix">
                             <Text role="label-sm" as="span" className="ug-flag">UG</Text>
                             <Text role="body-lg" as="span">+256</Text>
                           </div>
                           <input
+                            ref={momoPhoneRef}
                             type="tel"
                             className={`momo-input ${momoPhone ? (isValidPhone ? 'is-valid' : 'is-invalid') : ''}`}
                             placeholder="772 123456"
@@ -750,7 +910,7 @@ const CheckoutPage = () => {
                             onChange={(e) => setMomoPhone(e.target.value.replace(/[^0-9\s]/g, ''))}
                           />
                         </div>
-                        {phoneError && <Text role="label-md" as="p" color="support-red" className="momo-error-text">{phoneError}</Text>}
+                        {(showErrors || momoPhone) && phoneError && <Text role="label-md" as="p" color="support-red" className="momo-error-text">{phoneError}</Text>}
                         <Text role="label-sm" as="p" color="tertiary" className="momo-helper-text">
                           We will push a secure PIN prompt to this number to approve the transaction.
                         </Text>
@@ -880,7 +1040,6 @@ const CheckoutPage = () => {
                   fullWidth
                   loading={isProcessing}
                   onClick={handlePlaceOrder}
-                  disabled={!selectedAddress || (selectedPayment === 'momo' && !isValidPhone) || (!isAuthenticated && !isGuestFormValid())}
                 >
                   Complete Payment
                 </Button>
@@ -981,9 +1140,9 @@ const CheckoutPage = () => {
                     <Button
                       variant="pill"
                       onClick={() => setShowTracking(true)}
-                      icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>}
+                      icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>}
                     >
-                      Track Rider on Map
+                      Track Order
                     </Button>
                     {orderTracking?.riderPhone && (
                       <Button

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
-import { Bike, Home, CheckCircle2, RotateCcw } from 'lucide-react';
+import { User, CheckCircle2, RotateCcw } from 'lucide-react';
 import './RiderTracking.css';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -134,29 +134,15 @@ const RiderTracking = ({ orderId, location = "Kampala" }) => {
         </Card>
 
         <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
-          {currentStage >= 2 && (
-            <Card className="map-widget-container" removePadding={true}>
-              <div className="map-badge"></div>
-              <div className="tracking-map">
-                <div className="map-canvas">
-                  <div className="map-route-line"></div>
-                  <div className="map-marker rider pulse">
-                    <div className="marker-icon"><Bike size={18} /></div>
-                    <Text role="label-sm" as="div" className="marker-label">{rider.name ? rider.name.split(' ')[0] : "Rider"}</Text>
-                  </div>
-                  <div className="map-marker destination">
-                    <div className="marker-icon"><Home size={18} /></div>
-                    <Text role="label-sm" as="div" className="marker-label">You</Text>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          )}
-
           {currentStage >= 2 && rider.name && (
             <Card className="rider-card">
               <Card.Body style={{ padding: 0 }}>
                 <div className="rider-info-grid">
+                  <div className="rider-photo-wrapper">
+                    <div className="rider-photo-placeholder">
+                      <User size={30} strokeWidth={1.5} />
+                    </div>
+                  </div>
                   <div className="rider-details">
                     <Text role="label-sm" as="span" color="tertiary" className="rider-label">Your Rider</Text>
                     <Text role="title-lg" as="h4" className="rider-name">{rider.name}</Text>

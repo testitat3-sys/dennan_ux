@@ -707,4 +707,18 @@
   color: white;
 }
 
+/* ─── Validation Error States ────────────────────────────────────────── */
+.momo-input-wrapper.is-invalid {
+  border-color: var(--color-support-red, #c53030) !important;
+  background-color: color-mix(in srgb, var(--color-support-red, #c53030), transparent 96%) !important;
+}
 
+.momo-input-wrapper.is-invalid:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-support-red, #c53030), transparent 85%) !important;
+}
+
+.address-card-error {
+  border-color: var(--color-support-red, #c53030) !important;
+  background-color: color-mix(in srgb, var(--color-support-red, #c53030), transparent 96%) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-support-red, #c53030), transparent 85%) !important;
+}

@@ -61,7 +61,7 @@ const navData = [
         },
         { 
           title: 'Bath & Skin', 
-          links: [{ text: 'Bath & Skincare', href: '/category/newborn?q=skincare' }] 
+          links: [{ text: 'Bath & Skincare', href: '/brand/dalin' }] 
         },
         { 
           title: 'Laundry & Care', 

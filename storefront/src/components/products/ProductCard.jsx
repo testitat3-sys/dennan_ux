@@ -41,6 +41,7 @@ const ProductCard = ({
 
   const isSaved = isInWishlist(id);
   const isOutOfStock = inventory !== undefined && inventory <= 0;
+  const isLowStock = inventory !== undefined && inventory > 0 && inventory <= 3;
   const variantIndex = Math.abs(
     String(id ?? '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
   ) % 4;
@@ -87,10 +88,23 @@ const ProductCard = ({
           )}
           <div className="card-tags">
             {badge && <span className="tag tag--badge">{badge}</span>}
-            {brand && (
-              <span className="tag tag-brand tag--support-green">
-                {brand}
-              </span>
+            {isLowStock ? (
+              <div className="card-tags-row">
+                <span className="tag tag--low-stock tag--support-red">
+                  trending: {inventory} left
+                </span>
+                {brand && (
+                  <span className="tag tag-brand tag--support-green">
+                    {brand}
+                  </span>
+                )}
+              </div>
+            ) : (
+              brand && (
+                <span className="tag tag-brand tag--support-green">
+                  {brand}
+                </span>
+              )
             )}
             {unitsSold !== undefined && unitsSold >= 10 && (
               <span className="tag tag--sales">
