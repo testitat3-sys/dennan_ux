@@ -8,6 +8,7 @@ import ReturnProcessModal from "../components/ReturnProcessModal";
 import CustomerActivityModal from "../components/CustomerActivityModal";
 import RemindersWidget from "../components/RemindersWidget";
 import CalendarPanel from "../components/CalendarPanel";
+import ReceiptModal from "../components/ReceiptModal";
 import { getTodayStr } from "../utils/reminderHelpers";
 import {
   ClipboardList,
@@ -28,7 +29,9 @@ import {
   Banknote,
   Smartphone,
   CreditCard,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  History,
+  Printer
 } from "lucide-react";
 
 export default function StaffDashboard() {
@@ -46,6 +49,13 @@ export default function StaffDashboard() {
     api.orders.getOrdersForStaff,
     { token },
     { initialNumItems: 50 }
+  );
+
+  // --- TAB: MY ORDER HISTORY ---
+  const { results: myOrders, status: myOrdersStatus, loadMore: loadMoreMyOrders } = usePaginatedQuery(
+    api.orders.getMyHandledOrders,
+    { token },
+    { initialNumItems: 30 }
   );
 
   const claimOrderMutation = useMutation(api.orders.claimOrder);
@@ -143,6 +153,8 @@ export default function StaffDashboard() {
   const [checkoutError, setCheckoutError] = useState("");
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [isCheckoutSubmitting, setIsCheckoutSubmitting] = useState(false);
+  const [lastReceipt, setLastReceipt] = useState(null);
+  const [showReceipt, setShowReceipt] = useState(false);
   const todayStr = getTodayStr();
 
   // --- Linked-order lookup, used when a Calendar reminder references an order ---
@@ -295,11 +307,17 @@ export default function StaffDashboard() {
           setCheckoutError(`Voucher ${tender.voucherCode} has insufficient balance (Remaining: UGX ${validation.remainingBalance.toLocaleString()}).`);
           return;
         }
-      } else if (tender.method === "momo" && !tender.momoPhone?.trim()) {
-        setCheckoutError("Mobile money phone number is required for all MoMo tenders.");
-        return;
+      } else if (tender.method === "momo") {
+        if (!tender.momoPhone?.trim()) {
+          setCheckoutError("Mobile money phone number is required for all MoMo tenders.");
+          return;
+        }
+        if (!tender.cardOrderId?.trim()) {
+          setCheckoutError("Transaction ID is required for all MoMo tenders.");
+          return;
+        }
       } else if (tender.method === "card" && !tender.cardOrderId?.trim()) {
-        setCheckoutError("Card Order ID is required for all card tenders.");
+        setCheckoutError("Transaction ID is required for all card tenders.");
         return;
       }
     }
@@ -317,7 +335,7 @@ export default function StaffDashboard() {
         method: t.method,
         amount: t.amount,
         momoPhone: t.method === "momo" ? t.momoPhone.trim() : undefined,
-        cardOrderId: t.method === "card" ? t.cardOrderId.trim() : undefined,
+        cardOrderId: (t.method === "card" || t.method === "momo") ? t.cardOrderId.trim() : undefined,
         voucherCode: t.method === "voucher" ? t.voucherCode.trim().toUpperCase() : undefined
       }));
 
@@ -350,6 +368,22 @@ export default function StaffDashboard() {
 
       setIssuedVouchers(result.issuedVouchers || []);
       setCheckoutSuccess(true);
+      setLastReceipt({
+        orderId: result.orderId,
+        date: new Date(),
+        cashier: user?.name,
+        customerName: posCustomer.name.trim(),
+        customerPhone: posCustomer.phone.trim(),
+        items: [
+          ...cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
+          ...voucherCartItems.map(item => ({ name: "Gift Voucher", quantity: 1, price: item.amount }))
+        ],
+        payments: tenders.map(t => ({ method: t.method, amount: t.amount })),
+        subtotal: cartSubtotal,
+        discountAmount: 0,
+        total: cartSubtotal
+      });
+
       resetPosForm();
       setTimeout(() => {
         setCheckoutSuccess(false);
@@ -383,6 +417,39 @@ export default function StaffDashboard() {
   }, [cartSubtotal, tenders.length]);
 
   const initials = (name) => (name || "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+
+  // Helper: map an order from history list to ReceiptModal shape
+  const buildReceiptFromOrder = (order) => ({
+    orderId: order._id,
+    date: new Date(order.createdAt),
+    cashier: order.claimantName || user?.name,
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    items: order.items?.map(i => ({
+      name: i.productName,
+      quantity: i.quantity,
+      price: i.unitPrice,
+    })) || [],
+    payments: order.payments || [],
+    subtotal: order.subtotal,
+    discountAmount: order.discountAmount || 0,
+    couponApplied: order.couponApplied,
+    total: order.grandTotal,
+  });
+
+  // Helper: status -> CSS modifier
+  const getStatusModifier = (status) => {
+    switch (status) {
+      case "preparing": return "new";
+      case "packing": return "packing";
+      case "dispatched": return "dispatched";
+      case "delivered": return "done";
+      case "failed": return "failed";
+      case "returned": return "returned";
+      case "partially_returned": return "partially-returned";
+      default: return "new";
+    }
+  };
 
   const unclaimedOrders = ordersList?.filter(o => o.status === "preparing") || [];
   const activeOrders = ordersList?.filter(o => o.claimedBy === user?.id && ["packing", "dispatched"].includes(o.status)) || [];
@@ -423,6 +490,13 @@ export default function StaffDashboard() {
             >
               <ShoppingCart size={18} />
               <span>Physical Orders</span>
+            </button>
+            <button
+              className={`sidebar-nav-item ${activeTab === "history" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("history")}
+            >
+              <History size={18} />
+              <span>My Order History</span>
             </button>
             <button
               className={`sidebar-nav-item ${activeTab === "customers" ? "is-active" : ""}`}
@@ -731,6 +805,14 @@ export default function StaffDashboard() {
                         <Sparkles size={16} />
                         <span>Physical order processed successfully!</span>
                       </div>
+                      <button
+                        type="button"
+                        className="btn btn--secondary btn--sm"
+                        onClick={() => setShowReceipt(true)}
+                        style={{ marginTop: "var(--space-1)" }}
+                      >
+                        Print Receipt
+                      </button>
                       {issuedVouchers.length > 0 && (
                         <div style={{ width: "100%", marginTop: "var(--space-2)", paddingTop: "var(--space-2)", borderTop: "1px solid rgba(34,197,94,0.2)" }}>
                           <div style={{ fontSize: "11px", fontWeight: 700, marginBottom: "var(--space-1)" }}>Issued Gift Vouchers:</div>
@@ -922,24 +1004,39 @@ export default function StaffDashboard() {
 
                             {/* Conditional inputs */}
                             {tender.method === "momo" && (
-                              <div className="form-group" style={{ margin: 0, marginTop: "var(--space-2)" }}>
-                                <label className="form-label" style={{ fontSize: "11px" }}>MoMo Phone</label>
-                                <input
-                                  type="tel"
-                                  className="form-input"
-                                  placeholder="e.g. +256701..."
-                                  value={tender.momoPhone || ""}
-                                  onChange={(e) => handleUpdateTender(tender.tempId, "momoPhone", e.target.value)}
-                                  disabled={isCheckoutSubmitting}
-                                  required
-                                  style={{ height: "36px", fontSize: "12px" }}
-                                />
-                              </div>
+                              <>
+                                <div className="form-group" style={{ margin: 0, marginTop: "var(--space-2)" }}>
+                                  <label className="form-label" style={{ fontSize: "11px" }}>MoMo Phone</label>
+                                  <input
+                                    type="tel"
+                                    className="form-input"
+                                    placeholder="e.g. +256701..."
+                                    value={tender.momoPhone || ""}
+                                    onChange={(e) => handleUpdateTender(tender.tempId, "momoPhone", e.target.value)}
+                                    disabled={isCheckoutSubmitting}
+                                    required
+                                    style={{ height: "36px", fontSize: "12px" }}
+                                  />
+                                </div>
+                                <div className="form-group" style={{ margin: 0, marginTop: "var(--space-2)" }}>
+                                  <label className="form-label" style={{ fontSize: "11px" }}>Transaction ID</label>
+                                  <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="e.g. MoMo reference"
+                                    value={tender.cardOrderId || ""}
+                                    onChange={(e) => handleUpdateTender(tender.tempId, "cardOrderId", e.target.value)}
+                                    disabled={isCheckoutSubmitting}
+                                    required
+                                    style={{ height: "36px", fontSize: "12px" }}
+                                  />
+                                </div>
+                              </>
                             )}
 
                             {tender.method === "card" && (
                               <div className="form-group" style={{ margin: 0, marginTop: "var(--space-2)" }}>
-                                <label className="form-label" style={{ fontSize: "11px" }}>Card Order ID</label>
+                                <label className="form-label" style={{ fontSize: "11px" }}>Transaction ID</label>
                                 <input
                                   type="text"
                                   className="form-input"
@@ -1037,7 +1134,17 @@ export default function StaffDashboard() {
                       <button
                         type="submit"
                         className={`btn btn--primary btn--md btn--full-width${isCheckoutSubmitting ? " is-loading" : ""}`}
-                        disabled={isCheckoutSubmitting}
+                        disabled={
+                          isCheckoutSubmitting ||
+                          (cart.length === 0 && voucherCartItems.length === 0) ||
+                          !posCustomer.name.trim() ||
+                          tendersRemainingToPay !== 0 ||
+                          tenders.some(t =>
+                            (t.method === "momo" && (!t.momoPhone?.trim() || !t.cardOrderId?.trim())) ||
+                            (t.method === "card" && !t.cardOrderId?.trim()) ||
+                            (t.method === "voucher" && !t.voucherCode?.trim())
+                          )
+                        }
                       >
                         {isCheckoutSubmitting && <span className="btn-spinner" />}
                         Complete Store Purchase
@@ -1046,6 +1153,115 @@ export default function StaffDashboard() {
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB: MY ORDER HISTORY */}
+          {activeTab === "history" && (
+            <div className="admin-tab-panel is-active">
+              <div className="page-header">
+                <h1 className="admin-page-title">My Order History</h1>
+                <span style={{ fontSize: "12px", color: "var(--text-tertiary)", alignSelf: "center" }}>
+                  Sorted: Newest First
+                </span>
+              </div>
+
+              {myOrders === undefined ? (
+                <div className="empty-state">
+                  <div className="empty-title">Loading history...</div>
+                </div>
+              ) : myOrders.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-title">No orders handled yet.</div>
+                  <div className="empty-sub">Orders you claim or walk-in purchases you process will appear here.</div>
+                </div>
+              ) : (
+                <>
+                  <div className="table-wrap">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Date &amp; Time</th>
+                          <th>Customer</th>
+                          <th>Type</th>
+                          <th>Items</th>
+                          <th>Total</th>
+                          <th>Status</th>
+                          <th style={{ width: "150px" }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {myOrders.map((order) => (
+                          <tr
+                            key={order._id}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => setViewingOrder(order)}
+                          >
+                            <td style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
+                              {new Date(order.createdAt).toLocaleString("en-GB", {
+                                day: "2-digit", month: "short", year: "numeric",
+                                hour: "2-digit", minute: "2-digit"
+                              })}
+                            </td>
+                            <td className="td-customer">{order.customerName}</td>
+                            <td>
+                              <span
+                                className={`status-badge ${order.isWalkIn ? "status-badge--done" : "status-badge--packing"}`}
+                                style={{ fontSize: "10px" }}
+                              >
+                                {order.isWalkIn ? "Walk-in" : "Online"}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: "center" }}>{order.items?.length || 0}</td>
+                            <td style={{ whiteSpace: "nowrap" }}>UGX {order.grandTotal.toLocaleString()}</td>
+                            <td>
+                              <span className={`status-badge status-badge--${getStatusModifier(order.status)}`}>
+                                <span className="status-dot" />
+                                {order.status.toUpperCase()}
+                              </span>
+                            </td>
+                            <td
+                              className="td-action"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div style={{ display: "flex", gap: "5px" }}>
+                                <button
+                                  className="btn btn--secondary btn--sm"
+                                  onClick={() => setViewingOrder(order)}
+                                  title="View full details"
+                                >
+                                  <Eye size={13} />
+                                </button>
+                                <button
+                                  className="btn btn--outline btn--sm"
+                                  onClick={() => {
+                                    setLastReceipt(buildReceiptFromOrder(order));
+                                    setShowReceipt(true);
+                                  }}
+                                  title="Print receipt"
+                                >
+                                  <Printer size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {myOrdersStatus === "CanLoadMore" && (
+                    <div style={{ textAlign: "center", marginTop: "var(--space-4)" }}>
+                      <button
+                        className="btn btn--secondary"
+                        onClick={() => loadMoreMyOrders(20)}
+                      >
+                        Load More Orders
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
@@ -1149,6 +1365,14 @@ export default function StaffDashboard() {
             setCrmCustomer(null);
             // Convex automatically updates queries when state changes!
           }}
+        />
+      )}
+
+      {/* Receipt Modal */}
+      {showReceipt && lastReceipt && (
+        <ReceiptModal
+          receipt={lastReceipt}
+          onClose={() => setShowReceipt(false)}
         />
       )}
 

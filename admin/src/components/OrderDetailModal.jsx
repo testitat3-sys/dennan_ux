@@ -144,8 +144,8 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, token }
                     return (
                       <div key={idx} style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
                         <strong>{methodLabels[p.method] || p.method}</strong>: UGX {p.amount.toLocaleString()}
-                        {p.method === "momo" && p.momoPhone && ` (${p.momoPhone})`}
-                        {p.method === "card" && p.cardOrderId && ` (ID: ${p.cardOrderId})`}
+                        {p.method === "momo" && p.momoPhone && ` (${p.momoPhone}${p.cardOrderId ? `, Transaction ID: ${p.cardOrderId}` : ""})`}
+                        {p.method === "card" && p.cardOrderId && ` (Transaction ID: ${p.cardOrderId})`}
                         {p.method === "voucher" && p.voucherCode && ` (Code: ${p.voucherCode})`}
                       </div>
                     );
@@ -155,10 +155,17 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, token }
                 <>
                   <div style={{ fontSize: "13px", marginBottom: "6px" }}>Method: <strong>{order.paymentMethod?.toUpperCase()}</strong></div>
                   {order.paymentMethod === "card" && order.cardOrderId && (
-                    <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Card Order ID: <strong>{order.cardOrderId}</strong></p>
+                    <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Transaction ID: <strong>{order.cardOrderId}</strong></p>
                   )}
-                  {order.paymentMethod === "momo" && order.momoPhone && (
-                    <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>MoMo Phone: <strong>{order.momoPhone}</strong></p>
+                  {order.paymentMethod === "momo" && (
+                    <>
+                      {order.momoPhone && (
+                        <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>MoMo Phone: <strong>{order.momoPhone}</strong></p>
+                      )}
+                      {order.cardOrderId && (
+                        <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Transaction ID: <strong>{order.cardOrderId}</strong></p>
+                      )}
+                    </>
                   )}
                 </>
               )}

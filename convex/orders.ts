@@ -654,6 +654,49 @@ export const getOrderDetailById = query({
   },
 });
 
+export const getMyHandledOrders = query({
+  args: {
+    token: v.string(),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const { user: staffUser } = await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    const result = await ctx.db
+      .query("orders")
+      .withIndex("by_claimedBy", (q) => q.eq("claimedBy", staffUser._id))
+      .order("desc")
+      .paginate(args.paginationOpts);
+
+    const enrichedPage = [];
+    for (const order of result.page) {
+      const customer = await ctx.db.get(order.userId);
+
+      const items = await ctx.db
+        .query("orderItems")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+
+      const payments = await ctx.db
+        .query("orderPayments")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+
+      enrichedPage.push({
+        ...order,
+        customerName: customer?.name || "Unnamed Customer",
+        customerEmail: customer?.email,
+        customerPhone: customer?.phone,
+        items,
+        payments,
+        claimantName: staffUser.name || null,
+      });
+    }
+
+    return { ...result, page: enrichedPage };
+  },
+});
+
 export const claimOrder = mutation({
   args: {
     token: v.string(),
@@ -1011,8 +1054,13 @@ export const createPhysicalOrder = mutation({
       if (p.method === "card" && !p.cardOrderId?.trim()) {
         throw new Error("Card Order ID is required for card payments");
       }
-      if (p.method === "momo" && !p.momoPhone?.trim()) {
-        throw new Error("Mobile money phone number is required for MoMo payments");
+      if (p.method === "momo") {
+        if (!p.momoPhone?.trim()) {
+          throw new Error("Mobile money phone number is required for MoMo payments");
+        }
+        if (!p.cardOrderId?.trim()) {
+          throw new Error("Transaction ID is required for MoMo payments");
+        }
       }
       if (p.method === "voucher" && !p.voucherCode?.trim()) {
         throw new Error("Voucher code is required for voucher payments");
