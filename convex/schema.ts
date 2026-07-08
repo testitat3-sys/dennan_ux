@@ -480,6 +480,7 @@ export default defineSchema({
     isWalkIn: v.optional(v.boolean()),
     note: v.optional(v.string()),
     cardOrderId: v.optional(v.string()),
+    receiptNumber: v.optional(v.string()), // Human-readable receipt number (walk-in orders)
   }).index("by_user", ["userId"])
     .index("by_claimedBy", ["claimedBy"]),
 

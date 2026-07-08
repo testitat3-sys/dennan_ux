@@ -1192,6 +1192,15 @@ export const createPhysicalOrder = mutation({
       cardOrderIdSummary = args.payments[0].cardOrderId;
     }
 
+    // Generate human-readable receipt number: RCP-YYYYMMDD-XXXX
+    const receiptDate = new Date(now);
+    const receiptDateStr =
+      String(receiptDate.getUTCFullYear()) +
+      String(receiptDate.getUTCMonth() + 1).padStart(2, "0") +
+      String(receiptDate.getUTCDate()).padStart(2, "0");
+    const receiptSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const receiptNumber = `RCP-${receiptDateStr}-${receiptSuffix}`;
+
     const orderId = await ctx.db.insert("orders", {
       userId: customerUser._id,
       status: "delivered", // Delivered immediately
@@ -1213,6 +1222,7 @@ export const createPhysicalOrder = mutation({
       completedAt: now,
       isOnline: false,
       isWalkIn: true,
+      receiptNumber,
       history: [
         {
           status: "delivered",
@@ -1330,7 +1340,7 @@ export const createPhysicalOrder = mutation({
       });
     }
 
-    return { success: true, orderId, issuedVouchers };
+    return { success: true, orderId, receiptNumber, issuedVouchers };
   },
 });
 

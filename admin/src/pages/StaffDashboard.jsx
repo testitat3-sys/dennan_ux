@@ -10,6 +10,7 @@ import RemindersWidget from "../components/RemindersWidget";
 import CalendarPanel from "../components/CalendarPanel";
 import ReceiptModal from "../components/ReceiptModal";
 import { getTodayStr } from "../utils/reminderHelpers";
+import sosLogo from "../assets/SOS.png";
 import {
   ClipboardList,
   ShoppingCart,
@@ -370,6 +371,7 @@ export default function StaffDashboard() {
       setCheckoutSuccess(true);
       setLastReceipt({
         orderId: result.orderId,
+        receiptNumber: result.receiptNumber,
         date: new Date(),
         cashier: user?.name,
         customerName: posCustomer.name.trim(),
@@ -421,6 +423,7 @@ export default function StaffDashboard() {
   // Helper: map an order from history list to ReceiptModal shape
   const buildReceiptFromOrder = (order) => ({
     orderId: order._id,
+    receiptNumber: order.receiptNumber,
     date: new Date(order.createdAt),
     cashier: order.claimantName || user?.name,
     customerName: order.customerName,
@@ -472,7 +475,7 @@ export default function StaffDashboard() {
         {/* Sidebar Navigation */}
         <aside className="sidebar">
           <div className="sidebar-brand">
-            <span className="sidebar-brand-title">Dennan</span>
+            <img src={sosLogo} alt="Dennan" className="sidebar-logo" />
             <span className="sidebar-brand-sub">Staff Hub</span>
           </div>
 

@@ -12,10 +12,11 @@ export default function ReceiptModal({ receipt, onClose }) {
     hour12: true,
   });
 
-  // Build a short receipt number from the orderId or a timestamp fallback
-  const receiptNo = receipt.orderId
-    ? receipt.orderId.slice(-8).toUpperCase()
-    : new Date(receipt.date).getTime().toString(36).toUpperCase().slice(-8);
+  // Use stored receipt number from DB; fall back to orderId suffix or timestamp
+  const receiptNo = receipt.receiptNumber ||
+    (receipt.orderId
+      ? receipt.orderId.slice(-8).toUpperCase()
+      : new Date(receipt.date).getTime().toString(36).toUpperCase().slice(-8));
 
   const hasDiscount = receipt.discountAmount && receipt.discountAmount > 0;
   const subtotal = receipt.subtotal ?? receipt.total;

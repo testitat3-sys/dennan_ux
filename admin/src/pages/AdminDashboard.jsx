@@ -9,6 +9,7 @@ import RemindersWidget from "../components/RemindersWidget";
 import CalendarPanel from "../components/CalendarPanel";
 import SalesMetricsPanel from "../components/SalesMetricsPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
+import sosLogo from "../assets/SOS.png";
 import {
   LayoutDashboard,
   Boxes,
@@ -153,8 +154,8 @@ export default function AdminDashboard() {
         {/* Sidebar Navigation */}
         <aside className="sidebar">
           <div className="sidebar-brand">
-            <span className="sidebar-brand-title">Dennan</span>
-            <span className="sidebar-brand-sub">Admin Console</span>
+            <img src={sosLogo} alt="Dennan" className="sidebar-logo" />
+            <span className="sidebar-brand-sub">Admin Hub</span>
           </div>
 
           <nav className="sidebar-nav">

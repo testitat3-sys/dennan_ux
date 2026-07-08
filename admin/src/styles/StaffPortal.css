@@ -1013,6 +1013,14 @@
   color: var(--color-brand-primary);
 }
 
+.sidebar-logo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
 .sidebar-brand-sub {
   font-size: var(--label-md);
   font-weight: 700;
