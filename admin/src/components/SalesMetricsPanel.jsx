@@ -17,6 +17,7 @@ import {
 import { TrendingUp, CheckCircle, DollarSign } from "lucide-react";
 import { getTodayStr } from "../utils/reminderHelpers";
 import PaymentMethodDetailModal from "./PaymentMethodDetailModal";
+import ChannelDetailModal from "./ChannelDetailModal";
 import "../styles/SalesMetrics.css";
 
 const METHOD_COLORS = {
@@ -26,12 +27,25 @@ const METHOD_COLORS = {
   voucher: "#c9a227",
 };
 
+const CHANNEL_COLORS = {
+  online: "#3b7dd8",
+  walk_in: "#7fa93e",
+  whatsapp: "#25d366",
+};
+
 const PAYMENT_FILTERS = [
   { value: "all", label: "All" },
   { value: "physical", label: "Cash" },
   { value: "momo", label: "Mobile Money" },
   { value: "card", label: "Card" },
   { value: "voucher", label: "Gift Voucher" },
+];
+
+const CHANNEL_FILTERS = [
+  { value: "all", label: "All" },
+  { value: "online", label: "Online" },
+  { value: "walk_in", label: "Walk-in" },
+  { value: "whatsapp", label: "WhatsApp" },
 ];
 
 const DATE_PRESETS = [
@@ -61,7 +75,9 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
   const [customStart, setCustomStart] = useState(addDays(todayStr, -29));
   const [customEnd, setCustomEnd] = useState(todayStr);
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
+  const [channelFilter, setChannelFilter] = useState("all");
   const [selectedMethod, setSelectedMethod] = useState(null);
+  const [selectedChannel, setSelectedChannel] = useState(null);
 
   const { startDate, endDate } = useMemo(() => {
     switch (datePreset) {
@@ -87,11 +103,17 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
     startDate,
     endDate,
     paymentMethod: paymentMethodFilter === "all" ? undefined : paymentMethodFilter,
+    channel: channelFilter === "all" ? undefined : channelFilter,
   });
 
   const pieData = useMemo(() => {
     if (!metrics) return [];
     return metrics.byPaymentMethod.map((m) => ({ name: m.label, value: m.amount, method: m.method }));
+  }, [metrics]);
+
+  const channelPieData = useMemo(() => {
+    if (!metrics) return [];
+    return metrics.byChannel.map((c) => ({ name: c.label, value: c.amount, channel: c.channel }));
   }, [metrics]);
 
   return (
@@ -145,6 +167,18 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
               onClick={() => setPaymentMethodFilter(p.value)}
             >
               {p.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="sales-metrics-segment-group">
+          {CHANNEL_FILTERS.map((c) => (
+            <button
+              key={c.value}
+              className={`btn btn--segment ${channelFilter === c.value ? "btn--segment-active" : ""}`}
+              onClick={() => setChannelFilter(c.value)}
+            >
+              {c.label}
             </button>
           ))}
         </div>
@@ -227,6 +261,28 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
                 </PieChart>
               </ResponsiveContainer>
             </div>
+
+            <div className="sales-metrics-chart-card">
+              <h3 className="product-edit-card-title">Sales by Channel</h3>
+              <ResponsiveContainer width="100%" height={320}>
+                <PieChart>
+                  <Pie
+                    data={channelPieData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                  >
+                    {channelPieData.map((entry) => (
+                      <Cell key={entry.channel} fill={CHANNEL_COLORS[entry.channel] || "#999"} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `UGX ${Number(value).toLocaleString()}`} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           <div className="section-header">
@@ -258,6 +314,36 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
               </tbody>
             </table>
           </div>
+
+          <div className="section-header">
+            <h2 className="section-title">Channel Breakdown</h2>
+          </div>
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Channel</th>
+                  <th>Amount</th>
+                  <th>Orders</th>
+                  <th>% of Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.byChannel.map((c) => (
+                  <tr
+                    key={c.channel}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => setSelectedChannel({ channel: c.channel, label: c.label })}
+                  >
+                    <td><strong>{c.label}</strong></td>
+                    <td>UGX {c.amount.toLocaleString()}</td>
+                    <td>{c.count}</td>
+                    <td>{metrics.totalSales > 0 ? Math.round((c.amount / metrics.totalSales) * 100) : 0}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 
@@ -268,6 +354,16 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
         endDate={endDate}
         token={token}
         onClose={() => setSelectedMethod(null)}
+        onOpenOrder={onOpenOrder}
+      />
+
+      <ChannelDetailModal
+        channel={selectedChannel?.channel || null}
+        channelLabel={selectedChannel?.label}
+        startDate={startDate}
+        endDate={endDate}
+        token={token}
+        onClose={() => setSelectedChannel(null)}
         onOpenOrder={onOpenOrder}
       />
     </div>

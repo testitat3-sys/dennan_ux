@@ -147,7 +147,7 @@ export const staticData = {
       ],
       rider: {
         name: "Moses K.",
-        photo: "/assets/rider_moses.png",
+        photo: "/assets/rider_moses.webp",
         bike: "Yamaha FZ (UFE 452C)",
         rating: 4.9,
         phone: "+256700000000"
@@ -189,25 +189,25 @@ export const staticData = {
       id: "curated-picks",
       title: "Curated Picks for You",
       subtext: "Hand-selected by our experts and tailored to your unique parenting style.",
-      heroImage: "/new_assets/Motherhood.webp"
+      heroImage: "/assets/stage_expectant.webp"
     },
     "most-loved": {
       id: "most-loved",
       title: "Most Loved by Parents",
       subtext: "The highest-rated essentials as voted by our community of mothers and fathers.",
-      heroImage: "/new_assets/Newborn.webp"
+      heroImage: "/assets/Newborn.webp"
     },
     "essentials": {
       id: "essentials",
       title: "The Essentials",
       subtext: "The non-negotiables for safety, feeding, and sleep. Every home needs these.",
-      heroImage: "/new_assets/Care.webp"
+      heroImage: "/assets/Care.webp"
     },
     "must-haves": {
       id: "must-haves",
       title: "Must-Haves for Parents",
       subtext: "Quality items that make an enormous difference to your daily life.",
-      heroImage: "/assets/feeding_nursing.png"
+      heroImage: "/assets/feeding_nursing.webp"
     },
     "luxuries": {
       id: "luxuries",

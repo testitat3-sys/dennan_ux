@@ -8,6 +8,38 @@ const http = httpRouter();
 auth.addHttpRoutes(http);
 
 http.route({
+  path: "/api/import-products",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    try {
+      const authHeader = req.headers.get("Authorization");
+      const expectedToken = `Bearer ${process.env.STAFF_AUTH_SALT || "dennan-secure-salt-2026"}`;
+      if (authHeader !== expectedToken) {
+        console.warn("[convex/http.ts] Unauthorized import attempt");
+        return new Response("Unauthorized", { status: 401 });
+      }
+
+      const { products } = await req.json();
+      console.log(`[convex/http.ts] POST /api/import-products received batch of size ${products?.length || 0}`);
+      
+      if (!Array.isArray(products)) {
+        return new Response("Bad Request: products must be an array", { status: 400 });
+      }
+
+      const result = await ctx.runMutation(internal.importProducts.upsertProductsBatch, { products });
+      
+      return new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      console.error("[convex/http.ts] Import error:", error);
+      return new Response("Internal Server Error", { status: 500 });
+    }
+  }),
+});
+
+http.route({
   path: "/api/save-test-link",
   method: "POST",
     handler: httpAction(async (ctx, req) => {

@@ -19,6 +19,7 @@ export default function ReceiptModal({ receipt, onClose }) {
       : new Date(receipt.date).getTime().toString(36).toUpperCase().slice(-8));
 
   const hasDiscount = receipt.discountAmount && receipt.discountAmount > 0;
+  const hasDeliveryFee = receipt.deliveryFee && receipt.deliveryFee > 0;
   const subtotal = receipt.subtotal ?? receipt.total;
   const grandTotal = receipt.total;
 
@@ -101,20 +102,26 @@ export default function ReceiptModal({ receipt, onClose }) {
 
           {/* ── Totals ── */}
           <div className="receipt-totals">
+            {(hasDiscount || hasDeliveryFee) && (
+              <div className="receipt-total-row">
+                <span>Subtotal</span>
+                <span>UGX {subtotal.toLocaleString()}</span>
+              </div>
+            )}
             {hasDiscount && (
-              <>
-                <div className="receipt-total-row">
-                  <span>Subtotal</span>
-                  <span>UGX {subtotal.toLocaleString()}</span>
-                </div>
-                <div className="receipt-total-row receipt-discount">
-                  <span>
-                    Discount
-                    {receipt.couponApplied ? ` (${receipt.couponApplied})` : ""}
-                  </span>
-                  <span>- UGX {receipt.discountAmount.toLocaleString()}</span>
-                </div>
-              </>
+              <div className="receipt-total-row receipt-discount">
+                <span>
+                  Discount
+                  {receipt.couponApplied ? ` (${receipt.couponApplied})` : ""}
+                </span>
+                <span>- UGX {receipt.discountAmount.toLocaleString()}</span>
+              </div>
+            )}
+            {hasDeliveryFee && (
+              <div className="receipt-total-row">
+                <span>Delivery Fee</span>
+                <span>UGX {receipt.deliveryFee.toLocaleString()}</span>
+              </div>
             )}
             <div className="receipt-total-row receipt-grand-total">
               <span>AMOUNT DUE</span>
@@ -146,7 +153,7 @@ export default function ReceiptModal({ receipt, onClose }) {
           {/* ── Footer ── */}
           <div className="receipt-footer">
             <p>Next time, order at <strong>dennan.ug</strong></p>
-            <p>We deliver! 🚀</p>
+            <p>Thanks for shopping with us!</p>
           </div>
 
         </div>

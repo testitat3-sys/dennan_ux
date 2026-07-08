@@ -41,7 +41,6 @@ const ProductCard = ({
 
   const isSaved = isInWishlist(id);
   const isOutOfStock = inventory !== undefined && inventory <= 0;
-  const isLowStock = inventory !== undefined && inventory > 0 && inventory <= 3;
   const variantIndex = Math.abs(
     String(id ?? '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
   ) % 4;
@@ -138,11 +137,6 @@ const ProductCard = ({
             {isOutOfStock && (
               <span className="card-stock-pill card-stock-pill--oos">
                 Out of Stock
-              </span>
-            )}
-            {isLowStock && (
-              <span className="card-stock-pill card-stock-pill--low">
-                {inventory} left
               </span>
             )}
           </div>

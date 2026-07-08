@@ -1,25 +1,26 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
-import BrandPage from './pages/BrandPage';
-import PLP from './pages/PLP';
-import Dashboard from './pages/Dashboard';
-import RegistryPage from './pages/RegistryPage';
-import WishlistPage from './pages/WishlistPage';
-import CheckoutPage from './pages/CheckoutPage';
-import PaymentCallbackPage from './pages/PaymentCallbackPage';
-import PDP from './pages/PDP';
-import DesignSystemPage from './pages/DesignSystemPage';
-import ComingSoonPage from './pages/ComingSoonPage';
-import AboutPage from './pages/AboutPage';
-import AuthPage from './pages/AuthPage';
-import AfterSignIn from './pages/AfterSignIn';
-import ProfilePage from './pages/ProfilePage';
-import NotFoundPage from './pages/NotFoundPage';
-import PublicRegistryPage from './pages/PublicRegistryPage';
 import ProtectedRoute from './components/layout/ProtectedRoute';
+
+const BrandPage = lazy(() => import('./pages/BrandPage'));
+const PLP = lazy(() => import('./pages/PLP'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const RegistryPage = lazy(() => import('./pages/RegistryPage'));
+const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const PaymentCallbackPage = lazy(() => import('./pages/PaymentCallbackPage'));
+const PDP = lazy(() => import('./pages/PDP'));
+const DesignSystemPage = lazy(() => import('./pages/DesignSystemPage'));
+const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const AuthPage = lazy(() => import('./pages/AuthPage'));
+const AfterSignIn = lazy(() => import('./pages/AfterSignIn'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const PublicRegistryPage = lazy(() => import('./pages/PublicRegistryPage'));
 
 import ScrollToTop from './utils/ScrollToTop';
 import { useQuery } from 'convex/react';
@@ -46,6 +47,7 @@ function App() {
     <Router>
       <ScrollToTop />
       <Layout>
+        <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<AuthPage />} />
@@ -95,6 +97,7 @@ function App() {
           {/* Catch-all route for unknown paths */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </Suspense>
       </Layout>
     </Router>
   );

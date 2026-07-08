@@ -16,6 +16,7 @@ import Page from '../components/ui/Page';
 import Card from '../components/ui/Card';
 import Text from '../components/ui/Text';
 import DefaultProductImage from '../components/products/DefaultProductImage';
+import { Check, Settings, Sparkles as SparklesIcon, RotateCcw, ShoppingCart, Clock } from 'lucide-react';
 import './CheckoutPage.css';
 
 const CheckoutPage = () => {
@@ -99,6 +100,14 @@ const CheckoutPage = () => {
 
   // Completed order snapshot returned from the backend
   const [placedOrderDetails, setPlacedOrderDetails] = useState(null);
+
+  // Live fulfillment status for the just-placed order (works for guests too — the
+  // orderId itself is the capability token, no auth required).
+  const activeOrderId = placedOrderDetails?.orderId || pendingOrderId;
+  const orderTracking = useQuery(
+    api.orders.getOrderTrackingStatus,
+    activeOrderId ? { orderId: activeOrderId } : "skip"
+  );
 
   // 1. Fetch auxiliary static checkout data (delivery zones, rider profile)
   useEffect(() => {
@@ -265,7 +274,7 @@ const CheckoutPage = () => {
     const points = Math.floor(mockOrder.grandTotal / 1000);
     if (points > 0) {
       queueToast(
-        `✨ You've earned +${points} Dennan Loyalty Points! ${isAuthenticated ? 'They have been credited to your profile.' : 'Create an account next time to save them.'}`,
+        `You've earned +${points} Dennan Loyalty Points! ${isAuthenticated ? 'They have been credited to your profile.' : 'Create an account next time to save them.'}`,
         'success'
       );
     }
@@ -316,7 +325,7 @@ const CheckoutPage = () => {
     const points = Math.floor(grandTotal / 1000);
     if (points > 0) {
       queueToast(
-        `✨ You've earned +${points} Dennan Loyalty Points! ${isAuthenticated ? 'They have been credited to your profile.' : 'Create an account next time to save them.'}`,
+        `You've earned +${points} Dennan Loyalty Points! ${isAuthenticated ? 'They have been credited to your profile.' : 'Create an account next time to save them.'}`,
         'success'
       );
     }
@@ -548,7 +557,7 @@ const CheckoutPage = () => {
 
     const points = Math.floor(order.grandTotal / 1000);
     if (points > 0) {
-      queueToast(`✨ You've earned +${points} Dennan Loyalty Points! They have been credited to your profile.`, 'success');
+      queueToast(`You've earned +${points} Dennan Loyalty Points! They have been credited to your profile.`, 'success');
     }
   };
 
@@ -605,7 +614,8 @@ const CheckoutPage = () => {
                       <Text role="title-lg" as="h3" className="delivery-name">{selectedAddress.name}</Text>
                       <Text role="body-sm" as="p" className="delivery-zone">Zone: {selectedAddress.zone}</Text>
                       <Text role="body-sm" as="p" color="tertiary" className="delivery-eta-hint">
-                        ⏱ Delivery ETA: <Text role="body-sm" as="strong" color="tertiary">{lockedETA?.travelTime} mins</Text> ({lockedETA?.timeString})
+                        <Clock size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                        Delivery ETA: <Text role="body-sm" as="strong" color="tertiary">{lockedETA?.travelTime} mins</Text> ({lockedETA?.timeString})
                       </Text>
                     </Card.Body>
                     <Card.Actions>
@@ -666,7 +676,7 @@ const CheckoutPage = () => {
                         <Text role="label-md" as="span" className="momo-label">Phone Number</Text>
                         <div className="momo-input-wrapper">
                           <div className="momo-prefix">
-                            <Text role="body-lg" as="span" className="ug-flag">🇺🇬</Text>
+                            <Text role="label-sm" as="span" className="ug-flag">UG</Text>
                             <Text role="body-lg" as="span">+256</Text>
                           </div>
                           <input
@@ -729,7 +739,7 @@ const CheckoutPage = () => {
                         <Text role="label-md" as="span" className="momo-label">Phone Number</Text>
                         <div className="momo-input-wrapper">
                           <div className="momo-prefix">
-                            <Text role="body-lg" as="span" className="ug-flag">🇺🇬</Text>
+                            <Text role="label-sm" as="span" className="ug-flag">UG</Text>
                             <Text role="body-lg" as="span">+256</Text>
                           </div>
                           <input
@@ -857,7 +867,8 @@ const CheckoutPage = () => {
                       {couponError && <Text role="label-md" as="p" color="support-red" className="coupon-error-text">{couponError}</Text>}
                       {appliedCoupon && (
                         <Text role="label-md" as="p" color="support-green" className="coupon-success-text">
-                          ✓ Code applied! Saved {formatPrice(discountAmount)}
+                          <Check size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                          Code applied! Saved {formatPrice(discountAmount)}
                         </Text>
                       )}
                     </Card.Body>
@@ -974,13 +985,15 @@ const CheckoutPage = () => {
                     >
                       Track Rider on Map
                     </Button>
-                    <Button
-                      variant="pill"
-                      onClick={() => window.location.href = `tel:${checkoutData?.tracking?.rider?.phone || '+256772000000'}`}
-                      icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
-                    >
-                      Contact Delivery Lead
-                    </Button>
+                    {orderTracking?.riderPhone && (
+                      <Button
+                        variant="pill"
+                        onClick={() => window.location.href = `tel:${orderTracking.riderPhone}`}
+                        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
+                      >
+                        Contact Delivery Lead
+                      </Button>
+                    )}
                   </div>
 
                   {showPrefPrompt && (
@@ -1058,9 +1071,8 @@ const CheckoutPage = () => {
             </>
           ) : (
             <RiderTracking
-              initialETA={remainingTime || lockedETA?.travelTime || 18}
+              orderId={placedOrderDetails?.orderId || pendingOrderId}
               location={selectedAddress?.zone || 'Kampala'}
-              trackingData={checkoutData?.tracking}
             />
           )}
         </div>
@@ -1117,7 +1129,8 @@ const CheckoutPage = () => {
             <div className="dev-tool-panel">
               <div className="dev-tool-header">
                 <span className="dev-tool-title">
-                  🔧 Developer Options
+                  <Settings size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                  Developer Options
                 </span>
                 <button
                   onClick={() => setShowDevPanel(false)}
@@ -1137,7 +1150,8 @@ const CheckoutPage = () => {
                   setShowDevPanel(false);
                 }}
               >
-                ✨ Confirm with Mock Items
+                <SparklesIcon size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                Confirm with Mock Items
               </button>
 
               <button
@@ -1149,7 +1163,8 @@ const CheckoutPage = () => {
                 disabled={cartItems.length === 0}
                 style={cartItems.length === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
               >
-                🛒 Confirm Actual Cart ({cartItems.length})
+                <ShoppingCart size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                Confirm Actual Cart ({cartItems.length})
               </button>
 
               {isOrderConfirmed && (
@@ -1160,7 +1175,8 @@ const CheckoutPage = () => {
                     setShowDevPanel(false);
                   }}
                 >
-                  🔄 Reset Checkout
+                  <RotateCcw size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                  Reset Checkout
                 </button>
               )}
             </div>

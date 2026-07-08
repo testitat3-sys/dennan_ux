@@ -45,6 +45,25 @@ export const getProducts = query({
   },
 });
 
+export const getHomeFeaturedProducts = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    const kept = products.filter((p) => shouldKeepProduct(p));
+
+    const mostLoved = kept
+      .filter((p) => p.isMostLoved)
+      .slice(0, 8)
+      .map(normalizeProductPrice);
+    const curated = kept
+      .filter((p) => p.isCuratedForYou)
+      .slice(0, 4)
+      .map(normalizeProductPrice);
+
+    return { mostLoved, curated };
+  },
+});
+
 export const getProductById = query({
   args: { id: v.string() },
   handler: async (ctx, args) => {

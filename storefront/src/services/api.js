@@ -8,29 +8,6 @@ export const fetchData = async (endpoint) => {
   return staticData[endpoint] || null;
 };
 
-export const getHomepageData = async () => {
-  try {
-    const [hero, brands, trustItems] = await Promise.all([
-      convex.query(api.data.getHero),
-      convex.query(api.data.getBrands),
-      convex.query(api.data.getTrustItems),
-    ]);
-
-    return {
-      hero: hero || staticData.hero,
-      brands: (brands && brands.length > 0) ? brands : (staticData.brands || []),
-      trustItems: (trustItems && trustItems.length > 0) ? trustItems : staticData.trustItems,
-    };
-  } catch (error) {
-    console.warn("[API] Convex query failed for homepage. Falling back to local staticData.", error);
-    return {
-      hero: staticData.hero,
-      brands: staticData.brands || [],
-      trustItems: staticData.trustItems,
-    };
-  }
-};
-
 export const getDashboardData = async () => {
   try {
     const dash = await convex.query(api.data.getDashboardConfig);
@@ -41,19 +18,6 @@ export const getDashboardData = async () => {
   } catch (error) {
     console.warn("[API] Convex query failed for dashboard config. Falling back to local staticData.", error);
     return staticData.dashboard;
-  }
-};
-
-export const getProducts = async () => {
-  try {
-    const products = await convex.query(api.data.getProducts);
-    if (!products || products.length === 0) {
-      return [];
-    }
-    return products;
-  } catch (error) {
-    console.warn("[API] Convex query failed for products. Falling back to empty array.", error);
-    return [];
   }
 };
 

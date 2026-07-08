@@ -11,9 +11,9 @@ const TommeeTippeeBanner = () => {
         aria-label="Shop Tommee Tippee products"
       >
         <picture>
-          <source media="(max-width: 768px)" srcSet="/new_assets/tommee%20tippee%20banner%20mobile.webp" />
+          <source media="(max-width: 768px)" srcSet="/assets/tommee%20tippee%20banner%20mobile.webp" />
           <img
-            src="/new_assets/tommee tippee banner.webp"
+            src="/assets/tommee tippee banner.webp"
             alt="Tommee Tippee Brand Banner - Shop the collection"
             className="tommee-banner__img"
             loading="lazy"

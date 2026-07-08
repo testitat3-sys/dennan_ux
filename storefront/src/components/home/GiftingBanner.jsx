@@ -11,9 +11,9 @@ const GiftingBanner = ({ href = '/registry' }) => {
         aria-label="Start a group gift — Circle of Love group gifting"
       >
         <picture>
-          <source media="(max-width: 768px)" srcSet="/new_assets/Group%20gifting%20mobile.png" />
+          <source media="(max-width: 768px)" srcSet="/assets/Group%20gifting%20mobile.webp" />
           <img
-            src="/new_assets/Group%20Gifting%20In%20Uganda.webp"
+            src="/assets/Group%20Gifting%20In%20Uganda.webp"
             alt="Circle of Love — Group gifting. Create a gift with friends or family and contribute in small amounts."
             className="gifting-banner__img"
             loading="lazy"

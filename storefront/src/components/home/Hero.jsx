@@ -81,7 +81,7 @@ const Hero = ({ content }) => {
 
       <div className="hero__image-wrap" aria-hidden="true">
         <div className="hero__accent"></div>
-        <img src={backgroundImage} alt="Premium nursery" className="hero__image-inner" />
+        <img src={backgroundImage} alt="Premium nursery" className="hero__image-inner" fetchpriority="high" />
         <div className="hero__image-tag">
           <span className="hero__image-tag-label">{trending.label}</span>
           <span className="hero__image-tag-value">{trending.value}</span>

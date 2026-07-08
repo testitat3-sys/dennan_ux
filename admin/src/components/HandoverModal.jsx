@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { X, Clock, ArrowRight } from "lucide-react";
+import { X, Clock, ArrowRight, User, MapPin } from "lucide-react";
 
-export default function HandoverModal({ orderId, onClose, onSubmit }) {
+export default function HandoverModal({ orderId, customerName, customerPhone, deliveryAddress, onClose, onSubmit }) {
   const [riderName, setRiderName] = useState("");
   const [riderPhone, setRiderPhone] = useState("");
   const [delayMinutes, setDelayMinutes] = useState(30);
@@ -49,6 +49,16 @@ export default function HandoverModal({ orderId, onClose, onSubmit }) {
           {error && (
             <div className="form-error is-visible">
               <span>{error}</span>
+            </div>
+          )}
+
+          {(customerName || deliveryAddress) && (
+            <div className="customer-info-box">
+              <h4><User size={15} /> Customer</h4>
+              <p>{customerName || "Unknown customer"} — {customerPhone || "No phone on file"}</p>
+              {deliveryAddress && (
+                <p><MapPin size={13} /> {deliveryAddress.name}{deliveryAddress.zone ? `, Zone: ${deliveryAddress.zone}` : ""}</p>
+              )}
             </div>
           )}
 

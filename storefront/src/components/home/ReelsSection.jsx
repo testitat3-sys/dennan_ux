@@ -9,7 +9,7 @@ const ReelsSection = () => {
   // Duplicate the same Dalin video 4 times
   const reels = Array.from({ length: 4 }, (_, idx) => ({
     id: idx,
-    thumbnail: "/new_assets/dalin_thumbnail.png",
+    thumbnail: "/assets/dalin_thumbnail.png",
     videoUrl: "https://player.cloudinary.com/embed/?cloud_name=vjngpdmd&public_id=dalin_video_mljelx&autoplay=true",
     title: `Dalin baby care reel ${idx + 1}`
   }));

@@ -31,7 +31,7 @@ const navData = [
     type: 'mother',
     icon: <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/>,
     menu: {
-      featured: { image: '/new_assets/stage_expectant.webp', alt: 'Maternity essentials', title: 'Motherhood Lookbook', link: '/category/mother', linkText: 'View Guide' },
+      featured: { image: '/assets/stage_expectant.webp', alt: 'Maternity essentials', title: 'Motherhood Lookbook', link: '/category/mother', linkText: 'View Guide' },
       columns: [
         { 
           title: 'Maternity', 
@@ -110,7 +110,7 @@ const navData = [
     type: 'about',
     icon: <><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>,
     menu: {
-      featured: { image: '/new_assets/about%20dennan.png', alt: 'Our Philosophy', title: 'Our Philosophy', link: '/about', linkText: 'Read Story' },
+      featured: { image: '/assets/about dennan.png', alt: 'Our Philosophy', title: 'Our Philosophy', link: '/about', linkText: 'Read Story' },
       columns: [
         { title: 'Quick Links', links: [{ text: 'Our Story', href: '/about' }, { text: 'Contact Us', href: 'https://wa.me/256784733314' }] }
       ]

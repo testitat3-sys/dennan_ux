@@ -170,6 +170,8 @@ export const placeOrder = mutation({
       grandTotal,
       couponApplied: appliedCoupon,
       createdAt: Date.now(),
+      channel: "online",
+      isOnline: true,
     });
 
     // 6. Save line items snapshots (locks price and details at checkout)
@@ -396,6 +398,8 @@ export const placeGuestOrder = mutation({
       grandTotal,
       couponApplied: appliedCoupon,
       createdAt: Date.now(),
+      channel: "online",
+      isOnline: true,
     });
 
     // 6. Line item snapshots
@@ -471,6 +475,37 @@ export const getOrderForClient = query({
       return null;
     }
     return order;
+  },
+});
+
+// Public, unauthenticated tracking query for the storefront's post-purchase progress
+// view. The orderId itself (an unguessable Convex Id) is the capability token — same
+// trust model already used to hand a guest their order confirmation. Deliberately
+// returns only what's needed to render fulfillment progress, excluding payment
+// details, coordinates, and any other order/customer PII.
+export const getOrderTrackingStatus = query({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) return null;
+
+    return {
+      status: order.status,
+      createdAt: order.createdAt,
+      claimedAt: order.claimedAt,
+      dispatchedAt: order.dispatchedAt,
+      completedAt: order.completedAt,
+      failedAt: order.failedAt,
+      expectedDeliveryTime: order.expectedDeliveryTime,
+      deliveryPersonName: order.deliveryPersonName,
+      riderPhone: order.riderPhone,
+      zone: order.deliveryAddress?.zone,
+      etaMinutes: order.deliveryAddress?.etaMinutes,
+      history: (order.history ?? []).map((h) => ({
+        status: h.status,
+        timestamp: h.timestamp,
+      })),
+    };
   },
 });
 
@@ -825,10 +860,22 @@ export const completeOrder = mutation({
   },
 });
 
-export const markOrderFailed = mutation({
+// Replaces the old markOrderFailed: staff report a failed/undelivered order and, in
+// the same atomic mutation, submit the affected items into the returns-approval
+// pipeline (source: "delivery_failure"). No inventory is restocked here — that only
+// happens once an admin approves each returnItems row (see convex/returns.ts).
+export const reportDeliveryFailure = mutation({
   args: {
     token: v.string(),
     orderId: v.id("orders"),
+    failedItems: v.array(
+      v.object({
+        productId: v.id("products"),
+        quantity: v.number(),
+        reason: v.optional(v.string()),
+      })
+    ),
+    note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { user } = await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
@@ -846,12 +893,37 @@ export const markOrderFailed = mutation({
       throw new Error("Only the claiming staff member can mark this order as failed");
     }
 
+    const orderItems = await ctx.db
+      .query("orderItems")
+      .withIndex("by_order", (q) => q.eq("orderId", args.orderId))
+      .collect();
+    const orderItemsMap = new Map(orderItems.map((item) => [item.productId, item]));
+
+    let refundAmount = 0;
+    for (const failedItem of args.failedItems) {
+      if (failedItem.quantity <= 0) {
+        throw new Error(`Invalid failed-item quantity ${failedItem.quantity} for product ${failedItem.productId}`);
+      }
+      const originalItem = orderItemsMap.get(failedItem.productId);
+      if (!originalItem) {
+        throw new Error(`Product ${failedItem.productId} was not part of the original order`);
+      }
+      if (failedItem.quantity > originalItem.quantity) {
+        throw new Error(
+          `Cannot report ${failedItem.quantity} of product ${originalItem.productName} as failed. Ordered: ${originalItem.quantity}.`
+        );
+      }
+      refundAmount += failedItem.quantity * originalItem.unitPrice;
+    }
+
     const failedAt = Date.now();
     const history = order.history || [];
     history.push({
       status: "failed",
       timestamp: failedAt,
-      note: "Marked as failed/undelivered",
+      note: args.failedItems.length > 0
+        ? `Marked as failed/undelivered — ${args.failedItems.length} item(s) pending return approval`
+        : "Marked as failed/undelivered",
     });
 
     await ctx.db.patch(args.orderId, {
@@ -860,17 +932,29 @@ export const markOrderFailed = mutation({
       history,
     });
 
-    // Restock inventory
-    const items = await ctx.db
-      .query("orderItems")
-      .withIndex("by_order", (q) => q.eq("orderId", args.orderId))
-      .collect();
+    if (args.failedItems.length > 0) {
+      const returnId = await ctx.db.insert("returns", {
+        orderId: args.orderId,
+        refundAmount,
+        note: args.note,
+        staffId: user._id,
+        staffName: user.name ?? "Staff",
+        createdAt: failedAt,
+      });
 
-    for (const item of items) {
-      const product = await ctx.db.get(item.productId);
-      if (product && product.inventory !== undefined) {
-        await ctx.db.patch(product._id, {
-          inventory: product.inventory + item.quantity,
+      for (const failedItem of args.failedItems) {
+        const originalItem = orderItemsMap.get(failedItem.productId)!;
+        await ctx.db.insert("returnItems", {
+          returnId,
+          orderId: args.orderId,
+          productId: failedItem.productId,
+          productName: originalItem.productName,
+          quantity: failedItem.quantity,
+          unitPrice: originalItem.unitPrice,
+          reason: failedItem.reason,
+          status: "pending",
+          source: "delivery_failure",
+          createdAt: failedAt,
         });
       }
     }
@@ -980,6 +1064,8 @@ export const adminCreateOrder = mutation({
       grandTotal,
       couponApplied: appliedCoupon,
       createdAt: Date.now(),
+      channel: "online",
+      isOnline: true,
     });
 
     for (const item of itemsToOrder) {
@@ -1038,6 +1124,10 @@ export const createPhysicalOrder = mutation({
         priority: v.optional(v.union(v.literal("low"), v.literal("normal"), v.literal("high"))),
       })
     ),
+    workedByStaffId: v.optional(v.id("users")),
+    channel: v.optional(v.union(v.literal("walk_in"), v.literal("whatsapp"))),
+    deliveryFee: v.optional(v.number()),
+    deliveryLocation: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Gated: Staff or Admin
@@ -1048,6 +1138,22 @@ export const createPhysicalOrder = mutation({
     }
 
     const now = Date.now();
+    const channel = args.channel ?? "walk_in";
+
+    // Resolve who actually worked the sale (defaults to the logged-in staff member)
+    let attributedStaff = staffUser;
+    if (args.workedByStaffId && args.workedByStaffId !== staffUser._id) {
+      const chosenStaff = await ctx.db.get(args.workedByStaffId);
+      if (!chosenStaff || (chosenStaff.accountRole !== "staff" && chosenStaff.accountRole !== "admin")) {
+        throw new Error("Selected staff member is not valid");
+      }
+      attributedStaff = chosenStaff;
+    }
+
+    const deliveryFee = channel === "whatsapp" ? (args.deliveryFee ?? 0) : 0;
+    if (deliveryFee < 0) {
+      throw new Error("Delivery fee cannot be negative");
+    }
 
     // Per-tender validation
     for (const p of args.payments) {
@@ -1136,10 +1242,11 @@ export const createPhysicalOrder = mutation({
       }
     }
 
-    // Validate payment total
+    // Validate payment total (includes the staff-entered delivery fee for WhatsApp orders)
+    const payableTotal = computedSubtotal + deliveryFee;
     const totalPayments = args.payments.reduce((sum, p) => sum + p.amount, 0);
-    if (totalPayments !== computedSubtotal) {
-      throw new Error(`Payment total mismatch: paid UGX ${totalPayments.toLocaleString()} but total is UGX ${computedSubtotal.toLocaleString()}`);
+    if (totalPayments !== payableTotal) {
+      throw new Error(`Payment total mismatch: paid UGX ${totalPayments.toLocaleString()} but total is UGX ${payableTotal.toLocaleString()}`);
     }
 
     // Validate and pre-process voucher redemptions
@@ -1201,7 +1308,41 @@ export const createPhysicalOrder = mutation({
     const receiptSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
     const receiptNumber = `RCP-${receiptDateStr}-${receiptSuffix}`;
 
-    const orderId = await ctx.db.insert("orders", {
+    const isWhatsapp = channel === "whatsapp";
+    const orderId = await ctx.db.insert("orders", isWhatsapp ? {
+      userId: customerUser._id,
+      // WhatsApp orders still need to be physically delivered — enter the real
+      // fulfillment pipeline already "claimed" (auto-claimed by whoever took the
+      // order), rather than being marked delivered on the spot like in-store sales.
+      status: "packing",
+      paymentMethod: paymentMethodSummary,
+      momoPhone: momoPhoneSummary,
+      cardOrderId: cardOrderIdSummary,
+      note: args.note,
+      deliveryAddress: {
+        name: args.deliveryLocation?.trim() || args.customerName,
+        zone: "WhatsApp Delivery",
+      },
+      subtotal: computedSubtotal,
+      discountAmount: 0,
+      deliveryFee,
+      grandTotal: computedSubtotal + deliveryFee,
+      createdAt: now,
+      claimedBy: attributedStaff._id,
+      claimedAt: now,
+      timeToClaim: 0,
+      isOnline: false,
+      isWalkIn: false,
+      channel: "whatsapp",
+      receiptNumber,
+      history: [
+        {
+          status: "packing",
+          timestamp: now,
+          note: `WhatsApp order created & claimed by ${attributedStaff.name ?? "Staff"}`,
+        },
+      ],
+    } : {
       userId: customerUser._id,
       status: "delivered", // Delivered immediately
       paymentMethod: paymentMethodSummary,
@@ -1217,11 +1358,12 @@ export const createPhysicalOrder = mutation({
       deliveryFee: 0,
       grandTotal: computedSubtotal,
       createdAt: now,
-      claimedBy: staffUser._id,
+      claimedBy: attributedStaff._id,
       claimedAt: now,
       completedAt: now,
       isOnline: false,
       isWalkIn: true,
+      channel: "walk_in",
       receiptNumber,
       history: [
         {
@@ -1424,6 +1566,18 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   voucher: "Gift Voucher",
 };
 
+const CHANNEL_LABELS: Record<string, string> = {
+  online: "Online",
+  walk_in: "Walk-in",
+  whatsapp: "WhatsApp Order",
+};
+
+// Legacy orders predate the `channel` field — fall back to the isWalkIn boolean so
+// every order resolves to a channel bucket.
+function resolveOrderChannel(order: any): string {
+  return order.channel ?? (order.isWalkIn ? "walk_in" : "online");
+}
+
 // For a single order, returns its attributed tenders: real orderPayments rows
 // if any exist (with their method-specific detail fields), else a single
 // fallback tender built from the order's summary paymentMethod/grandTotal fields.
@@ -1595,6 +1749,7 @@ export const adminGetSalesMetrics = query({
     startDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
     endDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
     paymentMethod: v.optional(v.string()), // "physical"|"momo"|"card"|"voucher"
+    channel: v.optional(v.string()), // "online"|"walk_in"|"whatsapp"
   },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["admin"]);
@@ -1624,15 +1779,21 @@ export const adminGetSalesMetrics = query({
     const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
     const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
 
-    // 3. Filter to completed orders within range
-    const ordersInRange = allOrders.filter(
+    // 3. Filter to completed orders within range, then by channel (order-level filter,
+    // unlike payment method which is a tender-level filter applied inside
+    // computeAggregate below)
+    let ordersInRange = allOrders.filter(
       (o: any) =>
         o.createdAt >= rangeStartMs && o.createdAt < rangeEndMs && completedStatuses.includes(o.status)
     );
+    if (args.channel) {
+      ordersInRange = ordersInRange.filter((o: any) => resolveOrderChannel(o) === args.channel);
+    }
 
     // 4. Attribute tenders per order, applying the payment-method filter (if any)
     const computeAggregate = (orders: any[]) => {
       const byMethodMap = new Map<string, { method: string; amount: number; count: number }>();
+      const byChannelMap = new Map<string, { channel: string; amount: number; count: number }>();
       const distinctOrderIds = new Set<string>();
       let totalSales = 0;
 
@@ -1644,8 +1805,10 @@ export const adminGetSalesMetrics = query({
         if (tenders.length === 0) continue;
 
         distinctOrderIds.add(order._id.toString());
+        let orderAmount = 0;
         for (const t of tenders) {
           totalSales += t.amount;
+          orderAmount += t.amount;
           const existing = byMethodMap.get(t.method);
           if (existing) {
             existing.amount += t.amount;
@@ -1654,14 +1817,26 @@ export const adminGetSalesMetrics = query({
             byMethodMap.set(t.method, { method: t.method, amount: t.amount, count: 1 });
           }
         }
+
+        const channel = resolveOrderChannel(order);
+        const existingChannel = byChannelMap.get(channel);
+        if (existingChannel) {
+          existingChannel.amount += orderAmount;
+          existingChannel.count += 1;
+        } else {
+          byChannelMap.set(channel, { channel, amount: orderAmount, count: 1 });
+        }
       }
 
-      return { totalSales, orderCount: distinctOrderIds.size, byMethodMap };
+      return { totalSales, orderCount: distinctOrderIds.size, byMethodMap, byChannelMap };
     };
 
     const overall = computeAggregate(ordersInRange);
     const byPaymentMethod = Array.from(overall.byMethodMap.values())
       .map((b) => ({ ...b, label: PAYMENT_METHOD_LABELS[b.method] || b.method }))
+      .sort((a, b) => b.amount - a.amount);
+    const byChannel = Array.from(overall.byChannelMap.values())
+      .map((b) => ({ ...b, label: CHANNEL_LABELS[b.channel] || b.channel }))
       .sort((a, b) => b.amount - a.amount);
     const aov = overall.orderCount > 0 ? Math.round(overall.totalSales / overall.orderCount) : 0;
 
@@ -1689,6 +1864,7 @@ export const adminGetSalesMetrics = query({
       orderCount: overall.orderCount,
       aov,
       byPaymentMethod,
+      byChannel,
       series,
       bucketGranularity,
       rangeStart: toDateStr(rangeStartMs),
@@ -1703,6 +1879,7 @@ export const adminGetPaymentMethodTransactions = query({
     startDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
     endDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
     paymentMethod: v.string(), // "physical"|"momo"|"card"|"voucher"
+    channel: v.optional(v.string()), // "online"|"walk_in"|"whatsapp"
   },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["admin"]);
@@ -1732,11 +1909,14 @@ export const adminGetPaymentMethodTransactions = query({
     const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
     const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
 
-    // 3. Filter to completed orders within range
-    const ordersInRange = allOrders.filter(
+    // 3. Filter to completed orders within range (+ optional channel filter)
+    let ordersInRange = allOrders.filter(
       (o: any) =>
         o.createdAt >= rangeStartMs && o.createdAt < rangeEndMs && completedStatuses.includes(o.status)
     );
+    if (args.channel) {
+      ordersInRange = ordersInRange.filter((o: any) => resolveOrderChannel(o) === args.channel);
+    }
 
     // 4. Attribute tenders per order, keep only ones matching the requested method
     type Row = {
@@ -1786,6 +1966,73 @@ export const adminGetPaymentMethodTransactions = query({
       cardOrderId: r.cardOrderId,
       voucherCode: r.voucherCode,
     }));
+  },
+});
+
+// Drill-down for the "Sales by Channel" breakdown — mirrors
+// adminGetPaymentMethodTransactions, but lists orders for a single channel instead of
+// a single payment tender.
+export const adminGetChannelTransactions = query({
+  args: {
+    token: v.string(),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    channel: v.string(), // "online"|"walk_in"|"whatsapp"
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const completedStatuses = ["delivered", "returned", "partially_returned"];
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    const allOrders = await ctx.db.query("orders").collect();
+    const allOrderPayments = await ctx.db.query("orderPayments").collect();
+    const paymentsByOrderId = new Map<string, typeof allOrderPayments>();
+    for (const payment of allOrderPayments) {
+      const key = payment.orderId.toString();
+      const existing = paymentsByOrderId.get(key);
+      if (existing) {
+        existing.push(payment);
+      } else {
+        paymentsByOrderId.set(key, [payment]);
+      }
+    }
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayMs = startOfToday.getTime();
+
+    const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
+    const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
+
+    const ordersInRange = allOrders.filter(
+      (o: any) =>
+        o.createdAt >= rangeStartMs &&
+        o.createdAt < rangeEndMs &&
+        completedStatuses.includes(o.status) &&
+        resolveOrderChannel(o) === args.channel
+    );
+
+    const distinctUserIds = Array.from(new Set(ordersInRange.map((o: any) => o.userId.toString())));
+    const users = await Promise.all(distinctUserIds.map((id) => ctx.db.get(id as any)));
+    const nameByUserId = new Map<string, string>();
+    distinctUserIds.forEach((id, idx) => {
+      nameByUserId.set(id, (users[idx] as any)?.name || "Unnamed Customer");
+    });
+
+    const rows = ordersInRange.map((order: any) => {
+      const tenders = attributeOrderPayments(order, paymentsByOrderId);
+      const amount = tenders.reduce((sum, t) => sum + t.amount, 0);
+      return {
+        orderId: order._id,
+        createdAt: order.createdAt,
+        customerName: nameByUserId.get(order.userId.toString()) || "Unnamed Customer",
+        amount,
+      };
+    });
+
+    rows.sort((a, b) => b.createdAt - a.createdAt);
+    return rows;
   },
 });
 

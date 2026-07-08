@@ -80,10 +80,10 @@ const Dashboard = () => {
   const activeStageTileData = stageInfo ? {
     title: stageInfo.type === 'expecting' ? "Expectant Motherhood" : "Newborn Journey",
     eyebrow: stageInfo.type === 'expecting' ? `Week ${stageInfo.week} of 40` : `${stageInfo.months || 0} Months Old`,
-    copy: stageInfo.type === 'expecting' 
-      ? "Nurturing postpartum recovery and nursery setups before baby's big day." 
+    copy: stageInfo.type === 'expecting'
+      ? "Nurturing postpartum recovery and nursery setups before baby's big day."
       : "Milestones in movement, sensory exploration, and soft organic essentials.",
-    image: stageInfo.type === 'expecting' ? "/assets/stage_expectant.png" : "/assets/stage_newborn.webp",
+    image: stageInfo.type === 'expecting' ? "/assets/stage_expectant.webp" : "/assets/stage_newborn.webp",
     type: stageInfo.type === 'expecting' ? "expectant" : "newborn",
     href: stageInfo.type === 'expecting' ? "/collection/curated-picks" : "/collection/essentials"
   } : null;
@@ -92,7 +92,7 @@ const Dashboard = () => {
     title: "The Essentials",
     badge: "Daily Staples",
     copy: "Curated everyday staples designed for comfort and quality throughout every journey stage.",
-    image: "/assets/newborn_apparel.png",
+    image: "/assets/newborn_apparel.webp",
     href: "/collection/essentials",
     type: "essentials"
   };
@@ -104,13 +104,13 @@ const Dashboard = () => {
 
       {/* Main Content Scroll Canvas */}
       <Page as="main" className="dashboard-main">
-        
+
         {/* 1. The Welcome Canvas (Hero Section) */}
         <Page.Section as="header" className="welcome-canvas">
           <h1 className="welcome-canvas__greeting">
             {collectionTitle}
           </h1>
-          
+
           <Card variant="section" hasBorder={false} style={{ backgroundColor: 'var(--surface-container-low)' }}>
             <Card.Body>
               <CardGrid columns={3} gap="default" className="welcome-canvas__overview">
@@ -119,7 +119,7 @@ const Dashboard = () => {
                   <span className="overview-stat__value">{displayName}</span>
                   <span className="overview-stat__desc">{convexUser?.email || user?.email}</span>
                 </div>
-                
+
                 <div className="overview-stat">
                   <span className="overview-stat__label">Current path</span>
                   <span className="overview-stat__value">
@@ -167,15 +167,15 @@ const Dashboard = () => {
               <CardGrid columns={2} gap="loose">
                 <div className="journey-tracker">
                   <h2 className="journey-tracker__title">Timeline of Growth</h2>
-                  
+
                   <div className="progress-bar-container">
                     <div className="progress-bar__labels">
                       <span>{stageInfo.type === 'expecting' ? 'Conception' : 'Birth'}</span>
                       <span>{stageInfo.type === 'expecting' ? 'Week 40' : '2 Years'}</span>
                     </div>
                     <div className="progress-bar__track">
-                      <div 
-                        className="progress-bar__fill" 
+                      <div
+                        className="progress-bar__fill"
                         style={{ width: `${stageInfo.progress}%` }}
                       ></div>
                     </div>
@@ -218,7 +218,7 @@ const Dashboard = () => {
                 <span className="discovery-header__eyebrow">AI-curated essentials</span>
                 <h2 className="discovery-header__title">The Now Feed</h2>
               </div>
-              
+
               <div className="asymmetric-discovery-grid">
                 {/* Now / Next Product Feeds displaying ProductCard components */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-10)' }}>
@@ -245,7 +245,7 @@ const Dashboard = () => {
                     </Card.Header>
                     <Card.Body>
                       <p className="essentials-wash-card__copy">
-                        Daily comfort staples designed with clinical precision and botanical warmth. 
+                        Daily comfort staples designed with clinical precision and botanical warmth.
                       </p>
                       <div style={{ marginTop: 'var(--space-2)' }}>
                         <TierCard tier={essentialsTier} />
@@ -276,14 +276,14 @@ const Dashboard = () => {
                   {/* Gift Wrapping Card */}
                   <Card variant="default" hasBorder={false} className="gift-wrapping-card" style={{ backgroundColor: 'color-mix(in srgb, var(--color-brand-primary), transparent 94%)' }}>
                     <Card.Header style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                      <span style={{ 
+                      <span style={{
                         display: 'inline-block',
-                        fontFamily: 'var(--font-sans)', 
-                        fontSize: 'var(--label-xs)', 
-                        color: 'var(--color-brand-primary)', 
-                        textTransform: 'uppercase', 
-                        letterSpacing: '0.08em', 
-                        fontWeight: '700' 
+                        fontFamily: 'var(--font-sans)',
+                        fontSize: 'var(--label-xs)',
+                        color: 'var(--color-brand-primary)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        fontWeight: '700'
                       }}>
                         Premium Gifting
                       </span>
@@ -312,18 +312,18 @@ const Dashboard = () => {
       </Page>
 
       {selectedProduct && (
-        <QuickViewModal 
-          product={selectedProduct} 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
+        <QuickViewModal
+          product={selectedProduct}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
           onSuccess={handleModalSuccess}
         />
       )}
 
-      <Toast 
-        isOpen={showToast} 
-        message={toastMessage} 
-        onClose={() => setShowToast(false)} 
+      <Toast
+        isOpen={showToast}
+        message={toastMessage}
+        onClose={() => setShowToast(false)}
       />
 
       <NotifySignupModal

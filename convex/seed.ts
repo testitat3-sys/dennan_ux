@@ -9,8 +9,8 @@ const CATEGORIES = {
 };
 
 const BRANDS = [
-  "Tommee Tippee", "Nuby", "Philips Avent", "Skip Hop", "Snuz", 
-  "Mamas & Papas", "Silver Cross", "Cybex", "Beaba", "Haakaa", 
+  "Tommee Tippee", "Nuby", "Philips Avent", "Skip Hop", "Snuz",
+  "Mamas & Papas", "Silver Cross", "Cybex", "Beaba", "Haakaa",
   "Medela", "Stokke"
 ];
 
@@ -40,7 +40,7 @@ export const seedData = mutation({
           const slug = faker.helpers.slugify(name).toLowerCase() + "-" + faker.string.alphanumeric(4);
           const brand = faker.helpers.arrayElement(BRANDS);
           const tier = faker.helpers.arrayElement(TIERS);
-          
+
           // Pricing in UGX: 10,000 to 500,000
           const price = faker.number.int({ min: 10000, max: 500000 });
           const wasPrice = faker.datatype.boolean() ? price + faker.number.int({ min: 5000, max: 50000 }) : undefined;
@@ -48,7 +48,7 @@ export const seedData = mutation({
           // Image via Picsum
           const imageId = faker.number.int({ min: 1, max: 1000 });
           const image = `https://picsum.photos/400/400?random=${imageId}`;
-          
+
           const images = [
             image,
             `https://picsum.photos/400/400?random=${faker.number.int({ min: 1, max: 1000 })}`,
@@ -93,7 +93,7 @@ export const seedData = mutation({
 
           // Vary number of reviews (0 to 5)
           const numReviews = faker.number.int({ min: 0, max: 5 });
-          
+
           if (numReviews === 0) {
             productsWithZeroReviews.push(name);
           } else {
@@ -130,33 +130,33 @@ export const seedStagesAndTiers = mutation({
     for (const s of existingStages) {
       await ctx.db.delete(s._id);
     }
-    
-    await ctx.db.insert("stages", { 
-      type: "mother", 
-      title: "Expectant<br>&amp; New Mom", 
-      eyebrow: "Stage 1", 
-      subtext: "Hospital bag, postpartum recovery, feeding prep, and everything you need before baby arrives.", 
-      heroImage: "/assets/stage_expectant.png", 
-      href: "/category/mother", 
-      order: 1 
+
+    await ctx.db.insert("stages", {
+      type: "mother",
+      title: "Expectant<br>&amp; New Mom",
+      eyebrow: "Stage 1",
+      subtext: "Hospital bag, postpartum recovery, feeding prep, and everything you need before baby arrives.",
+      heroImage: "/assets/stage_expectant.webp",
+      href: "/category/mother",
+      order: 1
     });
-    await ctx.db.insert("stages", { 
-      type: "newborn", 
-      title: "Newborn<br>0–6 months", 
-      eyebrow: "Stage 2", 
-      subtext: "Safe sleep, feeding essentials, skin care, and gentle gear for the tiniest stage of all.", 
-      heroImage: "/assets/stage_newborn.webp", 
-      href: "/category/newborn", 
-      order: 2 
+    await ctx.db.insert("stages", {
+      type: "newborn",
+      title: "Newborn<br>0–6 months",
+      eyebrow: "Stage 2",
+      subtext: "Safe sleep, feeding essentials, skin care, and gentle gear for the tiniest stage of all.",
+      heroImage: "/assets/stage_newborn.webp",
+      href: "/category/newborn",
+      order: 2
     });
-    await ctx.db.insert("stages", { 
-      type: "kid", 
-      title: "Baby<br>&amp; Toddler", 
-      eyebrow: "Stage 3", 
-      subtext: "Weaning, movement, play, and independence. Everything for curious, growing little ones.", 
-      heroImage: "/assets/stage_toddler.webp", 
-      href: "/category/kid", 
-      order: 3 
+    await ctx.db.insert("stages", {
+      type: "kid",
+      title: "Baby<br>&amp; Toddler",
+      eyebrow: "Stage 3",
+      subtext: "Weaning, movement, play, and independence. Everything for curious, growing little ones.",
+      heroImage: "/assets/stage_toddler.webp",
+      href: "/category/kid",
+      order: 3
     });
 
     // Clear existing tiers so we re-seed with fresh data
@@ -164,11 +164,11 @@ export const seedStagesAndTiers = mutation({
     for (const t of existingTiers) {
       await ctx.db.delete(t._id);
     }
-    
+
     await ctx.db.insert("tiers", { type: "essentials", title: "Essentials", badge: "Must-have", copy: "The basics", image: "https://picsum.photos/400/400?random=4", href: "/collection/essentials", order: 1 });
     await ctx.db.insert("tiers", { type: "musthaves", title: "Must-Haves", badge: "Highly recommended", copy: "Make life easier", image: "https://picsum.photos/400/400?random=5", href: "/collection/must-haves", order: 2 });
     await ctx.db.insert("tiers", { type: "luxuries", title: "Luxuries", badge: "Nice to have", copy: "Treat yourself", image: "https://picsum.photos/400/400?random=6", href: "/collection/luxuries", order: 3 });
-    
+
     return { success: true };
   }
 });
@@ -484,7 +484,7 @@ export const seedReels = mutation({
     // Insert each reel and its nested products
     for (let i = 0; i < args.reels.length; i++) {
       const reelData = args.reels[i];
-      
+
       const reelId = await ctx.db.insert("reels", {
         label: reelData.label,
         caption: reelData.caption,
@@ -501,8 +501,8 @@ export const seedReels = mutation({
           if (matchName) {
             const canonicalProducts = await ctx.db.query("products").collect();
             const found = canonicalProducts.find(
-              p => p.name.toLowerCase() === matchName.toLowerCase() || 
-                   p.name.toLowerCase().includes(matchName.toLowerCase())
+              p => p.name.toLowerCase() === matchName.toLowerCase() ||
+                p.name.toLowerCase().includes(matchName.toLowerCase())
             );
             if (found) {
               linkedProductId = found._id;

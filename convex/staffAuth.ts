@@ -330,3 +330,28 @@ export const getStaffList = query({
     return staffPerformanceList;
   },
 });
+
+// Lightweight staff+admin name roster for the POS "staff who worked on this" picker.
+// Unlike getStaffList (admin-only, includes every claimed order's details), this is
+// accessible to any staff/admin and returns only what's needed to populate a dropdown.
+export const getStaffRoster = query({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    const staffUsers = await ctx.db
+      .query("users")
+      .withIndex("by_accountRole", (q) => q.eq("accountRole", "staff"))
+      .collect();
+    const adminUsers = await ctx.db
+      .query("users")
+      .withIndex("by_accountRole", (q) => q.eq("accountRole", "admin"))
+      .collect();
+
+    return [...staffUsers, ...adminUsers]
+      .map((u) => ({ id: u._id, name: u.name || "Unnamed Staff", accountRole: u.accountRole }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+});

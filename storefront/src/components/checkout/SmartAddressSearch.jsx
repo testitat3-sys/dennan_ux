@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './SmartAddressSearch.css';
 import Button from '../ui/Button';
+import { loadGoogleMaps } from '../../utils/loadGoogleMaps';
 
 const SmartAddressSearch = ({ onSelectAddress, landmarks = [], history = [] }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -9,17 +10,18 @@ const SmartAddressSearch = ({ onSelectAddress, landmarks = [], history = [] }) =
   const [suggestions, setSuggestions] = useState([]);
   const [status, setStatus] = useState('IDLE'); // IDLE, LOADING, OK, ZERO_RESULTS, ERROR
   const searchRef = useRef(null);
-  
+
   const sessionTokenRef = useRef(null);
 
-  // Initialize Maps Library & Session Token
+  // Load the Maps Places library on demand & initialize a session token
   useEffect(() => {
-    // Make sure Google Maps is loaded
-    if (window.google && window.google.maps && window.google.maps.places) {
+    loadGoogleMaps().then(() => {
       if (!sessionTokenRef.current) {
         sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
       }
-    }
+    }).catch((error) => {
+      console.error('Error loading Google Maps:', error);
+    });
   }, []);
 
   // Handle clicking outside to close suggestions

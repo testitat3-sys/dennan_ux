@@ -129,7 +129,7 @@ const RegistryPage = () => {
         if (!seen.includes(expectedId)) {
           localStorage.setItem('dennan_seen_contributions', JSON.stringify([...seen, expectedId]));
         }
-      } catch (e) {}
+      } catch (e) { }
 
       setToastMessage(`"${item.name}" marked as gifted!`);
       setShowToast(true);
@@ -187,11 +187,11 @@ const RegistryPage = () => {
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     const { item, totalContributed } = itemToDelete;
-    
+
     await removeFromRegistry(item.id || item.productId);
     setToastMessage(`"${item.name}" removed. UGX ${totalContributed.toLocaleString()} converted to Dennan Store Credit!`);
     setShowToast(true);
-    
+
     setIsDeleteConfirmOpen(false);
     setItemToDelete(null);
   };
@@ -317,8 +317,8 @@ const RegistryPage = () => {
 
     if (newContributions.length > 0) {
       // If we haven't done the initial load catch-up yet, we cap at 3 to prevent spam
-      const toProcess = !hasCheckedUnseen 
-        ? newContributions.slice(0, 3) 
+      const toProcess = !hasCheckedUnseen
+        ? newContributions.slice(0, 3)
         : newContributions;
 
       const newToastMessages = toProcess.map(c => {
@@ -369,7 +369,7 @@ const RegistryPage = () => {
         name: "Closer to Nature Starter Set",
         brand: "Tommee Tippee",
         price: 180000,
-        image: "/new_assets/Tommee Tippee Closer to Nature Starter Set.jfif",
+        image: "/assets/Tommee Tippee Closer to Nature Starter Set.jfif",
         category: "Feeding",
         stage: "mother",
         tags: [{ type: "primary", text: "Newborn Starter" }]
@@ -391,7 +391,7 @@ const RegistryPage = () => {
         name: "Hospital Bag Essentials",
         brand: "Mamas & Papas",
         price: 150000,
-        image: "/new_assets/Organic Cotton Starter Set.jfif",
+        image: "/assets/Organic Cotton Starter Set.jfif",
         category: "Apparel",
         stage: "mother",
         tags: [{ type: "primary", text: "Organic" }]
@@ -405,7 +405,7 @@ const RegistryPage = () => {
         name: "SnüzPod 4 Bedside Crib",
         brand: "Snuz",
         price: 850000,
-        image: "/new_assets/SnüzPod 4 Bedside Crib - White.jfif",
+        image: "/assets/SnüzPod 4 Bedside Crib - White.jfif",
         category: "Sleep",
         stage: "newborn",
         tags: [{ type: "primary", text: "Premium Sleep" }]
@@ -416,7 +416,7 @@ const RegistryPage = () => {
         name: "Skip Hop Forma Backpack",
         brand: "Skip Hop",
         price: 295000,
-        image: "/new_assets/Skip Hop Forma Backpack Nappy Bag.jfif",
+        image: "/assets/Skip Hop Forma Backpack Nappy Bag.jfif",
         category: "Comfort",
         stage: "newborn",
         tags: [{ type: "primary", text: "Top Rated" }]
@@ -427,7 +427,7 @@ const RegistryPage = () => {
         name: "Organic Cotton Starter Set",
         brand: "Mamas & Papas",
         price: 150000,
-        image: "/new_assets/Organic Cotton Starter Set.jfif",
+        image: "/assets/Organic Cotton Starter Set.jfif",
         category: "Apparel",
         stage: "newborn",
         tags: [{ type: "primary", text: "Eco-Friendly" }]
@@ -441,7 +441,7 @@ const RegistryPage = () => {
         name: "Babycook Neo Blender",
         brand: "Beaba",
         price: 650000,
-        image: "/new_assets/BÉABA Babycook Neo Food Blender.jfif",
+        image: "/assets/BÉABA Babycook Neo Food Blender.jfif",
         category: "Weaning",
         stage: "kid",
         tags: [{ type: "primary", text: "French Design" }]
@@ -452,7 +452,7 @@ const RegistryPage = () => {
         name: "Babycook Solo",
         brand: "Beaba",
         price: 470000,
-        image: "/new_assets/BÉABA Babycook Solo.jfif",
+        image: "/assets/BÉABA Babycook Solo.jfif",
         category: "Weaning",
         stage: "kid",
         tags: [{ type: "primary", text: "Compact Weaning" }]
@@ -499,7 +499,7 @@ const RegistryPage = () => {
         name: "Embroidered Organic Cotton Shawl",
         brand: "Mamas & Papas",
         price: 180000,
-        image: "/new_assets/Organic Cotton Starter Set.jfif",
+        image: "/assets/Organic Cotton Starter Set.jfif",
         category: "Comfort",
         stage: "christening",
         tags: [{ type: "primary", text: "100% Organic" }]
@@ -739,7 +739,7 @@ const RegistryPage = () => {
                   <section className="category-group packaging-section" style={{ borderTop: '1px dashed var(--surface-container-high)', marginTop: 'var(--space-12)', paddingTop: 'var(--space-10)' }}>
                     <div className="gift-wrapping-banner">
                       <div className="gift-wrapping-banner__image">
-                        <img src="/new_assets/gifting.png" alt="Gift wrapping" />
+                        <img src="/assets/gifting.webp" alt="Gift wrapping" />
                       </div>
                       <div className="gift-wrapping-banner__content">
                         <span className="gift-wrapping-banner__badge">Gift Wrapping</span>
@@ -860,49 +860,49 @@ const RegistryPage = () => {
               )}
             </div>
 
-          {/* Persistent Suggested Items Section with dynamic Search Bar */}
-          <section className="registry-discovery-section" style={{ borderTop: '1px dashed var(--surface-container-high)', paddingTop: 'var(--space-16)', paddingBottom: '0' }}>
-            <div className="discovery-header" style={{ marginBottom: 'var(--space-8)' }}>
-              <Text
-                variant="headline-md"
-                color="primary"
-                style={{ fontFamily: 'var(--font-editorial)', margin: 0 }}
-              >
-                Add Items to Your Registry
-              </Text>
-              <Text
-                variant="body-md"
-                color="secondary"
-                style={{ fontWeight: 300, marginTop: 'var(--space-2)' }}
-              >
-                Search our premium catalog or browse suggested essentials below to build your dream collection.
-              </Text>
+            {/* Persistent Suggested Items Section with dynamic Search Bar */}
+            <section className="registry-discovery-section" style={{ borderTop: '1px dashed var(--surface-container-high)', paddingTop: 'var(--space-16)', paddingBottom: '0' }}>
+              <div className="discovery-header" style={{ marginBottom: 'var(--space-8)' }}>
+                <Text
+                  variant="headline-md"
+                  color="primary"
+                  style={{ fontFamily: 'var(--font-editorial)', margin: 0 }}
+                >
+                  Add Items to Your Registry
+                </Text>
+                <Text
+                  variant="body-md"
+                  color="secondary"
+                  style={{ fontWeight: 300, marginTop: 'var(--space-2)' }}
+                >
+                  Search our premium catalog or browse suggested essentials below to build your dream collection.
+                </Text>
 
-              {/* Search Bar Input Container */}
-              <div className="registry-search-bar-wrap" style={{ marginTop: 'var(--space-6)', maxWidth: '500px', marginBottom: 'var(--space-8)' }}>
-                <SearchStrip
-                  initialQuery={searchQuery}
-                  placeholder="Search premium stroller, bedside crib, bottles..."
-                  isMinimal={true}
-                  onChange={(val) => setSearchQuery(val)}
-                  onSubmit={(val) => setSearchQuery(val)}
+                {/* Search Bar Input Container */}
+                <div className="registry-search-bar-wrap" style={{ marginTop: 'var(--space-6)', maxWidth: '500px', marginBottom: 'var(--space-8)' }}>
+                  <SearchStrip
+                    initialQuery={searchQuery}
+                    placeholder="Search premium stroller, bedside crib, bottles..."
+                    isMinimal={true}
+                    onChange={(val) => setSearchQuery(val)}
+                    onSubmit={(val) => setSearchQuery(val)}
+                  />
+                </div>
+              </div>
+
+              {/* Suggested Products Rail: horizontal scroll on desktop, 2-col/first-4 grid on mobile */}
+              {displayedSearchProducts.length > 0 ? (
+                <RegistrySuggestionRail
+                  products={displayedSearchProducts}
+                  onAddToRegistry={handleAddToRegistry}
                 />
-              </div>
-            </div>
-
-            {/* Suggested Products Rail: horizontal scroll on desktop, 2-col/first-4 grid on mobile */}
-            {displayedSearchProducts.length > 0 ? (
-              <RegistrySuggestionRail
-                products={displayedSearchProducts}
-                onAddToRegistry={handleAddToRegistry}
-              />
-            ) : (
-              <div style={{ padding: 'var(--space-8) 0', textAlign: 'center', color: 'var(--text-tertiary)', fontFamily: 'var(--font-sans)' }}>
-                No matching products found. Try searching for "crib", "stroller", or "backpack".
-              </div>
-            )}
-          </section>
-        </div>
+              ) : (
+                <div style={{ padding: 'var(--space-8) 0', textAlign: 'center', color: 'var(--text-tertiary)', fontFamily: 'var(--font-sans)' }}>
+                  No matching products found. Try searching for "crib", "stroller", or "backpack".
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       </main>
 

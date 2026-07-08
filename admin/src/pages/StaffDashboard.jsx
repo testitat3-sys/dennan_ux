@@ -5,10 +5,15 @@ import { useStaffAuth } from "../hooks/useStaffAuth";
 import OrderDetailModal from "../components/OrderDetailModal";
 import HandoverModal from "../components/HandoverModal";
 import ReturnProcessModal from "../components/ReturnProcessModal";
+import DeliveryFailureModal from "../components/DeliveryFailureModal";
 import CustomerActivityModal from "../components/CustomerActivityModal";
 import RemindersWidget from "../components/RemindersWidget";
 import CalendarPanel from "../components/CalendarPanel";
 import ReceiptModal from "../components/ReceiptModal";
+import Toast from "../components/Toast";
+import LiveTimer from "../components/LiveTimer";
+import { useToast } from "../hooks/useToast";
+import { useNewOrderNotifications } from "../hooks/useNewOrderNotifications";
 import { getTodayStr } from "../utils/reminderHelpers";
 import sosLogo from "../assets/SOS.png";
 import {
@@ -43,7 +48,10 @@ export default function StaffDashboard() {
   const [viewingOrder, setViewingOrder] = useState(null);
   const [handoverOrderId, setHandoverOrderId] = useState(null);
   const [returningOrder, setReturningOrder] = useState(null);
+  const [failureOrder, setFailureOrder] = useState(null);
   const [crmCustomer, setCrmCustomer] = useState(null);
+
+  const { toasts, showToast, dismissToast } = useToast();
 
   // --- TAB 1: ORDERS QUEUE ---
   const { results: ordersList, status: ordersStatus, loadMore: loadMoreOrders } = usePaginatedQuery(
@@ -62,8 +70,8 @@ export default function StaffDashboard() {
   const claimOrderMutation = useMutation(api.orders.claimOrder);
   const handoverMutation = useMutation(api.orders.handoverToDelivery);
   const completeOrderMutation = useMutation(api.orders.completeOrder);
-  const markFailedMutation = useMutation(api.orders.markOrderFailed);
-  const processReturnMutation = useMutation(api.returns.processReturn);
+  const reportDeliveryFailureMutation = useMutation(api.orders.reportDeliveryFailure);
+  const submitReturnMutation = useMutation(api.returns.submitReturn);
 
   const handleClaimOrder = async (orderId) => {
     try {
@@ -98,19 +106,25 @@ export default function StaffDashboard() {
     }
   };
 
-  const handleFailOrder = async (orderId) => {
-    if (window.confirm("Mark this order as FAILED? Inventory will be automatically restocked.")) {
-      try {
-        await markFailedMutation({ token, orderId });
-      } catch (err) {
-        alert("Error marking order failed: " + err.message);
-      }
+  const handleReportDeliveryFailure = async (data) => {
+    try {
+      await reportDeliveryFailureMutation({
+        token,
+        orderId: data.orderId,
+        failedItems: data.failedItems,
+        note: data.note
+      });
+      setFailureOrder(null);
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
     }
   };
 
   const handleReturnSubmit = async (data) => {
     try {
-      await processReturnMutation({
+      await submitReturnMutation({
         token,
         orderId: data.orderId,
         returnedItems: data.returnedItems,
@@ -129,6 +143,7 @@ export default function StaffDashboard() {
   // --- TAB 2: WALK-IN POS ---
   const posProducts = useQuery(api.products.getProductsForPOS, { token });
   const createPhysicalOrderMutation = useMutation(api.orders.createPhysicalOrder);
+  const staffRoster = useQuery(api.staffAuth.getStaffRoster, { token });
 
   const [posSearch, setPosSearch] = useState("");
   const [cart, setCart] = useState([]);
@@ -140,6 +155,10 @@ export default function StaffDashboard() {
     email: "",
     note: ""
   });
+  const [workedByStaffId, setWorkedByStaffId] = useState("");
+  const [saleChannel, setSaleChannel] = useState("walk_in");
+  const [deliveryLocation, setDeliveryLocation] = useState("");
+  const [deliveryFeeInput, setDeliveryFeeInput] = useState(0);
   const [tenders, setTenders] = useState([
     { tempId: "default", method: "physical", amount: 0, momoPhone: "", cardOrderId: "", voucherCode: "" }
   ]);
@@ -210,6 +229,10 @@ export default function StaffDashboard() {
     setTenders([{ tempId: "default", method: "physical", amount: 0, momoPhone: "", cardOrderId: "", voucherCode: "" }]);
     setVoucherValidation({});
     setPosCustomer({ name: "", phone: "", email: "", note: "" });
+    setWorkedByStaffId("");
+    setSaleChannel("walk_in");
+    setDeliveryLocation("");
+    setDeliveryFeeInput(0);
     setScheduleReminder(false);
     setReminderType("call");
     setReminderDate("");
@@ -277,10 +300,15 @@ export default function StaffDashboard() {
       }
     }
 
-    // Validate tenders total
+    if (saleChannel === "whatsapp" && posDeliveryFee < 0) {
+      setCheckoutError("Delivery fee cannot be negative.");
+      return;
+    }
+
+    // Validate tenders total (includes delivery fee for WhatsApp orders)
     const totalTendersAmount = tenders.reduce((sum, t) => sum + t.amount, 0);
-    if (totalTendersAmount !== cartSubtotal) {
-      setCheckoutError(`Tender total (UGX ${totalTendersAmount.toLocaleString()}) must match cart total (UGX ${cartSubtotal.toLocaleString()}).`);
+    if (totalTendersAmount !== posPayableTotal) {
+      setCheckoutError(`Tender total (UGX ${totalTendersAmount.toLocaleString()}) must match order total (UGX ${posPayableTotal.toLocaleString()}).`);
       return;
     }
 
@@ -364,7 +392,11 @@ export default function StaffDashboard() {
             scheduledTime: reminderTime || undefined,
             priority: reminderPriority
           }
-          : undefined
+          : undefined,
+        workedByStaffId: workedByStaffId || undefined,
+        channel: saleChannel,
+        deliveryFee: saleChannel === "whatsapp" ? posDeliveryFee : undefined,
+        deliveryLocation: saleChannel === "whatsapp" ? (deliveryLocation.trim() || undefined) : undefined,
       });
 
       setIssuedVouchers(result.issuedVouchers || []);
@@ -383,7 +415,8 @@ export default function StaffDashboard() {
         payments: tenders.map(t => ({ method: t.method, amount: t.amount })),
         subtotal: cartSubtotal,
         discountAmount: 0,
-        total: cartSubtotal
+        deliveryFee: posDeliveryFee,
+        total: posPayableTotal
       });
 
       resetPosForm();
@@ -408,15 +441,18 @@ export default function StaffDashboard() {
   const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0) +
     voucherCartItems.reduce((sum, item) => sum + item.amount, 0);
 
-  const tendersRemainingToPay = cartSubtotal - tenders.reduce((sum, t) => sum + t.amount, 0);
+  const posDeliveryFee = saleChannel === "whatsapp" ? (parseInt(deliveryFeeInput) || 0) : 0;
+  const posPayableTotal = cartSubtotal + posDeliveryFee;
+
+  const tendersRemainingToPay = posPayableTotal - tenders.reduce((sum, t) => sum + t.amount, 0);
 
   React.useEffect(() => {
     if (tenders.length === 1) {
       setTenders(prev => [
-        { ...prev[0], amount: cartSubtotal }
+        { ...prev[0], amount: posPayableTotal }
       ]);
     }
-  }, [cartSubtotal, tenders.length]);
+  }, [posPayableTotal, tenders.length]);
 
   const initials = (name) => (name || "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
 
@@ -436,6 +472,7 @@ export default function StaffDashboard() {
     payments: order.payments || [],
     subtotal: order.subtotal,
     discountAmount: order.discountAmount || 0,
+    deliveryFee: order.deliveryFee || 0,
     couponApplied: order.couponApplied,
     total: order.grandTotal,
   });
@@ -457,6 +494,10 @@ export default function StaffDashboard() {
   const unclaimedOrders = ordersList?.filter(o => o.status === "preparing") || [];
   const activeOrders = ordersList?.filter(o => o.claimedBy === user?.id && ["packing", "dispatched"].includes(o.status)) || [];
 
+  useNewOrderNotifications(ordersList === undefined ? undefined : unclaimedOrders, {
+    onNewOrder: (order) => showToast(`New order received from ${order.customerName}`, "info"),
+  });
+
   const filteredPosProducts = posProducts?.filter(p =>
     p.name.toLowerCase().includes(posSearch.toLowerCase()) ||
     p.barcode?.includes(posSearch) ||
@@ -476,7 +517,7 @@ export default function StaffDashboard() {
         <aside className="sidebar">
           <div className="sidebar-brand">
             <img src={sosLogo} alt="Dennan" className="sidebar-logo" />
-            <span className="sidebar-brand-sub">Staff Hub</span>
+            <span className="sidebar-brand-sub">Growth Team</span>
           </div>
 
           <nav className="sidebar-nav">
@@ -586,7 +627,9 @@ export default function StaffDashboard() {
                       </div>
 
                       <div className="order-card-footer">
-                        <div className="order-footer-left" />
+                        <div className="order-footer-left">
+                          <LiveTimer sinceTimestamp={order.createdAt} label="Waiting" warningThresholdSeconds={300} />
+                        </div>
                         <div className="order-actions">
                           <button className="btn btn--secondary btn--sm" onClick={() => setViewingOrder(order)}>
                             <span className="btn-icon btn-icon--left"><Eye size={14} /></span>
@@ -634,7 +677,11 @@ export default function StaffDashboard() {
                       </div>
 
                       <div className="order-card-footer">
-                        <div className="order-footer-left" />
+                        <div className="order-footer-left">
+                          {order.status === "packing" && (
+                            <LiveTimer sinceTimestamp={order.claimedAt} label="Packing" warningThresholdSeconds={900} />
+                          )}
+                        </div>
                         <div className="order-actions">
                           <button className="btn btn--secondary btn--sm" onClick={() => setViewingOrder(order)}>
                             <span className="btn-icon btn-icon--left"><Eye size={14} /></span>
@@ -642,10 +689,19 @@ export default function StaffDashboard() {
                           </button>
 
                           {order.status === "packing" && (
-                            <button className="btn btn--primary btn--sm" onClick={() => setHandoverOrderId(order._id)}>
-                              <span className="btn-icon btn-icon--left"><Truck size={14} /></span>
-                              <span className="btn-text">Dispatch</span>
-                            </button>
+                            <>
+                              <button
+                                className="btn btn--outline btn--sm"
+                                onClick={() => { setLastReceipt(buildReceiptFromOrder(order)); setShowReceipt(true); }}
+                              >
+                                <span className="btn-icon btn-icon--left"><Printer size={14} /></span>
+                                <span className="btn-text">Print Receipt</span>
+                              </button>
+                              <button className="btn btn--primary btn--sm" onClick={() => setHandoverOrderId(order._id)}>
+                                <span className="btn-icon btn-icon--left"><Truck size={14} /></span>
+                                <span className="btn-text">Dispatch</span>
+                              </button>
+                            </>
                           )}
 
                           {order.status === "dispatched" && (
@@ -654,7 +710,7 @@ export default function StaffDashboard() {
                                 <span className="btn-icon btn-icon--left"><CheckCircle size={14} /></span>
                                 <span className="btn-text">Complete</span>
                               </button>
-                              <button className="btn btn--ghost btn--danger btn--sm" onClick={() => handleFailOrder(order._id)}>
+                              <button className="btn btn--ghost btn--danger btn--sm" onClick={() => setFailureOrder(order)}>
                                 <span className="btn-icon btn-icon--left"><XCircle size={14} /></span>
                                 <span className="btn-text">Mark Failed</span>
                               </button>
@@ -770,9 +826,9 @@ export default function StaffDashboard() {
                                 overflow: "hidden"
                               }}>
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8, marginBottom: "4px" }}>
-                                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
-                                  <line x1="3" y1="6" x2="21" y2="6"/>
-                                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                                  <line x1="3" y1="6" x2="21" y2="6" />
+                                  <path d="M16 10a4 4 0 0 1-8 0" />
                                 </svg>
                                 <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", letterSpacing: "0.5px" }}>
                                   {p.brand || "Dennan"}
@@ -894,9 +950,85 @@ export default function StaffDashboard() {
                         ))}
                       </div>
 
+                      {posDeliveryFee > 0 && (
+                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "var(--space-3)" }}>
+                          <span style={{ fontSize: "13px", color: "var(--text-tertiary)" }}>Delivery Fee</span>
+                          <span style={{ fontSize: "13px", color: "var(--text-tertiary)" }}>UGX {posDeliveryFee.toLocaleString()}</span>
+                        </div>
+                      )}
                       <div style={{ display: "flex", justifyContent: "space-between", marginTop: "var(--space-3)", paddingTop: "var(--space-3)", borderTop: "2px solid var(--surface-container-high)" }}>
                         <span style={{ fontSize: "13px", fontWeight: 600 }}>Total Payable</span>
-                        <strong style={{ fontSize: "16px" }}>UGX {cartSubtotal.toLocaleString()}</strong>
+                        <strong style={{ fontSize: "16px" }}>UGX {posPayableTotal.toLocaleString()}</strong>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Sale Type</label>
+                        <div className="tab-strip" style={{ marginBottom: 0 }}>
+                          <button
+                            type="button"
+                            className={`tab-btn${saleChannel === "walk_in" ? " is-active" : ""}`}
+                            onClick={() => setSaleChannel("walk_in")}
+                            disabled={isCheckoutSubmitting}
+                          >
+                            Walk-in
+                          </button>
+                          <button
+                            type="button"
+                            className={`tab-btn${saleChannel === "whatsapp" ? " is-active" : ""}`}
+                            onClick={() => setSaleChannel("whatsapp")}
+                            disabled={isCheckoutSubmitting}
+                          >
+                            WhatsApp Order
+                          </button>
+                        </div>
+                      </div>
+
+                      {saleChannel === "whatsapp" && (
+                        <>
+                          <div className="form-group">
+                            <label className="form-label">Delivery Location</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="e.g. Bukoto, near Kabira Country Club"
+                              value={deliveryLocation}
+                              onChange={(e) => setDeliveryLocation(e.target.value)}
+                              disabled={isCheckoutSubmitting}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Delivery Fee (UGX)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              className="form-input"
+                              placeholder="e.g. 5000"
+                              value={deliveryFeeInput}
+                              onChange={(e) => setDeliveryFeeInput(e.target.value)}
+                              disabled={isCheckoutSubmitting}
+                            />
+                            <p className="momo-hint">
+                              This order enters the delivery pipeline (packing → dispatch) instead of being marked delivered immediately.
+                            </p>
+                          </div>
+                        </>
+                      )}
+
+                      <div className="form-group">
+                        <label className="form-label">Staff Who Worked On This</label>
+                        <select
+                          className="form-input"
+                          value={workedByStaffId || user?.id || ""}
+                          onChange={(e) => setWorkedByStaffId(e.target.value)}
+                          disabled={isCheckoutSubmitting}
+                        >
+                          {!staffRoster && user && (
+                            <option value={user.id}>{user.name}</option>
+                          )}
+                          {staffRoster?.map((s) => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
                       </div>
 
                       <div className="form-group">
@@ -1342,13 +1474,19 @@ export default function StaffDashboard() {
       )}
 
       {/* Rider Handover Modal */}
-      {handoverOrderId && (
-        <HandoverModal
-          orderId={handoverOrderId}
-          onClose={() => setHandoverOrderId(null)}
-          onSubmit={handleHandoverSubmit}
-        />
-      )}
+      {handoverOrderId && (() => {
+        const handoverOrder = activeOrders.find(o => o._id === handoverOrderId);
+        return (
+          <HandoverModal
+            orderId={handoverOrderId}
+            customerName={handoverOrder?.customerName}
+            customerPhone={handoverOrder?.customerPhone}
+            deliveryAddress={handoverOrder?.deliveryAddress}
+            onClose={() => setHandoverOrderId(null)}
+            onSubmit={handleHandoverSubmit}
+          />
+        );
+      })()}
 
       {/* Returns processing modal */}
       {returningOrder && (
@@ -1356,6 +1494,15 @@ export default function StaffDashboard() {
           order={returningOrder}
           onClose={() => setReturningOrder(null)}
           onSubmit={handleReturnSubmit}
+        />
+      )}
+
+      {/* Delivery failure / returns-to-approval modal */}
+      {failureOrder && (
+        <DeliveryFailureModal
+          order={failureOrder}
+          onClose={() => setFailureOrder(null)}
+          onSubmit={handleReportDeliveryFailure}
         />
       )}
 
@@ -1487,6 +1634,8 @@ export default function StaffDashboard() {
           </div>
         </div>
       )}
+
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

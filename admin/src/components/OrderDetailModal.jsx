@@ -252,7 +252,7 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, token }
             {/* Quick Actions */}
             <div className="customer-info-box">
               <h4>Fulfillment Actions</h4>
-              {order.status === "delivered" && onOpenReturn && (
+              {["delivered", "partially_returned"].includes(order.status) && onOpenReturn && (
                 <button
                   className="btn btn--secondary btn--md btn--full-width"
                   onClick={() => onOpenReturn(order)}

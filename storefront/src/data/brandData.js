@@ -20,7 +20,7 @@ export const brands = {
         name: 'Closer to Nature Baby Bottles',
         price: '£18.99',
         wasPrice: '£24.99',
-        image: '/new_assets/Tommee Tippee Closer to Nature Starter Set.jfif',
+        image: '/assets/Tommee Tippee Closer to Nature Starter Set.jfif',
         tier: 'Essentials',
         stage: 'newborn',
         deliveryTime: 'Ships in 2 hours',
@@ -30,7 +30,7 @@ export const brands = {
         id: 2,
         name: 'Perfect Prep Day & Night',
         price: '£130.00',
-        image: '/new_assets/Tommee Tippee Closer to Nature Starter Set.jfif', // Reusing for dummy
+        image: '/assets/Tommee Tippee Closer to Nature Starter Set.jfif', // Reusing for dummy
         tier: 'Must-Haves',
         stage: 'newborn',
         deliveryTime: 'Ships in 2 hours',
@@ -40,7 +40,7 @@ export const brands = {
         id: 3,
         name: 'Explora Weaning Sippee Cup',
         price: '£6.99',
-        image: '/new_assets/Tommee Tippee Closer to Nature Starter Set.jfif',
+        image: '/assets/Tommee Tippee Closer to Nature Starter Set.jfif',
         tier: 'Essentials',
         stage: 'toddler',
         deliveryTime: 'Ships in 2 hours',

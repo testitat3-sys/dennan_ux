@@ -359,7 +359,14 @@
 }
 
 .marker-icon {
-  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: white;
+  color: var(--color-brand-accent);
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
 }
 
@@ -371,6 +378,18 @@
   font-weight: 700;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tracking-issue-card {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+}
+
+.rider-name {
+  overflow-wrap: break-word;
 }
 
 .pulse .marker-icon {

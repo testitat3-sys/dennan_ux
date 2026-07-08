@@ -8,6 +8,7 @@ import OrderDetailModal from "../components/OrderDetailModal";
 import RemindersWidget from "../components/RemindersWidget";
 import CalendarPanel from "../components/CalendarPanel";
 import SalesMetricsPanel from "../components/SalesMetricsPanel";
+import ReturnsPanel from "../components/ReturnsPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import sosLogo from "../assets/SOS.png";
 import {
@@ -28,7 +29,8 @@ import {
   BarChart3,
   Calendar as CalendarIcon,
   Pencil,
-  Plus
+  Plus,
+  RotateCcw
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -193,6 +195,13 @@ export default function AdminDashboard() {
             >
               <UserCheck size={18} />
               <span>Staff Roster</span>
+            </button>
+            <button
+              className={`sidebar-nav-item ${activeTab === "returns" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("returns")}
+            >
+              <RotateCcw size={18} />
+              <span>Returns</span>
             </button>
             <button
               className={`sidebar-nav-item ${activeTab === "customers" ? "is-active" : ""}`}
@@ -687,6 +696,11 @@ export default function AdminDashboard() {
           {/* TAB 7: SALES METRICS */}
           {activeTab === "metrics" && (
             <SalesMetricsPanel token={token} onOpenOrder={setPendingOrderId} />
+          )}
+
+          {/* TAB 8: RETURNS APPROVAL */}
+          {activeTab === "returns" && (
+            <ReturnsPanel token={token} />
           )}
         </main>
       </div>

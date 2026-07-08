@@ -481,6 +481,9 @@ export default defineSchema({
     note: v.optional(v.string()),
     cardOrderId: v.optional(v.string()),
     receiptNumber: v.optional(v.string()), // Human-readable receipt number (walk-in orders)
+    channel: v.optional(
+      v.union(v.literal("online"), v.literal("walk_in"), v.literal("whatsapp"))
+    ),
   }).index("by_user", ["userId"])
     .index("by_claimedBy", ["claimedBy"]),
 
@@ -786,13 +789,17 @@ export default defineSchema({
 
   returns: defineTable({
     orderId: v.id("orders"),
-    returnedItems: v.array(
-      v.object({
-        productId: v.id("products"),
-        name: v.string(),
-        quantity: v.number(),
-        unitPrice: v.number(),
-      })
+    // Legacy embedded shape — no longer written by submitReturn; kept optional so old
+    // rows still validate. New code treats `returnItems` as the source of truth.
+    returnedItems: v.optional(
+      v.array(
+        v.object({
+          productId: v.id("products"),
+          name: v.string(),
+          quantity: v.number(),
+          unitPrice: v.number(),
+        })
+      )
     ),
     refundAmount: v.number(),
     note: v.optional(v.string()),
@@ -800,6 +807,25 @@ export default defineSchema({
     staffName: v.string(),
     createdAt: v.number(),
   }).index("by_order", ["orderId"]),
+
+  returnItems: defineTable({
+    returnId: v.id("returns"),
+    orderId: v.id("orders"),
+    productId: v.id("products"),
+    productName: v.string(),
+    quantity: v.number(),
+    unitPrice: v.number(),
+    reason: v.optional(v.string()),
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected")),
+    source: v.union(v.literal("manual_return"), v.literal("delivery_failure")),
+    approvedBy: v.optional(v.id("users")),
+    approvedAt: v.optional(v.number()),
+    rejectedReason: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_return", ["returnId"])
+    .index("by_order", ["orderId"])
+    .index("by_status", ["status"]),
 
   customerActivities: defineTable({
     customerId: v.id("users"),
