@@ -1,6 +1,12 @@
-import React from "react";
+import React, { useRef, useState } from "react";
+import { Printer, Copy, Check, X } from "lucide-react";
+import html2canvas from "html2canvas";
 
 export default function ReceiptModal({ receipt, onClose }) {
+  const receiptRef = useRef(null);
+  const [copying, setCopying] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   if (!receipt) return null;
 
   const formattedDate = new Date(receipt.date).toLocaleString("en-GB", {
@@ -32,17 +38,53 @@ export default function ReceiptModal({ receipt, onClose }) {
     voucher: "Gift Voucher",
   };
 
+  const handleCopyImage = async () => {
+    if (!receiptRef.current || copying) return;
+    setCopying(true);
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": blob }),
+          ]);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2500);
+        } catch {
+          // Fallback: download the image if clipboard write is blocked
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `receipt-${receiptNo}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        } finally {
+          setCopying(false);
+        }
+      }, "image/png");
+    } catch (err) {
+      console.error("Failed to capture receipt:", err);
+      setCopying(false);
+    }
+  };
+
   return (
     <div className="printable-receipt-modal" onClick={onClose}>
       <div className="printable-receipt-card" onClick={(e) => e.stopPropagation()}>
 
-        <div className="receipt-print-wrapper">
+        <div className="receipt-print-wrapper" ref={receiptRef}>
 
           {/* ── Header ── */}
           <div className="receipt-header">
             <h2>DENNAN</h2>
-            <p className="receipt-location">Shop L-1, MM Plaza, Luwum Street</p>
-            <p className="receipt-contact">Tel: 0784 733314</p>
+            <p className="receipt-location">Ntinda Complex GF-02 · 0784 733314</p>
+            <p className="receipt-location">MM Plaza L-01 · 0786 690058</p>
           </div>
 
           <div className="divider-dots" />
@@ -161,9 +203,21 @@ export default function ReceiptModal({ receipt, onClose }) {
         {/* ── Screen-only buttons ── */}
         <div className="receipt-actions">
           <button type="button" className="btn btn--secondary" onClick={onClose}>
+            <X size={14} />
             Close
           </button>
+          <button
+            type="button"
+            className="btn btn--outline"
+            onClick={handleCopyImage}
+            disabled={copying}
+            title="Copy receipt as image"
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {copying ? "Copying…" : copied ? "Copied!" : "Copy Image"}
+          </button>
           <button type="button" className="btn btn--primary" onClick={() => window.print()}>
+            <Printer size={14} />
             Print
           </button>
         </div>

@@ -13,6 +13,8 @@ import {
   PieChart,
   Pie,
   Cell,
+  BarChart,
+  Bar,
 } from "recharts";
 import { TrendingUp, CheckCircle, DollarSign } from "lucide-react";
 import { getTodayStr } from "../utils/reminderHelpers";
@@ -32,6 +34,20 @@ const CHANNEL_COLORS = {
   walk_in: "#7fa93e",
   whatsapp: "#25d366",
 };
+
+const STAGE_COLORS = {
+  mother: "#d35097",
+  newborn: "#3b7dd8",
+  kid: "#c9a227",
+};
+
+const TIER_COLORS = {
+  essentials: "#7fa93e",
+  musthaves: "#3b7dd8",
+  luxuries: "#d35097",
+};
+
+const CATEGORY_PALETTE = ["#d35097", "#3b7dd8", "#7fa93e", "#c9a227", "#8a63d2", "#e07a3e", "#2fb5a3"];
 
 const PAYMENT_FILTERS = [
   { value: "all", label: "All" },
@@ -115,6 +131,12 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
     if (!metrics) return [];
     return metrics.byChannel.map((c) => ({ name: c.label, value: c.amount, channel: c.channel }));
   }, [metrics]);
+
+  const productAnalytics = useQuery(api.orders.adminGetProductAnalytics, {
+    token,
+    startDate,
+    endDate,
+  });
 
   return (
     <div className="admin-tab-panel is-active">
@@ -344,6 +366,92 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
               </tbody>
             </table>
           </div>
+
+          {productAnalytics && productAnalytics.topProducts.length > 0 && (
+            <>
+              <div className="section-header">
+                <h2 className="section-title">Product Sales Analytics</h2>
+                {productAnalytics.overallMarginPct !== null && (
+                  <span style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
+                    Overall gross margin: {productAnalytics.overallMarginPct}%
+                    {productAnalytics.productsWithoutCostData > 0 &&
+                      ` (${productAnalytics.productsWithoutCostData} product(s) missing cost data)`}
+                  </span>
+                )}
+              </div>
+
+              <div className="sales-metrics-charts-grid">
+                <div className="sales-metrics-chart-card">
+                  <h3 className="product-edit-card-title">Revenue by Category</h3>
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart data={productAnalytics.byCategory} layout="vertical" margin={{ left: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-container-high)" />
+                      <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => v.toLocaleString()} />
+                      <YAxis type="category" dataKey="label" tick={{ fontSize: 10 }} width={160} />
+                      <Tooltip formatter={(value) => `UGX ${Number(value).toLocaleString()}`} />
+                      <Bar dataKey="revenue">
+                        {productAnalytics.byCategory.map((entry, i) => (
+                          <Cell key={entry.key} fill={CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="sales-metrics-chart-card">
+                  <h3 className="product-edit-card-title">Revenue by Stage & Tier</h3>
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart data={[...productAnalytics.byStage, ...productAnalytics.byTier]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-container-high)" />
+                      <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => v.toLocaleString()} />
+                      <Tooltip formatter={(value) => `UGX ${Number(value).toLocaleString()}`} />
+                      <Bar dataKey="revenue">
+                        {[...productAnalytics.byStage, ...productAnalytics.byTier].map((entry) => (
+                          <Cell
+                            key={entry.key}
+                            fill={STAGE_COLORS[entry.key] || TIER_COLORS[entry.key] || "#999"}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="section-header">
+                <h2 className="section-title">Top Products</h2>
+              </div>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Product</th>
+                      <th>Units Sold</th>
+                      <th>Revenue</th>
+                      <th>Gross Margin</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {productAnalytics.topProducts.map((p, idx) => (
+                      <tr key={p.productId}>
+                        <td>{idx + 1}</td>
+                        <td><strong>{p.name}</strong></td>
+                        <td>{p.unitsSold}</td>
+                        <td>UGX {p.revenue.toLocaleString()}</td>
+                        <td>
+                          {p.hasCostData
+                            ? `UGX ${p.grossMargin.toLocaleString()} (${p.marginPct}%)`
+                            : "No cost data"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </>
       )}
 

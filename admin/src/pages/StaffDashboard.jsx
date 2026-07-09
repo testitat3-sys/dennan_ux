@@ -16,6 +16,7 @@ import { useToast } from "../hooks/useToast";
 import { useNewOrderNotifications } from "../hooks/useNewOrderNotifications";
 import { getTodayStr } from "../utils/reminderHelpers";
 import sosLogo from "../assets/SOS.png";
+import profileImg from "../assets/about-dennan.png";
 import {
   ClipboardList,
   ShoppingCart,
@@ -37,7 +38,8 @@ import {
   CreditCard,
   Calendar as CalendarIcon,
   History,
-  Printer
+  Printer,
+  Image as ImageIcon
 } from "lucide-react";
 
 export default function StaffDashboard() {
@@ -521,49 +523,58 @@ export default function StaffDashboard() {
           </div>
 
           <nav className="sidebar-nav">
-            <button
-              className={`sidebar-nav-item ${activeTab === "orders" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("orders")}
-            >
-              <ClipboardList size={18} />
-              <span>Online Orders</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "pos" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("pos")}
-            >
-              <ShoppingCart size={18} />
-              <span>Physical Orders</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "history" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("history")}
-            >
-              <History size={18} />
-              <span>My Order History</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "customers" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("customers")}
-            >
-              <Users size={18} />
-              <span>Customers CRM</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "calendar" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("calendar")}
-            >
-              <CalendarIcon size={18} />
-              <span>Calendar</span>
-              {dueActivities && dueActivities.length > 0 && (
-                <span className="sidebar-nav-badge">{dueActivities.length}</span>
-              )}
-            </button>
+            <div className="sidebar-nav-group">
+              <span className="sidebar-nav-group-label">Orders</span>
+              <button
+                className={`sidebar-nav-item ${activeTab === "orders" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("orders")}
+              >
+                <ClipboardList size={18} />
+                <span>Online Orders</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "pos" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("pos")}
+              >
+                <ShoppingCart size={18} />
+                <span>Physical Orders</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "history" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("history")}
+              >
+                <History size={18} />
+                <span>My Order History</span>
+              </button>
+            </div>
+
+            <div className="sidebar-nav-group">
+              <span className="sidebar-nav-group-label">Customers & Planning</span>
+              <button
+                className={`sidebar-nav-item ${activeTab === "customers" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("customers")}
+              >
+                <Users size={18} />
+                <span>Customers CRM</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "calendar" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("calendar")}
+              >
+                <CalendarIcon size={18} />
+                <span>Calendar</span>
+                {dueActivities && dueActivities.length > 0 && (
+                  <span className="sidebar-nav-badge">{dueActivities.length}</span>
+                )}
+              </button>
+            </div>
           </nav>
 
           <div className="sidebar-footer">
             <div className="sidebar-user">
-              <div className="avatar">{initials(user?.name)}</div>
+              <div className="avatar">
+                <img src={profileImg} alt={user?.name || "Profile"} className="avatar-img" />
+              </div>
               <div className="sidebar-user-info">
                 <span className="sidebar-user-name">{user?.name}</span>
                 <span className="sidebar-user-role">{user?.accountRole?.toUpperCase()}</span>
@@ -1376,6 +1387,16 @@ export default function StaffDashboard() {
                                   title="Print receipt"
                                 >
                                   <Printer size={13} />
+                                </button>
+                                <button
+                                  className="btn btn--outline btn--sm"
+                                  onClick={() => {
+                                    setLastReceipt(buildReceiptFromOrder(order));
+                                    setShowReceipt(true);
+                                  }}
+                                  title="Copy receipt as image"
+                                >
+                                  <ImageIcon size={13} />
                                 </button>
                               </div>
                             </td>

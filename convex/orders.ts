@@ -1877,6 +1877,138 @@ export const adminGetSalesMetrics = query({
   },
 });
 
+const STAGE_LABELS: Record<string, string> = { mother: "Mother", newborn: "Newborn", kid: "Kid" };
+const TIER_LABELS: Record<string, string> = { essentials: "Essentials", musthaves: "Must-Haves", luxuries: "Luxuries" };
+
+export const adminGetProductAnalytics = query({
+  args: {
+    token: v.string(),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+
+    const completedStatuses = ["delivered", "returned", "partially_returned"];
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayMs = startOfToday.getTime();
+
+    const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
+    const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
+
+    const allOrders = await ctx.db.query("orders").collect();
+    const ordersInRange = allOrders.filter(
+      (o: any) =>
+        o.createdAt >= rangeStartMs && o.createdAt < rangeEndMs && completedStatuses.includes(o.status)
+    );
+
+    // Aggregate units/revenue per product across all matching orders' line items
+    const productAgg = new Map<string, { productId: any; unitsSold: number; revenue: number }>();
+    for (const order of ordersInRange) {
+      const items = await ctx.db
+        .query("orderItems")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+      for (const item of items) {
+        const key = item.productId.toString();
+        const revenue = item.unitPrice * item.quantity;
+        const existing = productAgg.get(key);
+        if (existing) {
+          existing.unitsSold += item.quantity;
+          existing.revenue += revenue;
+        } else {
+          productAgg.set(key, { productId: item.productId, unitsSold: item.quantity, revenue });
+        }
+      }
+    }
+
+    const byCategoryMap = new Map<string, { key: string; label: string; unitsSold: number; revenue: number }>();
+    const byStageMap = new Map<string, { key: string; label: string; unitsSold: number; revenue: number }>();
+    const byTierMap = new Map<string, { key: string; label: string; unitsSold: number; revenue: number }>();
+    const topProducts: {
+      productId: string;
+      name: string;
+      unitsSold: number;
+      revenue: number;
+      grossMargin: number | null;
+      marginPct: number | null;
+      hasCostData: boolean;
+    }[] = [];
+
+    for (const [key, agg] of productAgg.entries()) {
+      const product = await ctx.db.get(agg.productId);
+      const name = product?.name || "Unknown Product";
+      const costPrice = product?.costPrice;
+      const hasCostData = typeof costPrice === "number";
+      const grossMargin = hasCostData ? agg.revenue - costPrice * agg.unitsSold : null;
+      const marginPct =
+        hasCostData && agg.revenue > 0 ? Math.round((grossMargin! / agg.revenue) * 1000) / 10 : null;
+
+      topProducts.push({
+        productId: key,
+        name,
+        unitsSold: agg.unitsSold,
+        revenue: agg.revenue,
+        grossMargin,
+        marginPct,
+        hasCostData,
+      });
+
+      const categoryKey = product?.category || "Uncategorized";
+      const catEntry = byCategoryMap.get(categoryKey) || { key: categoryKey, label: categoryKey, unitsSold: 0, revenue: 0 };
+      catEntry.unitsSold += agg.unitsSold;
+      catEntry.revenue += agg.revenue;
+      byCategoryMap.set(categoryKey, catEntry);
+
+      if (product?.stage) {
+        const stageEntry = byStageMap.get(product.stage) || {
+          key: product.stage,
+          label: STAGE_LABELS[product.stage] || product.stage,
+          unitsSold: 0,
+          revenue: 0,
+        };
+        stageEntry.unitsSold += agg.unitsSold;
+        stageEntry.revenue += agg.revenue;
+        byStageMap.set(product.stage, stageEntry);
+      }
+
+      if (product?.tier) {
+        const tierEntry = byTierMap.get(product.tier) || {
+          key: product.tier,
+          label: TIER_LABELS[product.tier] || product.tier,
+          unitsSold: 0,
+          revenue: 0,
+        };
+        tierEntry.unitsSold += agg.unitsSold;
+        tierEntry.revenue += agg.revenue;
+        byTierMap.set(product.tier, tierEntry);
+      }
+    }
+
+    topProducts.sort((a, b) => b.revenue - a.revenue);
+
+    const withCostData = topProducts.filter((p) => p.hasCostData);
+    const totalRevenueWithCost = withCostData.reduce((sum, p) => sum + p.revenue, 0);
+    const totalMarginWithCost = withCostData.reduce((sum, p) => sum + (p.grossMargin || 0), 0);
+    const overallMarginPct =
+      totalRevenueWithCost > 0 ? Math.round((totalMarginWithCost / totalRevenueWithCost) * 1000) / 10 : null;
+
+    return {
+      topProducts: topProducts.slice(0, 10),
+      byCategory: Array.from(byCategoryMap.values()).sort((a, b) => b.revenue - a.revenue),
+      byStage: Array.from(byStageMap.values()).sort((a, b) => b.revenue - a.revenue),
+      byTier: Array.from(byTierMap.values()).sort((a, b) => b.revenue - a.revenue),
+      overallMarginPct,
+      productsWithoutCostData: topProducts.length - withCostData.length,
+      rangeStart: toDateStr(rangeStartMs),
+      rangeEnd: toDateStr(rangeEndMs - dayMs),
+    };
+  },
+});
+
 export const adminGetPaymentMethodTransactions = query({
   args: {
     token: v.string(),

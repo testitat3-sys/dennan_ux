@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import CustomerActivityModal from "../components/CustomerActivityModal";
@@ -11,6 +11,7 @@ import SalesMetricsPanel from "../components/SalesMetricsPanel";
 import ReturnsPanel from "../components/ReturnsPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import sosLogo from "../assets/SOS.png";
+import profileImg from "../assets/about-dennan.png";
 import {
   LayoutDashboard,
   Boxes,
@@ -30,7 +31,9 @@ import {
   Calendar as CalendarIcon,
   Pencil,
   Plus,
-  RotateCcw
+  RotateCcw,
+  History,
+  Eye
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -63,6 +66,25 @@ export default function AdminDashboard() {
 
   // Stats Query
   const stats = useQuery(api.orders.adminGetOverviewStats, { token });
+
+  // Order History (all orders, admin-wide)
+  const { results: orderHistory, status: orderHistoryStatus, loadMore: loadMoreOrderHistory } = usePaginatedQuery(
+    api.orders.getOrdersForStaff,
+    { token },
+    { initialNumItems: 25 }
+  );
+  const getStatusModifier = (status) => {
+    switch (status) {
+      case "preparing": return "new";
+      case "packing": return "packing";
+      case "dispatched": return "dispatched";
+      case "delivered": return "done";
+      case "failed": return "failed";
+      case "returned": return "returned";
+      case "partially_returned": return "partially-returned";
+      default: return "new";
+    }
+  };
 
   // Stock list
   const stockList = useQuery(api.products.getStockList, { token });
@@ -161,70 +183,94 @@ export default function AdminDashboard() {
           </div>
 
           <nav className="sidebar-nav">
-            <button
-              className={`sidebar-nav-item ${activeTab === "overview" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("overview")}
-            >
-              <LayoutDashboard size={18} />
-              <span>Overview</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "metrics" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("metrics")}
-            >
-              <BarChart3 size={18} />
-              <span>Sales Metrics</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "stock" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("stock")}
-            >
-              <Boxes size={18} />
-              <span>Stock Manager</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "discounts" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("discounts")}
-            >
-              <Tag size={18} />
-              <span>Discounts & Promos</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "staff" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("staff")}
-            >
-              <UserCheck size={18} />
-              <span>Staff Roster</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "returns" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("returns")}
-            >
-              <RotateCcw size={18} />
-              <span>Returns</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "customers" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("customers")}
-            >
-              <Users size={18} />
-              <span>Customers</span>
-            </button>
-            <button
-              className={`sidebar-nav-item ${activeTab === "calendar" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("calendar")}
-            >
-              <CalendarIcon size={18} />
-              <span>Calendar</span>
-              {dueActivities && dueActivities.length > 0 && (
-                <span className="sidebar-nav-badge">{dueActivities.length}</span>
-              )}
-            </button>
+            <div className="sidebar-nav-group">
+              <span className="sidebar-nav-group-label">Overview</span>
+              <button
+                className={`sidebar-nav-item ${activeTab === "overview" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("overview")}
+              >
+                <LayoutDashboard size={18} />
+                <span>Dashboard</span>
+              </button>
+            </div>
+
+            <div className="sidebar-nav-group">
+              <span className="sidebar-nav-group-label">Sales & Orders</span>
+              <button
+                className={`sidebar-nav-item ${activeTab === "metrics" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("metrics")}
+              >
+                <BarChart3 size={18} />
+                <span>Sales Metrics</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "history" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("history")}
+              >
+                <History size={18} />
+                <span>Order History</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "returns" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("returns")}
+              >
+                <RotateCcw size={18} />
+                <span>Returns</span>
+              </button>
+            </div>
+
+            <div className="sidebar-nav-group">
+              <span className="sidebar-nav-group-label">Catalogue</span>
+              <button
+                className={`sidebar-nav-item ${activeTab === "stock" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("stock")}
+              >
+                <Boxes size={18} />
+                <span>Stock Manager</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "discounts" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("discounts")}
+              >
+                <Tag size={18} />
+                <span>Discounts & Promos</span>
+              </button>
+            </div>
+
+            <div className="sidebar-nav-group">
+              <span className="sidebar-nav-group-label">People & Planning</span>
+              <button
+                className={`sidebar-nav-item ${activeTab === "customers" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("customers")}
+              >
+                <Users size={18} />
+                <span>Customers</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "calendar" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("calendar")}
+              >
+                <CalendarIcon size={18} />
+                <span>Calendar</span>
+                {dueActivities && dueActivities.length > 0 && (
+                  <span className="sidebar-nav-badge">{dueActivities.length}</span>
+                )}
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "staff" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("staff")}
+              >
+                <UserCheck size={18} />
+                <span>Staff Roster</span>
+              </button>
+            </div>
           </nav>
 
           <div className="sidebar-footer">
             <div className="sidebar-user">
-              <div className="avatar">{initials}</div>
+              <div className="avatar">
+                <img src={profileImg} alt={user?.name || "Profile"} className="avatar-img" />
+              </div>
               <div className="sidebar-user-info">
                 <span className="sidebar-user-name">{user?.name}</span>
                 <span className="sidebar-user-role">{user?.accountRole?.toUpperCase()}</span>
@@ -684,6 +730,98 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: ORDER HISTORY (all orders, admin-wide) */}
+          {activeTab === "history" && (
+            <div className="admin-tab-panel is-active">
+              <div className="page-header">
+                <h1 className="admin-page-title">Order History</h1>
+                <span style={{ fontSize: "12px", color: "var(--text-tertiary)", alignSelf: "center" }}>
+                  Sorted: Newest First
+                </span>
+              </div>
+
+              {orderHistory === undefined ? (
+                <div className="empty-state">
+                  <div className="empty-title">Loading order history...</div>
+                </div>
+              ) : orderHistory.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-title">No orders yet.</div>
+                </div>
+              ) : (
+                <>
+                  <div className="table-wrap">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Date & Time</th>
+                          <th>Customer</th>
+                          <th>Type</th>
+                          <th>Items</th>
+                          <th>Total</th>
+                          <th>Status</th>
+                          <th>Claimed By</th>
+                          <th style={{ width: "80px" }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orderHistory.map((order) => (
+                          <tr
+                            key={order._id}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => setViewingOrder(order)}
+                          >
+                            <td style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
+                              {new Date(order.createdAt).toLocaleString("en-GB", {
+                                day: "2-digit", month: "short", year: "numeric",
+                                hour: "2-digit", minute: "2-digit"
+                              })}
+                            </td>
+                            <td className="td-customer">{order.customerName}</td>
+                            <td>
+                              <span
+                                className={`status-badge ${order.isWalkIn ? "status-badge--done" : "status-badge--packing"}`}
+                                style={{ fontSize: "10px" }}
+                              >
+                                {order.isWalkIn ? "Walk-in" : "Online"}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: "center" }}>{order.items?.length || 0}</td>
+                            <td style={{ whiteSpace: "nowrap" }}>UGX {order.grandTotal.toLocaleString()}</td>
+                            <td>
+                              <span className={`status-badge status-badge--${getStatusModifier(order.status)}`}>
+                                <span className="status-dot" />
+                                {order.status.toUpperCase()}
+                              </span>
+                            </td>
+                            <td>{order.claimantName || "—"}</td>
+                            <td className="td-action" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                className="btn btn--secondary btn--sm"
+                                onClick={() => setViewingOrder(order)}
+                                title="View full details"
+                              >
+                                <Eye size={13} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {orderHistoryStatus === "CanLoadMore" && (
+                    <div style={{ textAlign: "center", marginTop: "var(--space-4)" }}>
+                      <button className="btn btn--secondary btn--sm" onClick={() => loadMoreOrderHistory(25)}>
+                        Load More
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
