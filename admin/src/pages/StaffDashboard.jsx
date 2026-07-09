@@ -4,7 +4,8 @@ import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import OrderDetailModal from "../components/OrderDetailModal";
 import HandoverModal from "../components/HandoverModal";
-import ReturnProcessModal from "../components/ReturnProcessModal";
+import ExchangeModal from "../components/ReturnProcessModal";
+import ReturnsPanel from "../components/ReturnsPanel";
 import DeliveryFailureModal from "../components/DeliveryFailureModal";
 import CustomerActivityModal from "../components/CustomerActivityModal";
 import RemindersWidget from "../components/RemindersWidget";
@@ -29,7 +30,6 @@ import {
   Plus,
   X,
   Eye,
-  Hand,
   Sparkles,
   LogOut,
   ChevronRight,
@@ -39,12 +39,15 @@ import {
   Calendar as CalendarIcon,
   History,
   Printer,
-  Copy
+  Copy,
+  RotateCcw,
+  Package
 } from "lucide-react";
 
 export default function StaffDashboard() {
   const { user, token, logout } = useStaffAuth();
   const [activeTab, setActiveTab] = useState("orders");
+  const [ordersTab, setOrdersTab] = useState("pending");
 
   // Modals state
   const [viewingOrder, setViewingOrder] = useState(null);
@@ -75,7 +78,7 @@ export default function StaffDashboard() {
   const handoverMutation = useMutation(api.orders.handoverToDelivery);
   const completeOrderMutation = useMutation(api.orders.completeOrder);
   const reportDeliveryFailureMutation = useMutation(api.orders.reportDeliveryFailure);
-  const submitReturnMutation = useMutation(api.returns.submitReturn);
+  const submitExchangeMutation = useMutation(api.returns.submitExchange);
 
   const handleClaimOrder = async (orderId) => {
     try {
@@ -126,13 +129,14 @@ export default function StaffDashboard() {
     }
   };
 
-  const handleReturnSubmit = async (data) => {
+  const handleExchangeSubmit = async (data) => {
     try {
-      await submitReturnMutation({
+      await submitExchangeMutation({
         token,
         orderId: data.orderId,
         returnedItems: data.returnedItems,
-        refundAmount: data.refundAmount,
+        exchangeItems: data.exchangeItems,
+        topUp: data.topUp,
         note: data.note
       });
       setReturningOrder(null);
@@ -140,6 +144,7 @@ export default function StaffDashboard() {
       return true;
     } catch (err) {
       console.error(err);
+      alert("Failed to process exchange: " + err.message);
       return false;
     }
   };
@@ -508,10 +513,22 @@ export default function StaffDashboard() {
     }
   };
 
-  const unclaimedOrders = ordersList?.filter(o => o.status === "preparing") || [];
-  const activeOrders = ordersList?.filter(o => o.claimedBy === user?.id && ["packing", "dispatched"].includes(o.status)) || [];
+  const pendingOrders = ordersList?.filter(o => o.status === "preparing") || [];
+  const packingOrders = ordersList?.filter(o => o.status === "packing") || [];
+  const dispatchedOrders = ordersList?.filter(o => o.status === "dispatched") || [];
+  const deliveredOrders = ordersList?.filter(o => o.status === "delivered") || [];
+  const failedOrders = ordersList?.filter(o => o.status === "failed") || [];
 
-  useNewOrderNotifications(ordersList === undefined ? undefined : unclaimedOrders, {
+  const ORDERS_TABS = [
+    { key: "pending", label: "Pending", icon: Sparkles, orders: pendingOrders },
+    { key: "packing", label: "Packing", icon: Package, orders: packingOrders },
+    { key: "dispatched", label: "Dispatched", icon: Truck, orders: dispatchedOrders },
+    { key: "delivered", label: "Delivered", icon: CheckCircle, orders: deliveredOrders },
+    { key: "failed", label: "Failed", icon: XCircle, orders: failedOrders },
+  ];
+  const activeOrdersList = ORDERS_TABS.find(t => t.key === ordersTab).orders;
+
+  useNewOrderNotifications(ordersList === undefined ? undefined : pendingOrders, {
     onNewOrder: (order) => showToast(`New order received from ${order.customerName}`, "info"),
   });
 
@@ -546,6 +563,9 @@ export default function StaffDashboard() {
               >
                 <ClipboardList size={18} />
                 <span>Online Orders</span>
+                {pendingOrders.length > 0 && (
+                  <span className="sidebar-nav-badge">{pendingOrders.length}</span>
+                )}
               </button>
               <button
                 className={`sidebar-nav-item ${activeTab === "pos" ? "is-active" : ""}`}
@@ -560,6 +580,13 @@ export default function StaffDashboard() {
               >
                 <History size={18} />
                 <span>My Order History</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "returns" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("returns")}
+              >
+                <RotateCcw size={18} />
+                <span>Returns</span>
               </button>
             </div>
 
@@ -614,8 +641,21 @@ export default function StaffDashboard() {
               <RemindersWidget token={token} onViewCalendar={() => setActiveTab("calendar")} />
 
               <div className="tab-strip">
-                <span className="tab-btn is-active">New & Unclaimed ({unclaimedOrders.length})</span>
-                <span className="tab-btn">My Active Shipments ({activeOrders.length})</span>
+                {ORDERS_TABS.map(({ key, label, icon: Icon, orders }) => (
+                  <button
+                    key={key}
+                    className={`tab-btn ${ordersTab === key ? "is-active" : ""}`}
+                    onClick={() => setOrdersTab(key)}
+                  >
+                    <Icon size={15} />
+                    <span>{label}</span>
+                    {orders.length > 0 && (
+                      <span className={`tab-count-badge ${key === "pending" ? "tab-count-badge--alert" : ""}`}>
+                        {orders.length}
+                      </span>
+                    )}
+                  </button>
+                ))}
               </div>
 
               <div className="order-feed">
@@ -623,127 +663,48 @@ export default function StaffDashboard() {
                   <div className="empty-state">
                     <div className="empty-title">Syncing queue...</div>
                   </div>
-                ) : unclaimedOrders.length === 0 ? (
+                ) : activeOrdersList.length === 0 ? (
                   <div className="empty-state">
-                    <div className="empty-title">No new orders in queue.</div>
+                    <div className="empty-title">No orders in {ORDERS_TABS.find(t => t.key === ordersTab).label.toLowerCase()}.</div>
                   </div>
                 ) : (
-                  unclaimedOrders.map(order => (
-                    <article key={order._id} className="order-card order-card--new">
-                      <div className="order-card-header">
-                        <div>
-                          <h2 className="order-customer-name">{order.customerName}</h2>
-                          <div className="order-meta-line">
-                            <span>UGX {order.grandTotal.toLocaleString()}</span>
-                            <span className="meta-separator">·</span>
-                            <span>Zone: {order.deliveryAddress?.zone}</span>
-                          </div>
+                  activeOrdersList.map(order => (
+                    <article
+                      key={order._id}
+                      className={`order-row order-row--${getStatusModifier(order.status)}`}
+                      onClick={() => setViewingOrder(order)}
+                    >
+                      <div className="order-row-main">
+                        <h2 className="order-row-name" title={order.customerName}>{order.customerName}</h2>
+                        <div className="order-meta-line">
+                          <span>UGX {order.grandTotal.toLocaleString()}</span>
+                          <span className="meta-separator">·</span>
+                          <span>Zone: {order.deliveryAddress?.zone}</span>
                         </div>
-                        <span className="status-badge status-badge--new">
-                          <span className="status-dot" />
-                          New
+                      </div>
+
+                      {order.claimantName && (
+                        <span className="claimed-chip" title={order.claimantName}>
+                          <span className="mini-avatar">{order.claimantName[0]}</span>
+                          <span className="claimed-chip-name">{order.claimantName}</span>
                         </span>
-                      </div>
+                      )}
 
-                      <div className="order-details">
-                        <div className="order-detail-row">
-                          <span className="order-detail-icon"><ShoppingCart size={15} /></span>
-                          <div className="order-detail-content">Items: {order.items?.length || 0} items</div>
-                        </div>
-                      </div>
-
-                      <div className="order-card-footer">
-                        <div className="order-footer-left">
+                      <div className="order-row-timer">
+                        {order.status === "preparing" && (
                           <LiveTimer sinceTimestamp={order.createdAt} label="Waiting" warningThresholdSeconds={300} />
-                        </div>
-                        <div className="order-actions">
-                          <button className="btn btn--secondary btn--sm" onClick={() => setViewingOrder(order)}>
-                            <span className="btn-icon btn-icon--left"><Eye size={14} /></span>
-                            <span className="btn-text">Details</span>
-                          </button>
-                          <button className="btn btn--primary btn--sm" onClick={() => handleClaimOrder(order._id)}>
-                            <span className="btn-icon btn-icon--left"><Hand size={14} /></span>
-                            <span className="btn-text">Claim Order</span>
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  ))
-                )}
-              </div>
-
-              <div className="section-header">
-                <h2 className="section-title">My Active Shipments</h2>
-              </div>
-              <div className="order-feed">
-                {ordersList === undefined ? (
-                  <div className="empty-state">
-                    <div className="empty-title">Syncing queue...</div>
-                  </div>
-                ) : activeOrders.length === 0 ? (
-                  <div className="empty-state">
-                    <div className="empty-title">No active claimed orders.</div>
-                  </div>
-                ) : (
-                  activeOrders.map(order => (
-                    <article key={order._id} className={`order-card order-card--${order.status}`}>
-                      <div className="order-card-header">
-                        <div>
-                          <h2 className="order-customer-name">{order.customerName}</h2>
-                          <div className="order-meta-line">
-                            <span>Zone: {order.deliveryAddress?.zone}</span>
-                            <span className="meta-separator">·</span>
-                            <span>UGX {order.grandTotal.toLocaleString()}</span>
-                          </div>
-                        </div>
-                        <span className={`status-badge status-badge--${order.status}`}>
-                          <span className="status-dot" />
-                          {order.status.toUpperCase()}
-                        </span>
+                        )}
+                        {order.status === "packing" && (
+                          <LiveTimer sinceTimestamp={order.claimedAt} label="Packing" warningThresholdSeconds={900} />
+                        )}
                       </div>
 
-                      <div className="order-card-footer">
-                        <div className="order-footer-left">
-                          {order.status === "packing" && (
-                            <LiveTimer sinceTimestamp={order.claimedAt} label="Packing" warningThresholdSeconds={900} />
-                          )}
-                        </div>
-                        <div className="order-actions">
-                          <button className="btn btn--secondary btn--sm" onClick={() => setViewingOrder(order)}>
-                            <span className="btn-icon btn-icon--left"><Eye size={14} /></span>
-                            <span className="btn-text">Details</span>
-                          </button>
+                      <span className={`status-badge status-badge--${getStatusModifier(order.status)}`}>
+                        <span className="status-dot" />
+                        {order.status.toUpperCase()}
+                      </span>
 
-                          {order.status === "packing" && (
-                            <>
-                              <button
-                                className="btn btn--outline btn--sm"
-                                onClick={() => { setLastReceipt(buildReceiptFromOrder(order)); setShowReceipt(true); }}
-                              >
-                                <span className="btn-icon btn-icon--left"><Printer size={14} /></span>
-                                <span className="btn-text">Print Receipt</span>
-                              </button>
-                              <button className="btn btn--primary btn--sm" onClick={() => setHandoverOrderId(order._id)}>
-                                <span className="btn-icon btn-icon--left"><Truck size={14} /></span>
-                                <span className="btn-text">Dispatch</span>
-                              </button>
-                            </>
-                          )}
-
-                          {order.status === "dispatched" && (
-                            <>
-                              <button className="btn btn--outline btn--sm" onClick={() => handleCompleteOrder(order._id)}>
-                                <span className="btn-icon btn-icon--left"><CheckCircle size={14} /></span>
-                                <span className="btn-text">Complete</span>
-                              </button>
-                              <button className="btn btn--ghost btn--danger btn--sm" onClick={() => setFailureOrder(order)}>
-                                <span className="btn-icon btn-icon--left"><XCircle size={14} /></span>
-                                <span className="btn-text">Mark Failed</span>
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                      <ChevronRight size={16} className="order-row-chevron" />
                     </article>
                   ))
                 )}
@@ -1496,6 +1457,11 @@ export default function StaffDashboard() {
           {activeTab === "calendar" && (
             <CalendarPanel token={token} onOpenOrder={setPendingOrderId} />
           )}
+
+          {/* TAB 5: RETURNS / EXCHANGES */}
+          {activeTab === "returns" && (
+            <ReturnsPanel token={token} />
+          )}
         </main>
       </div>
 
@@ -1505,13 +1471,18 @@ export default function StaffDashboard() {
           order={viewingOrder}
           onClose={() => setViewingOrder(null)}
           onOpenReturn={(order) => setReturningOrder(order)}
+          onClaim={(id) => { handleClaimOrder(id); setViewingOrder(null); }}
+          onPrintReceipt={(order) => { setLastReceipt(buildReceiptFromOrder(order)); setShowReceipt(true); }}
+          onDispatch={(id) => { setViewingOrder(null); setHandoverOrderId(id); }}
+          onComplete={(id) => { handleCompleteOrder(id); setViewingOrder(null); }}
+          onMarkFailed={(order) => { setViewingOrder(null); setFailureOrder(order); }}
           token={token}
         />
       )}
 
       {/* Rider Handover Modal */}
       {handoverOrderId && (() => {
-        const handoverOrder = activeOrders.find(o => o._id === handoverOrderId);
+        const handoverOrder = ordersList?.find(o => o._id === handoverOrderId);
         return (
           <HandoverModal
             orderId={handoverOrderId}
@@ -1524,12 +1495,13 @@ export default function StaffDashboard() {
         );
       })()}
 
-      {/* Returns processing modal */}
+      {/* Exchange processing modal (returns are exchange-only — no cash refunds) */}
       {returningOrder && (
-        <ReturnProcessModal
+        <ExchangeModal
           order={returningOrder}
+          token={token}
           onClose={() => setReturningOrder(null)}
-          onSubmit={handleReturnSubmit}
+          onSubmit={handleExchangeSubmit}
         />
       )}
 

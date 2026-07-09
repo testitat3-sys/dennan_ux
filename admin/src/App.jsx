@@ -4,8 +4,11 @@ import { StaffAuthProvider, useStaffAuth } from './hooks/useStaffAuth';
 import StaffLogin from './pages/StaffLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
+import AccountingDashboard from './pages/AccountingDashboard';
+import StockManagerDashboard from './pages/StockManagerDashboard';
 import AdminProductEdit from './pages/AdminProductEdit';
 import AdminProductCreate from './pages/AdminProductCreate';
+import sosLogo from './assets/SOS.png';
 
 function MainRouter() {
   const { user, isLoading } = useStaffAuth();
@@ -19,22 +22,54 @@ function MainRouter() {
         alignItems: 'center',
         height: '100vh',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        background: '#0b0f19',
-        color: '#9ca3af'
+        background: '#FAF9F8',
       }}>
         <div style={{
-          width: '32px',
-          height: '32px',
-          borderRadius: '50%',
-          border: '3px solid rgba(255,255,255,0.05)',
-          borderTopColor: '#d35097',
-          animation: 'spin 1s linear infinite',
-          marginBottom: '1rem'
-        }} />
-        <span>Authenticating staff portal...</span>
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '24px'
+        }}>
+          <img 
+            src={sosLogo} 
+            alt="SOS Logo" 
+            style={{ 
+              width: '140px', 
+              height: 'auto',
+              display: 'block'
+            }} 
+          />
+          <div style={{
+            width: '140px',
+            height: '4px',
+            background: 'rgba(33, 37, 39, 0.15)',
+            borderRadius: '2px',
+            overflow: 'hidden',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              height: '100%',
+              backgroundColor: '#212527',
+              borderRadius: '2px',
+              animation: 'progress-loading 1.5s infinite ease-in-out'
+            }} />
+          </div>
+        </div>
         <style>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
+          @keyframes progress-loading {
+            0% {
+              left: -40%;
+              width: 40%;
+            }
+            50% {
+              left: 20%;
+              width: 60%;
+            }
+            100% {
+              left: 100%;
+              width: 40%;
+            }
           }
         `}</style>
       </div>
@@ -54,6 +89,10 @@ function MainRouter() {
           <AdminDashboard />
         ) : user.accountRole === "staff" ? (
           <StaffDashboard />
+        ) : user.accountRole === "accounting" ? (
+          <AccountingDashboard />
+        ) : user.accountRole === "stockManager" ? (
+          <StockManagerDashboard />
         ) : (
           <div style={{
             display: 'flex',
@@ -77,7 +116,7 @@ function MainRouter() {
       <Route path="/admin/products/new" element={
         !user ? (
           <Navigate to="/login" replace />
-        ) : user.accountRole === "admin" ? (
+        ) : user.accountRole === "admin" || user.accountRole === "stockManager" ? (
           <AdminProductCreate />
         ) : (
           <Navigate to="/" replace />
@@ -88,7 +127,7 @@ function MainRouter() {
       <Route path="/admin/products/:productId" element={
         !user ? (
           <Navigate to="/login" replace />
-        ) : user.accountRole === "admin" ? (
+        ) : user.accountRole === "admin" || user.accountRole === "stockManager" ? (
           <AdminProductEdit />
         ) : (
           <Navigate to="/" replace />

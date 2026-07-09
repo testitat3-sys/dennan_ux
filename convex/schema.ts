@@ -102,7 +102,7 @@ export default defineSchema({
     engagementScore: v.optional(v.number()),
     recentlyViewed: v.optional(v.array(v.id("products"))), // Capped array of recently viewed product IDs
     password: v.optional(v.string()),
-    accountRole: v.optional(v.union(v.literal("staff"), v.literal("admin"))),
+    accountRole: v.optional(v.union(v.literal("staff"), v.literal("admin"), v.literal("accounting"), v.literal("stockManager"))),
     customerNotes: v.optional(v.string()),
     isWalkIn: v.optional(v.boolean()),
   })
@@ -224,6 +224,21 @@ export default defineSchema({
       v.union(v.literal("physical"), v.literal("digital"), v.literal("service"))
     ),
     refillReminderLeadDays: v.optional(v.number()),
+
+    /**
+     * Freeform, append-only classification tags. Lets new one-off product
+     * classifications (e.g. "sold_via_exchange") be introduced without a
+     * schema migration — see convex/attributes.ts and convex/ATTRIBUTES.md.
+     */
+    attributes: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          value: v.optional(v.string()),
+          setAt: v.number(),
+        })
+      )
+    ),
   })
     .index("by_slug", ["slug"])
     .index("by_barcode", ["barcode"])
@@ -233,6 +248,7 @@ export default defineSchema({
     .index("by_brand", ["brand"])
     .index("by_stage_and_tier", ["stage", "tier"])
     .index("by_category_tier_stage", ["category", "tier", "stage"])
+    .index("by_sku", ["sku"])
     .searchIndex("search_name", { searchField: "name" }),
 
   // ─── Product Reviews ─────────────────────────────────────────────────────────
@@ -409,6 +425,30 @@ export default defineSchema({
     order: v.optional(v.number()),
   }).index("by_slug", ["slug"]),
 
+  /**
+   * productBrandNames — lightweight name+slug list powering the admin brand
+   * dropdown/combobox on the product create/edit forms. Deliberately separate
+   * from `brands` (marketing content for brand landing pages) since products
+   * just need a plain brand name string, not the heavier marketing fields.
+   */
+  productBrandNames: defineTable({
+    name: v.string(),
+    slug: v.string(),
+  }).index("by_name", ["name"]).index("by_slug", ["slug"]),
+
+  /**
+   * stockCounters — single-row denormalized {ok, low, out} count of products
+   * by stock status, kept in sync incrementally by every mutation that writes
+   * a product's inventory or reorderPoint (see convex/stockCounters.ts). This
+   * lets the Stock Manager summary chips stay accurate without ever scanning
+   * the full products table.
+   */
+  stockCounters: defineTable({
+    ok: v.number(),
+    low: v.number(),
+    out: v.number(),
+  }),
+
   // ─── Coupons & Promotion system ──────────────────────────────────────────────
   coupons: defineTable({
     code: v.string(), // e.g. "MOMMYUG"
@@ -485,6 +525,17 @@ export default defineSchema({
     receiptNumber: v.optional(v.string()), // Human-readable receipt number (walk-in orders)
     channel: v.optional(
       v.union(v.literal("online"), v.literal("walk_in"), v.literal("whatsapp"))
+    ),
+
+    /** Freeform, append-only classification tags — see convex/attributes.ts and convex/ATTRIBUTES.md. */
+    attributes: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          value: v.optional(v.string()),
+          setAt: v.number(),
+        })
+      )
     ),
   }).index("by_user", ["userId"])
     .index("by_claimedBy", ["claimedBy"])
@@ -809,7 +860,18 @@ export default defineSchema({
     staffId: v.id("users"),
     staffName: v.string(),
     createdAt: v.number(),
-  }).index("by_order", ["orderId"]),
+
+    // Exchange fields — populated by submitExchange, undefined for legacy rows.
+    exchangeTotal: v.optional(v.number()),
+    returnedTotal: v.optional(v.number()),
+    topUpAmount: v.optional(v.number()),
+    topUpMethod: v.optional(
+      v.union(v.literal("physical"), v.literal("momo"), v.literal("card"))
+    ),
+    topUpMomoPhone: v.optional(v.string()),
+    topUpCardOrderId: v.optional(v.string()),
+  }).index("by_order", ["orderId"])
+    .index("by_createdAt", ["createdAt"]),
 
   returnItems: defineTable({
     returnId: v.id("returns"),
@@ -823,12 +885,27 @@ export default defineSchema({
     source: v.union(v.literal("manual_return"), v.literal("delivery_failure")),
     approvedBy: v.optional(v.id("users")),
     approvedAt: v.optional(v.number()),
+    /** Whether the item was restocked to the shelf when approved. Undefined for legacy rows. */
+    restocked: v.optional(v.boolean()),
     rejectedReason: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_return", ["returnId"])
     .index("by_order", ["orderId"])
     .index("by_status", ["status"]),
+
+  /** Products given to the customer in exchange for a return — see returns.submitExchange. */
+  returnExchangeItems: defineTable({
+    returnId: v.id("returns"),
+    orderId: v.id("orders"),
+    productId: v.id("products"),
+    productName: v.string(),
+    quantity: v.number(),
+    unitPrice: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_return", ["returnId"])
+    .index("by_order", ["orderId"]),
 
   customerActivities: defineTable({
     customerId: v.id("users"),

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as attributes from "../attributes.js";
 import type * as auth from "../auth.js";
 import type * as brands from "../brands.js";
 import type * as cart from "../cart.js";
@@ -23,15 +24,18 @@ import type * as inspect from "../inspect.js";
 import type * as migrations from "../migrations.js";
 import type * as orders from "../orders.js";
 import type * as pesapal from "../pesapal.js";
+import type * as productBrandNames from "../productBrandNames.js";
 import type * as products from "../products.js";
 import type * as registry from "../registry.js";
 import type * as registryPesapal from "../registryPesapal.js";
 import type * as returns from "../returns.js";
 import type * as seed from "../seed.js";
 import type * as seedCloseMatches from "../seedCloseMatches.js";
+import type * as seedProductBrandNames from "../seedProductBrandNames.js";
 import type * as seedProduction from "../seedProduction.js";
 import type * as seedProducts from "../seedProducts.js";
 import type * as staffAuth from "../staffAuth.js";
+import type * as stockCounters from "../stockCounters.js";
 import type * as storeOnlyProducts from "../storeOnlyProducts.js";
 import type * as users from "../users.js";
 import type * as wishlist from "../wishlist.js";
@@ -43,6 +47,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  attributes: typeof attributes;
   auth: typeof auth;
   brands: typeof brands;
   cart: typeof cart;
@@ -58,15 +63,18 @@ declare const fullApi: ApiFromModules<{
   migrations: typeof migrations;
   orders: typeof orders;
   pesapal: typeof pesapal;
+  productBrandNames: typeof productBrandNames;
   products: typeof products;
   registry: typeof registry;
   registryPesapal: typeof registryPesapal;
   returns: typeof returns;
   seed: typeof seed;
   seedCloseMatches: typeof seedCloseMatches;
+  seedProductBrandNames: typeof seedProductBrandNames;
   seedProduction: typeof seedProduction;
   seedProducts: typeof seedProducts;
   staffAuth: typeof staffAuth;
+  stockCounters: typeof stockCounters;
   storeOnlyProducts: typeof storeOnlyProducts;
   users: typeof users;
   wishlist: typeof wishlist;

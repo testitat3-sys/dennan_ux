@@ -1,9 +1,9 @@
 import React from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { X, Calendar, MapPin, CreditCard, Clock, RotateCcw, User, Phone, Truck, Bell } from "lucide-react";
+import { X, Calendar, MapPin, CreditCard, Clock, RotateCcw, User, Phone, Truck, Bell, Hand, Printer, CheckCircle, XCircle } from "lucide-react";
 
-export default function OrderDetailModal({ order, onClose, onOpenReturn, token }) {
+export default function OrderDetailModal({ order, onClose, onOpenReturn, onClaim, onPrintReceipt, onDispatch, onComplete, onMarkFailed, token }) {
   const linkedActivities = useQuery(
     api.customerActivities.getActivitiesByOrder,
     order && token ? { token, orderId: order._id } : "skip"
@@ -252,6 +252,59 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, token }
             {/* Quick Actions */}
             <div className="customer-info-box">
               <h4>Fulfillment Actions</h4>
+              {order.status === "preparing" && onClaim && (
+                <button
+                  className="btn btn--primary btn--md btn--full-width"
+                  onClick={() => onClaim(order._id)}
+                >
+                  <span className="btn-icon btn-icon--left"><Hand size={16} /></span>
+                  Claim Order
+                </button>
+              )}
+              {order.status === "packing" && (
+                <>
+                  {onPrintReceipt && (
+                    <button
+                      className="btn btn--outline btn--md btn--full-width"
+                      onClick={() => onPrintReceipt(order)}
+                    >
+                      <span className="btn-icon btn-icon--left"><Printer size={16} /></span>
+                      Print Receipt
+                    </button>
+                  )}
+                  {onDispatch && (
+                    <button
+                      className="btn btn--primary btn--md btn--full-width"
+                      onClick={() => onDispatch(order._id)}
+                    >
+                      <span className="btn-icon btn-icon--left"><Truck size={16} /></span>
+                      Dispatch
+                    </button>
+                  )}
+                </>
+              )}
+              {order.status === "dispatched" && (
+                <>
+                  {onComplete && (
+                    <button
+                      className="btn btn--outline btn--md btn--full-width"
+                      onClick={() => onComplete(order._id)}
+                    >
+                      <span className="btn-icon btn-icon--left"><CheckCircle size={16} /></span>
+                      Complete
+                    </button>
+                  )}
+                  {onMarkFailed && (
+                    <button
+                      className="btn btn--ghost btn--danger btn--md btn--full-width"
+                      onClick={() => onMarkFailed(order)}
+                    >
+                      <span className="btn-icon btn-icon--left"><XCircle size={16} /></span>
+                      Mark Failed
+                    </button>
+                  )}
+                </>
+              )}
               {["delivered", "partially_returned"].includes(order.status) && onOpenReturn && (
                 <button
                   className="btn btn--secondary btn--md btn--full-width"

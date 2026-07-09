@@ -9,6 +9,7 @@ import { paginationOptsValidator } from "convex/server";
 import { verifyStaffSession } from "./staffAuth";
 import { generateUniqueVoucherCode } from "./giftVouchers";
 import { computeDeliveryQuote, computeDeliveryQuoteByName } from "./delivery";
+import { applyStockCounterDelta } from "./stockCounters";
 
 async function syncStockDeductionByBarcode(
   ctx: MutationCtx,
@@ -37,6 +38,11 @@ async function syncStockDeductionByBarcode(
         inventory: newInventory,
         unitsSold: (pToUpdate.unitsSold || 0) + quantity,
       });
+      await applyStockCounterDelta(
+        ctx,
+        { inventory: pToUpdate.inventory, reorderPoint: pToUpdate.reorderPoint },
+        { inventory: newInventory, reorderPoint: pToUpdate.reorderPoint }
+      );
     } else {
       await ctx.db.patch(pToUpdate._id, {
         unitsSold: (pToUpdate.unitsSold || 0) + quantity,
@@ -606,8 +612,8 @@ export const getOrdersForStaff = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    // Verifies the caller is a valid staff member or admin
-    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+    // Verifies the caller is a valid staff member, admin, or accounting
+    await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
 
     // Query orders in reverse chronological order
     const result = await ctx.db
@@ -654,6 +660,134 @@ export const getOrdersForStaff = query({
       ...result,
       page: enrichedPage,
     };
+  },
+});
+
+/**
+ * Order History tab's default query — date-range bounded (defaults to
+ * "today" when no dates are given), so the panel resets to a blank slate
+ * every morning. Reuses parseDateStrToMs/toDateStr (defined further below in
+ * this file; function declarations are hoisted so this is safe to reference
+ * here) and the same by_createdAt index range pattern as adminGetSalesMetrics.
+ */
+export const adminGetOrdersByDateRange = query({
+  args: {
+    token: v.string(),
+    startDate: v.optional(v.string()), // "YYYY-MM-DD", server-local; defaults to today
+    endDate: v.optional(v.string()), // "YYYY-MM-DD", server-local; defaults to today
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
+
+    const dayMs = 24 * 60 * 60 * 1000;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayMs = startOfToday.getTime();
+
+    const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs;
+    const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
+
+    const result = await ctx.db
+      .query("orders")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
+      .order("desc")
+      .paginate(args.paginationOpts);
+
+    const enrichedPage = [];
+    for (const order of result.page) {
+      const customer = await ctx.db.get(order.userId);
+
+      const items = await ctx.db
+        .query("orderItems")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+
+      const payments = await ctx.db
+        .query("orderPayments")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+
+      let claimantName = null;
+      if (order.claimedBy) {
+        const claimant = await ctx.db.get(order.claimedBy);
+        claimantName = claimant?.name || null;
+      }
+
+      enrichedPage.push({
+        ...order,
+        customerName: customer?.name || "Unnamed Customer",
+        customerEmail: customer?.email,
+        customerPhone: customer?.phone,
+        items,
+        payments,
+        claimantName,
+      });
+    }
+
+    return {
+      ...result,
+      page: enrichedPage,
+    };
+  },
+});
+
+/**
+ * Order History "Download CSV" query. Bounded by a hard cap (never an
+ * unbounded collect) — if the selected date range has more than HARD_CAP
+ * orders, returns `truncated: true` and no rows so the client can ask staff
+ * to narrow the range instead.
+ */
+export const adminExportOrdersByDateRange = query({
+  args: {
+    token: v.string(),
+    startDate: v.string(), // "YYYY-MM-DD"
+    endDate: v.string(), // "YYYY-MM-DD"
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
+
+    const dayMs = 24 * 60 * 60 * 1000;
+    const HARD_CAP = 2000;
+    const rangeStartMs = parseDateStrToMs(args.startDate);
+    const rangeEndMs = parseDateStrToMs(args.endDate) + dayMs;
+
+    const orders = await ctx.db
+      .query("orders")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
+      .order("desc")
+      .take(HARD_CAP + 1);
+
+    if (orders.length > HARD_CAP) {
+      return { truncated: true, cap: HARD_CAP, rows: [] as any[] };
+    }
+
+    const rows = [];
+    for (const order of orders) {
+      const customer = await ctx.db.get(order.userId);
+      const items = await ctx.db
+        .query("orderItems")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+
+      let claimantName = "";
+      if (order.claimedBy) {
+        const claimant = await ctx.db.get(order.claimedBy);
+        claimantName = claimant?.name || "";
+      }
+
+      rows.push({
+        date: new Date(order.createdAt).toISOString(),
+        customerName: customer?.name || "Unnamed Customer",
+        type: order.isWalkIn ? "Walk-in" : "Online",
+        itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
+        total: order.grandTotal,
+        status: order.status,
+        claimantName,
+      });
+    }
+
+    return { truncated: false, cap: HARD_CAP, rows };
   },
 });
 
@@ -1754,7 +1888,7 @@ export const adminGetDailySalesDashboard = query({
 });
 
 // Parses a "YYYY-MM-DD" string into a server-local midnight timestamp.
-function parseDateStrToMs(dateStr: string): number {
+export function parseDateStrToMs(dateStr: string): number {
   const [y, m, d] = dateStr.split("-").map(Number);
   const dt = new Date(y, m - 1, d);
   dt.setHours(0, 0, 0, 0);
@@ -1778,7 +1912,7 @@ export const adminGetSalesMetrics = query({
     channel: v.optional(v.string()), // "online"|"walk_in"|"whatsapp"
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
 
     const completedStatuses = ["delivered", "returned", "partially_returned"];
     const dayMs = 24 * 60 * 60 * 1000;
@@ -1864,6 +1998,30 @@ export const adminGetSalesMetrics = query({
     };
 
     const overall = computeAggregate(ordersInRange);
+
+    // 4b. Merge exchange top-up revenue (recorded on `returns`, not
+    // `orderPayments` — see returns.submitExchange) into totals so it counts
+    // as real sales, while staying separately trackable for auditing.
+    const returnsInRange = await ctx.db
+      .query("returns")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
+      .collect();
+    const exchangeTopUps = returnsInRange.filter((r: any) => (r.topUpAmount ?? 0) > 0);
+
+    let exchangeTopUpRevenue = 0;
+    for (const t of exchangeTopUps) {
+      exchangeTopUpRevenue += t.topUpAmount;
+      overall.totalSales += t.topUpAmount;
+      const method = t.topUpMethod || "physical";
+      const existing = overall.byMethodMap.get(method);
+      if (existing) {
+        existing.amount += t.topUpAmount;
+        existing.count += 1;
+      } else {
+        overall.byMethodMap.set(method, { method, amount: t.topUpAmount, count: 1 });
+      }
+    }
+
     const byPaymentMethod = Array.from(overall.byMethodMap.values())
       .map((b) => ({ ...b, label: PAYMENT_METHOD_LABELS[b.method] || b.method }))
       .sort((a, b) => b.amount - a.amount);
@@ -1872,12 +2030,16 @@ export const adminGetSalesMetrics = query({
       .sort((a, b) => b.amount - a.amount);
     const aov = overall.orderCount > 0 ? Math.round(overall.totalSales / overall.orderCount) : 0;
 
-    // 5. Time series, bucketed by day (<=62 days) or week otherwise
+    // 5. Time series — hourly for short ranges (<=3 days) so a "Today" or
+    // 2-3 day selection still plots a meaningful trend instead of 1-3 points,
+    // daily up to 62 days, weekly beyond that.
     const totalRangeDays = Math.round((rangeEndMs - rangeStartMs) / dayMs);
-    const bucketGranularity: "day" | "week" = totalRangeDays <= 62 ? "day" : "week";
-    const bucketMs = bucketGranularity === "day" ? dayMs : 7 * dayMs;
+    const bucketGranularity: "hour" | "day" | "week" =
+      totalRangeDays <= 3 ? "hour" : totalRangeDays <= 62 ? "day" : "week";
+    const bucketMs =
+      bucketGranularity === "hour" ? 60 * 60 * 1000 : bucketGranularity === "day" ? dayMs : 7 * dayMs;
 
-    const series: { date: string; total: number; byMethod: Record<string, number> }[] = [];
+    const series: { date: string; bucketStartMs: number; total: number; byMethod: Record<string, number> }[] = [];
     for (let bucketStart = rangeStartMs; bucketStart < rangeEndMs; bucketStart += bucketMs) {
       const bucketEnd = Math.min(bucketStart + bucketMs, rangeEndMs);
       const bucketOrders = ordersInRange.filter(
@@ -1888,7 +2050,15 @@ export const adminGetSalesMetrics = query({
       for (const b of bucketAgg.byMethodMap.values()) {
         byMethod[b.method] = b.amount;
       }
-      series.push({ date: toDateStr(bucketStart), total: bucketAgg.totalSales, byMethod });
+      let bucketTotal = bucketAgg.totalSales;
+      for (const t of exchangeTopUps) {
+        if (t.createdAt >= bucketStart && t.createdAt < bucketEnd) {
+          bucketTotal += t.topUpAmount;
+          const method = t.topUpMethod || "physical";
+          byMethod[method] = (byMethod[method] || 0) + t.topUpAmount;
+        }
+      }
+      series.push({ date: toDateStr(bucketStart), bucketStartMs: bucketStart, total: bucketTotal, byMethod });
     }
 
     return {
@@ -1901,6 +2071,15 @@ export const adminGetSalesMetrics = query({
       bucketGranularity,
       rangeStart: toDateStr(rangeStartMs),
       rangeEnd: toDateStr(rangeEndMs - dayMs),
+      exchangeTopUpRevenue,
+      exchangeTopUpCount: exchangeTopUps.length,
+      exchangeTopUps: exchangeTopUps.map((t: any) => ({
+        returnId: t._id,
+        orderId: t.orderId,
+        amount: t.topUpAmount,
+        method: t.topUpMethod,
+        createdAt: t.createdAt,
+      })),
     };
   },
 });
@@ -1915,7 +2094,7 @@ export const adminGetProductAnalytics = query({
     endDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
 
     const completedStatuses = ["delivered", "returned", "partially_returned"];
     const dayMs = 24 * 60 * 60 * 1000;
@@ -2046,7 +2225,7 @@ export const adminGetPaymentMethodTransactions = query({
     channel: v.optional(v.string()), // "online"|"walk_in"|"whatsapp"
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
 
     const completedStatuses = ["delivered", "returned", "partially_returned"];
     const dayMs = 24 * 60 * 60 * 1000;
@@ -2144,7 +2323,7 @@ export const adminGetChannelTransactions = query({
     channel: v.string(), // "online"|"walk_in"|"whatsapp"
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
 
     const completedStatuses = ["delivered", "returned", "partially_returned"];
     const dayMs = 24 * 60 * 60 * 1000;

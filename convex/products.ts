@@ -1,6 +1,9 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 import { verifyStaffSession } from "./staffAuth";
+import { applyStockCounterDelta } from "./stockCounters";
+import { parseDateStrToMs } from "./orders";
 
 // Reusable product field validators matching the products schema
 const productFieldsValidator = {
@@ -103,7 +106,7 @@ export const upsertBatchFromWebhook = internalMutation({
 });
 
 // Helper function to convert product name to lowercase, URL-safe slug base
-function slugify(name: string): string {
+export function slugify(name: string): string {
   return name
     .toString()
     .toLowerCase()
@@ -226,11 +229,20 @@ async function upsertSingleProduct(ctx: any, fields: any) {
   if (existing) {
     // 3. Update existing product
     await ctx.db.patch(existing._id, productFields);
+    await applyStockCounterDelta(
+      ctx,
+      { inventory: existing.inventory, reorderPoint: existing.reorderPoint },
+      { inventory: productFields.inventory ?? existing.inventory, reorderPoint: existing.reorderPoint }
+    );
     console.log(`[convex/products.ts] Batch Product updated: ${slug} (${existing._id})`);
     return { id: existing._id, status: "updated", slug };
   } else {
     // 4. Create new product
     const newId = await ctx.db.insert("products", productFields);
+    await applyStockCounterDelta(ctx, null, {
+      inventory: productFields.inventory,
+      reorderPoint: undefined,
+    });
     console.log(`[convex/products.ts] Batch Product created: ${slug} (${newId})`);
     return { id: newId, status: "created", slug };
   }
@@ -344,29 +356,204 @@ export const getProductsForPOS = query({
   },
 });
 
+function toStockRow(p: any) {
+  return {
+    id: p._id,
+    name: p.name,
+    sku: p.sku,
+    barcode: p.barcode,
+    inventory: p.inventory ?? 0,
+    unitsSold: p.unitsSold ?? 0,
+    costPrice: p.costPrice ?? 0,
+    reorderPoint: p.reorderPoint ?? 0,
+  };
+}
+
+/**
+ * Browse-mode stock listing — a bounded page at a time, never the full
+ * ~4000-row products table in one call.
+ */
 export const getStockList = query({
   args: {
     token: v.string(),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
-    const products = await ctx.db
+    const result = await ctx.db
       .query("products")
-      .collect();
+      .order("desc")
+      .paginate(args.paginationOpts);
 
-    // Filter to keep only actual data and return inventory details
-    return products
-      .filter((p) => shouldKeepProduct(p, true))
-      .map((p) => ({
-        id: p._id,
-        name: p.name,
-        sku: p.sku,
-        barcode: p.barcode,
-        inventory: p.inventory ?? 0,
-        costPrice: p.costPrice ?? 0,
-        reorderPoint: p.reorderPoint ?? 0,
-      }));
+    return {
+      ...result,
+      page: result.page.filter((p) => shouldKeepProduct(p, true)).map(toStockRow),
+    };
+  },
+});
+
+/**
+ * Search-mode stock listing — merges bounded results from the name search
+ * index plus prefix-range lookups on barcode/sku, capped at SEARCH_CAP total.
+ * Not paginated (small capped result set), used only when a search term is
+ * present; browse mode above is used otherwise.
+ */
+export const searchStockList = query({
+  args: {
+    token: v.string(),
+    searchTerm: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+
+    const term = args.searchTerm.trim();
+    if (!term) return [];
+
+    const SEARCH_CAP = 100;
+    const upperBound = term + "￿";
+
+    const [byName, byBarcode, bySku] = await Promise.all([
+      ctx.db
+        .query("products")
+        .withSearchIndex("search_name", (q) => q.search("name", term))
+        .take(SEARCH_CAP),
+      ctx.db
+        .query("products")
+        .withIndex("by_barcode", (q) => q.gte("barcode", term).lt("barcode", upperBound))
+        .take(SEARCH_CAP),
+      ctx.db
+        .query("products")
+        .withIndex("by_sku", (q) => q.gte("sku", term).lt("sku", upperBound))
+        .take(SEARCH_CAP),
+    ]);
+
+    const merged = new Map<string, any>();
+    for (const p of [...byName, ...byBarcode, ...bySku]) {
+      if (shouldKeepProduct(p, true)) merged.set(p._id.toString(), p);
+    }
+
+    return Array.from(merged.values()).slice(0, SEARCH_CAP).map(toStockRow);
+  },
+});
+
+// Order statuses counted as completed sales for period-based reporting.
+const SALES_COMPLETED_STATUSES = ["delivered", "returned", "partially_returned"];
+// Hard cap on orders scanned per date-range aggregation, matching the CSV export's cap.
+const SALES_RANGE_ORDER_CAP = 2000;
+
+/**
+ * Scans orders in [rangeStartMs, rangeEndMs) (capped) and aggregates completed
+ * order-item quantities per product. Shared by getProductSalesInRange and
+ * getProductSalesRangeSummary so both stay consistent.
+ */
+async function aggregateProductSalesInRange(ctx: any, rangeStartMs: number, rangeEndMs: number) {
+  const orders = await ctx.db
+    .query("orders")
+    .withIndex("by_createdAt", (q: any) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
+    .order("desc")
+    .take(SALES_RANGE_ORDER_CAP + 1);
+
+  const truncated = orders.length > SALES_RANGE_ORDER_CAP;
+  const ordersToScan = truncated ? orders.slice(0, SALES_RANGE_ORDER_CAP) : orders;
+  const completedOrders = ordersToScan.filter((o: any) => SALES_COMPLETED_STATUSES.includes(o.status));
+
+  const quantityByProduct = new Map<string, number>();
+  for (const order of completedOrders) {
+    const items = await ctx.db
+      .query("orderItems")
+      .withIndex("by_order", (q: any) => q.eq("orderId", order._id))
+      .collect();
+    for (const item of items) {
+      const key = item.productId.toString();
+      quantityByProduct.set(key, (quantityByProduct.get(key) ?? 0) + item.quantity);
+    }
+  }
+
+  const sortedAgg = Array.from(quantityByProduct.entries())
+    .map(([productId, quantitySoldInRange]) => ({ productId, quantitySoldInRange }))
+    .sort((a, b) => b.quantitySoldInRange - a.quantitySoldInRange || a.productId.localeCompare(b.productId));
+
+  return { truncated, cap: SALES_RANGE_ORDER_CAP, sortedAgg };
+}
+
+function dateRangeToMs(startDate: string, endDate: string) {
+  const dayMs = 24 * 60 * 60 * 1000;
+  const rangeStartMs = parseDateStrToMs(startDate);
+  const rangeEndMs = parseDateStrToMs(endDate) + dayMs;
+  return { rangeStartMs, rangeEndMs };
+}
+
+/**
+ * Paginated report of products sold within a date range, with units sold in
+ * range and current (live) inventory remaining. Aggregates in-memory (order
+ * scan is capped) then manually paginates the sorted result using a
+ * stringified offset cursor, matching Convex's {page, isDone, continueCursor}
+ * pagination contract so usePaginatedQuery works unmodified.
+ */
+export const getProductSalesInRange = query({
+  args: {
+    token: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+
+    const { rangeStartMs, rangeEndMs } = dateRangeToMs(args.startDate, args.endDate);
+    const { sortedAgg } = await aggregateProductSalesInRange(ctx, rangeStartMs, rangeEndMs);
+
+    const offset = args.paginationOpts.cursor ? parseInt(args.paginationOpts.cursor, 10) : 0;
+    const pageSlice = sortedAgg.slice(offset, offset + args.paginationOpts.numItems);
+    const nextOffset = offset + pageSlice.length;
+    const isDone = nextOffset >= sortedAgg.length;
+
+    const page = await Promise.all(
+      pageSlice.map(async (row) => {
+        const product = await ctx.db.get(row.productId as any);
+        return {
+          productId: row.productId,
+          name: product?.name ?? "Unknown Product",
+          sku: product?.sku,
+          barcode: product?.barcode,
+          inventory: product?.inventory ?? 0,
+          quantitySoldInRange: row.quantitySoldInRange,
+        };
+      })
+    );
+
+    return {
+      page,
+      isDone,
+      continueCursor: String(nextOffset),
+    };
+  },
+});
+
+/**
+ * Summary stats (total products/units sold + truncation warning) for the
+ * same date range as getProductSalesInRange, queried separately so the
+ * paginated query's response shape stays a plain Convex pagination result.
+ */
+export const getProductSalesRangeSummary = query({
+  args: {
+    token: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+
+    const { rangeStartMs, rangeEndMs } = dateRangeToMs(args.startDate, args.endDate);
+    const { truncated, cap, sortedAgg } = await aggregateProductSalesInRange(ctx, rangeStartMs, rangeEndMs);
+
+    return {
+      truncated,
+      cap,
+      productCount: sortedAgg.length,
+      totalUnitsSold: sortedAgg.reduce((sum, r) => sum + r.quantitySoldInRange, 0),
+    };
   },
 });
 
@@ -377,7 +564,7 @@ export const adjustStock = mutation({
     delta: v.number(),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
     const product = await ctx.db.get(args.productId);
     if (!product) {
@@ -411,6 +598,11 @@ export const adjustStock = mutation({
       await ctx.db.patch(pToUpdate._id, {
         inventory: newInv,
       });
+      await applyStockCounterDelta(
+        ctx,
+        { inventory: currentInv, reorderPoint: pToUpdate.reorderPoint },
+        { inventory: newInv, reorderPoint: pToUpdate.reorderPoint }
+      );
     }
 
     return { success: true, newInventory: Math.max(0, newInventory) };
@@ -426,7 +618,7 @@ export const setDiscount = mutation({
     discountExpiry: v.number(), // Unix timestamp (ms)
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
     const product = await ctx.db.get(args.productId);
     if (!product) {
@@ -455,7 +647,7 @@ export const getDiscountList = query({
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
     const products = await ctx.db
       .query("products")
@@ -489,7 +681,7 @@ export const generateCloudinarySignature = mutation({
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
     const apiKey = process.env.CLOUDINARY_API_KEY;
@@ -518,7 +710,7 @@ export const getProductDetail = query({
     productId: v.id("products"),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
     const product = await ctx.db.get(args.productId);
     if (!product) {
@@ -565,10 +757,12 @@ export const updateProduct = mutation({
     material: v.optional(v.string()),
     pattern: v.optional(v.string()),
     targetGender: v.optional(v.union(v.literal("boy"), v.literal("girl"), v.literal("unisex"))),
+    minMonth: v.optional(v.number()),
+    maxMonth: v.optional(v.number()),
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
     const { token, productId, ...fields } = args;
     const product = await ctx.db.get(productId);
@@ -583,7 +777,27 @@ export const updateProduct = mutation({
       }
     }
 
+    const resultingIsActive = "isActive" in patch ? (patch.isActive as boolean) : product.isActive;
+    if (resultingIsActive) {
+      const isStoreOnly = product.specifications?.some(
+        (spec) => spec.label === "for-store-only" && spec.value === "true"
+      );
+      const resultingImage = "image" in patch ? (patch.image as string | undefined) : product.image;
+      if (!isStoreOnly && !resultingImage) {
+        throw new Error("Customer-facing products require a primary image before they can be made active.");
+      }
+    }
+
     await ctx.db.patch(productId, patch);
+
+    if ("reorderPoint" in patch) {
+      await applyStockCounterDelta(
+        ctx,
+        { inventory: product.inventory, reorderPoint: product.reorderPoint },
+        { inventory: product.inventory, reorderPoint: patch.reorderPoint as number | undefined }
+      );
+    }
+
     return { success: true };
   },
 });
@@ -624,11 +838,13 @@ export const createProduct = mutation({
     reorderPoint: v.optional(v.number()),
     image: v.optional(v.string()),
     images: v.optional(v.array(v.string())),
+    minMonth: v.optional(v.number()),
+    maxMonth: v.optional(v.number()),
     isActive: v.boolean(),
     isStoreOnly: v.boolean(),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
     const existing = await ctx.db
       .query("products")
@@ -638,8 +854,8 @@ export const createProduct = mutation({
       throw new Error(`A product with barcode "${args.barcode}" already exists.`);
     }
 
-    if (!args.isStoreOnly && !args.image) {
-      throw new Error("Customer-facing products require a primary image.");
+    if (args.isActive && !args.isStoreOnly && !args.image) {
+      throw new Error("Customer-facing products require a primary image before they can be made active.");
     }
 
     const baseSlug = slugify(args.name);
@@ -680,6 +896,8 @@ export const createProduct = mutation({
       reorderPoint: args.reorderPoint,
       image: args.image,
       images: args.images ?? [],
+      minMonth: args.minMonth,
+      maxMonth: args.maxMonth,
       isActive: args.isActive,
       actual_data: true,
       tags: [],
@@ -687,6 +905,8 @@ export const createProduct = mutation({
       inventory: 0,
       unitsSold: 0,
     });
+
+    await applyStockCounterDelta(ctx, null, { inventory: 0, reorderPoint: args.reorderPoint });
 
     return { success: true, productId };
   },

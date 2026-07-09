@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
+import BrandCombobox from "../components/BrandCombobox";
 import {
   ArrowLeft,
   CheckCircle,
@@ -27,6 +28,19 @@ const CATEGORY_OPTIONS = [
 const STAGE_OPTIONS = ["mother", "newborn", "kid"];
 const TIER_OPTIONS = ["essentials", "musthaves", "luxuries"];
 const GENDER_OPTIONS = ["boy", "girl", "unisex"];
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB
+
+function range(start, end) {
+  const out = [];
+  for (let i = start; i <= end; i++) out.push(i);
+  return out;
+}
+
+const AGE_MONTH_GROUPS = [
+  { label: "Year 1 (0-11 mo)", months: range(0, 11) },
+  { label: "Year 2 (12-23 mo)", months: range(12, 23) },
+  { label: "Year 3 (24-35 mo)", months: range(24, 35) },
+];
 
 export default function AdminProductEdit() {
   const { productId } = useParams();
@@ -58,6 +72,8 @@ export default function AdminProductEdit() {
   const [material, setMaterial] = useState("");
   const [pattern, setPattern] = useState("");
   const [targetGender, setTargetGender] = useState("");
+  const [minMonth, setMinMonth] = useState("");
+  const [maxMonth, setMaxMonth] = useState("");
   const [isActive, setIsActive] = useState(true);
 
   // Image state
@@ -91,6 +107,8 @@ export default function AdminProductEdit() {
       setMaterial(product.material || "");
       setPattern(product.pattern || "");
       setTargetGender(product.targetGender || "");
+      setMinMonth(product.minMonth !== undefined ? String(product.minMonth) : "");
+      setMaxMonth(product.maxMonth !== undefined ? String(product.maxMonth) : "");
       setIsActive(product.isActive ?? true);
       setImage(product.image || "");
       setImages(product.images || []);
@@ -118,6 +136,8 @@ export default function AdminProductEdit() {
       material !== (product.material || "") ||
       pattern !== (product.pattern || "") ||
       targetGender !== (product.targetGender || "") ||
+      minMonth !== (product.minMonth !== undefined ? String(product.minMonth) : "") ||
+      maxMonth !== (product.maxMonth !== undefined ? String(product.maxMonth) : "") ||
       isActive !== (product.isActive ?? true) ||
       image !== (product.image || "") ||
       JSON.stringify(images) !== JSON.stringify(product.images || []);
@@ -125,7 +145,7 @@ export default function AdminProductEdit() {
   }, [
     name, brand, description, price, originalPrice, costPrice, reorderPoint,
     category, subCategory, stage, tier, size, color, material, pattern,
-    targetGender, isActive, image, images, product,
+    targetGender, minMonth, maxMonth, isActive, image, images, product,
   ]);
 
   useEffect(() => {
@@ -170,6 +190,10 @@ export default function AdminProductEdit() {
   const handlePrimaryFile = async (file) => {
     if (!file) return;
     setImageError("");
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError(`Image is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed size is 2 MB.`);
+      return;
+    }
     setIsUploadingPrimary(true);
     try {
       const url = await uploadToCloudinary(file);
@@ -184,6 +208,10 @@ export default function AdminProductEdit() {
   const handleGalleryFile = async (file) => {
     if (!file) return;
     setImageError("");
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError(`Image is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed size is 2 MB.`);
+      return;
+    }
     setIsUploadingGallery(true);
     try {
       const url = await uploadToCloudinary(file);
@@ -219,6 +247,10 @@ export default function AdminProductEdit() {
       showToast("Please enter a valid original price.", "error");
       return;
     }
+    if (minMonth !== "" && maxMonth !== "" && Number(minMonth) > Number(maxMonth)) {
+      showToast("Min age cannot be greater than max age.", "error");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -241,6 +273,8 @@ export default function AdminProductEdit() {
         material: material.trim() || undefined,
         pattern: pattern.trim() || undefined,
         targetGender: targetGender || undefined,
+        minMonth: minMonth === "" ? undefined : Number(minMonth),
+        maxMonth: maxMonth === "" ? undefined : Number(maxMonth),
         isActive,
         image: image || undefined,
         images,
@@ -449,7 +483,7 @@ export default function AdminProductEdit() {
                     ))}
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: "16px" }}>
                   <label className="form-label">Target Gender</label>
                   <select className="form-input-box" value={targetGender} onChange={(e) => setTargetGender(e.target.value)}>
                     <option value="">-- None --</option>
@@ -457,6 +491,35 @@ export default function AdminProductEdit() {
                       <option key={g} value={g}>{g}</option>
                     ))}
                   </select>
+                </div>
+                <div className="product-edit-fields-row">
+                  <div className="form-group flex-1">
+                    <label className="form-label">Min Age</label>
+                    <select className="form-input-box" value={minMonth} onChange={(e) => setMinMonth(e.target.value)}>
+                      <option value="">No limit</option>
+                      {AGE_MONTH_GROUPS.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.months.map((m) => (
+                            <option key={m} value={m}>{m} mo</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group flex-1">
+                    <label className="form-label">Max Age</label>
+                    <select className="form-input-box" value={maxMonth} onChange={(e) => setMaxMonth(e.target.value)}>
+                      <option value="">No limit</option>
+                      {AGE_MONTH_GROUPS.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.months.map((m) => (
+                            <option key={m} value={m}>{m} mo</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                      <option value="36">36+ / No limit</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -472,7 +535,7 @@ export default function AdminProductEdit() {
                   </div>
                   <div className="form-group flex-1">
                     <label className="form-label">Brand</label>
-                    <input type="text" className="form-input-box" value={brand} onChange={(e) => setBrand(e.target.value)} />
+                    <BrandCombobox token={token} value={brand} onChange={setBrand} />
                   </div>
                 </div>
 

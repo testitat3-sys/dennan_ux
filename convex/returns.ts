@@ -1,6 +1,8 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { verifyStaffSession } from "./staffAuth";
+import { appendAttribute } from "./attributes";
+import { applyStockCounterDelta } from "./stockCounters";
 import { Id } from "./_generated/dataModel";
 
 // Restocks a product (and any barcode-matching duplicate product rows) by `quantity`.
@@ -25,9 +27,15 @@ async function restockByBarcode(ctx: any, productId: Id<"products">, quantity: n
 
   for (const pToUpdate of productsToUpdate) {
     if (pToUpdate.inventory !== undefined) {
+      const newInventory = pToUpdate.inventory + quantity;
       await ctx.db.patch(pToUpdate._id, {
-        inventory: pToUpdate.inventory + quantity,
+        inventory: newInventory,
       });
+      await applyStockCounterDelta(
+        ctx,
+        { inventory: pToUpdate.inventory, reorderPoint: pToUpdate.reorderPoint },
+        { inventory: newInventory, reorderPoint: pToUpdate.reorderPoint }
+      );
     }
   }
 }
@@ -177,13 +185,237 @@ export const submitReturn = mutation({
 
 export const processReturn = submitReturn;
 
+/**
+ * Exchange-only replacement for submitReturn: customers no longer receive cash
+ * refunds. They must pick replacement product(s) — topping up if the exchange
+ * is pricier than what they returned, or accepting that any leftover value on
+ * a cheaper exchange is forfeited (never paid back in cash).
+ */
+export const submitExchange = mutation({
+  args: {
+    token: v.string(),
+    orderId: v.id("orders"),
+    returnedItems: v.array(
+      v.object({
+        productId: v.id("products"),
+        quantity: v.number(),
+        reason: v.optional(v.string()),
+      })
+    ),
+    exchangeItems: v.array(
+      v.object({
+        productId: v.id("products"),
+        quantity: v.number(),
+      })
+    ),
+    topUp: v.optional(
+      v.object({
+        method: v.union(v.literal("physical"), v.literal("momo"), v.literal("card")),
+        amount: v.number(),
+        momoPhone: v.optional(v.string()),
+        cardOrderId: v.optional(v.string()),
+      })
+    ),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { user: staffUser } = await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    if (args.returnedItems.length === 0) {
+      throw new Error("At least one returned item is required");
+    }
+    if (args.exchangeItems.length === 0) {
+      throw new Error("At least one exchange item is required");
+    }
+
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+
+    const orderItems = await ctx.db
+      .query("orderItems")
+      .withIndex("by_order", (q) => q.eq("orderId", args.orderId))
+      .collect();
+    if (orderItems.length === 0) {
+      throw new Error("No items found for this order");
+    }
+
+    const existingReturnItems = await ctx.db
+      .query("returnItems")
+      .withIndex("by_order", (q) => q.eq("orderId", args.orderId))
+      .filter((q) => q.neq(q.field("status"), "rejected"))
+      .collect();
+
+    const orderItemsMap = new Map(orderItems.map((item) => [item.productId, item]));
+    const alreadyReturnedMap = new Map<Id<"products">, number>();
+    for (const item of existingReturnItems) {
+      alreadyReturnedMap.set(
+        item.productId,
+        (alreadyReturnedMap.get(item.productId) || 0) + item.quantity
+      );
+    }
+
+    const enrichedReturnedItems = [];
+    for (const retItem of args.returnedItems) {
+      if (retItem.quantity <= 0) {
+        throw new Error(`Invalid return quantity ${retItem.quantity} for product ${retItem.productId}`);
+      }
+      const originalItem = orderItemsMap.get(retItem.productId);
+      if (!originalItem) {
+        throw new Error(`Product ${retItem.productId} was not part of the original order`);
+      }
+      const previouslyReturned = alreadyReturnedMap.get(retItem.productId) || 0;
+      if (previouslyReturned + retItem.quantity > originalItem.quantity) {
+        throw new Error(
+          `Cannot return ${retItem.quantity} of product ${originalItem.productName}. ` +
+          `Ordered: ${originalItem.quantity}, Already returned/pending: ${previouslyReturned}.`
+        );
+      }
+      enrichedReturnedItems.push({
+        productId: retItem.productId,
+        name: originalItem.productName,
+        quantity: retItem.quantity,
+        unitPrice: originalItem.unitPrice,
+        reason: retItem.reason,
+      });
+    }
+
+    // Value of the returned items, proportionally discounted like the original order.
+    let returnedTotal = 0;
+    for (const item of enrichedReturnedItems) {
+      returnedTotal += item.quantity * item.unitPrice;
+    }
+    if (order.subtotal > 0 && order.discountAmount > 0) {
+      const discountPercentage = order.discountAmount / order.subtotal;
+      returnedTotal = Math.round(returnedTotal * (1 - discountPercentage));
+    }
+
+    // Validate + price the exchange selection at current product prices.
+    const enrichedExchangeItems = [];
+    let exchangeTotal = 0;
+    for (const exItem of args.exchangeItems) {
+      if (exItem.quantity <= 0) {
+        throw new Error(`Invalid exchange quantity ${exItem.quantity}`);
+      }
+      const product = await ctx.db.get(exItem.productId);
+      if (!product) {
+        throw new Error(`Exchange product ${exItem.productId} not found`);
+      }
+      const currentInventory = product.inventory ?? 0;
+      if (currentInventory < exItem.quantity) {
+        throw new Error(`Insufficient stock for ${product.name}: have ${currentInventory}, need ${exItem.quantity}`);
+      }
+      const hasActiveDiscount = product.discountPrice != null && product.discountExpiry != null && product.discountExpiry > Date.now();
+      const unitPrice = hasActiveDiscount ? product.discountPrice : product.price;
+      enrichedExchangeItems.push({ productId: exItem.productId, name: product.name, quantity: exItem.quantity, unitPrice });
+      exchangeTotal += exItem.quantity * unitPrice;
+    }
+
+    // Pricier exchange requires a sufficient top-up; cheaper exchange forfeits
+    // the difference outright — there is never a cash refund either way.
+    const difference = exchangeTotal - returnedTotal;
+    let topUpAmount = 0;
+    let topUpMethod: "physical" | "momo" | "card" | undefined;
+    let topUpMomoPhone: string | undefined;
+    let topUpCardOrderId: string | undefined;
+    if (difference > 0) {
+      if (!args.topUp || args.topUp.amount < difference) {
+        throw new Error(
+          `Exchange total (UGX ${exchangeTotal.toLocaleString()}) exceeds the returned value ` +
+          `(UGX ${returnedTotal.toLocaleString()}) by UGX ${difference.toLocaleString()}, but no sufficient top-up was provided.`
+        );
+      }
+      topUpAmount = args.topUp.amount;
+      topUpMethod = args.topUp.method;
+      topUpMomoPhone = args.topUp.momoPhone;
+      topUpCardOrderId = args.topUp.cardOrderId;
+    }
+
+    const now = Date.now();
+
+    const returnId = await ctx.db.insert("returns", {
+      orderId: args.orderId,
+      refundAmount: 0,
+      note: args.note,
+      staffId: staffUser._id,
+      staffName: staffUser.name ?? "Staff",
+      createdAt: now,
+      exchangeTotal,
+      returnedTotal,
+      topUpAmount,
+      topUpMethod,
+      topUpMomoPhone,
+      topUpCardOrderId,
+    });
+
+    for (const item of enrichedReturnedItems) {
+      await ctx.db.insert("returnItems", {
+        returnId,
+        orderId: args.orderId,
+        productId: item.productId,
+        productName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        reason: item.reason,
+        status: "pending",
+        source: "manual_return",
+        createdAt: now,
+      });
+    }
+
+    // Exchange items leave the shop immediately — decrement stock right away
+    // rather than waiting for admin/cashier approval of the returned items.
+    for (const item of enrichedExchangeItems) {
+      await ctx.db.insert("returnExchangeItems", {
+        returnId,
+        orderId: args.orderId,
+        productId: item.productId,
+        productName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        createdAt: now,
+      });
+      await restockByBarcode(ctx, item.productId, -item.quantity);
+      await appendAttribute(ctx, "products", item.productId, "sold_via_exchange");
+    }
+
+    await appendAttribute(ctx, "orders", args.orderId, "fulfilled_via_exchange", returnId.toString());
+
+    let totalOrderedQty = 0;
+    for (const item of orderItems) totalOrderedQty += item.quantity;
+    let totalReturnedQty = 0;
+    for (const qty of alreadyReturnedMap.values()) totalReturnedQty += qty;
+    for (const item of args.returnedItems) totalReturnedQty += item.quantity;
+
+    const newStatus = totalReturnedQty >= totalOrderedQty ? "returned" : "partially_returned";
+    await ctx.db.patch(args.orderId, {
+      status: newStatus,
+      history: [
+        ...(order.history ?? []),
+        { status: newStatus, timestamp: now, note: `Exchange processed by ${staffUser.name ?? "Staff"} — awaiting approval` },
+      ],
+    });
+
+    return {
+      success: true,
+      returnId,
+      status: newStatus,
+      returnedTotal,
+      exchangeTotal,
+      topUpAmount,
+    };
+  },
+});
+
 export const approveReturnItem = mutation({
   args: {
     token: v.string(),
     returnItemId: v.id("returnItems"),
+    // Whether the returned item goes back on the shelf. Defaults to true to
+    // preserve legacy behavior for callers that predate this option.
+    restock: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { user: adminUser } = await verifyStaffSession(ctx, args.token, ["admin"]);
+    const { user: approver } = await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
 
     const item = await ctx.db.get(args.returnItemId);
     if (!item) throw new Error("Return item not found");
@@ -191,12 +423,16 @@ export const approveReturnItem = mutation({
       throw new Error(`Return item is already ${item.status}`);
     }
 
-    await restockByBarcode(ctx, item.productId, item.quantity);
+    const shouldRestock = args.restock ?? true;
+    if (shouldRestock) {
+      await restockByBarcode(ctx, item.productId, item.quantity);
+    }
 
     await ctx.db.patch(args.returnItemId, {
       status: "approved",
-      approvedBy: adminUser._id,
+      approvedBy: approver._id,
       approvedAt: Date.now(),
+      restocked: shouldRestock,
     });
 
     return { success: true };
@@ -210,7 +446,7 @@ export const rejectReturnItem = mutation({
     rejectedReason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { user: adminUser } = await verifyStaffSession(ctx, args.token, ["admin"]);
+    const { user: approver } = await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
 
     const item = await ctx.db.get(args.returnItemId);
     if (!item) throw new Error("Return item not found");
@@ -220,7 +456,7 @@ export const rejectReturnItem = mutation({
 
     await ctx.db.patch(args.returnItemId, {
       status: "rejected",
-      approvedBy: adminUser._id,
+      approvedBy: approver._id,
       approvedAt: Date.now(),
       rejectedReason: args.rejectedReason,
     });
@@ -232,7 +468,7 @@ export const rejectReturnItem = mutation({
 export const getPendingReturns = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
 
     const pendingItems = await ctx.db
       .query("returnItems")
@@ -254,6 +490,11 @@ export const getPendingReturns = query({
       const orderUser = order ? await ctx.db.get(order.userId) : null;
       const customerName = order?.deliveryAddress?.name || orderUser?.name || "Unknown";
 
+      const exchangeItems = await ctx.db
+        .query("returnExchangeItems")
+        .withIndex("by_return", (q) => q.eq("returnId", items[0].returnId))
+        .collect();
+
       results.push({
         returnId: items[0].returnId,
         orderId: items[0].orderId,
@@ -261,6 +502,10 @@ export const getPendingReturns = query({
         staffName: returnEnvelope.staffName,
         note: returnEnvelope.note,
         createdAt: returnEnvelope.createdAt,
+        returnedTotal: returnEnvelope.returnedTotal,
+        exchangeTotal: returnEnvelope.exchangeTotal,
+        topUpAmount: returnEnvelope.topUpAmount,
+        topUpMethod: returnEnvelope.topUpMethod,
         items: items.map((i) => ({
           _id: i._id,
           productId: i.productId,
@@ -270,6 +515,13 @@ export const getPendingReturns = query({
           reason: i.reason,
           status: i.status,
           source: i.source,
+        })),
+        exchangeItems: exchangeItems.map((e) => ({
+          _id: e._id,
+          productId: e.productId,
+          productName: e.productName,
+          quantity: e.quantity,
+          unitPrice: e.unitPrice,
         })),
       });
     }

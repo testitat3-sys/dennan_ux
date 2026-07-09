@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
+import BrandCombobox from "../components/BrandCombobox";
 import {
   ArrowLeft,
   CheckCircle,
@@ -27,6 +28,19 @@ const CATEGORY_OPTIONS = [
 const STAGE_OPTIONS = ["mother", "newborn", "kid"];
 const TIER_OPTIONS = ["essentials", "musthaves", "luxuries"];
 const GENDER_OPTIONS = ["boy", "girl", "unisex"];
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB
+
+function range(start, end) {
+  const out = [];
+  for (let i = start; i <= end; i++) out.push(i);
+  return out;
+}
+
+const AGE_MONTH_GROUPS = [
+  { label: "Year 1 (0-11 mo)", months: range(0, 11) },
+  { label: "Year 2 (12-23 mo)", months: range(12, 23) },
+  { label: "Year 3 (24-35 mo)", months: range(24, 35) },
+];
 
 export default function AdminProductCreate() {
   const navigate = useNavigate();
@@ -55,6 +69,8 @@ export default function AdminProductCreate() {
   const [material, setMaterial] = useState("");
   const [pattern, setPattern] = useState("");
   const [targetGender, setTargetGender] = useState("");
+  const [minMonth, setMinMonth] = useState("");
+  const [maxMonth, setMaxMonth] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isStoreOnly, setIsStoreOnly] = useState(false);
 
@@ -73,13 +89,13 @@ export default function AdminProductCreate() {
     const dirty =
       name || brand || description || price || originalPrice || costPrice ||
       reorderPoint || barcode || category || subCategory || stage || tier ||
-      size || color || material || pattern || targetGender || image ||
-      images.length > 0;
+      size || color || material || pattern || targetGender || minMonth ||
+      maxMonth || image || images.length > 0;
     setIsDirty(Boolean(dirty));
   }, [
     name, brand, description, price, originalPrice, costPrice, reorderPoint,
     barcode, category, subCategory, stage, tier, size, color, material,
-    pattern, targetGender, image, images,
+    pattern, targetGender, minMonth, maxMonth, image, images,
   ]);
 
   useEffect(() => {
@@ -124,6 +140,10 @@ export default function AdminProductCreate() {
   const handlePrimaryFile = async (file) => {
     if (!file) return;
     setImageError("");
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError(`Image is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed size is 2 MB.`);
+      return;
+    }
     setIsUploadingPrimary(true);
     try {
       const url = await uploadToCloudinary(file);
@@ -138,6 +158,10 @@ export default function AdminProductCreate() {
   const handleGalleryFile = async (file) => {
     if (!file) return;
     setImageError("");
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError(`Image is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed size is 2 MB.`);
+      return;
+    }
     setIsUploadingGallery(true);
     try {
       const url = await uploadToCloudinary(file);
@@ -201,8 +225,12 @@ export default function AdminProductCreate() {
       showToast("Target Gender is required.", "error");
       return;
     }
-    if (!isStoreOnly && !image) {
-      showToast("Customer-facing products require a primary image.", "error");
+    if (isActive && !isStoreOnly && !image) {
+      showToast("Customer-facing products require a primary image before they can be made active.", "error");
+      return;
+    }
+    if (minMonth !== "" && maxMonth !== "" && Number(minMonth) > Number(maxMonth)) {
+      showToast("Min age cannot be greater than max age.", "error");
       return;
     }
 
@@ -227,6 +255,8 @@ export default function AdminProductCreate() {
         material: material.trim() || undefined,
         pattern: pattern.trim() || undefined,
         targetGender,
+        minMonth: minMonth === "" ? undefined : Number(minMonth),
+        maxMonth: maxMonth === "" ? undefined : Number(maxMonth),
         isActive,
         isStoreOnly,
         image: image || undefined,
@@ -453,7 +483,7 @@ export default function AdminProductCreate() {
                     ))}
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: "16px" }}>
                   <label className="form-label">Target Gender *</label>
                   <select className="form-input-box" value={targetGender} onChange={(e) => setTargetGender(e.target.value)} required>
                     <option value="">-- Select Target Gender --</option>
@@ -461,6 +491,35 @@ export default function AdminProductCreate() {
                       <option key={g} value={g}>{g}</option>
                     ))}
                   </select>
+                </div>
+                <div className="product-edit-fields-row">
+                  <div className="form-group flex-1">
+                    <label className="form-label">Min Age</label>
+                    <select className="form-input-box" value={minMonth} onChange={(e) => setMinMonth(e.target.value)}>
+                      <option value="">No limit</option>
+                      {AGE_MONTH_GROUPS.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.months.map((m) => (
+                            <option key={m} value={m}>{m} mo</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group flex-1">
+                    <label className="form-label">Max Age</label>
+                    <select className="form-input-box" value={maxMonth} onChange={(e) => setMaxMonth(e.target.value)}>
+                      <option value="">No limit</option>
+                      {AGE_MONTH_GROUPS.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.months.map((m) => (
+                            <option key={m} value={m}>{m} mo</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                      <option value="36">36+ / No limit</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -476,7 +535,7 @@ export default function AdminProductCreate() {
                   </div>
                   <div className="form-group flex-1">
                     <label className="form-label">Brand *</label>
-                    <input type="text" className="form-input-box" value={brand} onChange={(e) => setBrand(e.target.value)} required />
+                    <BrandCombobox token={token} value={brand} onChange={setBrand} />
                   </div>
                 </div>
 

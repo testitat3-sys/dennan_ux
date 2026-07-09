@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import CustomerActivityModal from "../components/CustomerActivityModal";
@@ -9,6 +9,10 @@ import RemindersWidget from "../components/RemindersWidget";
 import CalendarPanel from "../components/CalendarPanel";
 import SalesMetricsPanel from "../components/SalesMetricsPanel";
 import ReturnsPanel from "../components/ReturnsPanel";
+import OrderHistoryPanel from "../components/OrderHistoryPanel";
+import StockManagerPanel from "../components/StockManagerPanel";
+import DiscountsPanel from "../components/DiscountsPanel";
+import ProductSalesPanel from "../components/ProductSalesPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import sosLogo from "../assets/SOS.png";
 import profileImg from "../assets/about-dennan.png";
@@ -19,21 +23,17 @@ import {
   Users,
   UserCheck,
   TrendingUp,
-  AlertCircle,
-  Search,
   CheckCircle,
   XCircle,
-  RefreshCcw,
   LogOut,
   ChevronRight,
   DollarSign,
   BarChart3,
   Calendar as CalendarIcon,
-  Pencil,
-  Plus,
   RotateCcw,
   History,
-  Eye
+  ClipboardList,
+  Search
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -67,41 +67,6 @@ export default function AdminDashboard() {
   // Stats Query
   const stats = useQuery(api.orders.adminGetOverviewStats, { token });
 
-  // Order History (all orders, admin-wide)
-  const { results: orderHistory, status: orderHistoryStatus, loadMore: loadMoreOrderHistory } = usePaginatedQuery(
-    api.orders.getOrdersForStaff,
-    { token },
-    { initialNumItems: 25 }
-  );
-  const getStatusModifier = (status) => {
-    switch (status) {
-      case "preparing": return "new";
-      case "packing": return "packing";
-      case "dispatched": return "dispatched";
-      case "delivered": return "done";
-      case "failed": return "failed";
-      case "returned": return "returned";
-      case "partially_returned": return "partially-returned";
-      default: return "new";
-    }
-  };
-
-  // Stock list
-  const stockList = useQuery(api.products.getStockList, { token });
-  const adjustStockMutation = useMutation(api.products.adjustStock);
-  const [stockSearch, setStockSearch] = useState("");
-  const [stockAdjustment, setStockAdjustment] = useState({}); // productId -> delta
-
-  // Discount list
-  const discountList = useQuery(api.products.getDiscountList, { token });
-  const setDiscountMutation = useMutation(api.products.setDiscount);
-  const [discountForm, setDiscountForm] = useState({
-    productId: "",
-    discountPrice: 0,
-    expiryDays: 7,
-  });
-  const [discountStatus, setDiscountStatus] = useState("");
-
   // Staff roster
   const staffList = useQuery(api.staffAuth.getStaffList, { token });
 
@@ -109,62 +74,12 @@ export default function AdminDashboard() {
   const customerList = useQuery(api.customerActivities.getCustomerList, { token });
   const [customerSearch, setCustomerSearch] = useState("");
 
-  // Handler for stock delta adjustments
-  const handleStockAdjustment = async (productId, delta) => {
-    try {
-      await adjustStockMutation({ token, productId, delta });
-      // Reset input value
-      setStockAdjustment(prev => ({ ...prev, [productId]: "" }));
-    } catch (err) {
-      alert("Failed to adjust stock: " + err.message);
-    }
-  };
-
-  // Handler for setting discount
-  const handleSetDiscount = async (e) => {
-    e.preventDefault();
-    if (!discountForm.productId) {
-      setDiscountStatus("Please select a product.");
-      return;
-    }
-    if (discountForm.discountPrice <= 0) {
-      setDiscountStatus("Price must be greater than 0.");
-      return;
-    }
-
-    try {
-      const expiryTimestamp = Date.now() + discountForm.expiryDays * 24 * 60 * 60 * 1000;
-      await setDiscountMutation({
-        token,
-        productId: discountForm.productId,
-        discountPrice: discountForm.discountPrice,
-        discountExpiry: expiryTimestamp
-      });
-      setDiscountStatus("Discount applied successfully!");
-      setDiscountForm({ productId: "", discountPrice: 0, expiryDays: 7 });
-      setTimeout(() => setDiscountStatus(""), 4000);
-    } catch (err) {
-      setDiscountStatus("Error: " + err.message);
-    }
-  };
-
   const initials = (user?.name || "?")
     .split(" ")
     .map((p) => p[0])
     .slice(0, 2)
     .join("")
     .toUpperCase();
-
-  const filteredStock = stockList?.filter(p =>
-    p.name.toLowerCase().includes(stockSearch.toLowerCase()) ||
-    p.sku?.toLowerCase().includes(stockSearch.toLowerCase()) ||
-    p.barcode.includes(stockSearch)
-  ) || [];
-  const stockStats = stockList ? {
-    ok: stockList.filter(p => p.inventory > p.reorderPoint).length,
-    low: stockList.filter(p => p.inventory > 0 && p.inventory <= p.reorderPoint).length,
-    out: stockList.filter(p => p.inventory <= 0).length,
-  } : null;
 
   const filteredCustomers = customerList?.filter(c =>
     c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
@@ -227,6 +142,13 @@ export default function AdminDashboard() {
               >
                 <Boxes size={18} />
                 <span>Stock Manager</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "salesReport" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("salesReport")}
+              >
+                <ClipboardList size={18} />
+                <span>Sales Report</span>
               </button>
               <button
                 className={`sidebar-nav-item ${activeTab === "discounts" ? "is-active" : ""}`}
@@ -371,257 +293,17 @@ export default function AdminDashboard() {
 
           {/* TAB 2: STOCK MANAGER */}
           {activeTab === "stock" && (
-            <div className="admin-tab-panel is-active">
-              <div className="page-header">
-                <h1 className="admin-page-title">Catalogue Inventory Manager</h1>
-                <div className="stock-search-wrap">
-                  <Search className="stock-search-icon" size={16} />
-                  <input
-                    className="stock-search-input"
-                    type="text"
-                    placeholder="Search by SKU, barcode, name..."
-                    value={stockSearch}
-                    onChange={(e) => setStockSearch(e.target.value)}
-                  />
-                  {stockSearch && (
-                    <button className="stock-search-clear" onClick={() => setStockSearch("")}>×</button>
-                  )}
-                </div>
-                <button
-                  className="btn btn--primary btn--sm"
-                  onClick={() => navigate("/admin/products/new")}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-                >
-                  <Plus size={14} /> New Product
-                </button>
-              </div>
+            <StockManagerPanel token={token} navigate={navigate} />
+          )}
 
-              {stockList === undefined ? (
-                <div className="empty-state">
-                  <div className="empty-title">Fetching stock listing...</div>
-                </div>
-              ) : (
-                <>
-                  <div className="stock-summary-row">
-                    <div className="stock-summary-chip stock-summary-chip--green">
-                      <span className="stock-chip-value">{stockStats.ok}</span>
-                      <span className="stock-chip-label">In Stock</span>
-                    </div>
-                    <div className="stock-summary-chip stock-summary-chip--amber">
-                      <span className="stock-chip-value">{stockStats.low}</span>
-                      <span className="stock-chip-label">Low Stock</span>
-                    </div>
-                    <div className="stock-summary-chip stock-summary-chip--red">
-                      <span className="stock-chip-value">{stockStats.out}</span>
-                      <span className="stock-chip-label">Out of Stock</span>
-                    </div>
-                  </div>
-
-                  <div className="table-wrap">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Product Details</th>
-                          <th>SKU</th>
-                          <th>Barcode</th>
-                          <th>Reorder Pt</th>
-                          <th>Cost Price</th>
-                          <th>Inventory</th>
-                          <th>Status</th>
-                          <th style={{ width: "200px" }}>Stock Adjustment</th>
-                          <th style={{ width: "80px" }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredStock.map((product) => {
-                          const isOut = product.inventory <= 0;
-                          const isLowStock = !isOut && product.inventory <= product.reorderPoint;
-                          const isVeryLow = isLowStock && product.inventory <= product.reorderPoint / 2;
-                          const adjustVal = stockAdjustment[product.id] || "";
-                          const qtyClass = isOut
-                            ? "stock-qty-badge--out"
-                            : isVeryLow
-                              ? "stock-qty-badge--very-low"
-                              : isLowStock
-                                ? "stock-qty-badge--low"
-                                : "stock-qty-badge--ok";
-                          const statusClass = isOut
-                            ? "stock-status-badge--out"
-                            : isLowStock
-                              ? "stock-status-badge--low"
-                              : "stock-status-badge--ok";
-                          return (
-                            <tr key={product.id} className={isOut ? "stock-row-oos" : ""}>
-                              <td>
-                                <strong>{product.name}</strong>
-                                {isLowStock && (
-                                  <div className="stock-very-low-hint">
-                                    <AlertCircle size={12} /> Low Stock Warning
-                                  </div>
-                                )}
-                              </td>
-                              <td>{product.sku || "—"}</td>
-                              <td>{product.barcode}</td>
-                              <td>{product.reorderPoint}</td>
-                              <td>UGX {product.costPrice?.toLocaleString() || "—"}</td>
-                              <td><span className={`stock-qty-badge ${qtyClass}`}>{product.inventory}</span></td>
-                              <td><span className={`stock-status-badge ${statusClass}`}>{isOut ? "Out" : isLowStock ? "Low" : "OK"}</span></td>
-                              <td>
-                                <div className="stock-adj-btns">
-                                  <input
-                                    type="number"
-                                    className="form-input"
-                                    style={{ width: "60px" }}
-                                    placeholder="+/-"
-                                    value={adjustVal}
-                                    onChange={(e) => setStockAdjustment(prev => ({
-                                      ...prev,
-                                      [product.id]: e.target.value
-                                    }))}
-                                  />
-                                  <button
-                                    className="stock-adj-btn stock-adj-btn--plus"
-                                    onClick={() => handleStockAdjustment(product.id, parseInt(adjustVal))}
-                                    disabled={!adjustVal || isNaN(parseInt(adjustVal))}
-                                  >
-                                    Apply
-                                  </button>
-                                </div>
-                              </td>
-                              <td>
-                                <button
-                                  className="btn btn--secondary btn--sm"
-                                  onClick={() => navigate(`/admin/products/${product.id}`)}
-                                  title="Edit product details"
-                                >
-                                  <Pencil size={12} />
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
-            </div>
+          {/* TAB: SALES REPORT (products sold in a date range) */}
+          {activeTab === "salesReport" && (
+            <ProductSalesPanel token={token} />
           )}
 
           {/* TAB 3: DISCOUNTS & PROMOS */}
           {activeTab === "discounts" && (
-            <div className="admin-tab-panel is-active">
-              <h1 className="admin-page-title">Discounts & Promos</h1>
-              <div className="product-edit-grid">
-                {/* Left Column: Set Discount Form */}
-                <div className="product-edit-card">
-                  <h3 className="product-edit-card-title">Create Product Discount</h3>
-
-                  {discountStatus && (
-                    <div className={`form-error ${discountStatus.includes("success") ? "" : "is-visible"}`}>
-                      {discountStatus}
-                    </div>
-                  )}
-
-                  <form onSubmit={handleSetDiscount} className="modal-form">
-                    <div className="form-group">
-                      <label className="form-label">Select Product</label>
-                      <select
-                        className="form-input"
-                        value={discountForm.productId}
-                        onChange={(e) => setDiscountForm(prev => ({ ...prev, productId: e.target.value }))}
-                        required
-                      >
-                        <option value="">-- Choose Product --</option>
-                        {stockList?.map(p => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} (Barcode: {p.barcode})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Discount Price (UGX)</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        min="1"
-                        placeholder="e.g. 25000"
-                        value={discountForm.discountPrice || ""}
-                        onChange={(e) => setDiscountForm(prev => ({ ...prev, discountPrice: parseInt(e.target.value) || 0 }))}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Discount Validity (Days)</label>
-                      <select
-                        className="form-input"
-                        value={discountForm.expiryDays}
-                        onChange={(e) => setDiscountForm(prev => ({ ...prev, expiryDays: parseInt(e.target.value) }))}
-                      >
-                        <option value={1}>1 Day</option>
-                        <option value={3}>3 Days</option>
-                        <option value={7}>1 Week</option>
-                        <option value={14}>2 Weeks</option>
-                        <option value={30}>1 Month</option>
-                      </select>
-                    </div>
-
-                    <button type="submit" className="btn btn--primary btn--md btn--full-width">
-                      Apply Discount
-                    </button>
-                  </form>
-                </div>
-
-                {/* Right Column: Active Discount List */}
-                <div className="product-edit-card">
-                  <h3 className="product-edit-card-title">Active Campaign Discounts</h3>
-
-                  {discountList === undefined ? (
-                    <div className="empty-state">
-                      <div className="empty-title">Fetching active campaigns...</div>
-                    </div>
-                  ) : discountList.length === 0 ? (
-                    <div className="empty-state">
-                      <div className="empty-title">No active discounts.</div>
-                      <div className="empty-sub">Use the form to create one.</div>
-                    </div>
-                  ) : (
-                    <div className="table-wrap">
-                      <table className="data-table">
-                        <thead>
-                          <tr>
-                            <th>Product</th>
-                            <th>Original Price</th>
-                            <th>Promo Price</th>
-                            <th>Expiry Date</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {discountList.map((product) => {
-                            const isActive = product.discountExpiry > Date.now();
-                            return (
-                              <tr key={product._id} className={isActive ? "discount-row-active" : ""}>
-                                <td><strong>{product.name}</strong></td>
-                                <td>UGX {product.originalPrice.toLocaleString()}</td>
-                                <td>
-                                  <span className="discount-badge discount-badge--cash">
-                                    UGX {product.discountPrice?.toLocaleString()}
-                                  </span>
-                                </td>
-                                <td>{new Date(product.discountExpiry).toLocaleDateString()}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <DiscountsPanel token={token} />
           )}
 
           {/* TAB 4: STAFF ROSTER */}
@@ -736,94 +418,7 @@ export default function AdminDashboard() {
 
           {/* TAB: ORDER HISTORY (all orders, admin-wide) */}
           {activeTab === "history" && (
-            <div className="admin-tab-panel is-active">
-              <div className="page-header">
-                <h1 className="admin-page-title">Order History</h1>
-                <span style={{ fontSize: "12px", color: "var(--text-tertiary)", alignSelf: "center" }}>
-                  Sorted: Newest First
-                </span>
-              </div>
-
-              {orderHistory === undefined ? (
-                <div className="empty-state">
-                  <div className="empty-title">Loading order history...</div>
-                </div>
-              ) : orderHistory.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-title">No orders yet.</div>
-                </div>
-              ) : (
-                <>
-                  <div className="table-wrap">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Date & Time</th>
-                          <th>Customer</th>
-                          <th>Type</th>
-                          <th>Items</th>
-                          <th>Total</th>
-                          <th>Status</th>
-                          <th>Claimed By</th>
-                          <th style={{ width: "80px" }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {orderHistory.map((order) => (
-                          <tr
-                            key={order._id}
-                            style={{ cursor: "pointer" }}
-                            onClick={() => setViewingOrder(order)}
-                          >
-                            <td style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
-                              {new Date(order.createdAt).toLocaleString("en-GB", {
-                                day: "2-digit", month: "short", year: "numeric",
-                                hour: "2-digit", minute: "2-digit"
-                              })}
-                            </td>
-                            <td className="td-customer">{order.customerName}</td>
-                            <td>
-                              <span
-                                className={`status-badge ${order.isWalkIn ? "status-badge--done" : "status-badge--packing"}`}
-                                style={{ fontSize: "10px" }}
-                              >
-                                {order.isWalkIn ? "Walk-in" : "Online"}
-                              </span>
-                            </td>
-                            <td style={{ textAlign: "center" }}>{order.items?.length || 0}</td>
-                            <td style={{ whiteSpace: "nowrap" }}>UGX {order.grandTotal.toLocaleString()}</td>
-                            <td>
-                              <span className={`status-badge status-badge--${getStatusModifier(order.status)}`}>
-                                <span className="status-dot" />
-                                {order.status.toUpperCase()}
-                              </span>
-                            </td>
-                            <td>{order.claimantName || "—"}</td>
-                            <td className="td-action" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                className="btn btn--secondary btn--sm"
-                                onClick={() => setViewingOrder(order)}
-                                title="View full details"
-                              >
-                                <Eye size={13} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {orderHistoryStatus === "CanLoadMore" && (
-                    <div style={{ textAlign: "center", marginTop: "var(--space-4)" }}>
-                      <button className="btn btn--secondary btn--sm" onClick={() => loadMoreOrderHistory(25)}>
-                        Load More
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            <OrderHistoryPanel token={token} onOpenOrder={setViewingOrder} />
           )}
 
           {/* TAB 6: CALENDAR / REMINDERS */}

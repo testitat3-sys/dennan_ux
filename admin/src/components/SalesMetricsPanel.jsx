@@ -85,6 +85,11 @@ function formatDisplayDate(dateStr) {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
+function formatDisplayTime(bucketStartMs) {
+  if (!bucketStartMs) return "";
+  return new Date(bucketStartMs).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
 export default function SalesMetricsPanel({ token, onOpenOrder }) {
   const todayStr = getTodayStr();
   const [datePreset, setDatePreset] = useState("30d");
@@ -246,16 +251,20 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
           <div className="sales-metrics-charts-grid">
             <div className="sales-metrics-chart-card">
               <h3 className="product-edit-card-title">
-                Sales Over Time ({metrics.bucketGranularity === "day" ? "Daily" : "Weekly"})
+                Sales Over Time ({metrics.bucketGranularity === "hour" ? "Hourly" : metrics.bucketGranularity === "day" ? "Daily" : "Weekly"})
               </h3>
               <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={metrics.series}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-container-high)" />
-                  <XAxis dataKey="date" tickFormatter={formatDisplayDate} tick={{ fontSize: 11 }} />
+                  <XAxis
+                    dataKey={metrics.bucketGranularity === "hour" ? "bucketStartMs" : "date"}
+                    tickFormatter={metrics.bucketGranularity === "hour" ? formatDisplayTime : formatDisplayDate}
+                    tick={{ fontSize: 11 }}
+                  />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => v.toLocaleString()} />
                   <Tooltip
                     formatter={(value) => `UGX ${Number(value).toLocaleString()}`}
-                    labelFormatter={formatDisplayDate}
+                    labelFormatter={metrics.bucketGranularity === "hour" ? formatDisplayTime : formatDisplayDate}
                   />
                   <Line type="monotone" dataKey="total" stroke="var(--color-brand-primary, #d35097)" strokeWidth={2} dot={false} />
                 </LineChart>
@@ -336,6 +345,45 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
               </tbody>
             </table>
           </div>
+
+          {metrics.exchangeTopUpCount > 0 && (
+            <>
+              <div className="section-header">
+                <h2 className="section-title">Exchange Top-Ups</h2>
+                <span style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
+                  UGX {metrics.exchangeTopUpRevenue.toLocaleString()} across {metrics.exchangeTopUpCount} exchange(s) — already included in Total Sales above
+                </span>
+              </div>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Method</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.exchangeTopUps.map((t) => (
+                      <tr
+                        key={t.returnId}
+                        style={{ cursor: onOpenOrder ? "pointer" : "default" }}
+                        onClick={() => onOpenOrder?.(t.orderId)}
+                      >
+                        <td style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
+                          {new Date(t.createdAt).toLocaleString("en-GB", {
+                            day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+                          })}
+                        </td>
+                        <td>{PAYMENT_FILTERS.find(p => p.value === t.method)?.label || t.method}</td>
+                        <td>UGX {t.amount.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
 
           <div className="section-header">
             <h2 className="section-title">Channel Breakdown</h2>
