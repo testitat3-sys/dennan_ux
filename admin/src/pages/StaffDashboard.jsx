@@ -143,7 +143,12 @@ export default function StaffDashboard() {
   };
 
   // --- TAB 2: WALK-IN POS ---
-  const posProducts = useQuery(api.products.getProductsForPOS, { token });
+  // Only subscribe once the POS tab is actually opened, since this pulls the
+  // full product catalog and stays live-subscribed for the rest of the session.
+  const posProducts = useQuery(
+    api.products.getProductsForPOS,
+    activeTab === "pos" ? { token } : "skip"
+  );
   const createPhysicalOrderMutation = useMutation(api.orders.createPhysicalOrder);
   const staffRoster = useQuery(api.staffAuth.getStaffRoster, { token });
 

@@ -23,25 +23,85 @@ export const getProducts = query({
     stage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    let products = ctx.db.query("products");
-    
-    // Simple filtering logic (can be optimized with indexes later)
-    let results = await products.collect();
-    
+    // Use an index when a category is supplied, since `by_category_tier_stage`
+    // and `by_category` cover the common filtered-page case and avoid a full
+    // table scan. Tier/stage still need a JS pass since the schema's tier
+    // literal casing may not match the lowercased arg, and stage-only combos
+    // aren't covered by an index prefix here.
+    let results = args.category
+      ? await ctx.db
+          .query("products")
+          .withIndex("by_category", (q) => q.eq("category", args.category))
+          .collect()
+      : await ctx.db.query("products").collect();
+
     // Only return products matching the central filter
     results = results.filter((p) => shouldKeepProduct(p));
-    
-    if (args.category) {
-      results = results.filter(p => p.category === args.category);
-    }
+
     if (args.tier) {
       results = results.filter(p => p.tier && p.tier.toLowerCase() === args.tier?.toLowerCase());
     }
     if (args.stage) {
       results = results.filter(p => p.stage === args.stage);
     }
-    
+
     return results.map(normalizeProductPrice);
+  },
+});
+
+export const getProductBySlugOrId = query({
+  args: {
+    productId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { productId } = args;
+
+    // Slug lookup (the common case from product links) uses the by_slug index.
+    let product = await ctx.db
+      .query("products")
+      .withIndex("by_slug", (q) => q.eq("slug", productId))
+      .unique();
+
+    // Fall back to a direct _id lookup.
+    if (!product) {
+      try {
+        product = await ctx.db.get(productId);
+      } catch {
+        // Not a valid Id<"products"> string; ignore and fall through.
+      }
+    }
+
+    return product ? normalizeProductPrice(product) : null;
+  },
+});
+
+export const getProductsByStage = query({
+  args: {
+    stage: v.string(),
+    limit: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const results = await ctx.db
+      .query("products")
+      .withIndex("by_stage", (q) => q.eq("stage", args.stage as any))
+      .take(args.limit);
+
+    return results.filter((p) => shouldKeepProduct(p)).map(normalizeProductPrice);
+  },
+});
+
+export const searchProducts = query({
+  args: {
+    query: v.string(),
+    limit: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const results = await ctx.db
+      .query("products")
+      .withSearchIndex("search_name", (q) => q.search("name", args.query))
+      .take(args.limit);
+
+    return results.filter((p) => shouldKeepProduct(p)).map(normalizeProductPrice);
   },
 });
 

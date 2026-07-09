@@ -41,7 +41,12 @@ const RegistryPage = () => {
 
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const convexUser = useQuery(api.users.viewer, isAuthenticated ? {} : "skip");
-  const dbProducts = useQuery(api.data.getProducts, {}) || [];
+  // Indexed per-stage lookups instead of fetching the entire catalog, since
+  // suggestions/packs only ever need a handful of products per stage.
+  const motherProducts = useQuery(api.data.getProductsByStage, { stage: 'mother', limit: 16 }) || [];
+  const newbornProducts = useQuery(api.data.getProductsByStage, { stage: 'newborn', limit: 16 }) || [];
+  const kidProducts = useQuery(api.data.getProductsByStage, { stage: 'kid', limit: 16 }) || [];
+  const stageProductsMap = { mother: motherProducts, newborn: newbornProducts, kid: kidProducts };
 
   const [viewMode] = useState('parent'); // Default to parent for management
   const [activeTab, setActiveTab] = useState('registry'); // registry, thank-you
@@ -60,23 +65,30 @@ const RegistryPage = () => {
   // Convex mutation for saving event type
   const dbSetEventType = useMutation(api.registry.setEventType);
 
+  // Text search only fires once the user actually types something, via the
+  // products.search_name search index (name-only; brand/category substring
+  // matching was dropped since an equality index can't serve free text).
+  const trimmedSearchQuery = searchQuery.trim();
+  const searchResults = useQuery(
+    api.data.searchProducts,
+    trimmedSearchQuery ? { query: trimmedSearchQuery, limit: 16 } : 'skip'
+  ) || [];
+
   // Dynamic Catalog Search & Suggested Items
   const displayedSearchProducts = useMemo(() => {
     const registryProductIds = new Set(registryItems.map(item => item.productId || item.id));
-    const available = dbProducts.filter(p => !registryProductIds.has(p._id || p.id || p.productId));
+    const excludeRegistryItems = (products) => products.filter(p => !registryProductIds.has(p._id || p.id || p.productId));
 
-    if (!searchQuery.trim()) {
+    if (!trimmedSearchQuery) {
       const stageFilter = convexUser?.stage || 'newborn';
-      const stageProducts = available.filter(p => p.stage === stageFilter);
-      return stageProducts.length > 0 ? stageProducts.slice(0, 8) : available.slice(0, 8);
+      const stageProducts = excludeRegistryItems(stageProductsMap[stageFilter] || []);
+      if (stageProducts.length > 0) return stageProducts.slice(0, 8);
+      const combined = excludeRegistryItems([...motherProducts, ...newbornProducts, ...kidProducts]);
+      return combined.slice(0, 8);
     }
 
-    return available.filter(p =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.brand && p.brand.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
-    ).slice(0, 8);
-  }, [dbProducts, searchQuery, registryItems, convexUser]);
+    return excludeRegistryItems(searchResults).slice(0, 8);
+  }, [motherProducts, newbornProducts, kidProducts, searchResults, trimmedSearchQuery, registryItems, convexUser]);
 
   // Toast States & Queue Management
   const [showToast, setShowToast] = useState(false);
@@ -357,10 +369,10 @@ const RegistryPage = () => {
 
   // Curated fallback packs
   const packs = useMemo(() => {
-    const stage1Products = dbProducts.filter(p => p.stage === 'mother').slice(0, 3);
-    const stage2Products = dbProducts.filter(p => p.stage === 'newborn').slice(0, 3);
-    const stage3Products = dbProducts.filter(p => p.stage === 'kid').slice(0, 3);
-    const stage4Products = dbProducts.filter(p => p.stage === 'christening').slice(0, 3);
+    const stage1Products = motherProducts.slice(0, 3);
+    const stage2Products = newbornProducts.slice(0, 3);
+    const stage3Products = kidProducts.slice(0, 3);
+    const stage4Products = []; // 'christening' isn't a valid stage in the schema; always empty, same as before
 
     const fallbackMother = [
       {
@@ -536,7 +548,7 @@ const RegistryPage = () => {
         items: stage4Products.length > 0 ? stage4Products : fallbackChristening
       }
     };
-  }, [dbProducts]);
+  }, [motherProducts, newbornProducts, kidProducts]);
 
   const handleAddToRegistry = async (product) => {
     const success = await addToRegistry(product);

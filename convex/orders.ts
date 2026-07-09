@@ -1617,21 +1617,7 @@ export const adminGetDailySalesDashboard = query({
 
     const completedStatuses = ["delivered", "returned", "partially_returned"];
 
-    // 2. Fetch all orders + all order payments once
-    const allOrders = await ctx.db.query("orders").collect();
-    const allOrderPayments = await ctx.db.query("orderPayments").collect();
-    const paymentsByOrderId = new Map<string, typeof allOrderPayments>();
-    for (const payment of allOrderPayments) {
-      const key = payment.orderId.toString();
-      const existing = paymentsByOrderId.get(key);
-      if (existing) {
-        existing.push(payment);
-      } else {
-        paymentsByOrderId.set(key, [payment]);
-      }
-    }
-
-    // 3. Day boundaries (server-local midnight), last 7 days including today
+    // 2. Day boundaries (server-local midnight), last 7 days including today
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const dayMs = 24 * 60 * 60 * 1000;
@@ -1644,6 +1630,29 @@ export const adminGetDailySalesDashboard = query({
         end: start + dayMs,
       });
     }
+
+    // 3. Fetch only the orders in the 7-day window via the createdAt index,
+    // then only the payments belonging to those orders (orderPayments has no
+    // date field of its own, so it can't be range-scoped directly).
+    const rangeStart = dayRanges[0].start;
+    const rangeEnd = dayRanges[dayRanges.length - 1].end;
+    const allOrders = await ctx.db
+      .query("orders")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStart).lt("createdAt", rangeEnd))
+      .collect();
+
+    const paymentsPerOrder = await Promise.all(
+      allOrders.map((o) =>
+        ctx.db
+          .query("orderPayments")
+          .withIndex("by_order", (q) => q.eq("orderId", o._id))
+          .collect()
+      )
+    );
+    const paymentsByOrderId = new Map<string, (typeof paymentsPerOrder)[number]>();
+    allOrders.forEach((o, i) => {
+      paymentsByOrderId.set(o._id.toString(), paymentsPerOrder[i]);
+    });
 
     const computeDayStats = (start: number, end: number) => {
       const ordersInRange = allOrders.filter((o: any) => o.createdAt >= start && o.createdAt < end);
@@ -1761,27 +1770,33 @@ export const adminGetSalesMetrics = query({
     const completedStatuses = ["delivered", "returned", "partially_returned"];
     const dayMs = 24 * 60 * 60 * 1000;
 
-    // 1. Fetch all orders + all order payments once
-    const allOrders = await ctx.db.query("orders").collect();
-    const allOrderPayments = await ctx.db.query("orderPayments").collect();
-    const paymentsByOrderId = new Map<string, typeof allOrderPayments>();
-    for (const payment of allOrderPayments) {
-      const key = payment.orderId.toString();
-      const existing = paymentsByOrderId.get(key);
-      if (existing) {
-        existing.push(payment);
-      } else {
-        paymentsByOrderId.set(key, [payment]);
-      }
-    }
-
-    // 2. Resolve the date range (default: last 30 days including today)
+    // 1. Resolve the date range (default: last 30 days including today)
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const todayMs = startOfToday.getTime();
 
     const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
     const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
+
+    // 2. Fetch only orders in range via the createdAt index, then only the
+    // payments belonging to those orders (orderPayments has no date field).
+    const allOrders = await ctx.db
+      .query("orders")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
+      .collect();
+
+    const paymentsPerOrder = await Promise.all(
+      allOrders.map((o) =>
+        ctx.db
+          .query("orderPayments")
+          .withIndex("by_order", (q) => q.eq("orderId", o._id))
+          .collect()
+      )
+    );
+    const paymentsByOrderId = new Map<string, (typeof paymentsPerOrder)[number]>();
+    allOrders.forEach((o, i) => {
+      paymentsByOrderId.set(o._id.toString(), paymentsPerOrder[i]);
+    });
 
     // 3. Filter to completed orders within range, then by channel (order-level filter,
     // unlike payment method which is a tender-level filter applied inside
@@ -1899,11 +1914,11 @@ export const adminGetProductAnalytics = query({
     const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
     const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
 
-    const allOrders = await ctx.db.query("orders").collect();
-    const ordersInRange = allOrders.filter(
-      (o: any) =>
-        o.createdAt >= rangeStartMs && o.createdAt < rangeEndMs && completedStatuses.includes(o.status)
-    );
+    const ordersInWindow = await ctx.db
+      .query("orders")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
+      .collect();
+    const ordersInRange = ordersInWindow.filter((o: any) => completedStatuses.includes(o.status));
 
     // Aggregate units/revenue per product across all matching orders' line items
     const productAgg = new Map<string, { productId: any; unitsSold: number; revenue: number }>();

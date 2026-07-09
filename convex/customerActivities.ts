@@ -14,11 +14,11 @@ export const getCustomerList = query({
     // 1. Verify admin or staff role
     await verifyStaffSession(ctx, args.token, ["admin", "staff"]);
 
-    // 2. Fetch all users
-    const allUsers = await ctx.db.query("users").collect();
-
-    // Filter to get only customers (users who do not have accountRole set to 'staff' or 'admin')
-    const customers = allUsers.filter((u) => !u.accountRole);
+    // 2. Fetch only customers (users with no accountRole set) via the indexed field
+    const customers = await ctx.db
+      .query("users")
+      .withIndex("by_accountRole", (q) => q.eq("accountRole", undefined))
+      .collect();
 
     const enrichedCustomers = [];
 

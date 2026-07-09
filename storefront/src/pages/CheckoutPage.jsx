@@ -29,7 +29,6 @@ const CheckoutPage = () => {
   const initiatePayment = useAction(api.pesapal.initiatePayment);
 
   const { cartItems, subtotal, clearCart } = useCart();
-  const allProducts = useQuery(api.data.getProducts);
   const [checkoutData, setCheckoutData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -94,6 +93,9 @@ const CheckoutPage = () => {
   // const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const isDev = false;
   const [showDevPanel, setShowDevPanel] = useState(false);
+  // Only used by the dev-mode mock order confirmation below — gated behind
+  // isDev so real checkouts don't pay for a full-catalog scan they never use.
+  const allProducts = useQuery(api.data.getProducts, isDev ? {} : 'skip');
 
   // Payment states
   const [selectedPayment, setSelectedPayment] = useState('momo');

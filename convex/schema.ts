@@ -232,7 +232,8 @@ export default defineSchema({
     .index("by_category", ["category"])
     .index("by_brand", ["brand"])
     .index("by_stage_and_tier", ["stage", "tier"])
-    .index("by_category_tier_stage", ["category", "tier", "stage"]),
+    .index("by_category_tier_stage", ["category", "tier", "stage"])
+    .searchIndex("search_name", { searchField: "name" }),
 
   // ─── Product Reviews ─────────────────────────────────────────────────────────
 
@@ -486,7 +487,8 @@ export default defineSchema({
       v.union(v.literal("online"), v.literal("walk_in"), v.literal("whatsapp"))
     ),
   }).index("by_user", ["userId"])
-    .index("by_claimedBy", ["claimedBy"]),
+    .index("by_claimedBy", ["claimedBy"])
+    .index("by_createdAt", ["createdAt"]),
 
   orderItems: defineTable({
     orderId: v.id("orders"),

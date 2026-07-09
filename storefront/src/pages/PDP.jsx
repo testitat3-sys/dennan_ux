@@ -44,23 +44,19 @@ const PDP = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showReviewModal, setShowReviewModal] = useState(false);
 
-  // Live fetch from Convex
-  const allProducts = useQuery(api.data.getProducts);
+  // Live fetch from Convex — single indexed lookup instead of the whole catalog
+  const fetchedProduct = useQuery(api.data.getProductBySlugOrId, productId ? { productId } : 'skip');
   const reviews = useQuery(api.products.getProductReviews, product && product._id ? { productId: product._id } : 'skip');
 
   useEffect(() => {
-    if (allProducts && productId) {
-      const foundProduct = allProducts.find(p => p.id === parseInt(productId) || p._id === productId || p.slug === productId);
-      if (foundProduct) {
-        setProduct(foundProduct);
+    if (fetchedProduct !== undefined) {
+      if (fetchedProduct) {
+        setProduct(fetchedProduct);
         setActiveImageIndex(0); // Reset to first image on product switch
-        setLoading(false);
-      } else {
-        // Fetch complete but no matching product found (slug/ID not matched)
-        setLoading(false);
       }
+      setLoading(false);
     }
-  }, [allProducts, productId]);
+  }, [fetchedProduct, productId]);
 
   // Scroll animations observer
   useEffect(() => {
