@@ -175,6 +175,8 @@ export const submitReturn = mutation({
   },
 });
 
+export const processReturn = submitReturn;
+
 export const approveReturnItem = mutation({
   args: {
     token: v.string(),

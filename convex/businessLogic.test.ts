@@ -282,6 +282,22 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(returnRes.success).toBe(true);
   expect(returnRes.status).toBe("partially_returned");
 
+  // Admin approves return items to trigger restocking
+  const pendingItems = await t.run(async (ctx) => {
+    return await ctx.db
+      .query("returnItems")
+      .withIndex("by_order", (q) => q.eq("orderId", orderId))
+      .collect();
+  });
+  for (const item of pendingItems) {
+    if (item.status === "pending") {
+      await t.mutation(api.returns.approveReturnItem, {
+        token: adminToken,
+        returnItemId: item._id,
+      });
+    }
+  }
+
   // Verify order status updated to partially_returned
   const returnedOrderDoc: any = await t.run(async (ctx) => {
     return await ctx.db.get(orderId);
@@ -306,6 +322,22 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   });
   expect(returnRes2.success).toBe(true);
   expect(returnRes2.status).toBe("returned");
+
+  // Admin approves the second batch of return items
+  const pendingItems2 = await t.run(async (ctx) => {
+    return await ctx.db
+      .query("returnItems")
+      .withIndex("by_order", (q) => q.eq("orderId", orderId))
+      .collect();
+  });
+  for (const item of pendingItems2) {
+    if (item.status === "pending") {
+      await t.mutation(api.returns.approveReturnItem, {
+        token: adminToken,
+        returnItemId: item._id,
+      });
+    }
+  }
 
   // Verify order status updated to returned
   const returnedOrderDoc2: any = await t.run(async (ctx) => {
@@ -337,7 +369,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
       { productId: productId1, quantity: 3 }, // 3x Bottles (inventory: 15 -> 12)
     ],
     payments: [
-      { method: "physical", amount: 120000 }
+      { method: "physical", amount: 150000 }
     ],
     note: "Cash payment received at counter",
   });
@@ -385,11 +417,11 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     customerName: "Babirye Sarah",
     phone: "+256780000003",
     items: [
-      { productId: productId1, quantity: 2 }, // 2x Bottles = 80000
+      { productId: productId1, quantity: 2 }, // 2x Bottles = 100000
     ],
     payments: [
-      { method: "physical", amount: 30000 },
-      { method: "momo", amount: 50000, momoPhone: "+256770000123" }
+      { method: "physical", amount: 40000 },
+      { method: "momo", amount: 60000, momoPhone: "+256770000123", cardOrderId: "momo-tx-123" }
     ],
     note: "Split payment cash and momo",
   });
@@ -408,8 +440,8 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
       .collect();
   });
   expect(multiPayments.length).toBe(2);
-  expect(multiPayments.some((p) => p.method === "physical" && p.amount === 30000)).toBe(true);
-  expect(multiPayments.some((p) => p.method === "momo" && p.amount === 50000 && p.momoPhone === "+256770000123")).toBe(true);
+  expect(multiPayments.some((p) => p.method === "physical" && p.amount === 40000)).toBe(true);
+  expect(multiPayments.some((p) => p.method === "momo" && p.amount === 60000 && p.momoPhone === "+256770000123" && p.cardOrderId === "momo-tx-123")).toBe(true);
 
   // Test: tender sum mismatch throws error
   await expect(
@@ -417,7 +449,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
       token: staffToken,
       customerName: "Babirye Sarah",
       items: [{ productId: productId1, quantity: 1 }],
-      payments: [{ method: "physical", amount: 10000 }], // should be 40000
+      payments: [{ method: "physical", amount: 10000 }], // should be 50000
     })
   ).rejects.toThrow("Payment total mismatch");
 
@@ -689,6 +721,22 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     note: "Sync return test"
   });
   expect(returnSyncRes.success).toBe(true);
+
+  // Admin approves the synced return item
+  const pendingSyncItems = await t.run(async (ctx) => {
+    return await ctx.db
+      .query("returnItems")
+      .withIndex("by_order", (q) => q.eq("orderId", posSyncRes.orderId))
+      .collect();
+  });
+  for (const item of pendingSyncItems) {
+    if (item.status === "pending") {
+      await t.mutation(api.returns.approveReturnItem, {
+        token: adminToken,
+        returnItemId: item._id,
+      });
+    }
+  }
 
   const [retStock1, retStock2] = await t.run(async (ctx) => {
     const p1 = await ctx.db.get(syncedProduct1);

@@ -199,6 +199,14 @@ export default function StaffDashboard() {
     }
   }, [pendingOrderDetail]);
 
+  const getOriginalPrice = (product) => {
+    if (!product) return 0;
+    const prices = [product.price, product.wasPrice, product.originalPrice, product.discountPrice].filter(
+      v => typeof v === "number" && v > 0
+    );
+    return prices.length > 0 ? Math.max(...prices) : (product.price || 0);
+  };
+
   const addToCart = (product) => {
     setCart(prev => {
       const existing = prev.find(item => item.id === product._id);
@@ -209,7 +217,7 @@ export default function StaffDashboard() {
         }
         return prev.map(item => item.id === product._id ? { ...item, quantity: item.quantity + 1 } : item);
       }
-      return [...prev, { id: product._id, name: product.name, price: product.price, quantity: 1, inventory: product.inventory }];
+      return [...prev, { id: product._id, name: product.name, price: getOriginalPrice(product), quantity: 1, inventory: product.inventory }];
     });
   };
 
@@ -857,7 +865,7 @@ export default function StaffDashboard() {
                             <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3, marginBottom: "3px" }}>{p.name}</div>
                             <div style={{ fontSize: "11px", color: "var(--text-tertiary)", marginBottom: "var(--space-2)" }}>Barcode: {p.barcode}</div>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-brand-primary)" }}>UGX {p.price.toLocaleString()}</span>
+                               <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-brand-primary)" }}>UGX {getOriginalPrice(p).toLocaleString()}</span>
                               <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "20px", background: !inStock ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)", color: !inStock ? "#ef4444" : "#16a34a" }}>
                                 {p.inventory !== undefined ? (!inStock ? "Out" : `${p.inventory} left`) : "In Stock"}
                               </span>

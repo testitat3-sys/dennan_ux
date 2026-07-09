@@ -1231,12 +1231,18 @@ export const createPhysicalOrder = mutation({
       }
       await syncStockDeductionByBarcode(ctx, product, item.quantity);
 
-      computedSubtotal += product.price * item.quantity;
+      // For walk-in and WhatsApp orders, always use the original (undiscounted) price.
+      // Discounts are only applicable to online storefront orders.
+      const prices = [rawProduct.price, rawProduct.wasPrice, rawProduct.originalPrice, rawProduct.discountPrice].filter(
+        (v): v is number => typeof v === "number" && v > 0
+      );
+      const unitPrice = prices.length > 0 ? Math.max(...prices) : rawProduct.price;
+      computedSubtotal += unitPrice * item.quantity;
       itemsToOrder.push({
         productId: item.productId,
         productName: product.name,
         quantity: item.quantity,
-        unitPrice: product.price,
+        unitPrice,
       });
     }
 

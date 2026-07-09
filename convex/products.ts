@@ -261,16 +261,25 @@ export function normalizeProductPrice(product: any): any {
   const hasExpiry = product.discountExpiry !== undefined && product.discountExpiry !== null;
   const isExpired = hasExpiry && product.discountExpiry <= now;
 
-  if (product.discountPrice !== undefined && !isExpired) {
+  const prices = [product.price, product.wasPrice, product.originalPrice, product.discountPrice].filter(
+    (v): v is number => typeof v === "number" && v > 0
+  );
+
+  if (prices.length === 0) return product;
+
+  const highestPrice = Math.max(...prices);
+  const lowestPrice = Math.min(...prices);
+
+  if (lowestPrice < highestPrice && !isExpired) {
     return {
       ...product,
-      price: product.discountPrice,
-      wasPrice: product.originalPrice ?? product.price,
+      price: lowestPrice,
+      wasPrice: highestPrice,
     };
   }
   return {
     ...product,
-    price: product.originalPrice ?? product.price,
+    price: highestPrice,
     wasPrice: undefined,
   };
 }
@@ -329,7 +338,9 @@ export const getProductsForPOS = query({
       .collect();
 
     // Return only active and kept products
-    return products.filter((p) => p.isActive && shouldKeepProduct(p, true));
+    return products
+      .filter((p) => p.isActive && shouldKeepProduct(p, true))
+      .map(normalizeProductPrice);
   },
 });
 
