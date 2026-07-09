@@ -15,8 +15,6 @@ export const { auth, signIn, signOut, store } = convexAuth({
         const user = await ctx.runQuery(api.users.getUserByEmail, { email });
         const isNewUser = user === null;
 
-        // Resolve the frontend origin (defaults to localhost:5173 in development)
-        const frontendOrigin = process.env.SITE_URL || "http://localhost:5173";
         // Style guidelines & copies based on user boarding status
         const subject = isNewUser
           ? "Complete your Dennan registration"

@@ -129,8 +129,14 @@ export default function AfterSignIn() {
       localStorage.removeItem('dennan_is_direct_login');
 
       // ── Reconcile Cached pre-auth onboarding details ─────────────────────
+      // Only reconcile when the local profile actually has a role, i.e. the
+      // user went through onboarding steps 1-3 before entering their email.
+      // The "Already have an account? Login" path saves a profile with no
+      // role, and should fall through to the hasJourneyData check below so
+      // that a login attempt with no matching account gets sent through
+      // onboarding instead of silently patched with an empty profile.
       const localProfile = readLocalProfile();
-      if (localProfile) {
+      if (localProfile && localProfile.role) {
         console.log(`[AfterSignIn.jsx] Local pre-auth profile found:`, localProfile);
         try {
           await saveOnboardingJourney({
