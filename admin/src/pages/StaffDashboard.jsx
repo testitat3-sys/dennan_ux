@@ -39,7 +39,7 @@ import {
   Calendar as CalendarIcon,
   History,
   Printer,
-  Image as ImageIcon
+  Copy
 } from "lucide-react";
 
 export default function StaffDashboard() {
@@ -1396,7 +1396,7 @@ export default function StaffDashboard() {
                                   }}
                                   title="Copy receipt as image"
                                 >
-                                  <ImageIcon size={13} />
+                                  <Copy size={13} />
                                 </button>
                               </div>
                             </td>
