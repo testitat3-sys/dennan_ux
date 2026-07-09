@@ -342,10 +342,14 @@ export const placeGuestOrder = mutation({
     }
 
     // 3. Server-side coupon validation
+    // Walk-in customers (created in-store) are not eligible for coupon discounts.
     let discountAmount = 0;
     let appliedCoupon = undefined;
 
     if (args.couponCode) {
+      if (guestUser.isWalkIn) {
+        throw new Error("Coupon codes cannot be applied to walk-in orders.");
+      }
       const couponResult = await validateCouponInternal(ctx, args.couponCode, computedSubtotal);
       if (couponResult.valid && couponResult.coupon) {
         discountAmount = couponResult.discountAmount;
@@ -1026,10 +1030,13 @@ export const adminCreateOrder = mutation({
       });
     }
 
-    // Process coupon
+    // Process coupon — blocked for walk-in customers (in-store / WhatsApp-originated profiles).
     let discountAmount = 0;
     let appliedCoupon = undefined;
     if (args.couponCode) {
+      if (customer.isWalkIn) {
+        throw new Error("Coupon codes cannot be applied to walk-in customer orders.");
+      }
       const couponResult = await validateCouponInternal(ctx, args.couponCode, computedSubtotal);
       if (couponResult.valid && couponResult.coupon) {
         discountAmount = couponResult.discountAmount;

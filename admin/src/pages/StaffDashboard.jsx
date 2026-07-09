@@ -62,10 +62,12 @@ export default function StaffDashboard() {
     { initialNumItems: 50 }
   );
 
-  // --- TAB: MY ORDER HISTORY ---
-  const { results: myOrders, status: myOrdersStatus, loadMore: loadMoreMyOrders } = usePaginatedQuery(
-    api.orders.getMyHandledOrders,
-    { token },
+  // --- TAB: ORDER HISTORY (all orders) ---
+  // Only subscribe when the history tab is open — avoids an unnecessary live
+  // subscription while staff are on the queue, POS, or other tabs.
+  const { results: allOrderHistory, status: allOrderHistoryStatus, loadMore: loadMoreAllOrderHistory } = usePaginatedQuery(
+    api.orders.getOrdersForStaff,
+    activeTab === "history" ? { token } : "skip",
     { initialNumItems: 30 }
   );
 
@@ -1307,24 +1309,24 @@ export default function StaffDashboard() {
             </div>
           )}
 
-          {/* TAB: MY ORDER HISTORY */}
+          {/* TAB: ORDER HISTORY (all orders) */}
           {activeTab === "history" && (
             <div className="admin-tab-panel is-active">
               <div className="page-header">
-                <h1 className="admin-page-title">My Order History</h1>
+                <h1 className="admin-page-title">Order History</h1>
                 <span style={{ fontSize: "12px", color: "var(--text-tertiary)", alignSelf: "center" }}>
                   Sorted: Newest First
                 </span>
               </div>
 
-              {myOrders === undefined ? (
+              {allOrderHistory === undefined ? (
                 <div className="empty-state">
                   <div className="empty-title">Loading history...</div>
                 </div>
-              ) : myOrders.length === 0 ? (
+              ) : allOrderHistory.length === 0 ? (
                 <div className="empty-state">
-                  <div className="empty-title">No orders handled yet.</div>
-                  <div className="empty-sub">Orders you claim or walk-in purchases you process will appear here.</div>
+                  <div className="empty-title">No orders yet.</div>
+                  <div className="empty-sub">All store orders will appear here.</div>
                 </div>
               ) : (
                 <>
@@ -1342,7 +1344,7 @@ export default function StaffDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {myOrders.map((order) => (
+                        {allOrderHistory.map((order) => (
                           <tr
                             key={order._id}
                             style={{ cursor: "pointer" }}
@@ -1411,11 +1413,11 @@ export default function StaffDashboard() {
                     </table>
                   </div>
 
-                  {myOrdersStatus === "CanLoadMore" && (
+                  {allOrderHistoryStatus === "CanLoadMore" && (
                     <div style={{ textAlign: "center", marginTop: "var(--space-4)" }}>
                       <button
                         className="btn btn--secondary"
-                        onClick={() => loadMoreMyOrders(20)}
+                        onClick={() => loadMoreAllOrderHistory(20)}
                       >
                         Load More Orders
                       </button>
