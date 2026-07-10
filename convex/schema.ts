@@ -449,6 +449,18 @@ export default defineSchema({
     out: v.number(),
   }),
 
+  /**
+   * barcodeCounters — one row per calendar year, tracking the last-issued
+   * sequence number for admin-generated barcodes ("{year}{seq}", e.g.
+   * "2026087"). Incremented atomically by createProduct (see
+   * convex/products.ts) so new barcodes never require scanning the
+   * products table.
+   */
+  barcodeCounters: defineTable({
+    year: v.number(),
+    lastSeq: v.number(),
+  }).index("by_year", ["year"]),
+
   // ─── Coupons & Promotion system ──────────────────────────────────────────────
   coupons: defineTable({
     code: v.string(), // e.g. "MOMMYUG"

@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { verifyStaffSession } from "./staffAuth";
 import { applyStockCounterDelta } from "./stockCounters";
+import { allocateNextBarcode } from "./barcodeCounters";
 import { parseDateStrToMs } from "./orders";
 
 // Reusable product field validators matching the products schema
@@ -812,9 +813,8 @@ export const createProduct = mutation({
   args: {
     token: v.string(),
     name: v.string(),
-    brand: v.string(),
-    barcode: v.string(),
-    description: v.string(),
+    brand: v.optional(v.string()),
+    description: v.optional(v.string()),
     originalPrice: v.number(),
     price: v.optional(v.number()),
     category: v.union(
@@ -828,7 +828,7 @@ export const createProduct = mutation({
     ),
     stage: v.union(v.literal("mother"), v.literal("newborn"), v.literal("kid")),
     tier: v.union(v.literal("essentials"), v.literal("musthaves"), v.literal("luxuries")),
-    targetGender: v.union(v.literal("boy"), v.literal("girl"), v.literal("unisex")),
+    targetGender: v.optional(v.union(v.literal("boy"), v.literal("girl"), v.literal("unisex"))),
     subCategory: v.optional(v.string()),
     size: v.optional(v.string()),
     color: v.optional(v.string()),
@@ -846,16 +846,11 @@ export const createProduct = mutation({
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
-    const existing = await ctx.db
-      .query("products")
-      .withIndex("by_barcode", (q) => q.eq("barcode", args.barcode))
-      .unique();
-    if (existing) {
-      throw new Error(`A product with barcode "${args.barcode}" already exists.`);
-    }
-
     if (args.isActive && !args.isStoreOnly && !args.image) {
       throw new Error("Customer-facing products require a primary image before they can be made active.");
+    }
+    if (args.isActive && !args.isStoreOnly && !args.description?.trim()) {
+      throw new Error("Customer-facing products require a description before they can be made active.");
     }
 
     const baseSlug = slugify(args.name);
@@ -875,10 +870,22 @@ export const createProduct = mutation({
       ? [{ label: "for-store-only", value: "true" }]
       : [];
 
+    let barcode = await allocateNextBarcode(ctx);
+    // Defensive guard: should never collide since allocateNextBarcode is a
+    // monotonic per-year counter, but re-roll rather than fail outright.
+    while (
+      await ctx.db
+        .query("products")
+        .withIndex("by_barcode", (q) => q.eq("barcode", barcode))
+        .unique()
+    ) {
+      barcode = await allocateNextBarcode(ctx);
+    }
+
     const productId = await ctx.db.insert("products", {
       name: args.name,
-      brand: args.brand,
-      barcode: args.barcode,
+      brand: args.brand || undefined,
+      barcode,
       slug,
       description: args.description,
       originalPrice: args.originalPrice,

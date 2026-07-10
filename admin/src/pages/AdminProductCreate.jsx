@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import BrandCombobox from "../components/BrandCombobox";
@@ -50,16 +50,14 @@ export default function AdminProductCreate() {
 
   const generateCloudinarySignature = useMutation(api.products.generateCloudinarySignature);
   const createProductMutation = useMutation(api.products.createProduct);
+  const nextBarcodePreview = useQuery(api.barcodeCounters.getNextBarcodePreview, { token });
 
   // Form state
   const [name, setName] = useState("");
   const [brand, setBrand] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [originalPrice, setOriginalPrice] = useState("");
-  const [costPrice, setCostPrice] = useState("");
   const [reorderPoint, setReorderPoint] = useState("");
-  const [barcode, setBarcode] = useState("");
   const [category, setCategory] = useState("");
   const [subCategory, setSubCategory] = useState("");
   const [stage, setStage] = useState("");
@@ -87,14 +85,14 @@ export default function AdminProductCreate() {
 
   useEffect(() => {
     const dirty =
-      name || brand || description || price || originalPrice || costPrice ||
-      reorderPoint || barcode || category || subCategory || stage || tier ||
+      name || brand || description || price ||
+      reorderPoint || category || subCategory || stage || tier ||
       size || color || material || pattern || targetGender || minMonth ||
       maxMonth || image || images.length > 0;
     setIsDirty(Boolean(dirty));
   }, [
-    name, brand, description, price, originalPrice, costPrice, reorderPoint,
-    barcode, category, subCategory, stage, tier, size, color, material,
+    name, brand, description, price, reorderPoint,
+    category, subCategory, stage, tier, size, color, material,
     pattern, targetGender, minMonth, maxMonth, image, images,
   ]);
 
@@ -192,21 +190,13 @@ export default function AdminProductCreate() {
       showToast("Product name is required.", "error");
       return;
     }
-    if (!brand.trim()) {
-      showToast("Brand is required.", "error");
+    if (isActive && !isStoreOnly && !description.trim()) {
+      showToast("Customer-facing products require a description before they can be made active.", "error");
       return;
     }
-    if (!barcode.trim()) {
-      showToast("Barcode is required.", "error");
-      return;
-    }
-    if (!description.trim()) {
-      showToast("Description is required.", "error");
-      return;
-    }
-    const originalPriceNum = parseFloat(originalPrice);
-    if (!originalPriceNum || originalPriceNum <= 0) {
-      showToast("Please enter a valid original price.", "error");
+    const priceNum = parseFloat(price);
+    if (!priceNum || priceNum <= 0) {
+      showToast("Please enter a valid price.", "error");
       return;
     }
     if (!category) {
@@ -219,10 +209,6 @@ export default function AdminProductCreate() {
     }
     if (!tier) {
       showToast("Tier is required.", "error");
-      return;
-    }
-    if (!targetGender) {
-      showToast("Target Gender is required.", "error");
       return;
     }
     if (isActive && !isStoreOnly && !image) {
@@ -239,12 +225,10 @@ export default function AdminProductCreate() {
       const result = await createProductMutation({
         token,
         name: name.trim(),
-        brand: brand.trim(),
-        barcode: barcode.trim(),
-        description: description.trim(),
-        price: price ? parseFloat(price) : undefined,
-        originalPrice: originalPriceNum,
-        costPrice: costPrice ? parseFloat(costPrice) : undefined,
+        brand: brand.trim() || undefined,
+        description: description.trim() || undefined,
+        price: priceNum,
+        originalPrice: priceNum,
         reorderPoint: reorderPoint ? parseInt(reorderPoint) : undefined,
         category,
         subCategory: subCategory.trim() || undefined,
@@ -254,7 +238,7 @@ export default function AdminProductCreate() {
         color: color.trim() || undefined,
         material: material.trim() || undefined,
         pattern: pattern.trim() || undefined,
-        targetGender,
+        targetGender: targetGender || undefined,
         minMonth: minMonth === "" ? undefined : Number(minMonth),
         maxMonth: maxMonth === "" ? undefined : Number(maxMonth),
         isActive,
@@ -353,7 +337,7 @@ export default function AdminProductCreate() {
 
               <div className="product-edit-card">
                 <h2 className="product-edit-card-title">
-                  Primary Image {!isStoreOnly && <span style={{ color: "var(--color-danger, #ef4444)" }}>*</span>}
+                  Primary Image {isActive && !isStoreOnly && <span style={{ color: "var(--color-danger, #ef4444)" }}>*</span>}
                 </h2>
                 <div
                   className={`product-edit-image-zone ${imageError ? "has-error" : ""}`}
@@ -484,8 +468,8 @@ export default function AdminProductCreate() {
                   </select>
                 </div>
                 <div className="form-group" style={{ marginBottom: "16px" }}>
-                  <label className="form-label">Target Gender *</label>
-                  <select className="form-input-box" value={targetGender} onChange={(e) => setTargetGender(e.target.value)} required>
+                  <label className="form-label">Target Gender</label>
+                  <select className="form-input-box" value={targetGender} onChange={(e) => setTargetGender(e.target.value)}>
                     <option value="">-- Select Target Gender --</option>
                     {GENDER_OPTIONS.map((g) => (
                       <option key={g} value={g}>{g}</option>
@@ -534,15 +518,21 @@ export default function AdminProductCreate() {
                     <input type="text" className="form-input-box" value={name} onChange={(e) => setName(e.target.value)} required />
                   </div>
                   <div className="form-group flex-1">
-                    <label className="form-label">Brand *</label>
+                    <label className="form-label">Brand</label>
                     <BrandCombobox token={token} value={brand} onChange={setBrand} />
                   </div>
                 </div>
 
                 <div className="product-edit-fields-row">
                   <div className="form-group flex-1">
-                    <label className="form-label">Barcode *</label>
-                    <input type="text" className="form-input-box code-font" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Scan or type barcode" required />
+                    <label className="form-label">Barcode (auto-assigned)</label>
+                    <input
+                      type="text"
+                      className="form-input-box code-font"
+                      value={nextBarcodePreview ?? "Generating..."}
+                      disabled
+                      readOnly
+                    />
                   </div>
                 </div>
 
@@ -569,14 +559,15 @@ export default function AdminProductCreate() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Description *</label>
+                  <label className="form-label">
+                    Description {isActive && !isStoreOnly && <span style={{ color: "var(--color-danger, #ef4444)" }}>*</span>}
+                  </label>
                   <textarea
                     rows={6}
                     className="form-input-box text-area-box"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Enter detailed product description..."
-                    required
                   />
                 </div>
 
@@ -594,21 +585,11 @@ export default function AdminProductCreate() {
               </div>
 
               <div className="product-edit-card">
-                <h2 className="product-edit-card-title">Pricing & Inventory Metrics</h2>
+                <h2 className="product-edit-card-title">Price & Inventory</h2>
                 <div className="product-edit-fields-row">
                   <div className="form-group flex-1">
-                    <label className="form-label">Original Price (UGX) *</label>
-                    <input type="number" className="form-input-box" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} required />
-                  </div>
-                  <div className="form-group flex-1">
-                    <label className="form-label">Selling Price (UGX)</label>
-                    <input type="number" className="form-input-box" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Defaults to original price" />
-                  </div>
-                </div>
-                <div className="product-edit-fields-row">
-                  <div className="form-group flex-1">
-                    <label className="form-label">Cost Price (UGX)</label>
-                    <input type="number" className="form-input-box" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
+                    <label className="form-label">Price (UGX) *</label>
+                    <input type="number" className="form-input-box" value={price} onChange={(e) => setPrice(e.target.value)} required />
                   </div>
                   <div className="form-group flex-1">
                     <label className="form-label">Reorder Point</label>

@@ -10,6 +10,7 @@
 
 import type * as attributes from "../attributes.js";
 import type * as auth from "../auth.js";
+import type * as barcodeCounters from "../barcodeCounters.js";
 import type * as brands from "../brands.js";
 import type * as cart from "../cart.js";
 import type * as coupons from "../coupons.js";
@@ -49,6 +50,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   attributes: typeof attributes;
   auth: typeof auth;
+  barcodeCounters: typeof barcodeCounters;
   brands: typeof brands;
   cart: typeof cart;
   coupons: typeof coupons;
