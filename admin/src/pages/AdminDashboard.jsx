@@ -13,6 +13,7 @@ import OrderHistoryPanel from "../components/OrderHistoryPanel";
 import StockManagerPanel from "../components/StockManagerPanel";
 import DiscountsPanel from "../components/DiscountsPanel";
 import ProductSalesPanel from "../components/ProductSalesPanel";
+import OnlineOrdersPanel from "../components/OnlineOrdersPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import sosLogo from "../assets/SOS.png";
 import profileImg from "../assets/about-dennan.png";
@@ -33,7 +34,8 @@ import {
   RotateCcw,
   History,
   ClipboardList,
-  Search
+  Search,
+  Package
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -111,6 +113,13 @@ export default function AdminDashboard() {
 
             <div className="sidebar-nav-group">
               <span className="sidebar-nav-group-label">Sales & Orders</span>
+              <button
+                className={`sidebar-nav-item ${activeTab === "onlineOrders" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("onlineOrders")}
+              >
+                <Package size={18} />
+                <span>Online Orders</span>
+              </button>
               <button
                 className={`sidebar-nav-item ${activeTab === "metrics" ? "is-active" : ""}`}
                 onClick={() => setActiveTab("metrics")}
@@ -289,6 +298,11 @@ export default function AdminDashboard() {
                 </>
               )}
             </div>
+          )}
+
+          {/* TAB: ONLINE ORDERS QUEUE */}
+          {activeTab === "onlineOrders" && (
+            <OnlineOrdersPanel token={token} />
           )}
 
           {/* TAB 2: STOCK MANAGER */}
