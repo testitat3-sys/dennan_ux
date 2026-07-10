@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 
 const ADD_NEW_VALUE = "__add_new__";
+const NO_BRAND = "no-brand";
 
 export default function BrandCombobox({ token, value, onChange }) {
   const brandOptions = useQuery(api.productBrandNames.listProductBrandNames, { token });
@@ -72,8 +73,8 @@ export default function BrandCombobox({ token, value, onChange }) {
   }
 
   return (
-    <select className="form-input-box" value={value || ""} onChange={handleSelectChange}>
-      <option value="">No Brand</option>
+    <select className="form-input-box" value={value || NO_BRAND} onChange={handleSelectChange}>
+      <option value={NO_BRAND}>No Brand</option>
       {sortedBrands.map((b) => (
         <option key={b._id} value={b.name}>{b.name}</option>
       ))}

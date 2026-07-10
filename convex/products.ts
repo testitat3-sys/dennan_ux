@@ -884,10 +884,10 @@ export const createProduct = mutation({
 
     const productId = await ctx.db.insert("products", {
       name: args.name,
-      brand: args.brand || undefined,
+      brand: args.brand?.trim() || "no-brand",
       barcode,
       slug,
-      description: args.description,
+      description: args.description?.trim() || "no-description",
       originalPrice: args.originalPrice,
       price: args.price ?? args.originalPrice,
       category: args.category,

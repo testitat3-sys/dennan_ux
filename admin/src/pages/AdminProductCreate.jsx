@@ -70,7 +70,7 @@ export default function AdminProductCreate() {
   const [minMonth, setMinMonth] = useState("");
   const [maxMonth, setMaxMonth] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [isStoreOnly, setIsStoreOnly] = useState(false);
+  const [isStoreOnly, setIsStoreOnly] = useState(true);
 
   // Image state
   const [image, setImage] = useState("");
@@ -225,8 +225,8 @@ export default function AdminProductCreate() {
       const result = await createProductMutation({
         token,
         name: name.trim(),
-        brand: brand.trim() || undefined,
-        description: description.trim() || undefined,
+        brand: brand.trim() || "no-brand",
+        description: description.trim() || "no-description",
         price: priceNum,
         originalPrice: priceNum,
         reorderPoint: reorderPoint ? parseInt(reorderPoint) : undefined,
