@@ -4023,15 +4023,19 @@
 }
 
 /* ── Print rules ── */
+/* Scoped to body.printing-receipt (toggled by ReceiptModal.jsx) so these
+   rules don't clobber other print flows sharing the same page, e.g.
+   BarcodeLabelModal — see the printing-barcode-label rules below. */
 @media print {
-  body * {
+  body.printing-receipt * {
     visibility: hidden !important;
   }
-  .receipt-print-wrapper,
-  .receipt-print-wrapper * {
+  body.printing-receipt .receipt-print-wrapper,
+  body.printing-receipt .receipt-print-wrapper * {
     visibility: visible !important;
   }
-  .receipt-print-wrapper {
+  body.printing-receipt .receipt-print-wrapper {
+    page: receipt-page;
     position: fixed !important;
     left: 0 !important;
     top: 0 !important;
@@ -4043,8 +4047,119 @@
     border: none !important;
     font-size: 11px !important;
   }
-  @page {
+  /* Named page — @page rules aren't scoped by body class like normal
+     selectors, so without a name this would cascade against the barcode
+     label's @page rule below (last one in the file wins for ALL print jobs,
+     not just the one whose modal is open). */
+  @page receipt-page {
     size: 80mm auto;
+    margin: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BARCODE LABEL
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.barcode-label-card {
+  background: var(--surface-container-low);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.barcode-label-print-wrapper {
+  background: #fff;
+  color: #111;
+  padding: 10px 8px;
+  border-radius: 4px;
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.06);
+}
+
+.barcode-label-code-text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.barcode-label-name {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.barcode-label-svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.barcode-label-price {
+  font-size: 13px;
+  font-weight: 900;
+  margin-top: 4px;
+}
+
+/* ── Print rules ── */
+/* BarcodeLabelModal is portaled onto document.body (outside #root), so
+   printing can remove the whole app from layout via display:none (unlike
+   visibility:hidden, this drops its height too) — otherwise the hidden but
+   still-in-flow dashboard pads print pagination out to dozens of pages. */
+@media print {
+  body.printing-barcode-label #root {
+    display: none !important;
+  }
+  body.printing-barcode-label .printable-receipt-modal {
+    position: static !important;
+    background: none !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+  }
+  body.printing-barcode-label .barcode-label-card {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+  }
+  body.printing-barcode-label .receipt-actions {
+    display: none !important;
+  }
+  .barcode-label-print-wrapper {
+    page: barcode-label-page;
+    box-shadow: none !important;
+    width: 40mm !important;
+    height: 30mm !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    padding: 4px 6px !important;
+  }
+  .barcode-label-code-text {
+    margin-bottom: 1px !important;
+  }
+  .barcode-label-name {
+    margin-bottom: 2px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .barcode-label-price {
+    margin-top: 2px !important;
+  }
+  /* Named page (see receipt-page above for why) — 40mm x 30mm matches common
+     thermal label stock (e.g. Zebra/TSC/Dymo small labels) — adjust to match
+     whatever physical label stock is actually used. */
+  @page barcode-label-page {
+    size: 40mm 30mm;
     margin: 0;
   }
 }

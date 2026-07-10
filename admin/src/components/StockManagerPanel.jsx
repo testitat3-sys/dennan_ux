@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { Search, AlertCircle, Pencil, Plus } from "lucide-react";
+import { Search, AlertCircle, Pencil, Plus, Printer } from "lucide-react";
+import BarcodeLabelModal from "./BarcodeLabelModal";
 
 export default function StockManagerPanel({ token, navigate }) {
   // Stock list — browse mode is paginated (never the full ~4000-row table),
@@ -21,6 +22,7 @@ export default function StockManagerPanel({ token, navigate }) {
   const stockSummary = useQuery(api.stockCounters.getStockSummary, { token });
   const adjustStockMutation = useMutation(api.products.adjustStock);
   const [stockAdjustment, setStockAdjustment] = useState({}); // productId -> delta
+  const [labelProduct, setLabelProduct] = useState(null);
 
   const handleStockAdjustment = async (productId, delta) => {
     try {
@@ -86,15 +88,13 @@ export default function StockManagerPanel({ token, navigate }) {
               <thead>
                 <tr>
                   <th>Product Details</th>
-                  <th>SKU</th>
                   <th>Barcode</th>
-                  <th>Reorder Pt</th>
                   <th>Cost Price</th>
                   <th>Inventory</th>
                   <th>Units Sold</th>
                   <th>Status</th>
                   <th style={{ width: "200px" }}>Stock Adjustment</th>
-                  <th style={{ width: "80px" }}>Actions</th>
+                  <th style={{ width: "110px" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -125,9 +125,7 @@ export default function StockManagerPanel({ token, navigate }) {
                           </div>
                         )}
                       </td>
-                      <td>{product.sku || "—"}</td>
                       <td>{product.barcode}</td>
-                      <td>{product.reorderPoint}</td>
                       <td>UGX {product.costPrice?.toLocaleString() || "—"}</td>
                       <td><span className={`stock-qty-badge ${qtyClass}`}>{product.inventory}</span></td>
                       <td>{(product.unitsSold ?? 0).toLocaleString()}</td>
@@ -155,13 +153,22 @@ export default function StockManagerPanel({ token, navigate }) {
                         </div>
                       </td>
                       <td>
-                        <button
-                          className="btn btn--secondary btn--sm"
-                          onClick={() => navigate(`/admin/products/${product.id}`)}
-                          title="Edit product details"
-                        >
-                          <Pencil size={12} />
-                        </button>
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          <button
+                            className="btn btn--secondary btn--sm"
+                            onClick={() => navigate(`/admin/products/${product.id}`)}
+                            title="Edit product details"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            className="btn btn--secondary btn--sm"
+                            onClick={() => setLabelProduct(product)}
+                            title="Print barcode label"
+                          >
+                            <Printer size={12} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -178,6 +185,13 @@ export default function StockManagerPanel({ token, navigate }) {
             </div>
           )}
         </>
+      )}
+
+      {labelProduct && (
+        <BarcodeLabelModal
+          product={labelProduct}
+          onClose={() => setLabelProduct(null)}
+        />
       )}
     </div>
   );

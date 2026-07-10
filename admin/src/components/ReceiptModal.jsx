@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Printer, Copy, Check, X } from "lucide-react";
 import html2canvas from "html2canvas";
 
@@ -6,6 +6,14 @@ export default function ReceiptModal({ receipt, onClose }) {
   const receiptRef = useRef(null);
   const [copying, setCopying] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Scopes the receipt @media print rules (StaffPortal.css) to this modal only,
+  // so they don't clobber other print flows (e.g. BarcodeLabelModal) that are
+  // mounted inside #root at the same time.
+  useEffect(() => {
+    document.body.classList.add("printing-receipt");
+    return () => document.body.classList.remove("printing-receipt");
+  }, []);
 
   if (!receipt) return null;
 

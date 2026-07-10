@@ -363,6 +363,7 @@ function toStockRow(p: any) {
     name: p.name,
     sku: p.sku,
     barcode: p.barcode,
+    price: p.price ?? 0,
     inventory: p.inventory ?? 0,
     unitsSold: p.unitsSold ?? 0,
     costPrice: p.costPrice ?? 0,
