@@ -20,7 +20,7 @@ import './PLP.css';
 
 const HERO = {
   title: 'Launch Offers',
-  subtext: 'Limited-time discounts while we get ready to launch.',
+  subtext: 'Choose a product to enjoy our limited-time discounts.',
   heroImage: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=1200',
 };
 
@@ -49,8 +49,8 @@ const LaunchPage = () => {
     if (!hasLeadInfo) {
       openLeadModal({
         source: 'launch',
-        title: 'Get notified at launch',
-        subtext: "Leave your details and we'll email you the moment it's live.",
+        title: 'Save up to 190,000',
+        subtext: "Create your Dennan account to claim your discount",
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -136,7 +136,7 @@ const LaunchPage = () => {
         <meta name="description" content={HERO.subtext} />
       </Helmet>
 
-      <Page.Section as="header" fullBleed className="plp__hero">
+      <Page.Section as="header" fullBleed className="plp__hero plp__hero--purple">
         <div className="plp__hero-bg">
           <img src={HERO.heroImage} alt={HERO.title} />
         </div>
@@ -151,7 +151,7 @@ const LaunchPage = () => {
 
           <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
             <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-              <Text role="display-lg" color="#ffffff" className="plp__hero-title">
+              <Text role="display-lg" color="brand-accent" className="plp__hero-title">
                 {HERO.title}
               </Text>
             </Card>
@@ -172,6 +172,33 @@ const LaunchPage = () => {
         <SearchStrip initialQuery={query} products={discountedProducts} onSubmit={handleSearchSubmit} />
       </Page.Section>
 
+      {!hasLeadInfo ? (
+        <Page.Section className="plp__container">
+          <div className="plp__empty">
+            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', alignItems: 'center' }}>
+                <Text role="title-sm" as="p" color="primary" style={{ fontWeight: 700, margin: 0 }}>
+                  Sign up to view launch offers
+                </Text>
+                <Text role="body-sm" as="p" color="secondary" style={{ margin: 0 }}>
+                  Create your Dennan account to unlock these discounts.
+                </Text>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => openLeadModal({
+                    source: 'launch',
+                    title: 'Save up to 190,000',
+                    subtext: "Create your Dennan account to claim your discount",
+                  })}
+                >
+                  Unlock offers
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </Page.Section>
+      ) : (
       <Page.Section className="plp__container">
         <aside className="plp__sidebar">
           <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
@@ -293,6 +320,7 @@ const LaunchPage = () => {
           </Card>
         </section>
       </Page.Section>
+      )}
 
       {selectedProduct && (
         <QuickViewModal

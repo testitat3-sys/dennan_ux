@@ -31,6 +31,18 @@
   z-index: 1;
 }
 
+.plp__hero--purple {
+  background: #603093;
+}
+
+.plp__hero--purple::after {
+  content: none;
+}
+
+.plp__hero--purple .plp__hero-bg {
+  display: none;
+}
+
 .plp__hero-bg {
   position: absolute;
   inset: 0;
