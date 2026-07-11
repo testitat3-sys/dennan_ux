@@ -77,6 +77,10 @@
   line-height: 1.2;
 }
 
+.notify-signup-modal--launch .notify-signup-headline {
+  color: #603093;
+}
+
 .notify-signup-subtext {
   font-family: var(--font-sans);
   font-size: var(--body-sm);

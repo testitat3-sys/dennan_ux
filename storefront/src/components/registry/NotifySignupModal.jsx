@@ -136,7 +136,7 @@ const NotifySignupModal = ({
       onClick={onClose}
     >
       <div
-        className="notify-signup-modal"
+        className={`notify-signup-modal notify-signup-modal--${source}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="notify-signup-inner">
