@@ -37,6 +37,7 @@ export const upsertProductsBatch = internalMutation({
         inventory: v.optional(v.number()),
         size: v.optional(v.string()),
         color: v.optional(v.string()),
+        minMonth: v.optional(v.number()),
       })
     ),
   },
@@ -52,11 +53,15 @@ export const upsertProductsBatch = internalMutation({
         .unique();
 
       if (existing) {
-        // ONLY update inventory, actual_data, and isActive
+        // updatedAt must be stamped on every write here - getProductsUpdatedSince
+        // (the offline POS delta sync) is an indexed range query on updatedAt, so
+        // a product whose updatedAt is left undefined is permanently invisible to
+        // it even after a full resync.
         await ctx.db.patch(existing._id, {
           inventory: p.inventory,
           actual_data: true,
           isActive: true,
+          updatedAt: Date.now(),
         });
         updated++;
       } else {
@@ -65,6 +70,7 @@ export const upsertProductsBatch = internalMutation({
           ...p,
           actual_data: true,
           isActive: true,
+          updatedAt: Date.now(),
         });
         added++;
       }

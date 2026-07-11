@@ -1,10 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import OrderDetailModal from "../components/OrderDetailModal";
 import HandoverModal from "../components/HandoverModal";
-import ExchangeModal from "../components/ReturnProcessModal";
 import ReturnsPanel from "../components/ReturnsPanel";
 import DeliveryFailureModal from "../components/DeliveryFailureModal";
 import CustomerActivityModal from "../components/CustomerActivityModal";
@@ -55,6 +55,7 @@ import {
 const LAST_TAB_KEY = "dennan_staff_last_tab";
 
 export default function StaffDashboard() {
+  const navigate = useNavigate();
   const { user, token, logout } = useStaffAuth();
   const [activeTab, setActiveTabState] = useState(
     () => localStorage.getItem(LAST_TAB_KEY) || "orders"
@@ -69,7 +70,6 @@ export default function StaffDashboard() {
   // Modals state
   const [viewingOrder, setViewingOrder] = useState(null);
   const [handoverOrderId, setHandoverOrderId] = useState(null);
-  const [returningOrder, setReturningOrder] = useState(null);
   const [failureOrder, setFailureOrder] = useState(null);
   const [crmCustomer, setCrmCustomer] = useState(null);
 
@@ -95,7 +95,6 @@ export default function StaffDashboard() {
   const handoverMutation = useMutation(api.orders.handoverToDelivery);
   const completeOrderMutation = useMutation(api.orders.completeOrder);
   const reportDeliveryFailureMutation = useMutation(api.orders.reportDeliveryFailure);
-  const submitExchangeMutation = useMutation(api.returns.submitExchange);
 
   const handleClaimOrder = async (orderId) => {
     try {
@@ -142,26 +141,6 @@ export default function StaffDashboard() {
       return true;
     } catch (err) {
       console.error(err);
-      return false;
-    }
-  };
-
-  const handleExchangeSubmit = async (data) => {
-    try {
-      await submitExchangeMutation({
-        token,
-        orderId: data.orderId,
-        returnedItems: data.returnedItems,
-        exchangeItems: data.exchangeItems,
-        topUp: data.topUp,
-        note: data.note
-      });
-      setReturningOrder(null);
-      setViewingOrder(null); // Close order details modal
-      return true;
-    } catch (err) {
-      console.error(err);
-      alert("Failed to process exchange: " + err.message);
       return false;
     }
   };
@@ -1642,7 +1621,7 @@ export default function StaffDashboard() {
         <OrderDetailModal
           order={viewingOrder}
           onClose={() => setViewingOrder(null)}
-          onOpenReturn={(order) => setReturningOrder(order)}
+          onOpenReturn={(order) => navigate(`/admin/orders/${order._id}/exchange`)}
           onClaim={(id) => { handleClaimOrder(id); setViewingOrder(null); }}
           onPrintReceipt={(order) => { setLastReceipt(buildReceiptFromOrder(order)); setShowReceipt(true); }}
           onDispatch={(id) => { setViewingOrder(null); setHandoverOrderId(id); }}
@@ -1666,16 +1645,6 @@ export default function StaffDashboard() {
           />
         );
       })()}
-
-      {/* Exchange processing modal (returns are exchange-only — no cash refunds) */}
-      {returningOrder && (
-        <ExchangeModal
-          order={returningOrder}
-          token={token}
-          onClose={() => setReturningOrder(null)}
-          onSubmit={handleExchangeSubmit}
-        />
-      )}
 
       {/* Delivery failure / returns-to-approval modal */}
       {failureOrder && (

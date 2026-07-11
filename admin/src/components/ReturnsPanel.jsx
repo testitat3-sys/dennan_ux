@@ -1,8 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePaginatedQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { CheckCircle, XCircle, PackageCheck, PackageX, RotateCcw } from "lucide-react";
-import TradeReturnModal from "./TradeReturnModal";
 
 function getTodayDateStr() {
   const d = new Date();
@@ -13,10 +13,10 @@ function getTodayDateStr() {
 }
 
 export default function ReturnsPanel({ token }) {
+  const navigate = useNavigate();
   const todayStr = getTodayDateStr();
   const [startDate, setStartDate] = useState(todayStr);
   const [endDate, setEndDate] = useState(todayStr);
-  const [tradingReturn, setTradingReturn] = useState(null);
 
   const { results: returns, status: returnsStatus, loadMore } = usePaginatedQuery(
     api.returns.getReturnsByDateRange,
@@ -26,7 +26,6 @@ export default function ReturnsPanel({ token }) {
 
   const approveReturnItem = useMutation(api.returns.approveReturnItem);
   const rejectReturnItem = useMutation(api.returns.rejectReturnItem);
-  const attachExchangeToReturn = useMutation(api.returns.attachExchangeToReturn);
   const rejectReturn = useMutation(api.returns.rejectReturn);
 
   const isToday = startDate === todayStr && endDate === todayStr;
@@ -60,17 +59,6 @@ export default function ReturnsPanel({ token }) {
       await rejectReturn({ token, returnId, rejectedReason });
     } catch (err) {
       alert("Failed to reject return: " + err.message);
-    }
-  };
-
-  const handleTradeSubmit = async ({ returnId, exchangeItems, topUp }) => {
-    try {
-      await attachExchangeToReturn({ token, returnId, exchangeItems, topUp });
-      setTradingReturn(null);
-      return true;
-    } catch (err) {
-      alert("Failed to process trade: " + err.message);
-      return false;
     }
   };
 
@@ -145,7 +133,7 @@ export default function ReturnsPanel({ token }) {
                       <div style={{ display: "flex", gap: "6px" }}>
                         <button
                           className="btn btn--secondary btn--sm"
-                          onClick={() => setTradingReturn(ret)}
+                          onClick={() => navigate(`/admin/returns/${ret.returnId}/trade`)}
                           title="Resolve by trading for a replacement product"
                         >
                           <RotateCcw size={13} /> Trade
@@ -259,15 +247,6 @@ export default function ReturnsPanel({ token }) {
             </button>
           )}
         </>
-      )}
-
-      {tradingReturn && (
-        <TradeReturnModal
-          ret={tradingReturn}
-          token={token}
-          onClose={() => setTradingReturn(null)}
-          onSubmit={handleTradeSubmit}
-        />
       )}
     </div>
   );

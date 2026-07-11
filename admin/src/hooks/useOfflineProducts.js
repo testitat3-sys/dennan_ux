@@ -4,9 +4,10 @@ import { api } from "@convex/_generated/api";
 import {
   getAllCachedProducts,
   getMeta,
-  setMeta,
-  bootstrapProductCache,
-  applyProductDelta,
+  putProductsBatch,
+  markBootstrapped,
+  applyProductDeltaBatch,
+  markSynced,
 } from "../lib/offlineDb";
 import { useOnlineStatus } from "./useOnlineStatus";
 
@@ -48,16 +49,31 @@ export function useOfflineProducts(token) {
   }, []);
 
   // On-demand, user-triggered full download - the only path that's allowed
-  // to fetch the whole catalog. Never called automatically.
+  // to fetch the whole catalog. Never called automatically. Loops pages
+  // (getProductsForPOS is paginated - the catalog is large enough to
+  // exceed a single query's document-read limit) and only marks the device
+  // bootstrapped once every page has been written locally.
   const requestBootstrap = useCallback(async () => {
     if (!token || !isOnline) {
       return { success: false, error: "offline" };
     }
     setIsSyncing(true);
     try {
-      const fullList = await convex.query(api.products.getProductsForPOS, { token });
-      await bootstrapProductCache(fullList);
-      setProducts(fullList);
+      let cursor = null;
+      let isDone = false;
+      const accumulated = [];
+      while (!isDone) {
+        const result = await convex.query(api.products.getProductsForPOS, {
+          token,
+          paginationOpts: { numItems: 500, cursor },
+        });
+        await putProductsBatch(result.page);
+        accumulated.push(...result.page);
+        setProducts([...accumulated]);
+        cursor = result.continueCursor;
+        isDone = result.isDone;
+      }
+      await markBootstrapped();
       setNeedsBootstrap(false);
       return { success: true };
     } catch (err) {
@@ -89,18 +105,29 @@ export function useOfflineProducts(token) {
 
       setIsSyncing(true);
       const since = (await getMeta("lastSyncedAt")) || 0;
-      const changed = await convex.query(api.products.getProductsUpdatedSince, {
-        token,
-        since,
-      });
-      if (changed.length > 0) {
-        await applyProductDelta(changed);
-        applyDeltaToState(changed);
-      } else {
-        // Nothing changed, but still bump lastSyncedAt so the next delta
-        // window starts from now, not from a stale timestamp.
-        await setMeta("lastSyncedAt", Date.now());
+      // Captured before the loop starts (not read again per page) - the
+      // cursor only advances to this point once every page of this pass
+      // has been applied, so a mid-loop failure can't skip rows.
+      const syncStartedAt = Date.now();
+
+      let cursor = null;
+      let isDone = false;
+      while (!isDone) {
+        const result = await convex.query(api.products.getProductsUpdatedSince, {
+          token,
+          since,
+          paginationOpts: { numItems: 500, cursor },
+        });
+        if (result.page.length > 0) {
+          await applyProductDeltaBatch(result.page);
+          applyDeltaToState(result.page);
+        }
+        cursor = result.continueCursor;
+        isDone = result.isDone;
       }
+      // Bump lastSyncedAt regardless of whether anything changed, so the
+      // next delta window starts from now, not from a stale timestamp.
+      await markSynced(syncStartedAt);
     } catch (err) {
       console.error("[useOfflineProducts] sync failed:", err);
     } finally {

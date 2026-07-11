@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { Copy, CheckCircle, RotateCcw, Search, Inbox, ShoppingBag, Bell } from "lucide-react";
+import { Copy, CheckCircle, RotateCcw, Search, Inbox, ShoppingBag, Bell, Megaphone } from "lucide-react";
 import CustomerActivityModal from "./CustomerActivityModal";
 
 const STATUS_TABS = [
@@ -32,6 +32,7 @@ export default function LeadsPanel({ token }) {
         token,
         storeRequestId: lead.kind === "storeRequest" ? lead.id : undefined,
         wishlistItemId: lead.kind === "restockNotify" ? lead.id : undefined,
+        notifySignupId: lead.kind === "notifySignup" ? lead.id : undefined,
         resolved: lead.status !== "resolved",
       });
     } catch (err) {
@@ -158,8 +159,12 @@ export default function LeadsPanel({ token }) {
                       </td>
                       <td>
                         <span className={`active-badge ${lead.kind === "storeRequest" ? "active-badge--on" : "active-badge--off"}`}>
-                          {lead.kind === "storeRequest" ? <ShoppingBag size={12} /> : <Bell size={12} />}
-                          {lead.kind === "storeRequest" ? "Store Request" : "Restock Notify"}
+                          {lead.kind === "storeRequest" && <ShoppingBag size={12} />}
+                          {lead.kind === "restockNotify" && <Bell size={12} />}
+                          {lead.kind === "notifySignup" && <Megaphone size={12} />}
+                          {lead.kind === "storeRequest" && "Store Request"}
+                          {lead.kind === "restockNotify" && "Restock Notify"}
+                          {lead.kind === "notifySignup" && "Launch Signup"}
                         </span>
                       </td>
                       <td>{lead.detail}</td>

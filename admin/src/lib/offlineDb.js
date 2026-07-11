@@ -64,16 +64,30 @@ export async function setMeta(key, value) {
   store.put({ key, value });
 }
 
-// First-ever full download for this device: writes every product and marks
-// the cache as bootstrapped so later syncs only ever ask for deltas.
-export async function bootstrapProductCache(products) {
+// Writes one page of a full-catalog download. Does not touch the
+// bootstrapped/lastSyncedAt meta flags - the caller loops this across every
+// page of a paginated bootstrap, then calls markBootstrapped() once at the
+// very end, so a page that fails partway through doesn't leave the device
+// falsely marked as fully bootstrapped.
+export async function putProductsBatch(products) {
   const db = await openDb();
   await new Promise((resolve, reject) => {
-    const transaction = db.transaction(["products", "meta"], "readwrite");
+    const transaction = db.transaction("products", "readwrite");
     const productStore = transaction.objectStore("products");
     for (const product of products) {
       productStore.put(product);
     }
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+// Marks the device as fully bootstrapped - call only after every page of a
+// full-catalog download has been written via putProductsBatch.
+export async function markBootstrapped() {
+  const db = await openDb();
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction("meta", "readwrite");
     const metaStore = transaction.objectStore("meta");
     metaStore.put({ key: "bootstrapped", value: true });
     metaStore.put({ key: "lastSyncedAt", value: Date.now() });
@@ -82,13 +96,16 @@ export async function bootstrapProductCache(products) {
   });
 }
 
-// Incremental sync: upserts changed products (keep: true) and evicts any
-// that are no longer active/kept (keep: false). Only touches rows that
-// actually changed - cheap even as the catalog grows.
-export async function applyProductDelta(changedProducts) {
+// Applies one page of an incremental delta sync: upserts changed products
+// (keep: true) and evicts any that are no longer active/kept (keep: false).
+// Does not touch lastSyncedAt - the caller loops this across every page of
+// a paginated delta, then calls markSynced() once at the very end, so a
+// page that fails partway through doesn't advance the sync cursor past
+// rows that were never actually applied.
+export async function applyProductDeltaBatch(changedProducts) {
   const db = await openDb();
   await new Promise((resolve, reject) => {
-    const transaction = db.transaction(["products", "meta"], "readwrite");
+    const transaction = db.transaction("products", "readwrite");
     const productStore = transaction.objectStore("products");
     for (const product of changedProducts) {
       const { keep, ...rest } = product;
@@ -98,10 +115,16 @@ export async function applyProductDelta(changedProducts) {
         productStore.delete(rest._id);
       }
     }
-    transaction.objectStore("meta").put({ key: "lastSyncedAt", value: Date.now() });
     transaction.oncomplete = () => resolve();
     transaction.onerror = () => reject(transaction.error);
   });
+}
+
+// Advances the delta-sync cursor - call only after every page of a delta
+// sync pass has been applied via applyProductDeltaBatch.
+export async function markSynced(timestamp) {
+  const store = await tx("meta", "readwrite");
+  store.put({ key: "lastSyncedAt", value: timestamp });
 }
 
 export async function listPendingOrders() {

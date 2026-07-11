@@ -6,6 +6,7 @@ import { UserProvider } from './context/UserContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { RegistryProvider } from './context/RegistryContext';
+import { LeadCaptureProvider } from './context/LeadCaptureContext';
 import './index.css'
 import App from './App.jsx'
 
@@ -25,7 +26,9 @@ createRoot(document.getElementById('root')).render(
         <CartProvider>
           <WishlistProvider>
             <RegistryProvider>
-              <App />
+              <LeadCaptureProvider>
+                <App />
+              </LeadCaptureProvider>
             </RegistryProvider>
           </WishlistProvider>
         </CartProvider>

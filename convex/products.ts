@@ -341,21 +341,28 @@ export const addReview = mutation({
   },
 });
 
+// Paginated: the catalog is large enough (5000+ rows) that a single
+// .collect() over the whole table exceeds Convex's per-execution read
+// limit. Callers (useOfflineProducts.js) loop pages until isDone.
 export const getProductsForPOS = query({
   args: {
     token: v.string(),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
 
-    const products = await ctx.db
+    const result = await ctx.db
       .query("products")
-      .collect();
+      .paginate(args.paginationOpts);
 
-    // Return only active and kept products
-    return products
-      .filter((p) => p.isActive && shouldKeepProduct(p, true))
-      .map(normalizeProductPrice);
+    return {
+      ...result,
+      // Return only active and kept products
+      page: result.page
+        .filter((p) => p.isActive && shouldKeepProduct(p, true))
+        .map(normalizeProductPrice),
+    };
   },
 });
 
@@ -363,7 +370,9 @@ export const getProductsForPOS = query({
  * Incremental sync for the offline POS product cache. The full catalog is
  * only ever pulled once per device via getProductsForPOS (a one-time
  * bootstrap) - every sync after that asks for changes only, so payload size
- * scales with how much actually changed, not with catalog size.
+ * scales with how much actually changed, not with catalog size. Paginated
+ * for the same per-execution read-limit reason as getProductsForPOS -
+ * callers loop pages until isDone.
  *
  * Each row is tagged `keep: false` when it should be evicted from the local
  * cache (inactive/filtered out) rather than upserted, so the client doesn't
@@ -373,19 +382,23 @@ export const getProductsUpdatedSince = query({
   args: {
     token: v.string(),
     since: v.number(),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
 
-    const changed = await ctx.db
+    const result = await ctx.db
       .query("products")
       .withIndex("by_updatedAt", (q) => q.gt("updatedAt", args.since))
-      .collect();
+      .paginate(args.paginationOpts);
 
-    return changed.map((p) => ({
-      ...normalizeProductPrice(p),
-      keep: p.isActive && shouldKeepProduct(p, true),
-    }));
+    return {
+      ...result,
+      page: result.page.map((p) => ({
+        ...normalizeProductPrice(p),
+        keep: p.isActive && shouldKeepProduct(p, true),
+      })),
+    };
   },
 });
 

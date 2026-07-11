@@ -808,4 +808,63 @@ export const getReturnItemsForOrder = query({
   },
 });
 
+/**
+ * Single-return detail, same enriched shape as getPendingReturns/
+ * getReturnsByDateRange - powers TradeReturnPage, which fetches its own
+ * data via a returnId route param instead of receiving it as a prop.
+ */
+export const getReturnById = query({
+  args: { token: v.string(), returnId: v.id("returns") },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    const returnEnvelope = await ctx.db.get(args.returnId);
+    if (!returnEnvelope) return null;
+
+    const items = await ctx.db
+      .query("returnItems")
+      .withIndex("by_return", (q) => q.eq("returnId", args.returnId))
+      .collect();
+
+    const order = await ctx.db.get(returnEnvelope.orderId);
+    const orderUser = order ? await ctx.db.get(order.userId) : null;
+    const customerName = order?.deliveryAddress?.name || orderUser?.name || "Unknown";
+
+    const exchangeItems = await ctx.db
+      .query("returnExchangeItems")
+      .withIndex("by_return", (q) => q.eq("returnId", args.returnId))
+      .collect();
+
+    return {
+      returnId: returnEnvelope._id,
+      orderId: returnEnvelope.orderId,
+      customerName,
+      staffName: returnEnvelope.staffName,
+      note: returnEnvelope.note,
+      createdAt: returnEnvelope.createdAt,
+      returnedTotal: returnEnvelope.returnedTotal,
+      exchangeTotal: returnEnvelope.exchangeTotal,
+      topUpAmount: returnEnvelope.topUpAmount,
+      topUpMethod: returnEnvelope.topUpMethod,
+      items: items.map((i) => ({
+        _id: i._id,
+        productId: i.productId,
+        productName: i.productName,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        reason: i.reason,
+        status: i.status,
+        source: i.source,
+      })),
+      exchangeItems: exchangeItems.map((e) => ({
+        _id: e._id,
+        productId: e.productId,
+        productName: e.productName,
+        quantity: e.quantity,
+        unitPrice: e.unitPrice,
+      })),
+    };
+  },
+});
+
 export { restockByBarcode };

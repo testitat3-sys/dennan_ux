@@ -1,0 +1,723 @@
+[
+    {
+        "barcode": "2024034",
+        "old_name": "Tommee Tippee Closer To Nature Bottle 340Ml 2Pc Coloured -",
+        "new_name": "Tommee Tippee Closer To Nature Coloured Bottles",
+        "size": "340ml",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "Coloured Closer to Nature bottles in a convenient 2-piece set.",
+        "tags": [
+            "Bottles",
+            "Closer To Nature",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 75000
+    },
+    {
+        "barcode": "20210322",
+        "old_name": "Tommee Tippee Closer To Nature 150Ml Bottle 1Pc -",
+        "new_name": "Tommee Tippee Closer To Nature Bottle",
+        "size": "150ml",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A single Closer to Nature bottle designed for newborn feeding.",
+        "tags": [
+            "Bottles",
+            "Closer To Nature",
+            "Tommee Tippee"
+        ],
+        "inventory": 2,
+        "price": 35000
+    },
+    {
+        "barcode": "20230332",
+        "old_name": "Tommee Tippee Super Flip Top Sportee Bottle 500Ml 18M+ -",
+        "new_name": "Tommee Tippee Super Flip Top Sportee Bottle",
+        "size": "500ml",
+        "minMonth": 18,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "On the Move",
+        "description": "A large capacity flip-top sportee bottle ideal for active toddlers 18 months and up.",
+        "tags": [
+            "Cup",
+            "Sportee Bottle",
+            "Tommee Tippee",
+            "Travel"
+        ],
+        "inventory": 0,
+        "price": 55000
+    },
+    {
+        "barcode": "20230333",
+        "old_name": "Tommee Tippee Super Star Insulated Sportee Bottle 266Ml 12M -",
+        "new_name": "Tommee Tippee Super Star Insulated Sportee Bottle",
+        "size": "266ml",
+        "minMonth": 12,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "On the Move",
+        "description": "An insulated sportee bottle designed to keep drinks cool for toddlers from 12 months.",
+        "tags": [
+            "Cup",
+            "Sportee Bottle",
+            "Tommee Tippee",
+            "Travel"
+        ],
+        "inventory": 0,
+        "price": 45000
+    },
+    {
+        "barcode": "20240798",
+        "old_name": "Tommee Tippee Decorated 2Pc 250Ml Bottles -",
+        "new_name": "Tommee Tippee Decorated Bottles",
+        "size": "250ml",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A 2-piece set of decorated feeding bottles for everyday use.",
+        "tags": [
+            "Bottles",
+            "Feeding",
+            "Tommee Tippee"
+        ],
+        "inventory": 5,
+        "price": 35000
+    },
+    {
+        "barcode": "20240896",
+        "old_name": "Tommee Tippee Natural Start Advanced Anti-Colic Bottles 150Ml 1Pc -",
+        "new_name": "Tommee Tippee Natural Start Advanced Anti-Colic Bottle",
+        "size": "150ml",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A single Natural Start bottle featuring advanced anti-colic technology.",
+        "tags": [
+            "Bottles",
+            "Anti-Colic",
+            "Tommee Tippee"
+        ],
+        "inventory": 1,
+        "price": 45000
+    },
+    {
+        "barcode": "20240897",
+        "old_name": "Tommee Tippee Natural Start Bottles 260Ml 1Pc -",
+        "new_name": "Tommee Tippee Natural Start Bottle",
+        "size": "260ml",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A single 260ml Natural Start bottle for everyday infant feeding.",
+        "tags": [
+            "Bottles",
+            "Feeding",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "20240898",
+        "old_name": "Tommee Tippee Natural Start Advanced Anti-Colic Bottle 260Ml 1Pc  -",
+        "new_name": "Tommee Tippee Natural Start Advanced Anti-Colic Bottle",
+        "size": "260ml",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A single 260ml Natural Start bottle optimized with anti-colic features.",
+        "tags": [
+            "Bottles",
+            "Anti-Colic",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 45000
+    },
+    {
+        "barcode": "201741001",
+        "old_name": "Tommee Tippee 2Pc Colourless Bottles 340Ml",
+        "new_name": "Tommee Tippee Colourless Bottles",
+        "size": "340ml",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A twin pack of clear, colourless 340ml feeding bottles.",
+        "tags": [
+            "Bottles",
+            "Feeding",
+            "Tommee Tippee"
+        ],
+        "inventory": 7,
+        "price": 75000
+    },
+    {
+        "barcode": "201741051",
+        "old_name": "Tommee Tippee Complete Starter Kit/Feeding Set",
+        "new_name": "Tommee Tippee Complete Starter Kit",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A comprehensive complete feeding set containing essential newborn items.",
+        "tags": [
+            "Bottles",
+            "Starter Set",
+            "Feeding Set",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 780000
+    },
+    {
+        "barcode": "201901884",
+        "old_name": "Tommee Tippee 3Pc Bottles 260Ml 01 S-0-24M",
+        "new_name": "Tommee Tippee Feeding Bottles Set",
+        "size": "260ml",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A 3-piece set of 260ml bottles suitable for babies from birth up to 24 months.",
+        "tags": [
+            "Bottles",
+            "Feeding",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 95000
+    },
+    {
+        "barcode": "202201030",
+        "old_name": "Tommee Tippee Closer To Nature Bottle 150Ml 3Pc -",
+        "new_name": "Tommee Tippee Closer To Nature Bottles Set",
+        "size": "150ml",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A 3-piece set of Closer to Nature 150ml bottles for newborns.",
+        "tags": [
+            "Bottles",
+            "Closer To Nature",
+            "Tommee Tippee"
+        ],
+        "inventory": 1,
+        "price": 95000
+    },
+    {
+        "barcode": "20210808",
+        "old_name": "Tommee Tippee Essential Baby Nail Clippers -",
+        "new_name": "Tommee Tippee Essential Baby Nail Clippers",
+        "stage": "newborn",
+        "category": "Bathing and Changing",
+        "subCategory": "Bath & Care",
+        "description": "Safe and precise baby nail clippers designed for small nails.",
+        "tags": [
+            "Grooming",
+            "Hygiene",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 25000
+    },
+    {
+        "barcode": "2024017",
+        "old_name": "Tommee Tippee Fast Flow 2Pc Teats 6M+ -",
+        "new_name": "Tommee Tippee Fast Flow Teats",
+        "minMonth": 6,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "Fast flow replacement teats suitable for older infants from 6 months.",
+        "tags": [
+            "Teats",
+            "Fast Flow",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "20190331",
+        "old_name": "Tommee Tippee Night Time Soother 6-18M",
+        "new_name": "Tommee Tippee Night Time Soother",
+        "minMonth": 6,
+        "stage": "kid",
+        "category": "Baby Play and Safety Gear",
+        "subCategory": "Essentials",
+        "description": "Orthodontic soothers with a glow-in-the-dark handle for nighttime use.",
+        "tags": [
+            "Soothers",
+            "Night Time",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "20200151",
+        "old_name": "Tommee Tippee Closer To Nature 2Pc Teats 3M+ 0030",
+        "new_name": "Tommee Tippee Closer To Nature Medium Flow Teats",
+        "minMonth": 3,
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "Closer to Nature replacement teats designed for babies 3 months and up.",
+        "tags": [
+            "Teats",
+            "Closer To Nature",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "20210316",
+        "old_name": "Avent Tommee Tippee Night Time Soother 6-18Mno -",
+        "new_name": "Tommee Tippee Night Time Soother",
+        "minMonth": 6,
+        "stage": "kid",
+        "category": "Baby Play and Safety Gear",
+        "subCategory": "Essentials",
+        "description": "Nighttime orthodontic soothers suited for babies aged 6 to 18 months.",
+        "tags": [
+            "Soothers",
+            "Night Time",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "201741562",
+        "old_name": "Tommee Tippee Clip On Soother Holder",
+        "new_name": "Tommee Tippee Clip On Soother Holder",
+        "stage": "newborn",
+        "category": "Baby Play and Safety Gear",
+        "subCategory": "Essentials",
+        "description": "A practical pacifier clip to keep your baby's soother clean and within reach.",
+        "tags": [
+            "Soother Accessories",
+            "Holder",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 38000
+    },
+    {
+        "barcode": "201801297",
+        "old_name": "Tommee Tippee Advanced Anticolic 2Pc Teats 6M+",
+        "new_name": "Tommee Tippee Advanced Anti-Colic Fast Flow Teats",
+        "minMonth": 6,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "Fast flow anti-colic teats designed for babies aged 6 months and up.",
+        "tags": [
+            "Teats",
+            "Anti-Colic",
+            "Tommee Tippee"
+        ],
+        "inventory": 6,
+        "price": 45000
+    },
+    {
+        "barcode": "201901649",
+        "old_name": "Tommee Tippee Fun Style/Fun Friends  2 Soothers 01 S-6-18M Nuetral",
+        "new_name": "Tommee Tippee Fun Style Soothers Pack",
+        "minMonth": 6,
+        "stage": "kid",
+        "category": "Baby Play and Safety Gear",
+        "subCategory": "Essentials",
+        "description": "Orthodontic pacifiers featuring playful designs in neutral tones.",
+        "tags": [
+            "Soothers",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "20200412",
+        "old_name": "Tommee Tippee Cherry Latex Soother 0-6M 2Pc 030",
+        "new_name": "Tommee Tippee Cherry Latex Soother",
+        "minMonth": 0,
+        "stage": "newborn",
+        "category": "Baby Play and Safety Gear",
+        "subCategory": "Essentials",
+        "description": "Classic cherry-shaped latex soothers for infants from birth to 6 months.",
+        "tags": [
+            "Soother",
+            "Latex",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 30000
+    },
+    {
+        "barcode": "201902412",
+        "old_name": "Kids Tommee Tippee Breast Like Soother 09",
+        "new_name": "Tommee Tippee Breast-Like Soother",
+        "stage": "newborn",
+        "category": "Baby Play and Safety Gear",
+        "subCategory": "Essentials",
+        "description": "A skin-like, flexible pacifier shaped to mimic the maternal breast.",
+        "tags": [
+            "Soother",
+            "Breast-Like",
+            "Tommee Tippee"
+        ],
+        "inventory": 2,
+        "price": 35000
+    },
+    {
+        "barcode": "202001357",
+        "old_name": "Tommee Tippee Night Time Orthodontic Soother 0-6M  -",
+        "new_name": "Tommee Tippee Night Time Orthodontic Soother",
+        "minMonth": 0,
+        "stage": "newborn",
+        "category": "Baby Play and Safety Gear",
+        "subCategory": "Essentials",
+        "description": "An orthodontic night pacifier tailored for infants from 0 to 6 months.",
+        "tags": [
+            "Soother",
+            "Night Time",
+            "Orthodontic",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "2024019",
+        "old_name": "Tommee Tippee Breast Pads 40Pc Large -",
+        "new_name": "Tommee Tippee Disposable Breast Pads",
+        "size": "40 pieces",
+        "stage": "mother",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Nursing",
+        "description": "Large, highly absorbent disposable breast pads providing protection and comfort.",
+        "tags": [
+            "Breastfeeding",
+            "Breast Pads",
+            "Mother",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "2017462",
+        "old_name": "Tommee Tippee Manual Breast Pump",
+        "new_name": "Tommee Tippee Manual Breast Pump",
+        "stage": "mother",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Breast Pumps",
+        "description": "A discreet and lightweight manual pump for quiet, comfortable expressing.",
+        "tags": [
+            "Breast Pump",
+            "Manual Pump",
+            "Nursing",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 155000
+    },
+    {
+        "barcode": "2026070",
+        "old_name": "Tommee Tippee In-Bra Wearable Breast Pump",
+        "new_name": "Tommee Tippee In-Bra Wearable Breast Pump",
+        "stage": "mother",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Breast Pumps",
+        "description": "A smart, hands-free wearable breast pump designed to fit neatly inside a bra.",
+        "tags": [
+            "Breast Pump",
+            "Wearable Pump",
+            "Nursing",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 1200000
+    },
+    {
+        "barcode": "201741037",
+        "old_name": "Tommee Tippee Breast Pads (40Pcs)",
+        "new_name": "Tommee Tippee Breast Pads",
+        "size": "40 pieces",
+        "stage": "mother",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Nursing",
+        "description": "Absorbent and discreet breast pads keeping nursing mothers dry and comfortable.",
+        "tags": [
+            "Breastfeeding",
+            "Breast Pads",
+            "Mother",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "201741069",
+        "old_name": "Tommee Tippee Electric Breast Pump",
+        "new_name": "Tommee Tippee Electric Breast Pump",
+        "stage": "mother",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Breast Pumps",
+        "description": "An efficient electric breast pump configured for ease of expression.",
+        "tags": [
+            "Breast Pump",
+            "Electric Pump",
+            "Nursing",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 750000
+    },
+    {
+        "barcode": "202102412",
+        "old_name": "Tommee Tippee Double Electric Breast Pump -",
+        "new_name": "Tommee Tippee Double Electric Breast Pump",
+        "stage": "mother",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Breast Pumps",
+        "description": "A performance-driven double electric breast pump to maximize expression efficiency.",
+        "tags": [
+            "Breast Pump",
+            "Electric Pump",
+            "Nursing",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 1000000
+    },
+    {
+        "barcode": "2017423",
+        "old_name": "Tommee Tippee Flask",
+        "new_name": "Tommee Tippee Flask",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A thermal travel flask designed to store warm water for bottle prep on the move.",
+        "tags": [
+            "Feeding",
+            "Travel",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 95000
+    },
+    {
+        "barcode": "20240799",
+        "old_name": "Tommee Tippee Quick Chop Baby Food Blender 4M+ -",
+        "new_name": "Tommee Tippee Quick Chop Baby Food Blender",
+        "minMonth": 4,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "A compact baby food blender built for quick chopping and preparing purees.",
+        "tags": [
+            "Weaning",
+            "Blender",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 215000
+    },
+    {
+        "barcode": "201802457",
+        "old_name": "Tommee Tippee Baby Food Blender ",
+        "new_name": "Tommee Tippee Baby Food Blender",
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "An easy-to-use food blender helpful for preparing early homemade infant meals.",
+        "tags": [
+            "Weaning",
+            "Blender",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 185000
+    },
+    {
+        "barcode": "20210328",
+        "old_name": "Tommee Tippee 4Pc Soft Self Feeding Spoons -",
+        "new_name": "Tommee Tippee Soft Self Feeding Spoons",
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "Soft self-feeding spoons built to encourage toddlers learning to feed themselves.",
+        "tags": [
+            "Weaning",
+            "Spoons",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "201801290",
+        "old_name": "Tommee Tippee Easygrip 5Pc Spoons 4M+",
+        "new_name": "Tommee Tippee Easygrip Spoons",
+        "minMonth": 4,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "Ergonomic easy-grip weaning spoons appropriate for infants from 4 months.",
+        "tags": [
+            "Weaning",
+            "Spoons",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 30000
+    },
+    {
+        "barcode": "2017440",
+        "old_name": "Tommee Tippee Free Flow First Cup",
+        "new_name": "Tommee Tippee Free Flow First Cup",
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "A free-flow training cup designed as an introductory cup for early weaning.",
+        "tags": [
+            "Cup",
+            "Weaning",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 25000
+    },
+    {
+        "barcode": "2024020",
+        "old_name": "Tommee Tippee Super Star Training Sippee Cup 300Ml 6M+ -",
+        "new_name": "Tommee Tippee Super Star Training Sippee Cup",
+        "size": "300ml",
+        "minMonth": 6,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "A 300ml spill-proof training sippee cup tailored for babies from 6 months.",
+        "tags": [
+            "Cup",
+            "Weaning",
+            "Sippee Cup",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 39000
+    },
+    {
+        "barcode": "2026067",
+        "old_name": "Tommee Tippee Insulated Active Spout Cup 12M+ 266Ml",
+        "new_name": "Tommee Tippee Insulated Active Spout Cup",
+        "size": "266ml",
+        "minMonth": 12,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "An insulated active spout cup constructed to keep toddler beverages cool.",
+        "tags": [
+            "Cup",
+            "Weaning",
+            "Spout Cup",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 42000
+    },
+    {
+        "barcode": "20210790",
+        "old_name": "Tommee Tippee No Knock Cup 18M+ -",
+        "new_name": "Tommee Tippee No Knock Cup",
+        "minMonth": 18,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "A clever open cup built with clever anti-topple technology to manage spillages.",
+        "tags": [
+            "Cup",
+            "Weaning",
+            "No Knock",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 30000
+    },
+    {
+        "barcode": "20230916",
+        "old_name": "Tommee Tippee Superstar Sippee Cup 390Ml 12M+ -",
+        "new_name": "Tommee Tippee Superstar Sippee Cup",
+        "size": "390ml",
+        "minMonth": 12,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "A large 390ml sippee cup suited for active toddlers older than a year.",
+        "tags": [
+            "Cup",
+            "Weaning",
+            "Sippee Cup",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 40000
+    },
+    {
+        "barcode": "201801276",
+        "old_name": "Tommee Tippee Easiflow 360 Lip Activated Cup 200Ml 6M",
+        "new_name": "Tommee Tippee Easiflow 360 Cup",
+        "size": "200ml",
+        "minMonth": 6,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "A lip-activated 360-degree rim cup preventing messy spills during drinking.",
+        "tags": [
+            "Cup",
+            "Weaning",
+            "360 Cup",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 50000
+    },
+    {
+        "barcode": "201901885",
+        "old_name": "Tommee Tippee Cool N Mash  Weaning Bowl 4M+ 01 S-0-24M",
+        "new_name": "Tommee Tippee Cool N Mash Weaning Bowl",
+        "minMonth": 4,
+        "stage": "kid",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Weaning",
+        "description": "A weaning bowl configured with an integrated cooling section and mashing surface.",
+        "tags": [
+            "Bowls",
+            "Weaning",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    },
+    {
+        "barcode": "201741193",
+        "old_name": "Tommee Tippee Bottle Brush",
+        "new_name": "Tommee Tippee Bottle Brush",
+        "stage": "newborn",
+        "category": "Feeding/Nursing Essentials",
+        "subCategory": "Bottle Feeding",
+        "description": "A two-piece bottle and teat brush optimized for deep cleaning feeding equipment.",
+        "tags": [
+            "Cleaning",
+            "Bottle Brush",
+            "Tommee Tippee"
+        ],
+        "inventory": 0,
+        "price": 35000
+    }
+]

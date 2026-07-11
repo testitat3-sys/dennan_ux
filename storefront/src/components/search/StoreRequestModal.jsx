@@ -103,10 +103,6 @@ const StoreRequestModal = ({ isOpen, onClose }) => {
     return Object.keys(next).length === 0;
   };
 
-  const isFormValid = () =>
-    firstName.trim() && lastName.trim() && email.trim() && EMAIL_RE.test(email.trim()) &&
-    UG_PHONE_RE.test(phone.replace(/\s+/g, '').trim()) && !!stage;
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
@@ -274,7 +270,7 @@ const StoreRequestModal = ({ isOpen, onClose }) => {
                 <button
                   type="submit"
                   className="store-request-submit-btn"
-                  disabled={!isFormValid() || isSubmitting}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Sending...' : 'Send  Request'}
                 </button>

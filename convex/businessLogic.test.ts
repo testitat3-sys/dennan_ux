@@ -74,7 +74,11 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   });
 
   // Query products for POS as Staff
-  const posProducts = await t.query(api.products.getProductsForPOS, { token: staffToken });
+  const posProductsResult = await t.query(api.products.getProductsForPOS, {
+    token: staffToken,
+    paginationOpts: { numItems: 100, cursor: null },
+  });
+  const posProducts = posProductsResult.page;
   expect(posProducts.length).toBeGreaterThanOrEqual(2);
   expect(posProducts.some((p: any) => p.name === "Baby Bottle Premium")).toBe(true);
 
@@ -115,8 +119,11 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(discountList.some((d: any) => d._id === productId1)).toBe(true);
 
   // Verify POS price was normalized to the discountPrice
-  const posProductsDiscount = await t.query(api.products.getProductsForPOS, { token: staffToken });
-  const posBottle = posProductsDiscount.find((p: any) => p._id === productId1);
+  const posProductsDiscountResult = await t.query(api.products.getProductsForPOS, {
+    token: staffToken,
+    paginationOpts: { numItems: 100, cursor: null },
+  });
+  const posBottle = posProductsDiscountResult.page.find((p: any) => p._id === productId1);
   expect(posBottle?.price).toBe(40000);
   expect(posBottle?.wasPrice).toBe(50000);
 

@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import ProductCardSkeleton from './ProductCardSkeleton';
 import { formatPrice } from '../../utils/priceUtils';
 import { stripBrandFromName } from '../../utils/productNameUtils';
+import { useConvexAuth } from 'convex/react';
 import { useWishlist } from '../../context/WishlistContext';
+import { useLeadCapture } from '../../context/LeadCaptureContext';
 import Button from '../ui/Button';
 import DefaultProductImage from './DefaultProductImage';
 import './ProductCard.css';
@@ -36,7 +38,9 @@ const ProductCard = ({
   const [imageError, setImageError] = useState(false);
   
   const { isInWishlist, toggleWishlist } = useWishlist();
-  
+  const { isAuthenticated } = useConvexAuth();
+  const { hasLeadInfo, openLeadModal } = useLeadCapture();
+
   const { image, name, price, wasPrice, tier, badge, tags, variant, inventory, unitsSold, brand } = product;
   const id = product.id || product._id;
 
@@ -68,6 +72,22 @@ const ProductCard = ({
   const handleWishlistClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    toggleWishlist(product);
+  };
+
+  const handleRemindClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated && !hasLeadInfo) {
+      openLeadModal({
+        source: 'launch_oos',
+        title: 'Get notified when back in stock',
+        subtext: `Leave your details and we'll let you know the moment ${displayName} is back.`,
+        specifications: [displayName],
+        onSuccess: () => toggleWishlist(product, true),
+      });
+      return;
+    }
     toggleWishlist(product);
   };
 
@@ -215,7 +235,7 @@ const ProductCard = ({
             <Button
               variant="card-add"
               fullWidth
-              onClick={handleWishlistClick}
+              onClick={handleRemindClick}
             >
               {isSaved ? "You'll be notified" : 'Remind me when available'}
             </Button>

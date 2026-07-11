@@ -11,6 +11,8 @@ import AccountingDashboard from './pages/AccountingDashboard';
 import StockManagerDashboard from './pages/StockManagerDashboard';
 import AdminProductEdit from './pages/AdminProductEdit';
 import AdminProductCreate from './pages/AdminProductCreate';
+import TradeReturnPage from './pages/TradeReturnPage';
+import OrderExchangePage from './pages/OrderExchangePage';
 import sosLogo from './assets/SOS.png';
 
 function MainRouter() {
@@ -132,6 +134,28 @@ function MainRouter() {
           <Navigate to="/login" replace />
         ) : user.accountRole === "admin" || user.accountRole === "stockManager" ? (
           <AdminProductEdit />
+        ) : (
+          <Navigate to="/" replace />
+        )
+      } />
+
+      {/* Resolve a pending return via trade */}
+      <Route path="/admin/returns/:returnId/trade" element={
+        !user ? (
+          <Navigate to="/login" replace />
+        ) : user.accountRole === "staff" || user.accountRole === "admin" ? (
+          <TradeReturnPage />
+        ) : (
+          <Navigate to="/" replace />
+        )
+      } />
+
+      {/* Walk-in exchange from an order's "return" button */}
+      <Route path="/admin/orders/:orderId/exchange" element={
+        !user ? (
+          <Navigate to="/login" replace />
+        ) : user.accountRole === "staff" || user.accountRole === "admin" ? (
+          <OrderExchangePage />
         ) : (
           <Navigate to="/" replace />
         )

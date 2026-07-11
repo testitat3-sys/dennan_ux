@@ -206,6 +206,45 @@ export const backfillProductUpdatedAt = mutation({
 });
 
 /**
+ * Migration Mutation: corrects backfillProductUpdatedAt above, which stamped
+ * `updatedAt: product._creationTime` - a timestamp in the past. Delta sync
+ * (getProductsUpdatedSince) only returns products where `updatedAt` is
+ * greater than a device's `lastSyncedAt`, which is bumped to "now" on every
+ * sync; a past creation time is almost always older than that, so the
+ * original backfill never actually became visible to an
+ * already-bootstrapped device. This unconditionally re-stamps every product
+ * to the current time, which is guaranteed newer than any device's recorded
+ * `lastSyncedAt`, so the very next delta sync on every device picks up the
+ * complete, correct catalog.
+ */
+export const touchAllProductsUpdatedAt = mutation({
+  args: { cursor: v.optional(v.union(v.string(), v.null())) },
+  handler: async (ctx, args) => {
+    const BATCH_SIZE = 200;
+    const result = await ctx.db
+      .query("products")
+      .paginate({ numItems: BATCH_SIZE, cursor: args.cursor ?? null });
+
+    const now = Date.now();
+    for (const product of result.page) {
+      await ctx.db.patch(product._id, { updatedAt: now });
+    }
+
+    console.log(
+      `[migrations.ts] touchAllProductsUpdatedAt: touched ${result.page.length} products this batch${result.isDone ? " (final batch)" : ""}.`
+    );
+
+    if (!result.isDone) {
+      await ctx.scheduler.runAfter(0, api.migrations.touchAllProductsUpdatedAt, {
+        cursor: result.continueCursor,
+      });
+    }
+
+    return { batchTouched: result.page.length, isDone: result.isDone };
+  }
+});
+
+/**
  * Migration Mutation: Backfills `returnItems` rows for legacy `returns` documents
  * that still carry their line items embedded in the (deprecated) `returnedItems`
  * array instead of as separate `returnItems` rows. The admin Returns panel only

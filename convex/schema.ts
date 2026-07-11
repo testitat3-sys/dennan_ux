@@ -623,6 +623,10 @@ export default defineSchema({
     source: v.string(), // e.g. "registry_coming_soon"
     specifications: v.optional(v.array(v.string())),
     createdAt: v.number(),
+    /** Lead-resolution tracking. Undefined = "new". */
+    status: v.optional(v.union(v.literal("new"), v.literal("resolved"))),
+    resolvedAt: v.optional(v.number()),
+    resolvedByStaffId: v.optional(v.id("users")),
   }).index("by_user", ["userId"]).index("by_email", ["email"]),
 
   storeRequests: defineTable({

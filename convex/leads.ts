@@ -2,12 +2,21 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { verifyStaffSession } from "./staffAuth";
 
+const STAGE_LABELS: Record<string, string> = {
+  expectant: "Expectant",
+  newborn: "Newborn",
+  toddler: "Toddler",
+  not_a_mother: "Not a parent yet",
+};
+
 /**
  * Unified "Leads" feed: shoppers who asked us to source a product we didn't
- * have (storeRequests) plus shoppers waiting on a back-in-stock alert
- * (wishlistItems with notifyBackInStock === true). Merged and sorted newest
- * first; resolved/unresolved filtering and counts are done client-side since
- * this is a small dataset (mirrors getCustomerList's pattern).
+ * have (storeRequests), shoppers waiting on a back-in-stock alert
+ * (wishlistItems with notifyBackInStock === true), and lead-capture signups
+ * from the launch page / out-of-stock modal (registryNotifySignups, scoped
+ * to source "launch"/"launch_oos"). Merged and sorted newest first;
+ * resolved/unresolved filtering and counts are done client-side since this
+ * is a small dataset (mirrors getCustomerList's pattern).
  */
 export const getLeads = query({
   args: {
@@ -54,27 +63,53 @@ export const getLeads = query({
       })
     );
 
-    return [...storeRequestLeads, ...wishlistLeads].sort((a, b) => b.createdAt - a.createdAt);
+    const notifySignups = (await ctx.db.query("registryNotifySignups").collect()).filter(
+      (n) => n.source === "launch" || n.source === "launch_oos"
+    );
+    const notifySignupLeads = notifySignups.map((n) => {
+      const stageLabel = n.stage ? STAGE_LABELS[n.stage] ?? n.stage : undefined;
+      const detail =
+        n.source === "launch_oos"
+          ? `Wants restock notification for: ${n.specifications?.join(", ") || "an out-of-stock product"}`
+          : `Signed up on the Launch page${stageLabel ? ` · Stage: ${stageLabel}` : ""}`;
+      return {
+        id: n._id,
+        kind: "notifySignup" as const,
+        userId: n.userId,
+        name: `${n.firstName} ${n.lastName}`.trim(),
+        email: n.email,
+        phone: n.phone,
+        detail,
+        createdAt: n.createdAt,
+        status: n.status ?? "new",
+        resolvedAt: n.resolvedAt,
+      };
+    });
+
+    return [...storeRequestLeads, ...wishlistLeads, ...notifySignupLeads].sort(
+      (a, b) => b.createdAt - a.createdAt
+    );
   },
 });
 
 /**
- * Marks a lead (either a storeRequests row or a wishlistItems notify row)
- * resolved or unresolved.
+ * Marks a lead (a storeRequests row, a wishlistItems notify row, or a
+ * registryNotifySignups row) resolved or unresolved.
  */
 export const resolveLead = mutation({
   args: {
     token: v.string(),
     storeRequestId: v.optional(v.id("storeRequests")),
     wishlistItemId: v.optional(v.id("wishlistItems")),
+    notifySignupId: v.optional(v.id("registryNotifySignups")),
     resolved: v.boolean(),
   },
   handler: async (ctx, args) => {
     const { user: staffUser } = await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
 
-    const id = args.storeRequestId ?? args.wishlistItemId;
+    const id = args.storeRequestId ?? args.wishlistItemId ?? args.notifySignupId;
     if (!id) {
-      throw new Error("Either storeRequestId or wishlistItemId is required.");
+      throw new Error("Either storeRequestId, wishlistItemId, or notifySignupId is required.");
     }
     const row = await ctx.db.get(id);
     if (!row) {
