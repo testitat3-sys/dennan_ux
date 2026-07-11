@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import OfflineBanner from "../components/OfflineBanner";
 import CustomerActivityModal from "../components/CustomerActivityModal";
 import OrderDetailModal from "../components/OrderDetailModal";
 import RemindersWidget from "../components/RemindersWidget";
@@ -38,12 +40,22 @@ import {
   Package
 } from "lucide-react";
 
+const LAST_TAB_KEY = "dennan_admin_last_tab";
+
 export default function AdminDashboard() {
   const { user, token, logout } = useStaffAuth();
   const navigate = useNavigate();
+  const isOnline = useOnlineStatus();
   const [activeTab, setActiveTab] = useState(
-    () => new URLSearchParams(window.location.search).get("tab") || "overview"
+    () =>
+      new URLSearchParams(window.location.search).get("tab") ||
+      localStorage.getItem(LAST_TAB_KEY) ||
+      "overview"
   );
+
+  useEffect(() => {
+    localStorage.setItem(LAST_TAB_KEY, activeTab);
+  }, [activeTab]);
 
   // CRM customer modal state
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -91,6 +103,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="staff-portal-body">
+      <OfflineBanner isOnline={isOnline} />
       <div className="admin-layout">
         {/* Sidebar Navigation */}
         <aside className="sidebar">

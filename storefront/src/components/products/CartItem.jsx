@@ -3,6 +3,7 @@ import { useCart } from '../../context/CartContext';
 import { useRegistry } from '../../context/RegistryContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { formatPrice } from '../../utils/priceUtils';
+import { stripBrandFromName } from '../../utils/productNameUtils';
 import Button from '../ui/Button';
 import DefaultProductImage from './DefaultProductImage';
 
@@ -11,6 +12,7 @@ const CartItem = ({ item }) => {
   const { updateQuantity, removeFromCart } = cartContext;
   const { moveFromCartToRegistry } = useRegistry();
   const { addToWishlist } = useWishlist();
+  const displayName = stripBrandFromName(item.name, item.brand);
 
   const handleMoveToRegistry = async () => {
     await moveFromCartToRegistry(item, cartContext);
@@ -25,7 +27,7 @@ const CartItem = ({ item }) => {
     <div className="cart-item">
       <div className="cart-item__thumbnail">
         {item.image ? (
-          <img src={item.image} alt={item.name} />
+          <img src={item.image} alt={displayName} />
         ) : (
           <DefaultProductImage />
         )}
@@ -34,7 +36,7 @@ const CartItem = ({ item }) => {
       <div className="cart-item__content">
         <div className="cart-item__info">
           <div className="cart-item__header">
-            <h4 className="cart-item__name">{item.name}</h4>
+            <h4 className="cart-item__name">{displayName}</h4>
             <span className="cart-item__stage-hint">{item.stage || 'Newborn'}</span>
           </div>
           <p className="cart-item__meta">Size: {item.size}</p>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation } from 'convex/react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@convex/_generated/api";
-import { useUser } from '../context/UserContext';
+import { useUser, useResolvedUser } from '../context/UserContext';
 import { Loader2, Calendar, Baby, User, Sparkles, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import Button from '../components/ui/Button';
@@ -14,7 +14,7 @@ import { getCheckoutData } from '../services/api';
 import './ProfilePage.css';
 
 export default function ProfilePage() {
-  const user = useQuery(api.users.viewer);
+  const { convexUser: user, isResolving, isOrphaned } = useResolvedUser();
   const updateProfileMutation = useMutation(api.users.updateProfile);
   const { updateProfile, logout } = useUser();
   const { signOut } = useAuthActions();
@@ -136,7 +136,7 @@ export default function ProfilePage() {
   }, [user, formInitialized]);
 
   // ── Loading state ──────────────────────────────────────────────────────────
-  if (user === undefined) {
+  if (isResolving) {
     return (
       <div className="dashboard-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
         <Loader2 className="animate-spin" size={48} color="var(--primary)" />
@@ -144,8 +144,8 @@ export default function ProfilePage() {
     );
   }
 
-  if (user === null) {
-    return null; // Redirecting in useEffect
+  if (isOrphaned || user === null) {
+    return null; // OnboardingModal is already open via useResolvedUser
   }
 
   // ── Handlers ────────────────────────────────────────────────────────────────

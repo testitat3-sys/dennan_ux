@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useConvexAuth, useQuery } from 'convex/react';
+import { api } from '@convex/_generated/api';
 
 const UserContext = createContext();
 
@@ -101,5 +103,28 @@ export const useUser = () => {
     throw new Error('useUser must be used within a UserProvider');
   }
   return context;
+};
+
+// Resolves the current user by preferring the localStorage-cached copy for
+// fast paints, falling back to Convex as the source of truth, and flagging
+// authenticated sessions whose user doc no longer exists (e.g. deleted
+// manually) so callers can surface onboarding instead of crashing/blanking.
+export const useResolvedUser = () => {
+  const { user: localUser, setShowOnboarding } = useUser();
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const convexUser = useQuery(api.users.viewer);
+
+  const isResolving = authLoading || (isAuthenticated && convexUser === undefined);
+  const isOrphaned = isAuthenticated && !authLoading && convexUser === null;
+
+  useEffect(() => {
+    if (isOrphaned) {
+      setShowOnboarding(true);
+    }
+  }, [isOrphaned, setShowOnboarding]);
+
+  const resolvedUser = convexUser ?? localUser ?? null;
+
+  return { localUser, convexUser, resolvedUser, isResolving, isOrphaned };
 };
 

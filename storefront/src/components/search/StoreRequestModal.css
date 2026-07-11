@@ -1,0 +1,285 @@
+/* ─── Store Request Modal ────────────────────────────────────────────────── */
+
+.store-request-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(17, 17, 17, 0.45);
+  backdrop-filter: blur(8px);
+  z-index: 2100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.store-request-overlay.is-active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.store-request-modal {
+  background: var(--surface-container-highest);
+  width: 100%;
+  max-width: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: var(--shadow-deep);
+  transform: translateY(100%);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.store-request-modal.is-active {
+  transform: translateY(0);
+}
+
+.store-request-modal__header {
+  padding: var(--space-6) var(--space-5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--surface-container);
+  background: var(--surface-container-highest);
+}
+
+.store-request-modal__title {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-sm);
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.store-request-modal__close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: color 0.2s ease;
+  padding: var(--space-2);
+}
+
+.store-request-modal__close:hover {
+  color: var(--text-primary);
+}
+
+.store-request-modal__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6) var(--space-5);
+  background: var(--surface-container-lowest);
+}
+
+/* Success screen */
+.store-request-modal__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+}
+
+.store-request-modal__success .success-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-brand-primary), transparent 92%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.store-request-modal__success .success-desc {
+  max-width: 380px;
+  margin: var(--space-3) 0 var(--space-8);
+  line-height: 1.5;
+}
+
+.store-request-modal__success .success-actions {
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Form */
+.store-request-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.store-request-subtitle {
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Uppercase, letter-spaced field label */
+.store-request-label {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.store-request-prompt {
+  margin-bottom: var(--space-2-5);
+}
+
+/* Stage pill chips */
+.stage-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.stage-chip {
+  padding: var(--space-1-5) 15px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-container);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.stage-chip:hover {
+  background: var(--surface-container-high);
+}
+
+.stage-chip.active {
+  background: color-mix(in srgb, var(--color-brand-primary) 13%, var(--surface-container));
+  color: var(--color-brand-primary);
+}
+
+.store-request-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.store-request-field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Underline inputs — no boxed border */
+.store-request-input,
+.store-request-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--surface-container-high);
+  border-radius: 0;
+  padding: var(--space-2-5) 0;
+  font-family: var(--font-sans);
+  font-size: var(--body-md);
+  color: var(--text-primary);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.store-request-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.store-request-input::placeholder,
+.store-request-textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.store-request-input:focus,
+.store-request-textarea:focus {
+  border-bottom-color: var(--color-brand-primary);
+  box-shadow: 0 1px 0 0 var(--color-brand-primary);
+}
+
+/* Phone field: prefix + underline input sharing one line */
+.store-request-phone-wrap {
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid var(--surface-container-high);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.store-request-phone-wrap:focus-within {
+  border-bottom-color: var(--color-brand-primary);
+  box-shadow: 0 1px 0 0 var(--color-brand-primary);
+}
+
+.store-request-phone-wrap.has-error {
+  border-bottom-color: var(--color-support-red);
+}
+
+.store-request-phone-prefix {
+  font-family: var(--font-sans);
+  font-size: var(--body-md);
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding-right: var(--space-2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.store-request-phone-wrap .store-request-input {
+  border-bottom: none;
+  padding-left: 0;
+}
+
+.store-request-phone-wrap .store-request-input:focus {
+  box-shadow: none;
+}
+
+.form-error-hint {
+  display: block;
+  margin-top: var(--space-1);
+}
+
+/* Dark pill submit button */
+.store-request-submit-btn {
+  width: 100%;
+  padding: var(--space-3-5, var(--space-4)) var(--space-6);
+  background: var(--color-anchor);
+  color: var(--color-on-primary);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: var(--body-md);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.store-request-submit-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-anchor) 84%, var(--color-brand-primary) 16%);
+}
+
+.store-request-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .store-request-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}

@@ -5,6 +5,7 @@ import { api } from "@convex/_generated/api";
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { formatPrice } from '../utils/priceUtils';
+import { stripBrandFromName } from '../utils/productNameUtils';
 import Toast from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import PDPSkeleton from '../components/ui/PDPSkeleton';
@@ -119,21 +120,22 @@ const PDP = () => {
   }
 
   const id = product.id || product._id;
+  const displayName = stripBrandFromName(product.name, product.brand);
   const isSaved = isInWishlist(id);
   const isOutOfStock = product.inventory !== undefined && product.inventory <= 0;
 
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedSize);
-    setToastMessage(`${product.name} added to cart!`);
+    setToastMessage(`${displayName} added to cart!`);
     setShowToast(true);
   };
 
   const handleToggleWishlist = () => {
     toggleWishlist(product, notifyBackInStock);
     if (!isSaved) {
-      setToastMessage(`${product.name} saved to wishlist!`);
+      setToastMessage(`${displayName} saved to wishlist!`);
     } else {
-      setToastMessage(`Removed ${product.name} from wishlist.`);
+      setToastMessage(`Removed ${displayName} from wishlist.`);
     }
     setShowToast(true);
   };
@@ -198,7 +200,7 @@ const PDP = () => {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="9 18 15 12 9 6" />
           </svg>
-          <span>{product.name}</span>
+          <span>{displayName}</span>
         </nav>
 
         <div className="pdp__grid">
@@ -246,7 +248,7 @@ const PDP = () => {
                     ) : (
                       <img
                         src={imgUrl}
-                        alt={`${product.name} view ${idx + 1}`}
+                        alt={`${displayName} view ${idx + 1}`}
                         onLoad={() => setLoadedImages(prev => ({ ...prev, [idx]: true }))}
                         onError={() => setLoadedImages(prev => ({ ...prev, [idx]: true }))}
                       />
@@ -282,7 +284,7 @@ const PDP = () => {
                       <DefaultProductImage />
                     </div>
                   ) : (
-                    <img src={imgUrl} alt={`${product.name} view ${idx + 1}`} />
+                    <img src={imgUrl} alt={`${displayName} view ${idx + 1}`} />
                   )}
                 </div>
               ))}
@@ -300,7 +302,7 @@ const PDP = () => {
                   </span>
                 )}
               </div>
-              <h1 className="pdp__title">{product.name}</h1>
+              <h1 className="pdp__title">{displayName}</h1>
               <div className="pdp__price-wrap">
                 <span className="pdp__price">{formatPrice(product.price)}</span>
                 {product.wasPrice && <span className="pdp__was-price">{formatPrice(product.wasPrice)}</span>}

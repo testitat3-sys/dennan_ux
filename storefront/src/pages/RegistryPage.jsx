@@ -21,6 +21,7 @@ import Text from '../components/ui/Text';
 import ContributorsModal from '../components/registry/ContributorsModal';
 import NotifySignupModal from '../components/registry/NotifySignupModal';
 import { ShoppingBag, Plus, Trash2, ArrowRight } from 'lucide-react';
+import { stripBrandFromName } from '../utils/productNameUtils';
 import './RegistryPage.css';
 import SearchStrip from '../components/home/SearchStrip';
 
@@ -143,7 +144,7 @@ const RegistryPage = () => {
         }
       } catch (e) { }
 
-      setToastMessage(`"${item.name}" marked as gifted!`);
+      setToastMessage(`"${stripBrandFromName(item.name, item.brand)}" marked as gifted!`);
       setShowToast(true);
     }
   };
@@ -162,7 +163,7 @@ const RegistryPage = () => {
   const handlePaymentSuccess = () => {
     setIsPaymentModalOpen(false);
     if (pendingPayment) {
-      setToastMessage(`UGX ${pendingPayment.amount.toLocaleString()} contributed towards "${pendingPayment.item.name}"!`);
+      setToastMessage(`UGX ${pendingPayment.amount.toLocaleString()} contributed towards "${stripBrandFromName(pendingPayment.item.name, pendingPayment.item.brand)}"!`);
       setShowToast(true);
     }
     setPendingPayment(null);
@@ -191,7 +192,7 @@ const RegistryPage = () => {
       setIsDeleteConfirmOpen(true);
     } else {
       removeFromRegistry(item.id || item.productId);
-      setToastMessage(`"${item.name}" removed from your registry.`);
+      setToastMessage(`"${stripBrandFromName(item.name, item.brand)}" removed from your registry.`);
       setShowToast(true);
     }
   };
@@ -201,7 +202,7 @@ const RegistryPage = () => {
     const { item, totalContributed } = itemToDelete;
 
     await removeFromRegistry(item.id || item.productId);
-    setToastMessage(`"${item.name}" removed. UGX ${totalContributed.toLocaleString()} converted to Dennan Store Credit!`);
+    setToastMessage(`"${stripBrandFromName(item.name, item.brand)}" removed. UGX ${totalContributed.toLocaleString()} converted to Dennan Store Credit!`);
     setShowToast(true);
 
     setIsDeleteConfirmOpen(false);
@@ -552,11 +553,12 @@ const RegistryPage = () => {
 
   const handleAddToRegistry = async (product) => {
     const success = await addToRegistry(product);
+    const displayName = stripBrandFromName(product.name, product.brand);
     if (success) {
-      setToastMessage(`"${product.name}" added to your registry!`);
+      setToastMessage(`"${displayName}" added to your registry!`);
       setShowToast(true);
     } else {
-      setToastMessage(`"${product.name}" is already in your registry.`);
+      setToastMessage(`"${displayName}" is already in your registry.`);
       setShowToast(true);
     }
   };

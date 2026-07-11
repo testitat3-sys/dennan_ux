@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatPrice } from '../../utils/priceUtils';
+import { stripBrandFromName } from '../../utils/productNameUtils';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import { Trash2, ShoppingBag, Gift } from 'lucide-react';
@@ -9,6 +10,7 @@ import './RegistryItemCard.css';
 const RegistryItemCard = ({ item, viewMode, onBuy, onContribute, onRemove }) => {
   const isPurchased = item.status === 'purchased';
   const isVirtualPackaging = item.productId === 'virtual-packaging';
+  const displayName = stripBrandFromName(item.name, item.brand);
 
   const renderPackagingPreview = () => {
     const patternType = item.patternType || 'stripe';
@@ -96,7 +98,7 @@ const RegistryItemCard = ({ item, viewMode, onBuy, onContribute, onRemove }) => 
               {renderPackagingPreview()}
             </div>
           ) : item.image ? (
-            <img src={item.image} alt={item.name} className="item-image" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={item.image} alt={displayName} className="item-image" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <div style={{ width: '100%', height: '100%' }}>
               <DefaultProductImage />
@@ -128,7 +130,7 @@ const RegistryItemCard = ({ item, viewMode, onBuy, onContribute, onRemove }) => 
       </Card.Header>
 
       <Card.Body>
-        <h3 className="product-card__name" style={{ flex: 1, minHeight: '44px' }}>{item.name}</h3>
+        <h3 className="product-card__name" style={{ flex: 1, minHeight: '44px' }}>{displayName}</h3>
         <div className="product-card__price-row">
           <span className="product-card__price">{formatPrice(item.price)}</span>
         </div>

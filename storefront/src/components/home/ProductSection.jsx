@@ -22,7 +22,7 @@ const ProductSection = ({ title, eyebrow, products, viewAllLink, viewAllText = '
         </div>
 
         {viewAllLink && (
-          <Link to={viewAllLink} className="section__link-action">
+          <Link to={viewAllLink} className="section__link-action" aria-label={`View all ${title} products`} title={`View all ${title} products`}>
             {viewAllText}
             <ArrowRight size={14} />
           </Link>
@@ -37,7 +37,7 @@ const ProductSection = ({ title, eyebrow, products, viewAllLink, viewAllText = '
               <ProductCard key={i} product={product} onAddToCart={onAddToCart} />
             ))}
             {viewAllLink && (
-              <Link to={viewAllLink} className="desktop-scroll-see-more-card">
+              <Link to={viewAllLink} className="desktop-scroll-see-more-card" aria-label={`View all ${title} products`} title={`View all ${title} products`}>
                 <div className="see-more-card__circle">
                   <ArrowRight size={24} />
                 </div>

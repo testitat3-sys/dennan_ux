@@ -4,6 +4,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { useRegistry } from '../context/RegistryContext';
 import { formatPrice } from '../utils/priceUtils';
+import { stripBrandFromName } from '../utils/productNameUtils';
 import Toast from '../components/ui/Toast';
 import ProductCard from '../components/products/ProductCard';
 import Button from '../components/ui/Button';
@@ -25,6 +26,7 @@ const WishlistPage = () => {
     removeFromWishlist,
     moveItemToCart,
     moveAllToCart,
+    setNotifyBackInStock,
     totalWishlistItems
   } = wishlistContext;
 
@@ -34,9 +36,6 @@ const WishlistPage = () => {
   // Toast States
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-
-  // Handle back-in-stock notifications toggles local state for out of stock items
-  const [notifiedItems, setNotifiedItems] = useState({});
 
   // --- Support Shared Wishlists ---
   const sharedIds = shareParam ? shareParam.split(',') : [];
@@ -73,16 +72,17 @@ const WishlistPage = () => {
 
   const handleMoveToCart = async (item) => {
     await moveItemToCart(item, 'M', cartContext);
-    setToastMessage(`"${item.name}" moved to cart!`);
+    setToastMessage(`"${stripBrandFromName(item.name, item.brand)}" moved to cart!`);
     setShowToast(true);
   };
 
   const handleMoveToRegistry = async (item) => {
     const success = await moveFromWishlistToRegistry(item, wishlistContext);
+    const displayName = stripBrandFromName(item.name, item.brand);
     if (success) {
-      setToastMessage(`"${item.name}" moved to registry!`);
+      setToastMessage(`"${displayName}" moved to registry!`);
     } else {
-      setToastMessage(`"${item.name}" is already in your registry.`);
+      setToastMessage(`"${displayName}" is already in your registry.`);
     }
     setShowToast(true);
   };
@@ -100,16 +100,15 @@ const WishlistPage = () => {
     setShowToast(true);
   };
 
-  const toggleNotify = (productId, productName) => {
-    setNotifiedItems(prev => {
-      const current = !!prev[productId];
-      const next = !current;
-      if (next) {
-        setToastMessage(`Back-in-stock alert activated for "${productName}"!`);
-        setShowToast(true);
-      }
-      return { ...prev, [productId]: next };
-    });
+  const toggleNotify = async (item) => {
+    if (isSharedView) return;
+    const productId = item.id || item._id;
+    const next = !item.notifyBackInStock;
+    await setNotifyBackInStock(productId, next);
+    if (next) {
+      setToastMessage(`Back-in-stock alert activated for "${stripBrandFromName(item.name, item.brand)}"!`);
+      setShowToast(true);
+    }
   };
 
   const isLoaded = isSharedView ? sharedWishlistRaw !== undefined : true;
@@ -197,8 +196,8 @@ const WishlistPage = () => {
                   showWishlistIcon={!isSharedView}
                   onRemove={() => removeFromWishlist(id)}
                   onAddToCart={handleMoveToCart}
-                  isNotified={!!notifiedItems[id]}
-                  onToggleNotify={() => toggleNotify(id, item.name)}
+                  isNotified={!!item.notifyBackInStock}
+                  onToggleNotify={() => toggleNotify(item)}
                   onMoveToRegistry={handleMoveToRegistry}
                 />
               );

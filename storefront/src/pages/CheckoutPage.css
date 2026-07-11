@@ -582,6 +582,67 @@
   animation: fadeIn 0.4s ease-out;
 }
 
+/* Referral Source ("How did you know about us?") prompt */
+.referral-prompt-card {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.referral-source-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.referral-source-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--surface-container-high);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.referral-source-chip:hover {
+  border-color: var(--color-brand-primary);
+  color: var(--color-brand-primary-dark);
+}
+
+.referral-source-chip.is-selected {
+  border-color: var(--color-brand-primary);
+  background: color-mix(in srgb, var(--color-brand-primary), transparent 92%);
+  color: var(--color-brand-primary-dark);
+}
+
+.referral-source-chip:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.referral-other-input {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  border: 1.5px solid var(--surface-container-high);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--body-md);
+  color: var(--text-primary);
+  background: var(--surface);
+  box-sizing: border-box;
+}
+
+.referral-other-input:focus {
+  outline: none;
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 0 0 3px rgba(211, 80, 151, 0.1);
+}
+
 /* Floating Developer Tool Panel */
 .dev-tool-floating {
   position: fixed;

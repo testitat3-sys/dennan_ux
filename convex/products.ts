@@ -233,7 +233,8 @@ async function upsertSingleProduct(ctx: any, fields: any) {
     await applyStockCounterDelta(
       ctx,
       { inventory: existing.inventory, reorderPoint: existing.reorderPoint },
-      { inventory: productFields.inventory ?? existing.inventory, reorderPoint: existing.reorderPoint }
+      { inventory: productFields.inventory ?? existing.inventory, reorderPoint: existing.reorderPoint },
+      existing._id
     );
     console.log(`[convex/products.ts] Batch Product updated: ${slug} (${existing._id})`);
     return { id: existing._id, status: "updated", slug };
@@ -354,6 +355,36 @@ export const getProductsForPOS = query({
     return products
       .filter((p) => p.isActive && shouldKeepProduct(p, true))
       .map(normalizeProductPrice);
+  },
+});
+
+/**
+ * Incremental sync for the offline POS product cache. The full catalog is
+ * only ever pulled once per device via getProductsForPOS (a one-time
+ * bootstrap) - every sync after that asks for changes only, so payload size
+ * scales with how much actually changed, not with catalog size.
+ *
+ * Each row is tagged `keep: false` when it should be evicted from the local
+ * cache (inactive/filtered out) rather than upserted, so the client doesn't
+ * need to duplicate shouldKeepProduct's filtering logic.
+ */
+export const getProductsUpdatedSince = query({
+  args: {
+    token: v.string(),
+    since: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    const changed = await ctx.db
+      .query("products")
+      .withIndex("by_updatedAt", (q) => q.gt("updatedAt", args.since))
+      .collect();
+
+    return changed.map((p) => ({
+      ...normalizeProductPrice(p),
+      keep: p.isActive && shouldKeepProduct(p, true),
+    }));
   },
 });
 
@@ -599,11 +630,13 @@ export const adjustStock = mutation({
       const newInv = Math.max(0, currentInv + args.delta);
       await ctx.db.patch(pToUpdate._id, {
         inventory: newInv,
+        updatedAt: Date.now(),
       });
       await applyStockCounterDelta(
         ctx,
         { inventory: currentInv, reorderPoint: pToUpdate.reorderPoint },
-        { inventory: newInv, reorderPoint: pToUpdate.reorderPoint }
+        { inventory: newInv, reorderPoint: pToUpdate.reorderPoint },
+        pToUpdate._id
       );
     }
 
@@ -638,6 +671,7 @@ export const setDiscount = mutation({
       discountExpiry: args.discountExpiry,
       price,
       wasPrice,
+      updatedAt: Date.now(),
     });
 
     return { success: true };
@@ -790,7 +824,7 @@ export const updateProduct = mutation({
       }
     }
 
-    await ctx.db.patch(productId, patch);
+    await ctx.db.patch(productId, { ...patch, updatedAt: Date.now() });
 
     if ("reorderPoint" in patch) {
       await applyStockCounterDelta(
@@ -912,6 +946,7 @@ export const createProduct = mutation({
       specifications,
       inventory: 0,
       unitsSold: 0,
+      updatedAt: Date.now(),
     });
 
     await applyStockCounterDelta(ctx, null, { inventory: 0, reorderPoint: args.reorderPoint });

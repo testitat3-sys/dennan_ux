@@ -15,6 +15,7 @@ import Toast from '../components/ui/Toast';
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { staticData } from '../constants/staticData';
+import { stripBrandFromName } from '../utils/productNameUtils';
 import HomeSkeleton from '../components/home/HomeSkeleton';
 import MobileHomeSkeleton from '../components/skeletons/MobileHomeSkeleton';
 
@@ -26,6 +27,13 @@ const Home = () => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.content = 'Shop Dennan for baby, kid and mum care essentials — most-loved picks, curated bundles for every stage, and gifts they\'ll love.';
+    }
   }, []);
 
   // Live Convex queries for hero/trust content, featured products, stages, tiers
@@ -46,7 +54,7 @@ const Home = () => {
   };
 
   const handleModalSuccess = (product) => {
-    setToastMessage(`${product.name} added to cart`);
+    setToastMessage(`${stripBrandFromName(product.name, product.brand)} added to cart`);
     setShowToast(true);
   };
 

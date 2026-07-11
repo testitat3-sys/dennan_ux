@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { Package } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
+import { stripBrandFromName } from '../utils/productNameUtils';
 import ProductCard from '../components/products/ProductCard';
 import ProductCardSkeleton from '../components/products/ProductCardSkeleton';
 import SearchStrip from '../components/home/SearchStrip';
 import QuickViewModal from '../components/products/QuickViewModal';
+import StoreRequestModal from '../components/search/StoreRequestModal';
 import Toast from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import Page from '../components/ui/Page';
@@ -134,6 +137,7 @@ const PLP = () => {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [showStoreRequestModal, setShowStoreRequestModal] = useState(false);
 
   const loading = allProducts === undefined || stages === undefined;
 
@@ -231,6 +235,23 @@ const PLP = () => {
     window.scrollTo(0, 0);
   }, [stageId, collectionId, activeFilters, query, allProducts, loading]);
 
+  // Auto-open the "request from physical store" modal shortly after a real,
+  // user-driven search/filter yields zero results — once per browser session
+  // so it doesn't nag on every subsequent empty search.
+  useEffect(() => {
+    if (loading) return;
+    const isUserDrivenEmpty = filteredProducts.length === 0 && (!!query || activeFilters.length > 0);
+    if (!isUserDrivenEmpty) return;
+    if (sessionStorage.getItem('dennan_store_request_auto_shown')) return;
+
+    const timer = setTimeout(() => {
+      setShowStoreRequestModal(true);
+      sessionStorage.setItem('dennan_store_request_auto_shown', 'true');
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [filteredProducts, query, activeFilters, loading]);
+
   if (loading) {
     return <PLPSkeleton />;
   }
@@ -258,7 +279,8 @@ const PLP = () => {
   };
 
   const handleModalSuccess = (product, isWishlist = false) => {
-    setToastMessage(isWishlist ? `${product.name} bookmarked to wishlist` : `${product.name} added to cart`);
+    const displayName = stripBrandFromName(product.name, product.brand);
+    setToastMessage(isWishlist ? `${displayName} bookmarked to wishlist` : `${displayName} added to cart`);
     setShowToast(true);
   };
 
@@ -432,26 +454,21 @@ const PLP = () => {
           <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
             <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
               <div className="plp__toolbar">
-                <Text role="body-sm" color="tertiary" className="plp__count">{filteredProducts.length} products found</Text>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-                  <button 
-                    className="plp__mobile-filter-btn" 
-                    onClick={() => setIsMobileFilterOpen(true)}
-                    aria-label={`Filter products${activeFilters.length > 0 ? `, ${activeFilters.length} active` : ''}`}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
-                    <span className="plp__mobile-filter-label">Filter</span>
-                    {activeFilters.length > 0 && (
-                      <span className="plp__mobile-filter-badge">{activeFilters.length}</span>
-                    )}
-                  </button>
-                  <Text role="body-sm" color="secondary" className="plp__sort">
-                    Sort by: <Text role="title-sm" color="primary" as="span" className="plp__sort-val">{isCollectionView ? 'Curated' : 'Recommended'}</Text>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: 'var(--space-1)' }}>
-                      <path d="m6 9 6 6 6-6"/>
-                    </svg>
-                  </Text>
-                </div>
+                <Text role="body-sm" color="tertiary" className="plp__count">
+                  <Package size={16} strokeWidth={2} aria-hidden="true" />
+                  {filteredProducts.length} products found
+                </Text>
+                <button
+                  className="plp__mobile-filter-btn"
+                  onClick={() => setIsMobileFilterOpen(true)}
+                  aria-label={`Filter products${activeFilters.length > 0 ? `, ${activeFilters.length} active` : ''}`}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+                  <span className="plp__mobile-filter-label">Filter</span>
+                  {activeFilters.length > 0 && (
+                    <span className="plp__mobile-filter-badge">{activeFilters.length}</span>
+                  )}
+                </button>
               </div>
             </Card>
 
@@ -474,7 +491,19 @@ const PLP = () => {
                     <Text role="body-lg" color="secondary">No products match your current filters.</Text>
                   </Card>
                   <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-                    <Button variant="ghost" size="sm" onClick={() => setActiveFilters([])}>Clear all filters</Button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', alignItems: 'center' }}>
+                      {activeFilters.length > 0 && (
+                        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', justifyContent: 'center' }}>
+                          <Button variant="ghost" size="sm" onClick={() => setActiveFilters([])}>Clear all filters</Button>
+                        </div>
+                      )}
+                      <Text role="title-sm" as="p" color="primary" style={{ fontWeight: 700, margin: 0 }}>
+                        Can't find what you're looking for?
+                      </Text>
+                      <Button variant="primary" size="sm" onClick={() => setShowStoreRequestModal(true)}>
+                        Request from physical store
+                      </Button>
+                    </div>
                   </Card>
                 </div>
               </Card>
@@ -492,10 +521,15 @@ const PLP = () => {
         />
       )}
 
-      <Toast 
-        isOpen={showToast} 
-        message={toastMessage} 
-        onClose={() => setShowToast(false)} 
+      <Toast
+        isOpen={showToast}
+        message={toastMessage}
+        onClose={() => setShowToast(false)}
+      />
+
+      <StoreRequestModal
+        isOpen={showStoreRequestModal}
+        onClose={() => setShowStoreRequestModal(false)}
       />
 
       {/* Mobile Bottom Sheet Filter Drawer */}

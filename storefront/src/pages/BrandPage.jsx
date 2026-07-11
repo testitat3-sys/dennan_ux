@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import ProductCard from '../components/products/ProductCard';
+import { stripBrandFromName } from '../utils/productNameUtils';
 import SearchStrip from '../components/home/SearchStrip';
 import QuickViewModal from '../components/products/QuickViewModal';
 import Toast from '../components/ui/Toast';
@@ -85,7 +86,8 @@ const BrandPage = () => {
   };
 
   const handleModalSuccess = (product, isWishlist = false) => {
-    setToastMessage(isWishlist ? `${product.name} bookmarked to wishlist` : `${product.name} added to cart`);
+    const displayName = stripBrandFromName(product.name, product.brand);
+    setToastMessage(isWishlist ? `${displayName} bookmarked to wishlist` : `${displayName} added to cart`);
     setShowToast(true);
   };
 

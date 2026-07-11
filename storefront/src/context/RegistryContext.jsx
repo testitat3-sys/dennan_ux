@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import { useConvexAuth, useQuery, useMutation } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import { getRegistryData } from '../services/api';
+import { useUser } from './UserContext';
 
 const RegistryContext = createContext();
 const REGISTRY_ITEMS_KEY = 'dennan_registry_items';
@@ -17,6 +18,7 @@ export const useRegistry = () => {
 
 export const RegistryProvider = ({ children }) => {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const { setShowOnboarding } = useUser();
 
   // --- Guest / Fallback Mock State ---
   const [guestItems, setGuestItems] = useState(() => {
@@ -90,19 +92,29 @@ export const RegistryProvider = ({ children }) => {
   const dbUpdatePackaging = useMutation(api.registry.updatePackaging);
   const dbRemovePackaging = useMutation(api.registry.removePackaging);
 
-  // Auto-create database registry if missing for authenticated user
+  // Auto-create database registry if missing for authenticated user.
+  // Guarded by a ref so a failure (e.g. the user's account doc was deleted)
+  // doesn't retry every render and spam the console — instead it surfaces
+  // the onboarding modal so the user can recover gracefully.
+  const ensureAttempted = useRef(false);
   useEffect(() => {
-    if (isAuthenticated && dbRegistry === null) {
+    if (!isAuthenticated) {
+      ensureAttempted.current = false;
+      return;
+    }
+    if (dbRegistry === null && !ensureAttempted.current) {
+      ensureAttempted.current = true;
       const initRegistry = async () => {
         try {
           await dbEnsureRegistry();
         } catch (error) {
           console.error("Failed to auto-create baby registry:", error);
+          setShowOnboarding(true);
         }
       };
       initRegistry();
     }
-  }, [isAuthenticated, dbRegistry, dbEnsureRegistry]);
+  }, [isAuthenticated, dbRegistry, dbEnsureRegistry, setShowOnboarding]);
 
   // Helper to calculate packaging for local/guest preview
   const calculatePackaging = (itemsList) => {

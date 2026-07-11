@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /checkout
+Disallow: /checkout/callback
+Disallow: /profile
+Disallow: /dashboard
+Disallow: /wishlist
+Disallow: /auth
+Disallow: /login
+Disallow: /signup
+Disallow: /after-signin
+Disallow: /onboarding

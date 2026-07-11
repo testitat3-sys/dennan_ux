@@ -41,6 +41,7 @@ export default function AfterSignIn() {
   const user = useQuery(api.users.viewer);
   const ensureFields = useMutation(api.users.ensureUserFields);
   const saveOnboardingJourney = useMutation(api.users.saveOnboardingJourney);
+  const submitReferralSource = useMutation(api.referralSources.submitReferralSource);
   const mergeGuestCart = useMutation(api.cart.mergeGuestCart);
   const mergeGuestWishlist = useMutation(api.wishlist.mergeGuestWishlist);
   const { setShowOnboarding, login } = useUser();
@@ -143,17 +144,26 @@ export default function AfterSignIn() {
             role: localProfile.role,
             dueDate: localProfile.dueDate,
             children: localProfile.children,
-            username: localProfile.username,
             name: localProfile.name,
           });
           console.log(`[AfterSignIn.jsx] Pre-auth journey details saved to database`);
-          
+
+          if (localProfile.referralSource) {
+            try {
+              await submitReferralSource({
+                source: localProfile.referralSource,
+                otherDetail: localProfile.otherReferralDetail,
+              });
+            } catch (err) {
+              console.error(`[AfterSignIn.jsx] Failed to submit pre-auth referral source:`, err);
+            }
+          }
+
           login({
             email: user.email,
             role: localProfile.role,
             dueDate: localProfile.dueDate,
             children: localProfile.children,
-            username: localProfile.username,
             name: localProfile.name,
           });
           clearLocalProfile();
@@ -200,7 +210,7 @@ export default function AfterSignIn() {
     };
 
     run();
-  }, [user, ensureFields, saveOnboardingJourney, mergeGuestCart, mergeGuestWishlist, navigate, setShowOnboarding, login]);
+  }, [user, ensureFields, saveOnboardingJourney, submitReferralSource, mergeGuestCart, mergeGuestWishlist, navigate, setShowOnboarding, login]);
 
   return (
     <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>

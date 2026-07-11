@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { formatPrice } from '../../utils/priceUtils';
+import { stripBrandFromName } from '../../utils/productNameUtils';
 import Button from '../ui/Button';
 import DefaultProductImage from './DefaultProductImage';
 import './QuickViewModal.css';
@@ -44,6 +45,7 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
   if (!isMounted) return null;
 
   const sizes = ['S', 'M', 'L', 'XL'];
+  const displayName = stripBrandFromName(product.name, product.brand);
   const isSaved = isInWishlist(product.id || product._id);
   const isOutOfStock = product.inventory !== undefined && product.inventory <= 0;
 
@@ -85,7 +87,7 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
               <div className="quick-view-left">
                 <div className="quick-view-image">
                   {product.image ? (
-                    <img src={product.image} alt={product.name} />
+                    <img src={product.image} alt={displayName} />
                   ) : (
                     <DefaultProductImage />
                   )}
@@ -112,7 +114,7 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
                     ))
                   }
                 </div>
-                <h2 className="quick-view-name">{product.name}</h2>
+                <h2 className="quick-view-name">{displayName}</h2>
                 <div className="quick-view-price-row">
                   <span className="quick-view-price">{formatPrice(product.price)}</span>
                   {product.wasPrice && <span className="quick-view-price-was">{formatPrice(product.wasPrice)}</span>}
@@ -166,7 +168,7 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
                 <div className="quick-view-actions">
                   {isOutOfStock ? (
                     <Button variant="primary" onClick={handleAddToWishlist}>
-                      {isSaved ? 'In Wishlist' : 'Add to Wishlist'}
+                      {isSaved ? "You'll be notified" : 'Remind me when available'}
                     </Button>
                   ) : (
                     <Button variant="primary" onClick={handleAddToCart}>
@@ -206,13 +208,13 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
                 <div className="mini-cart-item">
                   <div className="mini-cart-img">
                     {product.image ? (
-                      <img src={product.image} alt={product.name} />
+                      <img src={product.image} alt={displayName} />
                     ) : (
                       <DefaultProductImage />
                     )}
                   </div>
                   <div className="mini-cart-info">
-                    <span className="mini-cart-name">{product.name}</span>
+                    <span className="mini-cart-name">{displayName}</span>
                     <span className="mini-cart-meta">
                       {isAddedToWishlist ? 'Curated Bookmark' : `Size: ${size} • Qty: ${quantity}`}
                     </span>

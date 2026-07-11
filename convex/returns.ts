@@ -34,7 +34,8 @@ async function restockByBarcode(ctx: any, productId: Id<"products">, quantity: n
       await applyStockCounterDelta(
         ctx,
         { inventory: pToUpdate.inventory, reorderPoint: pToUpdate.reorderPoint },
-        { inventory: newInventory, reorderPoint: pToUpdate.reorderPoint }
+        { inventory: newInventory, reorderPoint: pToUpdate.reorderPoint },
+        pToUpdate._id
       );
     }
   }

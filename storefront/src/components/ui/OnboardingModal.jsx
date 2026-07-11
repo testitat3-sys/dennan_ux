@@ -4,7 +4,7 @@ import { useUser } from '../../context/UserContext';
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { Mail, ArrowRight, ArrowLeft, Baby, Heart, Plus } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft, Baby, Heart, Plus, Users, MoreHorizontal } from 'lucide-react';
 import Button from './Button';
 import './OnboardingModal.css';
 
@@ -15,6 +15,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   const { isAuthenticated } = useConvexAuth();
   const user = useQuery(api.users.viewer);
   const saveJourney = useMutation(api.users.saveOnboardingJourney);
+  const submitReferralSource = useMutation(api.referralSources.submitReferralSource);
 
   // ── Step state ──────────────────────────────────────────────────────────────
   // For Authenticated users: 1 = role selection, 2 = date details
@@ -26,8 +27,9 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   const [role, setRole] = useState(null);       // 'expecting' | 'parent'
   const [dueDate, setDueDate] = useState('');
   const [children, setChildren] = useState([{ id: Date.now(), dob: '', gender: 'unspecified' }]);
-  const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
+  const [referralSource, setReferralSource] = useState(null);
+  const [otherReferralDetail, setOtherReferralDetail] = useState('');
 
   // ── Email / auth state ──────────────────────────────────────────────────────
   const [email, setEmail] = useState('');
@@ -82,11 +84,9 @@ const OnboardingModal = ({ isOpen, onClose }) => {
           setChildren([{ id: Date.now(), dob: '', gender: 'unspecified' }]);
         }
         setFirstName(user.name || '');
-        setUsername(user.username || '');
         setStep(1);
       } else {
         setFirstName('');
-        setUsername('');
         setStep(1);
       }
     }
@@ -151,18 +151,27 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         role,
         dueDate: role === 'expecting' ? dueDate : undefined,
         children: role === 'parent' ? children.map(c => ({ dob: c.dob, gender: c.gender || 'unspecified' })) : undefined,
-        username: username.trim() || undefined,
         name: firstName.trim() || undefined,
       };
       console.log(`[OnboardingModal] Calling saveOnboardingJourney:`, payload);
       await saveJourney(payload);
+
+      if (referralSource) {
+        try {
+          await submitReferralSource({
+            source: referralSource,
+            otherDetail: referralSource === 'other' ? otherReferralDetail.trim() || undefined : undefined,
+          });
+        } catch (error) {
+          console.error("[OnboardingModal] submitReferralSource error:", error);
+        }
+      }
 
       // Update local profile state in UserContext
       updateProfile({
         role,
         dueDate: payload.dueDate,
         children: payload.children,
-        username: payload.username,
         name: payload.name,
       });
 
@@ -214,8 +223,9 @@ const OnboardingModal = ({ isOpen, onClose }) => {
         role,
         dueDate: role === 'expecting' ? dueDate : undefined,
         children: role === 'parent' ? children.map(c => ({ dob: c.dob, gender: c.gender || 'unspecified' })) : undefined,
-        username: username.trim(),
         name: firstName.trim(),
+        referralSource: referralSource || undefined,
+        otherReferralDetail: referralSource === 'other' ? otherReferralDetail.trim() || undefined : undefined,
         _savedAt: Date.now()
       };
       localStorage.setItem('dennan_onboarding_profile', JSON.stringify(profile));
@@ -456,12 +466,12 @@ const OnboardingModal = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {/* Step 3: Choose Username & First Name */}
+          {/* Step 3: First Name & Referral Source */}
           {step === 3 && (
             <div className="onboarding-step">
               <h2 className="onboarding-step-title">Tell us about yourself</h2>
               <p className="onboarding-step-desc">
-                Choose your first name and a username to personalise your Dennan experience.
+                Choose your first name to personalise your Dennan experience.
               </p>
 
               <div className="onboarding-date-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -478,15 +488,48 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="date-input-group">
-                  <label className="date-label">Username</label>
-                  <input
-                    type="text"
-                    className="onboarding-input"
-                    placeholder="e.g. mommy_care"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
+                  <label className="date-label">How did you know about us? (optional)</label>
+                  <div className="referral-source-options">
+                    {[
+                      {
+                        value: 'tiktok', label: 'TikTok', icon: (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M16 3v10.5a3.5 3.5 0 1 1-2.5-3.36V6.5a5.5 5.5 0 0 0 5.5 5.5" /><path d="M16 3a4.5 4.5 0 0 0 4.5 4.5" /></svg>
+                        )
+                      },
+                      {
+                        value: 'instagram', label: 'Instagram', icon: (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" /></svg>
+                        )
+                      },
+                      { value: 'friend', label: 'A friend', icon: <Users size={20} /> },
+                      {
+                        value: 'google', label: 'Google', icon: (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+                        )
+                      },
+                      { value: 'other', label: 'Other', icon: <MoreHorizontal size={20} /> },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        className={`referral-source-chip ${referralSource === opt.value ? 'is-selected' : ''}`}
+                        onClick={() => setReferralSource(opt.value)}
+                      >
+                        {opt.icon}
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {referralSource === 'other' && (
+                    <input
+                      type="text"
+                      className="onboarding-input"
+                      placeholder="Please tell us where..."
+                      value={otherReferralDetail}
+                      onChange={(e) => setOtherReferralDetail(e.target.value)}
+                      style={{ marginTop: '12px' }}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -502,7 +545,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                     variant="primary"
                     fullWidth
                     onClick={handleJourneySubmit}
-                    disabled={!username.trim() || !firstName.trim() || pending}
+                    disabled={!firstName.trim() || pending}
                     loading={pending}
                     icon={<ArrowRight size={18} />}
                     iconPosition="right"
@@ -514,7 +557,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                     variant="primary"
                     fullWidth
                     onClick={() => setStep(4)}
-                    disabled={!username.trim() || !firstName.trim() || pending}
+                    disabled={!firstName.trim() || pending}
                     icon={<ArrowRight size={18} />}
                     iconPosition="right"
                   >

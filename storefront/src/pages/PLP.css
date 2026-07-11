@@ -227,16 +227,11 @@
   margin-bottom: var(--space-8);
 }
 
-.plp__count {}
-
-.plp__sort {
+.plp__count {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  cursor: pointer;
 }
-
-.plp__sort-val {}
 
 .plp__grid {}
 

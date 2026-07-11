@@ -189,34 +189,6 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, onClaim
                 <strong>UGX {order.grandTotal.toLocaleString()}</strong>
               </div>
             </div>
-
-            <div className="section-header">
-              <h3 className="section-title">Items Ordered</h3>
-            </div>
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Size</th>
-                    <th>Qty</th>
-                    <th>Unit Price</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {order.items?.map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="item-name">{item.productName}</td>
-                      <td>{item.size || "—"}</td>
-                      <td className="item-qty">{item.quantity}</td>
-                      <td>UGX {item.unitPrice.toLocaleString()}</td>
-                      <td>UGX {(item.quantity * item.unitPrice).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
 
           {/* Right panel: Timeline & Actions */}
@@ -320,6 +292,37 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, onClaim
                   Claimed by {order.claimantName}
                 </span>
               )}
+            </div>
+          </div>
+
+          {/* Items Ordered: full-width row spanning both columns */}
+          <div className="order-items-full">
+            <div className="section-header">
+              <h3 className="section-title">Items Ordered</h3>
+            </div>
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Size</th>
+                    <th>Qty</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.items?.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="item-name">{item.productName}</td>
+                      <td>{item.size || "—"}</td>
+                      <td className="item-qty">{item.quantity}</td>
+                      <td>UGX {item.unitPrice.toLocaleString()}</td>
+                      <td>UGX {(item.quantity * item.unitPrice).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

@@ -16,7 +16,7 @@ import Page from '../components/ui/Page';
 import Card from '../components/ui/Card';
 import Text from '../components/ui/Text';
 import DefaultProductImage from '../components/products/DefaultProductImage';
-import { Check, Settings, Sparkles as SparklesIcon, RotateCcw, ShoppingCart, Clock } from 'lucide-react';
+import { Check, Settings, Sparkles as SparklesIcon, RotateCcw, ShoppingCart, Clock, Users, MoreHorizontal } from 'lucide-react';
 import './CheckoutPage.css';
 
 const CheckoutPage = () => {
@@ -26,6 +26,7 @@ const CheckoutPage = () => {
   const convexPlaceOrder = useMutation(api.orders.placeOrder);
   const placeGuestOrder = useMutation(api.orders.placeGuestOrder);
   const updateProfileMutation = useMutation(api.users.updateProfile);
+  const submitReferralSource = useMutation(api.referralSources.submitReferralSource);
   const initiatePayment = useAction(api.pesapal.initiatePayment);
 
   const { cartItems, subtotal, clearCart } = useCart();
@@ -48,6 +49,10 @@ const CheckoutPage = () => {
   const [toastQueue, setToastQueue] = useState([]);
   const [showPrefPrompt, setShowPrefPrompt] = useState(false);
   const [tempContactPref, setTempContactPref] = useState('email');
+  const [showReferralPrompt, setShowReferralPrompt] = useState(false);
+  const [selectedReferralSource, setSelectedReferralSource] = useState(null);
+  const [otherReferralText, setOtherReferralText] = useState('');
+  const [isSubmittingReferral, setIsSubmittingReferral] = useState(false);
   const [toastConfig, setToastConfig] = useState({
     isOpen: false,
     message: '',
@@ -160,6 +165,13 @@ const CheckoutPage = () => {
       }
     }
   }, [user, checkoutData, isAuthenticated, selectedAddress]);
+
+  // Prompt for "how did you know about us?" once per confirmed order (guest or authenticated).
+  useEffect(() => {
+    if (isOrderConfirmed) {
+      setShowReferralPrompt(true);
+    }
+  }, [isOrderConfirmed]);
 
   // 2. Setup delivery countdown once location is confirmed
   useEffect(() => {
@@ -727,6 +739,29 @@ const CheckoutPage = () => {
     }
   };
 
+  const handleSubmitReferralSource = async (source) => {
+    if (source === 'other' && !otherReferralText.trim()) {
+      setSelectedReferralSource(source);
+      return;
+    }
+    setSelectedReferralSource(source);
+    setIsSubmittingReferral(true);
+    try {
+      await submitReferralSource({
+        source,
+        otherDetail: source === 'other' ? otherReferralText.trim() : undefined,
+        orderId: activeOrderId || undefined,
+      });
+      setShowReferralPrompt(false);
+      queueToast("Thanks for letting us know!", 'success');
+    } catch (err) {
+      console.error("Failed to save referral source:", err);
+      queueToast("Couldn't save your answer. Please try again.", 'danger');
+    } finally {
+      setIsSubmittingReferral(false);
+    }
+  };
+
   if (loading) {
     return <CheckoutSkeleton />;
   }
@@ -1249,6 +1284,73 @@ const CheckoutPage = () => {
                         >
                           Save Preference
                         </Button>
+                      </Card.Body>
+                    </Card>
+                  )}
+
+                  {showReferralPrompt && (
+                    <Card className="referral-prompt-card animate-fadeIn" style={{ backgroundColor: 'var(--surface-container-low)', border: '1px solid rgba(211, 80, 151, 0.15)', borderRadius: 'var(--radius-xl)' }}>
+                      <Card.Header>
+                        <Text role="title-sm" as="h4" color="primary" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, margin: 0 }}>
+                          How Did You Know About Us?
+                        </Text>
+                      </Card.Header>
+                      <Card.Body style={{ gap: 'var(--space-4)', padding: '0 var(--space-6) var(--space-6)', display: 'flex', flexDirection: 'column' }}>
+                        <Text role="body-md" as="p" color="secondary" style={{ margin: 0 }}>
+                          While you wait for your order, help us out — where did you first hear about Dennan?
+                        </Text>
+                        <div className="referral-source-options">
+                          {[
+                            {
+                              value: 'tiktok', label: 'TikTok', icon: (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M16 3v10.5a3.5 3.5 0 1 1-2.5-3.36V6.5a5.5 5.5 0 0 0 5.5 5.5" /><path d="M16 3a4.5 4.5 0 0 0 4.5 4.5" /></svg>
+                              )
+                            },
+                            {
+                              value: 'instagram', label: 'Instagram', icon: (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" /></svg>
+                              )
+                            },
+                            { value: 'friend', label: 'A friend', icon: <Users size={20} /> },
+                            {
+                              value: 'google', label: 'Google', icon: (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+                              )
+                            },
+                            { value: 'other', label: 'Other', icon: <MoreHorizontal size={20} /> },
+                          ].map(opt => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              className={`referral-source-chip ${selectedReferralSource === opt.value ? 'is-selected' : ''}`}
+                              onClick={() => handleSubmitReferralSource(opt.value)}
+                              disabled={isSubmittingReferral}
+                            >
+                              {opt.icon}
+                              <span>{opt.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                        {selectedReferralSource === 'other' && (
+                          <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+                            <input
+                              type="text"
+                              className="referral-other-input"
+                              placeholder="Please tell us where..."
+                              value={otherReferralText}
+                              onChange={(e) => setOtherReferralText(e.target.value)}
+                            />
+                            <Button
+                              variant="soft"
+                              size="sm"
+                              loading={isSubmittingReferral}
+                              disabled={!otherReferralText.trim() || isSubmittingReferral}
+                              onClick={() => handleSubmitReferralSource('other')}
+                            >
+                              Submit
+                            </Button>
+                          </div>
+                        )}
                       </Card.Body>
                     </Card>
                   )}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCardSkeleton from './ProductCardSkeleton';
 import { formatPrice } from '../../utils/priceUtils';
+import { stripBrandFromName } from '../../utils/productNameUtils';
 import { useWishlist } from '../../context/WishlistContext';
 import Button from '../ui/Button';
 import DefaultProductImage from './DefaultProductImage';
@@ -39,6 +40,7 @@ const ProductCard = ({
   const { image, name, price, wasPrice, tier, badge, tags, variant, inventory, unitsSold, brand } = product;
   const id = product.id || product._id;
 
+  const displayName = stripBrandFromName(name, brand);
   const isSaved = isInWishlist(id);
   const isOutOfStock = inventory !== undefined && inventory <= 0;
   const isLowStock = inventory !== undefined && inventory > 0 && inventory <= 3;
@@ -82,7 +84,7 @@ const ProductCard = ({
       <Link to={`/product/${id}`} className="product-card__image-link">
         <div className="card-image">
           {image && !imageError ? (
-            <img src={image} alt={name} className="card-image-el" />
+            <img src={image} alt={displayName} className="card-image-el" />
           ) : (
             renderPlaceholder()
           )}
@@ -159,7 +161,7 @@ const ProductCard = ({
       <div className="card-info">
         <span className="card-tier">{tier}</span>
         <Link to={`/product/${id}`} className="product-card__name-link">
-          <h3 className="card-name">{name}</h3>
+          <h3 className="card-name">{displayName}</h3>
         </Link>
         <div className="card-price-row">
           <span className="card-price">{formatPrice(price)}</span>
@@ -210,12 +212,12 @@ const ProductCard = ({
               )}
             </div>
           ) : (
-            <Button 
+            <Button
               variant="card-add"
               fullWidth
               onClick={handleWishlistClick}
             >
-              {isSaved ? 'In Wishlist' : 'Add to Wishlist'}
+              {isSaved ? "You'll be notified" : 'Remind me when available'}
             </Button>
           )
         ) : (

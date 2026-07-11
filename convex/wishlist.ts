@@ -77,6 +77,33 @@ export const addToWishlist = mutation({
   },
 });
 
+export const setNotifyBackInStock = mutation({
+  args: {
+    productId: v.id("products"),
+    notifyBackInStock: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const item = await ctx.db
+      .query("wishlistItems")
+      .withIndex("by_user_and_product", (q) =>
+        q.eq("userId", userId).eq("productId", args.productId)
+      )
+      .first();
+
+    if (!item) {
+      throw new Error("Wishlist item not found");
+    }
+
+    await ctx.db.patch(item._id, { notifyBackInStock: args.notifyBackInStock });
+    return { success: true };
+  },
+});
+
 export const removeFromWishlist = mutation({
   args: {
     productId: v.id("products"),

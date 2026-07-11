@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '../context/UserContext';
+import { useUser, useResolvedUser } from '../context/UserContext';
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useQuery } from "convex/react";
-import { api } from "@convex/_generated/api";
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 
 // Import Existing UI Components
@@ -20,11 +18,12 @@ import Toast from '../components/ui/Toast';
 import NotifySignupModal from '../components/registry/NotifySignupModal';
 
 import { getDashboardData } from '../services/api';
+import { stripBrandFromName } from '../utils/productNameUtils';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const { user, getStageInfo, setShowOnboarding, logout } = useUser();
-  const convexUser = useQuery(api.users.viewer);
+  const { convexUser, isResolving, isOrphaned } = useResolvedUser();
   const { signOut } = useAuthActions();
   const navigate = useNavigate();
 
@@ -63,13 +62,14 @@ const Dashboard = () => {
   };
 
   const handleModalSuccess = (product) => {
-    setToastMessage(`${product.name} added to cart`);
+    setToastMessage(`${stripBrandFromName(product.name, product.brand)} added to cart`);
     setShowToast(true);
   };
 
 
 
-  if (!user || loading || !dashboardData) return null;
+  if (isOrphaned) return null; // OnboardingModal is already open via useResolvedUser
+  if (!user || isResolving || loading || !dashboardData) return null;
 
   const displayName = convexUser?.name || convexUser?.username || user?.email || 'User';
 

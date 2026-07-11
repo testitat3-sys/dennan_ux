@@ -468,3 +468,37 @@
   }
 }
 
+/* Referral Source ("How did you know about us?") chips */
+.referral-source-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.referral-source-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--surface-container-high);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.referral-source-chip:hover {
+  border-color: var(--color-brand-primary);
+  color: var(--color-brand-primary-dark);
+}
+
+.referral-source-chip.is-selected {
+  border-color: var(--color-brand-primary);
+  background: color-mix(in srgb, var(--color-brand-primary), transparent 92%);
+  color: var(--color-brand-primary-dark);
+}
+

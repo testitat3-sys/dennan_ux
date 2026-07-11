@@ -37,11 +37,13 @@ async function syncStockDeductionByBarcode(
       await ctx.db.patch(pToUpdate._id, {
         inventory: newInventory,
         unitsSold: (pToUpdate.unitsSold || 0) + quantity,
+        updatedAt: Date.now(),
       });
       await applyStockCounterDelta(
         ctx,
         { inventory: pToUpdate.inventory, reorderPoint: pToUpdate.reorderPoint },
-        { inventory: newInventory, reorderPoint: pToUpdate.reorderPoint }
+        { inventory: newInventory, reorderPoint: pToUpdate.reorderPoint },
+        pToUpdate._id
       );
     } else {
       await ctx.db.patch(pToUpdate._id, {
@@ -615,10 +617,12 @@ export const getOrdersForStaff = query({
     // Verifies the caller is a valid staff member, admin, or accounting
     await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
 
-    // Query orders in reverse chronological order
+    // Query orders in reverse chronological order, excluding walk-in sales
+    // (those are already complete on creation and belong only in Order History)
     const result = await ctx.db
       .query("orders")
       .order("desc")
+      .filter((q) => q.neq(q.field("isWalkIn"), true))
       .paginate(args.paginationOpts);
 
     const enrichedPage = [];
@@ -998,6 +1002,8 @@ export const completeOrder = mutation({
       history,
     });
 
+    await ctx.scheduler.runAfter(0, internal.receipts.sendOrderReceipt, { orderId: args.orderId });
+
     return { success: true };
   },
 });
@@ -1273,10 +1279,38 @@ export const createPhysicalOrder = mutation({
     channel: v.optional(v.union(v.literal("walk_in"), v.literal("whatsapp"))),
     deliveryFee: v.optional(v.number()),
     deliveryLocation: v.optional(v.string()),
+    // Client-generated id set by the offline POS queue (see admin/src/lib/offlineDb.js).
+    // If a resubmission arrives for an offlineOrderId that already produced an order
+    // (e.g. a retried sync after the client crashed before removing the queue entry),
+    // return the existing order instead of inserting a duplicate + double stock decrement.
+    offlineOrderId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Gated: Staff or Admin
     const { user: staffUser } = await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    if (args.offlineOrderId) {
+      const existingOrder = await ctx.db
+        .query("orders")
+        .withIndex("by_offlineOrderId", (q) => q.eq("offlineOrderId", args.offlineOrderId))
+        .first();
+      if (existingOrder) {
+        const existingVouchers = await ctx.db
+          .query("giftVouchers")
+          .withIndex("by_issuedOrderId", (q) => q.eq("issuedOrderId", existingOrder._id))
+          .collect();
+        return {
+          success: true,
+          orderId: existingOrder._id,
+          receiptNumber: existingOrder.receiptNumber,
+          issuedVouchers: existingVouchers.map((v) => ({
+            code: v.code,
+            amount: v.originalAmount,
+            expiresAt: v.expiresAt,
+          })),
+        };
+      }
+    }
 
     if (args.items.length === 0 && (!args.voucherItems || args.voucherItems.length === 0)) {
       throw new Error("Cannot create order with zero items and zero vouchers");
@@ -1486,6 +1520,7 @@ export const createPhysicalOrder = mutation({
       isWalkIn: false,
       channel: "whatsapp",
       receiptNumber,
+      offlineOrderId: args.offlineOrderId,
       history: [
         {
           status: "packing",
@@ -1516,6 +1551,7 @@ export const createPhysicalOrder = mutation({
       isWalkIn: true,
       channel: "walk_in",
       receiptNumber,
+      offlineOrderId: args.offlineOrderId,
       history: [
         {
           status: "delivered",
@@ -1524,6 +1560,10 @@ export const createPhysicalOrder = mutation({
         },
       ],
     });
+
+    if (!isWhatsapp) {
+      await ctx.scheduler.runAfter(0, internal.receipts.sendOrderReceipt, { orderId });
+    }
 
     // 4. Update voucher balances, create redemptions, and create order payments
     for (const rp of resolvedPayments) {
@@ -2092,6 +2132,11 @@ export const adminGetProductAnalytics = query({
     token: v.string(),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
+    // Narrows topProducts/byCategory/byStage/byTier/margin stats to a single
+    // brand. byBrand itself is always computed across every brand regardless
+    // of this filter, so the comparison chart and this filter's own option
+    // list stay stable no matter which brand (if any) is selected.
+    brand: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
@@ -2135,6 +2180,7 @@ export const adminGetProductAnalytics = query({
     const byCategoryMap = new Map<string, { key: string; label: string; unitsSold: number; revenue: number }>();
     const byStageMap = new Map<string, { key: string; label: string; unitsSold: number; revenue: number }>();
     const byTierMap = new Map<string, { key: string; label: string; unitsSold: number; revenue: number }>();
+    const byBrandMap = new Map<string, { key: string; label: string; unitsSold: number; revenue: number }>();
     const topProducts: {
       productId: string;
       name: string;
@@ -2147,6 +2193,18 @@ export const adminGetProductAnalytics = query({
 
     for (const [key, agg] of productAgg.entries()) {
       const product = await ctx.db.get(agg.productId);
+
+      // Brand grouping is always computed, unfiltered, so the comparison
+      // chart and this query's own filter dropdown reflect every brand sold
+      // in range regardless of which brand (if any) args.brand narrows to.
+      const brandKey = product?.brand || "Unknown";
+      const brandEntry = byBrandMap.get(brandKey) || { key: brandKey, label: brandKey, unitsSold: 0, revenue: 0 };
+      brandEntry.unitsSold += agg.unitsSold;
+      brandEntry.revenue += agg.revenue;
+      byBrandMap.set(brandKey, brandEntry);
+
+      if (args.brand && product?.brand !== args.brand) continue;
+
       const name = product?.name || "Unknown Product";
       const costPrice = product?.costPrice;
       const hasCostData = typeof costPrice === "number";
@@ -2208,6 +2266,7 @@ export const adminGetProductAnalytics = query({
       byCategory: Array.from(byCategoryMap.values()).sort((a, b) => b.revenue - a.revenue),
       byStage: Array.from(byStageMap.values()).sort((a, b) => b.revenue - a.revenue),
       byTier: Array.from(byTierMap.values()).sort((a, b) => b.revenue - a.revenue),
+      byBrand: Array.from(byBrandMap.values()).sort((a, b) => b.revenue - a.revenue),
       overallMarginPct,
       productsWithoutCostData: topProducts.length - withCostData.length,
       rangeStart: toDateStr(rangeStartMs),

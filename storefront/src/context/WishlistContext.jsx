@@ -34,6 +34,7 @@ export const WishlistProvider = ({ children }) => {
   const convexWishlistRaw = useQuery(api.wishlist.getWishlistItems, isAuthenticated ? {} : "skip");
   const convexAddToWishlist = useMutation(api.wishlist.addToWishlist);
   const convexRemoveFromWishlist = useMutation(api.wishlist.removeFromWishlist);
+  const convexSetNotifyBackInStock = useMutation(api.wishlist.setNotifyBackInStock);
 
   const convexWishlist = useMemo(() => {
     if (!convexWishlistRaw) return [];
@@ -93,6 +94,15 @@ export const WishlistProvider = ({ children }) => {
     }
   };
 
+  const setNotifyBackInStock = async (productId, notify) => {
+    if (!isAuthenticated) return;
+    try {
+      await convexSetNotifyBackInStock({ productId, notifyBackInStock: notify });
+    } catch (err) {
+      console.error("Failed to update notify preference:", err);
+    }
+  };
+
   const removeFromWishlist = async (productId) => {
     const cleanId = typeof productId === 'object' ? (productId._id || productId.id) : productId;
     if (isAuthenticated) {
@@ -143,6 +153,7 @@ export const WishlistProvider = ({ children }) => {
     isInWishlist,
     addToWishlist,
     removeFromWishlist,
+    setNotifyBackInStock,
     toggleWishlist,
     moveItemToCart,
     moveAllToCart,

@@ -10,6 +10,7 @@ import ProductCardSkeleton from '../components/products/ProductCardSkeleton';
 import ContributionModal from '../components/registry/ContributionModal';
 import PesapalPaymentModal from '../components/checkout/PesapalPaymentModal';
 import Toast from '../components/ui/Toast';
+import { stripBrandFromName } from '../utils/productNameUtils';
 import './PublicRegistryPage.css';
 
 const PublicRegistryPage = () => {
@@ -79,7 +80,7 @@ const PublicRegistryPage = () => {
     setIsPaymentModalOpen(false);
     if (pendingPayment) {
       setToastMessage(
-        `UGX ${pendingPayment.amount.toLocaleString()} contributed toward "${pendingPayment.item.name}". Thank you!`
+        `UGX ${pendingPayment.amount.toLocaleString()} contributed toward "${stripBrandFromName(pendingPayment.item.name, pendingPayment.item.brand)}". Thank you!`
       );
       setShowToast(true);
     }
@@ -315,7 +316,7 @@ const PublicRegistryPage = () => {
                     ) : (
                       <img
                         src={item.image}
-                        alt={item.name}
+                        alt={stripBrandFromName(item.name, item.brand)}
                         className="public-item-image"
                         loading="lazy"
                       />
@@ -324,7 +325,7 @@ const PublicRegistryPage = () => {
 
                   {/* Body */}
                   <div className="public-item-body" style={{ paddingBottom: 'var(--space-4)' }}>
-                    <span className="public-item-name">{item.name}</span>
+                    <span className="public-item-name">{stripBrandFromName(item.name, item.brand)}</span>
                     <span className="public-item-price">
                       UGX {item.price.toLocaleString()}
                     </span>

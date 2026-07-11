@@ -19,6 +19,41 @@
   }
 }
 
+/* ─── Onboarding Gate ────────────────────────────────────────────────────── */
+
+.onboarding-gate-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: var(--page-padding-y) var(--page-padding-x-desktop);
+}
+
+.onboarding-gate-card {
+  max-width: 480px;
+  width: 100%;
+  padding: var(--space-10);
+  background: var(--surface-container-low);
+  border-radius: var(--radius-2xl);
+}
+
+@media (max-width: 1024px) {
+  .onboarding-gate-wrapper {
+    padding: var(--page-padding-y) var(--page-padding-x-tablet);
+  }
+}
+
+@media (max-width: 768px) {
+  .onboarding-gate-wrapper {
+    min-height: 60vh;
+    padding: var(--page-padding-y) var(--page-padding-x-mobile);
+  }
+
+  .onboarding-gate-card {
+    padding: var(--space-6);
+  }
+}
+
 /* ─── Coming Soon ────────────────────────────────────────────────────────── */
 
 .registry-coming-soon {

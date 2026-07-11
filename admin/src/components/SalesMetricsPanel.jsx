@@ -48,6 +48,23 @@ const TIER_COLORS = {
 };
 
 const CATEGORY_PALETTE = ["#d35097", "#3b7dd8", "#7fa93e", "#c9a227", "#8a63d2", "#e07a3e", "#2fb5a3"];
+const OTHER_BRAND_COLOR = "#9aa0a6";
+const MAX_BRAND_CHART_SLICES = 7;
+
+// Collapses a long tail of small brands into one "Other" bar so the chart
+// stays readable with a large catalogue - the full list still renders in the
+// Brand Breakdown table below, so no brand's numbers are actually hidden.
+function groupBrandsForChart(byBrand, maxSlices = MAX_BRAND_CHART_SLICES) {
+  if (!byBrand || byBrand.length <= maxSlices) return byBrand || [];
+  const top = byBrand.slice(0, maxSlices - 1);
+  const rest = byBrand.slice(maxSlices - 1);
+  const otherRevenue = rest.reduce((sum, b) => sum + b.revenue, 0);
+  const otherUnits = rest.reduce((sum, b) => sum + b.unitsSold, 0);
+  return [
+    ...top,
+    { key: "__other__", label: `Other (${rest.length} brands)`, unitsSold: otherUnits, revenue: otherRevenue },
+  ];
+}
 
 const PAYMENT_FILTERS = [
   { value: "all", label: "All" },
@@ -97,6 +114,7 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
   const [customEnd, setCustomEnd] = useState(todayStr);
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
   const [channelFilter, setChannelFilter] = useState("all");
+  const [brandFilter, setBrandFilter] = useState("all");
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [selectedChannel, setSelectedChannel] = useState(null);
 
@@ -141,7 +159,13 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
     token,
     startDate,
     endDate,
+    brand: brandFilter === "all" ? undefined : brandFilter,
   });
+
+  const brandChartData = useMemo(
+    () => groupBrandsForChart(productAnalytics?.byBrand),
+    [productAnalytics]
+  );
 
   return (
     <div className="admin-tab-panel is-active">
@@ -209,6 +233,24 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
             </button>
           ))}
         </div>
+
+        {productAnalytics?.byBrand?.length > 0 && (
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label" style={{ fontSize: "11px" }}>Brand</label>
+            <select
+              className="form-input"
+              value={brandFilter}
+              onChange={(e) => setBrandFilter(e.target.value)}
+            >
+              <option value="all">All Brands</option>
+              {[...productAnalytics.byBrand]
+                .sort((a, b) => a.label.localeCompare(b.label))
+                .map((b) => (
+                  <option key={b.key} value={b.key}>{b.label}</option>
+                ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {metrics === undefined ? (
@@ -465,6 +507,28 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
+
+                {brandChartData.length > 0 && (
+                  <div className="sales-metrics-chart-card">
+                    <h3 className="product-edit-card-title">Revenue by Brand</h3>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={brandChartData} layout="vertical" margin={{ left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-container-high)" />
+                        <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => v.toLocaleString()} />
+                        <YAxis type="category" dataKey="label" tick={{ fontSize: 10 }} width={160} />
+                        <Tooltip formatter={(value) => `UGX ${Number(value).toLocaleString()}`} />
+                        <Bar dataKey="revenue">
+                          {brandChartData.map((entry, i) => (
+                            <Cell
+                              key={entry.key}
+                              fill={entry.key === "__other__" ? OTHER_BRAND_COLOR : CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               <div className="section-header">
@@ -498,6 +562,39 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
                   </tbody>
                 </table>
               </div>
+
+              {productAnalytics.byBrand.length > 0 && (
+                <>
+                  <div className="section-header">
+                    <h2 className="section-title">Brand Breakdown</h2>
+                  </div>
+                  <div className="table-wrap">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Brand</th>
+                          <th>Units Sold</th>
+                          <th>Revenue</th>
+                          <th>% of Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const totalBrandRevenue = productAnalytics.byBrand.reduce((sum, b) => sum + b.revenue, 0);
+                          return productAnalytics.byBrand.map((b) => (
+                            <tr key={b.key}>
+                              <td><strong>{b.label}</strong></td>
+                              <td>{b.unitsSold}</td>
+                              <td>UGX {b.revenue.toLocaleString()}</td>
+                              <td>{totalBrandRevenue > 0 ? Math.round((b.revenue / totalBrandRevenue) * 100) : 0}%</td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </>
           )}
         </>

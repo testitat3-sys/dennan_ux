@@ -105,6 +105,10 @@ export default defineSchema({
     accountRole: v.optional(v.union(v.literal("staff"), v.literal("admin"), v.literal("accounting"), v.literal("stockManager"))),
     customerNotes: v.optional(v.string()),
     isWalkIn: v.optional(v.boolean()),
+    // Free-form dictionary for tagging account-level facts that don't warrant
+    // their own column. Every key ever written here must be documented in
+    // docs/user-details-schema.md.
+    details: v.optional(v.record(v.string(), v.string())),
   })
     .index("email", ["email"])
     .index("by_accountRole", ["accountRole"]),
@@ -206,6 +210,14 @@ export default defineSchema({
     unitsSold: v.optional(v.number()),
     actual_data: v.boolean(), // Now strictly required in Phase 3
 
+    /**
+     * Last-write timestamp, stamped by every mutation that patches a product
+     * (including stock deduction on order fulfillment). Powers incremental
+     * "what changed since X" sync for the offline POS product cache - see
+     * getProductsUpdatedSince in convex/products.ts.
+     */
+    updatedAt: v.optional(v.number()),
+
     // ==========================================
     // NEW LOGISTICS & REFILL AUTOMATION FIELDS
     // ==========================================
@@ -249,6 +261,7 @@ export default defineSchema({
     .index("by_stage_and_tier", ["stage", "tier"])
     .index("by_category_tier_stage", ["category", "tier", "stage"])
     .index("by_sku", ["sku"])
+    .index("by_updatedAt", ["updatedAt"])
     .searchIndex("search_name", { searchField: "name" }),
 
   // ─── Product Reviews ─────────────────────────────────────────────────────────
@@ -365,6 +378,8 @@ export default defineSchema({
     productId: v.id("products"),
     /** True if user bookmarked when item was out of stock or explicitly subscribed to alerts */
     notifyBackInStock: v.optional(v.boolean()),
+    /** Unix timestamp (ms) when a back-in-stock email was last sent for the current restock; cleared when inventory drops back to 0 */
+    notifiedAt: v.optional(v.number()),
     /** Unix timestamp (ms) when the item was added */
     addedAt: v.number(),
   })
@@ -535,9 +550,12 @@ export default defineSchema({
     note: v.optional(v.string()),
     cardOrderId: v.optional(v.string()),
     receiptNumber: v.optional(v.string()), // Human-readable receipt number (walk-in orders)
+    receiptSentAt: v.optional(v.number()), // set once the email receipt has been sent, prevents duplicate sends
     channel: v.optional(
       v.union(v.literal("online"), v.literal("walk_in"), v.literal("whatsapp"))
     ),
+    /** Client-generated id for walk-in orders placed via the offline POS queue (admin/src/lib/offlineDb.js). Lets createPhysicalOrder detect and no-op a resubmitted sync instead of creating a duplicate order + stock decrement. */
+    offlineOrderId: v.optional(v.string()),
 
     /** Freeform, append-only classification tags — see convex/attributes.ts and convex/ATTRIBUTES.md. */
     attributes: v.optional(
@@ -551,7 +569,8 @@ export default defineSchema({
     ),
   }).index("by_user", ["userId"])
     .index("by_claimedBy", ["claimedBy"])
-    .index("by_createdAt", ["createdAt"]),
+    .index("by_createdAt", ["createdAt"])
+    .index("by_offlineOrderId", ["offlineOrderId"]),
 
   orderItems: defineTable({
     orderId: v.id("orders"),
@@ -601,6 +620,34 @@ export default defineSchema({
     specifications: v.optional(v.array(v.string())),
     createdAt: v.number(),
   }).index("by_user", ["userId"]).index("by_email", ["email"]),
+
+  storeRequests: defineTable({
+    userId: v.optional(v.id("users")),
+    firstName: v.string(),
+    lastName: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    // Matches products.stage, not registryNotifySignups' 4-value enum.
+    stage: v.optional(
+      v.union(v.literal("mother"), v.literal("newborn"), v.literal("kid"))
+    ),
+    itemDescription: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]).index("by_email", ["email"]),
+
+  referralSources: defineTable({
+    userId: v.optional(v.id("users")),
+    orderId: v.optional(v.id("orders")),
+    source: v.union(
+      v.literal("tiktok"),
+      v.literal("instagram"),
+      v.literal("friend"),
+      v.literal("google"),
+      v.literal("other")
+    ),
+    otherDetail: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]).index("by_order", ["orderId"]),
 
   registryItems: defineTable({
     registryId: v.id("registries"),

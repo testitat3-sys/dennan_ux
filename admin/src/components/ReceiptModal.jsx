@@ -93,6 +93,11 @@ export default function ReceiptModal({ receipt, onClose }) {
             <h2>DENNAN</h2>
             <p className="receipt-location">Ntinda Complex GF-02 · 0784 733314</p>
             <p className="receipt-location">MM Plaza L-01 · 0786 690058</p>
+            {receipt.pendingSync && (
+              <p style={{ fontWeight: 700, color: "#b45309", marginTop: 4 }}>
+                RECORDED OFFLINE — PENDING SYNC
+              </p>
+            )}
           </div>
 
           <div className="divider-dots" />

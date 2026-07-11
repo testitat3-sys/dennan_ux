@@ -15,6 +15,12 @@ import Toast from "../components/Toast";
 import LiveTimer from "../components/LiveTimer";
 import { useToast } from "../hooks/useToast";
 import { useNewOrderNotifications } from "../hooks/useNewOrderNotifications";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import { useOfflineProducts } from "../hooks/useOfflineProducts";
+import { useOfflineOrderSync } from "../hooks/useOfflineOrderSync";
+import { addPendingOrder, listPendingOrders } from "../lib/offlineDb";
+import OfflineBanner from "../components/OfflineBanner";
+import CatalogDownloadBanner from "../components/CatalogDownloadBanner";
 import { getTodayStr } from "../utils/reminderHelpers";
 import sosLogo from "../assets/SOS.png";
 import profileImg from "../assets/about-dennan.png";
@@ -44,9 +50,18 @@ import {
   Package
 } from "lucide-react";
 
+const LAST_TAB_KEY = "dennan_staff_last_tab";
+
 export default function StaffDashboard() {
   const { user, token, logout } = useStaffAuth();
-  const [activeTab, setActiveTab] = useState("orders");
+  const [activeTab, setActiveTabState] = useState(
+    () => localStorage.getItem(LAST_TAB_KEY) || "orders"
+  );
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    localStorage.setItem(LAST_TAB_KEY, tab);
+  };
+  const isOnline = useOnlineStatus();
   const [ordersTab, setOrdersTab] = useState("pending");
 
   // Modals state
@@ -150,13 +165,87 @@ export default function StaffDashboard() {
   };
 
   // --- TAB 2: WALK-IN POS ---
-  // Only subscribe once the POS tab is actually opened, since this pulls the
-  // full product catalog and stays live-subscribed for the rest of the session.
-  const posProducts = useQuery(
-    api.products.getProductsForPOS,
-    activeTab === "pos" ? { token } : "skip"
-  );
+  // Product catalog is downloaded once per device and cached in IndexedDB,
+  // then kept fresh via delta syncs on reconnect - see useOfflineProducts.
+  // This also means the POS grid still renders (from cache) with no
+  // connection at all.
+  const {
+    products: posProducts,
+    isSyncing: isPosCatalogSyncing,
+    needsBootstrap: catalogNeedsBootstrap,
+    requestBootstrap: requestCatalogBootstrap,
+    refreshBootstrapStatus: refreshCatalogBootstrapStatus,
+  } = useOfflineProducts(token);
   const createPhysicalOrderMutation = useMutation(api.orders.createPhysicalOrder);
+  // Reserves stock against not-yet-synced offline sales so a second offline
+  // sale of the same product can't oversell the cached inventory figure.
+  // Rebuilt from IndexedDB on mount (see effect below) so a page reload while
+  // orders are still pending doesn't silently forget the reservation, and
+  // trimmed per-order as each queued sale actually syncs (onOrderSynced
+  // below) so it doesn't keep double-subtracting once real inventory catches up.
+  const [offlineStockReservations, setOfflineStockReservations] = useState({});
+  const handleOfflineOrderSynced = React.useCallback((order) => {
+    const items = order?.payload?.items;
+    if (!items || items.length === 0) return;
+    setOfflineStockReservations(prev => {
+      const next = { ...prev };
+      for (const item of items) {
+        const remaining = (next[item.productId] || 0) - item.quantity;
+        if (remaining > 0) {
+          next[item.productId] = remaining;
+        } else {
+          delete next[item.productId];
+        }
+      }
+      return next;
+    });
+  }, []);
+  const { pendingCount, failedOrders: failedOfflineOrders } = useOfflineOrderSync(
+    token,
+    createPhysicalOrderMutation,
+    isOnline,
+    handleOfflineOrderSynced
+  );
+  // Rebuild reservations from the IndexedDB queue truth on mount, rather than
+  // starting from {} - otherwise a reload while offline sales are still
+  // pending/failed silently reopens the oversell window they were guarding.
+  React.useEffect(() => {
+    (async () => {
+      const all = await listPendingOrders();
+      const reservations = {};
+      for (const order of all) {
+        if (order.status !== "pending" && order.status !== "failed") continue;
+        for (const item of order.payload?.items || []) {
+          reservations[item.productId] = (reservations[item.productId] || 0) + item.quantity;
+        }
+      }
+      setOfflineStockReservations(reservations);
+    })();
+  }, []);
+  // Re-checks (fresh from IndexedDB, not stale React state) whether the
+  // catalog is missing every time staff open the POS tab - covers both a
+  // brand-new device and a mid-session IndexedDB eviction.
+  const [catalogPromptDismissed, setCatalogPromptDismissed] = useState(false);
+  React.useEffect(() => {
+    if (activeTab === "pos") {
+      setCatalogPromptDismissed(false);
+      refreshCatalogBootstrapStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const handleDownloadCatalog = async () => {
+    setCatalogPromptDismissed(true);
+    showToast("Downloading product catalog…", "info");
+    const result = await requestCatalogBootstrap();
+    if (result.success) {
+      showToast("Product catalog ready for offline use.", "success");
+    } else {
+      showToast("Couldn't download the catalog — try again.", "error");
+      setCatalogPromptDismissed(false);
+    }
+  };
+
   const staffRoster = useQuery(api.staffAuth.getStaffRoster, { token });
 
   const [posSearch, setPosSearch] = useState("");
@@ -212,17 +301,27 @@ export default function StaffDashboard() {
     return prices.length > 0 ? Math.max(...prices) : (product.price || 0);
   };
 
+  // Subtracts stock already reserved by not-yet-synced offline sales, so a
+  // second offline sale of the same product can't oversell the cached
+  // inventory figure. A no-op once everything's synced (reservations clear).
+  const getEffectiveInventory = (product) => {
+    if (!product || product.inventory === undefined) return undefined;
+    const reserved = offlineStockReservations[product._id] || 0;
+    return Math.max(0, product.inventory - reserved);
+  };
+
   const addToCart = (product) => {
+    const availableInventory = getEffectiveInventory(product);
     setCart(prev => {
       const existing = prev.find(item => item.id === product._id);
       if (existing) {
-        if (product.inventory !== undefined && existing.quantity >= product.inventory) {
-          alert(`Cannot add more. Only ${product.inventory} available in stock.`);
+        if (availableInventory !== undefined && existing.quantity >= availableInventory) {
+          alert(`Cannot add more. Only ${availableInventory} available in stock.`);
           return prev;
         }
         return prev.map(item => item.id === product._id ? { ...item, quantity: item.quantity + 1 } : item);
       }
-      return [...prev, { id: product._id, name: product.name, price: getOriginalPrice(product), quantity: 1, inventory: product.inventory }];
+      return [...prev, { id: product._id, name: product.name, price: getOriginalPrice(product), quantity: 1, inventory: availableInventory }];
     });
   };
 
@@ -306,6 +405,18 @@ export default function StaffDashboard() {
     }
     if (scheduleReminder && !reminderNote.trim()) {
       setCheckoutError("Please describe the reminder.");
+      return;
+    }
+
+    // Vouchers require live balance/expiry validation on the server, which
+    // can't be safely replicated offline - block them rather than risk
+    // issuing/redeeming a voucher the server later can't honor.
+    if (!isOnline && voucherCartItems.length > 0) {
+      setCheckoutError("Gift vouchers require a connection. Remove them to complete this sale offline.");
+      return;
+    }
+    if (!isOnline && tenders.some(t => t.method === "voucher")) {
+      setCheckoutError("Voucher tenders require a connection. Choose cash, MoMo, or card to complete this sale offline.");
       return;
     }
 
@@ -397,8 +508,12 @@ export default function StaffDashboard() {
         recipientEmail: item.recipientEmail || undefined
       }));
 
-      const result = await createPhysicalOrderMutation({
-        token,
+      // Generated up front (not just for the offline path) so the same id is both
+      // the IndexedDB queue key and the server-side idempotency key - see
+      // createPhysicalOrder's offlineOrderId handling in convex/orders.ts.
+      const offlineOrderId = crypto.randomUUID();
+
+      const orderPayload = {
         customerName: posCustomer.name.trim(),
         phone: posCustomer.phone.trim() || undefined,
         email: posCustomer.email.trim() || undefined,
@@ -419,17 +534,42 @@ export default function StaffDashboard() {
         channel: saleChannel,
         deliveryFee: saleChannel === "whatsapp" ? posDeliveryFee : undefined,
         deliveryLocation: saleChannel === "whatsapp" ? (deliveryLocation.trim() || undefined) : undefined,
-      });
+        offlineOrderId,
+      };
 
-      setIssuedVouchers(result.issuedVouchers || []);
+      let orderId, receiptNumber, issuedVouchersResult;
+
+      if (isOnline) {
+        const result = await createPhysicalOrderMutation({ token, ...orderPayload });
+        orderId = result.orderId;
+        receiptNumber = result.receiptNumber;
+        issuedVouchersResult = result.issuedVouchers || [];
+      } else {
+        // No connection: queue the sale locally (drained automatically once
+        // back online, see useOfflineOrderSync) instead of blocking checkout.
+        const pending = await addPendingOrder(orderPayload, offlineOrderId);
+        setOfflineStockReservations(prev => {
+          const next = { ...prev };
+          for (const item of cart) {
+            next[item.id] = (next[item.id] || 0) + item.quantity;
+          }
+          return next;
+        });
+        orderId = `pending-${pending.localId}`;
+        receiptNumber = `OFFLINE-${pending.localId.slice(0, 8).toUpperCase()}`;
+        issuedVouchersResult = [];
+      }
+
+      setIssuedVouchers(issuedVouchersResult);
       setCheckoutSuccess(true);
       setLastReceipt({
-        orderId: result.orderId,
-        receiptNumber: result.receiptNumber,
+        orderId,
+        receiptNumber,
         date: new Date(),
         cashier: user?.name,
         customerName: posCustomer.name.trim(),
         customerPhone: posCustomer.phone.trim(),
+        pendingSync: !isOnline,
         items: [
           ...cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
           ...voucherCartItems.map(item => ({ name: "Gift Voucher", quantity: 1, price: item.amount }))
@@ -546,6 +686,13 @@ export default function StaffDashboard() {
 
   return (
     <div className="staff-portal-body">
+      <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} failedCount={failedOfflineOrders.length} />
+      <CatalogDownloadBanner
+        show={catalogNeedsBootstrap && !catalogPromptDismissed}
+        isOnline={isOnline}
+        onDownload={handleDownloadCatalog}
+        onDismiss={() => setCatalogPromptDismissed(true)}
+      />
       <div className="admin-layout">
         {/* Sidebar Navigation */}
         <aside className="sidebar">
@@ -573,6 +720,9 @@ export default function StaffDashboard() {
               >
                 <ShoppingCart size={18} />
                 <span>Physical Orders</span>
+                {(pendingCount > 0 || failedOfflineOrders.length > 0) && (
+                  <span className="sidebar-nav-badge">{pendingCount + failedOfflineOrders.length}</span>
+                )}
               </button>
               <button
                 className={`sidebar-nav-item ${activeTab === "history" ? "is-active" : ""}`}
@@ -737,7 +887,7 @@ export default function StaffDashboard() {
                     )}
                   </div>
 
-                  {posProducts === undefined ? (
+                  {posProducts.length === 0 && isPosCatalogSyncing ? (
                     <div className="empty-state">
                       <div className="empty-title">Loading POS database...</div>
                     </div>
@@ -772,9 +922,10 @@ export default function StaffDashboard() {
                       </button>
 
                       {filteredPosProducts.map(p => {
-                        const inStock = p.inventory === undefined || p.inventory > 0;
+                        const availableInventory = getEffectiveInventory(p);
+                        const inStock = availableInventory === undefined || availableInventory > 0;
                         const cartItem = cart.find(item => item.id === p._id);
-                        const atMax = cartItem && p.inventory !== undefined && cartItem.quantity >= p.inventory;
+                        const atMax = cartItem && availableInventory !== undefined && cartItem.quantity >= availableInventory;
                         return (
                           <button
                             key={p._id}
@@ -828,7 +979,7 @@ export default function StaffDashboard() {
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-brand-primary)" }}>UGX {getOriginalPrice(p).toLocaleString()}</span>
                               <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "20px", background: !inStock ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)", color: !inStock ? "#ef4444" : "#16a34a" }}>
-                                {p.inventory !== undefined ? (!inStock ? "Out" : `${p.inventory} left`) : "In Stock"}
+                                {availableInventory !== undefined ? (!inStock ? "Out" : `${availableInventory} left`) : "In Stock"}
                               </span>
                             </div>
                             {cartItem && (

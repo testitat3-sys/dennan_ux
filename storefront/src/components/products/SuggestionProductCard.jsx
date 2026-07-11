@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import ProductCardSkeleton from './ProductCardSkeleton';
+import { stripBrandFromName } from '../../utils/productNameUtils';
 import { Plus } from 'lucide-react';
 
 const SuggestionProductCard = ({ product, onAddToRegistry, isGridItem = false }) => {
@@ -11,6 +12,7 @@ const SuggestionProductCard = ({ product, onAddToRegistry, isGridItem = false })
 
   const { image, name, price, wasPrice, brand, tags, unitsSold } = product;
   const id = product.id || product._id;
+  const displayName = stripBrandFromName(name, brand);
 
   if (!imageLoaded && !imageError) {
     return (
@@ -36,7 +38,7 @@ const SuggestionProductCard = ({ product, onAddToRegistry, isGridItem = false })
       <Card.Header>
         <Link to={`/product/${id}`} className="product-card__image-link" style={{ display: 'block', height: '180px', borderRadius: 'var(--radius-md)', overflow: 'hidden', position: 'relative' }}>
           <div className="product-card__image" style={{ height: '100%' }}>
-            <img src={image} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={image} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div className="product-card__tags">
               {unitsSold !== undefined && unitsSold > 0 && (
                 <span className="tag tag--sales">
@@ -58,7 +60,7 @@ const SuggestionProductCard = ({ product, onAddToRegistry, isGridItem = false })
         <div>
           <span className="product-card__tier" style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>{brand || product.brand}</span>
           <Link to={`/product/${id}`} className="product-card__name-link">
-            <h3 className="product-card__name" style={{ fontSize: '0.95rem', height: '36px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginTop: '2px', lineHeight: '1.2' }}>{name}</h3>
+            <h3 className="product-card__name" style={{ fontSize: '0.95rem', height: '36px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginTop: '2px', lineHeight: '1.2' }}>{displayName}</h3>
           </Link>
           <div className="product-card__price-row" style={{ marginTop: 'var(--space-1)', display: 'flex', gap: 'var(--space-2)' }}>
             <span className="product-card__price" style={{ fontSize: '0.95rem', fontWeight: '700' }}>UGX {price.toLocaleString()}</span>
