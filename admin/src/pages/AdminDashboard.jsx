@@ -16,6 +16,8 @@ import StockManagerPanel from "../components/StockManagerPanel";
 import DiscountsPanel from "../components/DiscountsPanel";
 import ProductSalesPanel from "../components/ProductSalesPanel";
 import OnlineOrdersPanel from "../components/OnlineOrdersPanel";
+import ErrorLogSettingsPanel from "../components/ErrorLogSettingsPanel";
+import LeadsPanel from "../components/LeadsPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import sosLogo from "../assets/SOS.png";
 import profileImg from "../assets/about-dennan.png";
@@ -37,7 +39,9 @@ import {
   History,
   ClipboardList,
   Search,
-  Package
+  Package,
+  Settings,
+  Inbox
 } from "lucide-react";
 
 const LAST_TAB_KEY = "dennan_admin_last_tab";
@@ -87,6 +91,10 @@ export default function AdminDashboard() {
   // Customer List
   const customerList = useQuery(api.customerActivities.getCustomerList, { token });
   const [customerSearch, setCustomerSearch] = useState("");
+
+  // Leads (store requests + back-in-stock signups)
+  const leadsList = useQuery(api.leads.getLeads, { token });
+  const unresolvedLeadsCount = leadsList?.filter((l) => l.status !== "resolved").length || 0;
 
   const initials = (user?.name || "?")
     .split(" ")
@@ -191,6 +199,16 @@ export default function AdminDashboard() {
                 <span>Customers</span>
               </button>
               <button
+                className={`sidebar-nav-item ${activeTab === "leads" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("leads")}
+              >
+                <Inbox size={18} />
+                <span>Leads</span>
+                {unresolvedLeadsCount > 0 && (
+                  <span className="sidebar-nav-badge">{unresolvedLeadsCount}</span>
+                )}
+              </button>
+              <button
                 className={`sidebar-nav-item ${activeTab === "calendar" ? "is-active" : ""}`}
                 onClick={() => setActiveTab("calendar")}
               >
@@ -206,6 +224,17 @@ export default function AdminDashboard() {
               >
                 <UserCheck size={18} />
                 <span>Staff Roster</span>
+              </button>
+            </div>
+
+            <div className="sidebar-nav-group">
+              <span className="sidebar-nav-group-label">System</span>
+              <button
+                className={`sidebar-nav-item ${activeTab === "settings" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("settings")}
+              >
+                <Settings size={18} />
+                <span>Settings</span>
               </button>
             </div>
           </nav>
@@ -443,6 +472,11 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* TAB: LEADS (store requests + back-in-stock signups) */}
+          {activeTab === "leads" && (
+            <LeadsPanel token={token} />
+          )}
+
           {/* TAB: ORDER HISTORY (all orders, admin-wide) */}
           {activeTab === "history" && (
             <OrderHistoryPanel token={token} onOpenOrder={setViewingOrder} />
@@ -461,6 +495,11 @@ export default function AdminDashboard() {
           {/* TAB 8: RETURNS APPROVAL */}
           {activeTab === "returns" && (
             <ReturnsPanel token={token} />
+          )}
+
+          {/* TAB 9: SETTINGS */}
+          {activeTab === "settings" && (
+            <ErrorLogSettingsPanel token={token} />
           )}
         </main>
       </div>

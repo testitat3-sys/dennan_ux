@@ -1,63 +1,45 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@convex/_generated/api";
 import { X, RotateCcw, AlertTriangle, Search, Minus, Plus } from "lucide-react";
 import { useOfflineProducts } from "../hooks/useOfflineProducts";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import CatalogDownloadBanner from "./CatalogDownloadBanner";
 
 /**
- * Exchange-only returns flow: customers never receive a cash refund. They
- * must pick replacement product(s) — topping up if the exchange is pricier
- * than what they returned, or forfeiting any leftover value if it's cheaper.
+ * Resolves an already-pending return by trading it for replacement
+ * product(s) — the "later" counterpart to ReturnProcessModal, which bundles
+ * exchange selection into the initial return submission. No cash refunds:
+ * customer tops up if the trade is pricier, or forfeits leftover value if
+ * it's cheaper.
  */
-export default function ExchangeModal({ order, token, onClose, onSubmit }) {
-  const [returnQuantities, setReturnQuantities] = useState({});
+export default function TradeReturnModal({ ret, token, onClose, onSubmit }) {
   const [exchangeCart, setExchangeCart] = useState([]);
   const [exchangeSearch, setExchangeSearch] = useState("");
   const [topUpMethod, setTopUpMethod] = useState("physical");
   const [topUpMomoPhone, setTopUpMomoPhone] = useState("");
   const [topUpCardOrderId, setTopUpCardOrderId] = useState("");
-  const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
+  const order = useQuery(api.orders.getOrderDetailById, { token, orderId: ret.orderId });
   const isOnline = useOnlineStatus();
   const { products, isSyncing, needsBootstrap, requestBootstrap } = useOfflineProducts(token);
 
-  useEffect(() => {
-    if (order && order.items) {
-      const initial = {};
-      order.items.forEach(item => {
-        initial[item.productId] = 0;
-      });
-      setReturnQuantities(initial);
-    }
-  }, [order]);
-
-  const handleQuantityChange = (productId, val, max) => {
-    const parsed = parseInt(val) || 0;
-    const clamped = Math.max(0, Math.min(max, parsed));
-    setReturnQuantities(prev => ({
-      ...prev,
-      [productId]: clamped
-    }));
-  };
-
-  // Value of returned items, proportionally discounted like the original order —
-  // mirrors the server-side calc in returns.submitExchange.
+  // Value of the return being resolved, discount-adjusted the same way the
+  // server (attachExchangeToReturn) will compute it once the order loads.
   const returnedTotal = useMemo(() => {
-    if (!order || !order.items) return 0;
-    let suggested = 0;
-    order.items.forEach(item => {
-      const qty = returnQuantities[item.productId] || 0;
-      suggested += qty * item.unitPrice;
-    });
-    if (order.subtotal > 0 && order.discountAmount > 0) {
-      const discountPercentage = order.discountAmount / order.subtotal;
-      suggested = Math.round(suggested * (1 - discountPercentage));
+    let raw = 0;
+    for (const item of ret.items) {
+      raw += item.quantity * item.unitPrice;
     }
-    return suggested;
-  }, [returnQuantities, order]);
+    if (order && order.subtotal > 0 && order.discountAmount > 0) {
+      const discountPercentage = order.discountAmount / order.subtotal;
+      raw = Math.round(raw * (1 - discountPercentage));
+    }
+    return raw;
+  }, [ret.items, order]);
 
   const getOriginalPrice = (product) => {
     if (!product) return 0;
@@ -113,15 +95,6 @@ export default function ExchangeModal({ order, token, onClose, onSubmit }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const returnedItems = Object.entries(returnQuantities)
-      .map(([productId, quantity]) => ({ productId, quantity }))
-      .filter(item => item.quantity > 0);
-
-    if (returnedItems.length === 0) {
-      setError("Please select at least one item and quantity to return.");
-      return;
-    }
-
     if (exchangeCart.length === 0) {
       setError("Please select at least one replacement product for the exchange.");
       return;
@@ -140,8 +113,7 @@ export default function ExchangeModal({ order, token, onClose, onSubmit }) {
     setIsSubmitting(true);
 
     const success = await onSubmit({
-      orderId: order._id,
-      returnedItems,
+      returnId: ret.returnId,
       exchangeItems: exchangeCart.map(item => ({ productId: item.productId, quantity: item.quantity })),
       topUp: topUpRequired > 0 ? {
         method: topUpMethod,
@@ -149,23 +121,20 @@ export default function ExchangeModal({ order, token, onClose, onSubmit }) {
         momoPhone: topUpMethod === "momo" ? topUpMomoPhone.trim() : undefined,
         cardOrderId: (topUpMethod === "momo" || topUpMethod === "card") ? topUpCardOrderId.trim() : undefined,
       } : undefined,
-      note: note.trim() || undefined
     });
 
     setIsSubmitting(false);
     if (!success) {
-      setError("Failed to process exchange. Ensure quantities do not exceed original order and stock is sufficient.");
+      setError("Failed to process trade. Ensure stock is sufficient.");
     }
   };
-
-  if (!order) return null;
 
   return (
     <div className="modal-overlay is-open">
       <div className="modal" style={{ maxWidth: "760px" }}>
         <div className="modal-header">
           <div>
-            <h2 className="modal-title">Process Exchange</h2>
+            <h2 className="modal-title">Resolve Return — Trade</h2>
             <span className="modal-subtitle">No cash refunds — customer must take a replacement product</span>
           </div>
           <button className="modal-close" onClick={onClose}>
@@ -182,40 +151,23 @@ export default function ExchangeModal({ order, token, onClose, onSubmit }) {
           )}
 
           <div className="section-header">
-            <h3 className="section-title">Step 1 — Items Being Returned</h3>
+            <h3 className="section-title">Items Being Returned</h3>
           </div>
           <div className="table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
                   <th>Product</th>
-                  <th>Ordered Qty</th>
+                  <th>Qty</th>
                   <th>Unit Price</th>
-                  <th style={{ width: "120px" }}>Return Qty</th>
                 </tr>
               </thead>
               <tbody>
-                {order.items?.map((item, idx) => (
-                  <tr key={idx}>
-                    <td className="item-name">
-                      {item.productName}
-                      {item.size && <div>Size: {item.size}</div>}
-                    </td>
+                {ret.items.map((item) => (
+                  <tr key={item._id}>
+                    <td className="item-name">{item.productName}</td>
                     <td className="item-qty">{item.quantity}</td>
                     <td>UGX {item.unitPrice.toLocaleString()}</td>
-                    <td>
-                      <input
-                        type="number"
-                        min="0"
-                        max={item.quantity}
-                        className="form-input"
-                        style={{ width: "80px" }}
-                        value={returnQuantities[item.productId] ?? 0}
-                        onChange={(e) => handleQuantityChange(item.productId, e.target.value, item.quantity)}
-                        required
-                        disabled={isSubmitting}
-                      />
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -227,7 +179,7 @@ export default function ExchangeModal({ order, token, onClose, onSubmit }) {
           </div>
 
           <div className="section-header">
-            <h3 className="section-title">Step 2 — Select Replacement Product(s)</h3>
+            <h3 className="section-title">Select Replacement Product(s)</h3>
           </div>
 
           <CatalogDownloadBanner
@@ -392,19 +344,6 @@ export default function ExchangeModal({ order, token, onClose, onSubmit }) {
             </div>
           )}
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="note">Return / Exchange Reason / Note</label>
-            <textarea
-              id="note"
-              className="form-input"
-              placeholder="e.g. Size didn't fit, customer requested exchange"
-              rows={3}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              disabled={isSubmitting}
-            />
-          </div>
-
           <div className="modal-actions">
             <button
               type="button"
@@ -420,7 +359,7 @@ export default function ExchangeModal({ order, token, onClose, onSubmit }) {
               disabled={isSubmitting}
             >
               {isSubmitting && <span className="btn-spinner" />}
-              Process Exchange
+              Confirm Trade
               {!isSubmitting && <RotateCcw size={18} />}
             </button>
           </div>

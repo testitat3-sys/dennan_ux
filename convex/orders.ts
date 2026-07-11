@@ -1950,6 +1950,7 @@ export const adminGetSalesMetrics = query({
     endDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
     paymentMethod: v.optional(v.string()), // "physical"|"momo"|"card"|"voucher"
     channel: v.optional(v.string()), // "online"|"walk_in"|"whatsapp"
+    brand: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
@@ -1996,7 +1997,47 @@ export const adminGetSalesMetrics = query({
       ordersInRange = ordersInRange.filter((o: any) => resolveOrderChannel(o) === args.channel);
     }
 
-    // 4. Attribute tenders per order, applying the payment-method filter (if any)
+    // 3b. When a brand filter is active, orders don't have a single brand
+    // (they can mix line items from several brands), so compute what
+    // fraction of each order's item revenue belongs to the selected brand
+    // and use that as a proration ratio for tenders below. Orders with none
+    // of the selected brand are dropped entirely.
+    let brandRatioByOrderId: Map<string, number> | null = null;
+    if (args.brand) {
+      const productBrandCache = new Map<string, string | undefined>();
+      const getProductBrand = async (productId: any) => {
+        const key = productId.toString();
+        if (!productBrandCache.has(key)) {
+          const product = await ctx.db.get(productId);
+          productBrandCache.set(key, product?.brand);
+        }
+        return productBrandCache.get(key);
+      };
+
+      brandRatioByOrderId = new Map();
+      for (const order of ordersInRange) {
+        const items = await ctx.db
+          .query("orderItems")
+          .withIndex("by_order", (q) => q.eq("orderId", order._id))
+          .collect();
+        let itemsRevenue = 0;
+        let brandRevenue = 0;
+        for (const item of items) {
+          const revenue = item.unitPrice * item.quantity;
+          itemsRevenue += revenue;
+          const brand = await getProductBrand(item.productId);
+          if (brand === args.brand) brandRevenue += revenue;
+        }
+        if (brandRevenue > 0 && itemsRevenue > 0) {
+          brandRatioByOrderId.set(order._id.toString(), brandRevenue / itemsRevenue);
+        }
+      }
+      ordersInRange = ordersInRange.filter((o: any) => brandRatioByOrderId!.has(o._id.toString()));
+    }
+
+    // 4. Attribute tenders per order, applying the payment-method filter (if
+    // any) and, when a brand is selected, prorating each tender by that
+    // order's brand-revenue ratio so multi-brand orders don't over-count.
     const computeAggregate = (orders: any[]) => {
       const byMethodMap = new Map<string, { method: string; amount: number; count: number }>();
       const byChannelMap = new Map<string, { channel: string; amount: number; count: number }>();
@@ -2010,17 +2051,21 @@ export const adminGetSalesMetrics = query({
         }
         if (tenders.length === 0) continue;
 
+        const ratio = brandRatioByOrderId ? brandRatioByOrderId.get(order._id.toString()) ?? 0 : 1;
+        if (ratio === 0) continue;
+
         distinctOrderIds.add(order._id.toString());
         let orderAmount = 0;
         for (const t of tenders) {
-          totalSales += t.amount;
-          orderAmount += t.amount;
+          const amount = t.amount * ratio;
+          totalSales += amount;
+          orderAmount += amount;
           const existing = byMethodMap.get(t.method);
           if (existing) {
-            existing.amount += t.amount;
+            existing.amount += amount;
             existing.count += 1;
           } else {
-            byMethodMap.set(t.method, { method: t.method, amount: t.amount, count: 1 });
+            byMethodMap.set(t.method, { method: t.method, amount, count: 1 });
           }
         }
 
@@ -2041,11 +2086,15 @@ export const adminGetSalesMetrics = query({
 
     // 4b. Merge exchange top-up revenue (recorded on `returns`, not
     // `orderPayments` — see returns.submitExchange) into totals so it counts
-    // as real sales, while staying separately trackable for auditing.
-    const returnsInRange = await ctx.db
-      .query("returns")
-      .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
-      .collect();
+    // as real sales, while staying separately trackable for auditing. Skipped
+    // entirely when brand-filtered: a top-up isn't tied to any specific
+    // brand's line items, so it can't be prorated meaningfully.
+    const returnsInRange = args.brand
+      ? []
+      : await ctx.db
+          .query("returns")
+          .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
+          .collect();
     const exchangeTopUps = returnsInRange.filter((r: any) => (r.topUpAmount ?? 0) > 0);
 
     let exchangeTopUpRevenue = 0;
@@ -2194,16 +2243,15 @@ export const adminGetProductAnalytics = query({
     for (const [key, agg] of productAgg.entries()) {
       const product = await ctx.db.get(agg.productId);
 
-      // Brand grouping is always computed, unfiltered, so the comparison
-      // chart and this query's own filter dropdown reflect every brand sold
-      // in range regardless of which brand (if any) args.brand narrows to.
+      if (args.brand && product?.brand !== args.brand) continue;
+
+      // Brand grouping respects the same filter as everything else below,
+      // so byBrand only ever contains the selected brand once one is chosen.
       const brandKey = product?.brand || "Unknown";
       const brandEntry = byBrandMap.get(brandKey) || { key: brandKey, label: brandKey, unitsSold: 0, revenue: 0 };
       brandEntry.unitsSold += agg.unitsSold;
       brandEntry.revenue += agg.revenue;
       byBrandMap.set(brandKey, brandEntry);
-
-      if (args.brand && product?.brand !== args.brand) continue;
 
       const name = product?.name || "Unknown Product";
       const costPrice = product?.costPrice;

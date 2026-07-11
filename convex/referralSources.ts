@@ -14,6 +14,7 @@ export const submitReferralSource = mutation({
       v.literal("instagram"),
       v.literal("friend"),
       v.literal("google"),
+      v.literal("chatgpt"),
       v.literal("other")
     ),
     otherDetail: v.optional(v.string()),

@@ -7,7 +7,13 @@ import { DownloadCloud, X } from "lucide-react";
  * download itself runs in the background once triggered - this banner
  * never blocks any tab.
  */
-export default function CatalogDownloadBanner({ show, isOnline, onDownload, onDismiss }) {
+export default function CatalogDownloadBanner({
+  show,
+  isOnline,
+  onDownload,
+  onDismiss,
+  message = "Product catalog isn't downloaded on this device — offline walk-in sales won't work until this finishes.",
+}) {
   if (!show) return null;
 
   return (
@@ -26,7 +32,7 @@ export default function CatalogDownloadBanner({ show, isOnline, onDownload, onDi
     >
       <DownloadCloud size={15} />
       <span style={{ flex: 1 }}>
-        Product catalog isn't downloaded on this device — offline walk-in sales won't work until this finishes.
+        {message}
         {!isOnline && " Requires a connection."}
       </span>
       <button

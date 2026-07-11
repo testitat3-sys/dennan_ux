@@ -23,7 +23,7 @@ export const upload = mutation({
         }
 
         // Otherwise patch it
-        await ctx.db.patch(existing._id, p as any);
+        await ctx.db.patch(existing._id, { ...p, updatedAt: Date.now() } as any);
         updated++;
       } else {
         // Fallback to checking by slug
@@ -37,10 +37,10 @@ export const upload = mutation({
             skipped++;
             continue;
           }
-          await ctx.db.patch(existingBySlug._id, p as any);
+          await ctx.db.patch(existingBySlug._id, { ...p, updatedAt: Date.now() } as any);
           updated++;
         } else {
-          await ctx.db.insert("products", p as any);
+          await ctx.db.insert("products", { ...p, updatedAt: Date.now() } as any);
           added++;
         }
       }

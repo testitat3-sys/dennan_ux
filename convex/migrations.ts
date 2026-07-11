@@ -1,4 +1,6 @@
 import { mutation } from "./_generated/server";
+import { v } from "convex/values";
+import { api } from "./_generated/api";
 
 // Category mapping helper to convert legacy category strings to their strict union equivalents
 const CATEGORY_MAP: Record<string, string> = {
@@ -158,5 +160,94 @@ export const backfillLegacyUsers = mutation({
 
     console.log(`[migrations.ts] Successfully backfilled ${updatedCount} users.`);
     return { success: true, totalFound: users.length, updatedCount };
+  }
+});
+
+/**
+ * Migration Mutation: Backfills `updatedAt` on products missing it (mainly
+ * rows created/patched via the ERP webhook ingestion path, which never
+ * stamped it). Without `updatedAt`, a product can never satisfy the
+ * getProductsUpdatedSince delta-sync query's `.gt("updatedAt", since)`
+ * check, so it's permanently invisible to the offline POS/exchange product
+ * cache after the device's first bootstrap - this backfill makes every
+ * affected product eligible again on the next sync.
+ */
+export const backfillProductUpdatedAt = mutation({
+  args: { cursor: v.optional(v.union(v.string(), v.null())) },
+  handler: async (ctx, args) => {
+    // Batched + self-scheduling: the products table is large enough (5000+
+    // rows) that a single .collect() over all of it exceeds Convex's
+    // per-execution read limit.
+    const BATCH_SIZE = 200;
+    const result = await ctx.db
+      .query("products")
+      .paginate({ numItems: BATCH_SIZE, cursor: args.cursor ?? null });
+
+    let updatedCount = 0;
+    for (const product of result.page) {
+      if (product.updatedAt === undefined) {
+        await ctx.db.patch(product._id, { updatedAt: product._creationTime });
+        updatedCount++;
+      }
+    }
+
+    console.log(
+      `[migrations.ts] backfillProductUpdatedAt: updated ${updatedCount} of ${result.page.length} scanned this batch${result.isDone ? " (final batch)" : ""}.`
+    );
+
+    if (!result.isDone) {
+      await ctx.scheduler.runAfter(0, api.migrations.backfillProductUpdatedAt, {
+        cursor: result.continueCursor,
+      });
+    }
+
+    return { batchScanned: result.page.length, batchUpdated: updatedCount, isDone: result.isDone };
+  }
+});
+
+/**
+ * Migration Mutation: Backfills `returnItems` rows for legacy `returns` documents
+ * that still carry their line items embedded in the (deprecated) `returnedItems`
+ * array instead of as separate `returnItems` rows. The admin Returns panel only
+ * reads from `returnItems`, so these legacy returns are otherwise invisible and
+ * can never be approved/rejected.
+ */
+export const backfillLegacyReturnItems = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const returns = await ctx.db.query("returns").collect();
+    console.log(`[migrations.ts] Found ${returns.length} returns to scan.`);
+
+    let returnsBackfilled = 0;
+    let itemsInserted = 0;
+
+    for (const ret of returns) {
+      if (!ret.returnedItems || ret.returnedItems.length === 0) continue;
+
+      const existingItems = await ctx.db
+        .query("returnItems")
+        .withIndex("by_return", (q) => q.eq("returnId", ret._id))
+        .collect();
+      if (existingItems.length > 0) continue;
+
+      for (const item of ret.returnedItems) {
+        await ctx.db.insert("returnItems", {
+          returnId: ret._id,
+          orderId: ret.orderId,
+          productId: item.productId,
+          productName: item.name,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          status: "pending",
+          source: "manual_return",
+          createdAt: ret.createdAt,
+        });
+        itemsInserted++;
+      }
+      returnsBackfilled++;
+    }
+
+    console.log(`[migrations.ts] Backfilled ${returnsBackfilled} returns, inserted ${itemsInserted} returnItems.`);
+    return { success: true, returnsScanned: returns.length, returnsBackfilled, itemsInserted };
   }
 });

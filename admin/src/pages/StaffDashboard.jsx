@@ -21,6 +21,7 @@ import { useOfflineOrderSync } from "../hooks/useOfflineOrderSync";
 import { addPendingOrder, listPendingOrders } from "../lib/offlineDb";
 import OfflineBanner from "../components/OfflineBanner";
 import CatalogDownloadBanner from "../components/CatalogDownloadBanner";
+import LeadsPanel from "../components/LeadsPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import sosLogo from "../assets/SOS.png";
 import profileImg from "../assets/about-dennan.png";
@@ -47,7 +48,8 @@ import {
   Printer,
   Copy,
   RotateCcw,
-  Package
+  Package,
+  Inbox
 } from "lucide-react";
 
 const LAST_TAB_KEY = "dennan_staff_last_tab";
@@ -84,7 +86,7 @@ export default function StaffDashboard() {
   // Only subscribe when the history tab is open — avoids an unnecessary live
   // subscription while staff are on the queue, POS, or other tabs.
   const { results: allOrderHistory, status: allOrderHistoryStatus, loadMore: loadMoreAllOrderHistory } = usePaginatedQuery(
-    api.orders.getOrdersForStaff,
+    api.orders.adminGetOrdersByDateRange,
     activeTab === "history" ? { token } : "skip",
     { initialNumItems: 30 }
   );
@@ -597,6 +599,10 @@ export default function StaffDashboard() {
   const customerList = useQuery(api.customerActivities.getCustomerList, { token });
   const [customerSearch, setCustomerSearch] = useState("");
 
+  // --- LEADS (store requests + back-in-stock signups) ---
+  const leadsList = useQuery(api.leads.getLeads, { token });
+  const unresolvedLeadsCount = leadsList?.filter((l) => l.status !== "resolved").length || 0;
+
   // --- TAB 4: CALENDAR / REMINDERS ---
   const dueActivities = useQuery(api.customerActivities.getDueActivities, { token, currentDate: todayStr });
 
@@ -748,6 +754,16 @@ export default function StaffDashboard() {
               >
                 <Users size={18} />
                 <span>Customers CRM</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "leads" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("leads")}
+              >
+                <Inbox size={18} />
+                <span>Leads</span>
+                {unresolvedLeadsCount > 0 && (
+                  <span className="sidebar-nav-badge">{unresolvedLeadsCount}</span>
+                )}
               </button>
               <button
                 className={`sidebar-nav-item ${activeTab === "calendar" ? "is-active" : ""}`}
@@ -1435,7 +1451,7 @@ export default function StaffDashboard() {
               <div className="page-header">
                 <h1 className="admin-page-title">Order History</h1>
                 <span style={{ fontSize: "12px", color: "var(--text-tertiary)", alignSelf: "center" }}>
-                  Sorted: Newest First
+                  Today &middot; Sorted: Newest First
                 </span>
               </div>
 
@@ -1602,6 +1618,11 @@ export default function StaffDashboard() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* TAB: LEADS (store requests + back-in-stock signups) */}
+          {activeTab === "leads" && (
+            <LeadsPanel token={token} />
           )}
 
           {/* TAB 4: CALENDAR / REMINDERS */}

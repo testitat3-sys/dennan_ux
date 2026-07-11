@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import './App.css';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
@@ -16,6 +17,7 @@ const PDP = lazy(() => import('./pages/PDP'));
 const DesignSystemPage = lazy(() => import('./pages/DesignSystemPage'));
 const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
+const FAQPage = lazy(() => import('./pages/FAQPage'));
 const AuthPage = lazy(() => import('./pages/AuthPage'));
 const AfterSignIn = lazy(() => import('./pages/AfterSignIn'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
@@ -44,6 +46,7 @@ function OnboardingRoute() {
 
 function App() {
   return (
+    <HelmetProvider>
     <Router>
       <ScrollToTop />
       <Layout>
@@ -90,7 +93,7 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/safety" element={<ComingSoonPage />} />
           <Route path="/support" element={<ComingSoonPage />} />
-          <Route path="/faq" element={<ComingSoonPage />} />
+          <Route path="/faq" element={<FAQPage />} />
           <Route path="/wholesale" element={<ComingSoonPage />} />
           <Route path="/brands" element={<ComingSoonPage />} />
           
@@ -100,6 +103,7 @@ function App() {
         </Suspense>
       </Layout>
     </Router>
+    </HelmetProvider>
   );
 }
 

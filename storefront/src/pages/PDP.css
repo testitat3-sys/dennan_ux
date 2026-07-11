@@ -188,6 +188,25 @@
   display: block;
 }
 
+.pdp__sales-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-secondary);
+  color: #e0c0ff;
+  font-size: var(--label-md);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.pdp__sales-pill svg {
+  color: var(--color-brand-accent);
+  flex-shrink: 0;
+}
+
 .pdp__title {
   font-family: var(--font-editorial);
   font-size: var(--headline-lg);

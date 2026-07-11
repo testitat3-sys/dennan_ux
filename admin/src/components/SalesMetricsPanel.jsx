@@ -143,6 +143,7 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
     endDate,
     paymentMethod: paymentMethodFilter === "all" ? undefined : paymentMethodFilter,
     channel: channelFilter === "all" ? undefined : channelFilter,
+    brand: brandFilter === "all" ? undefined : brandFilter,
   });
 
   const pieData = useMemo(() => {

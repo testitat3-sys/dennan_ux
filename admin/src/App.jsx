@@ -1,6 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { StaffAuthProvider, useStaffAuth } from './hooks/useStaffAuth';
+import { ErrorLogProvider } from './hooks/useErrorLog';
+import AppErrorBoundary from './components/AppErrorBoundary';
+import ErrorLogFab from './components/ErrorLogFab';
 import StaffLogin from './pages/StaffLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
@@ -144,7 +147,12 @@ function App() {
   return (
     <Router>
       <StaffAuthProvider>
-        <MainRouter />
+        <ErrorLogProvider>
+          <AppErrorBoundary name="App">
+            <MainRouter />
+          </AppErrorBoundary>
+          <ErrorLogFab />
+        </ErrorLogProvider>
       </StaffAuthProvider>
     </Router>
   );

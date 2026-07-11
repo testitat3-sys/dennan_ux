@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import Hero from '../components/home/Hero';
 import SearchStrip from '../components/home/SearchStrip';
 import BrandsBanner from '../components/home/BrandsBanner';
@@ -27,13 +28,6 @@ const Home = () => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.content = 'Shop Dennan for baby, kid and mum care essentials — most-loved picks, curated bundles for every stage, and gifts they\'ll love.';
-    }
   }, []);
 
   // Live Convex queries for hero/trust content, featured products, stages, tiers
@@ -121,6 +115,11 @@ const Home = () => {
 
   return (
     <>
+      <Helmet>
+        <title>Dennan — Shop for baby, kid and mum care.</title>
+        <meta name="description" content="Shop Dennan for baby, kid and mum care essentials — most-loved picks, curated bundles for every stage, and gifts they'll love." />
+        <link rel="canonical" href="https://dennan.ug/" />
+      </Helmet>
       <Hero content={hero} />
       <SearchStrip className="search-strip--home" products={featuredProducts ? [...mostLovedProducts, ...curatedProducts] : null} />
       <BrandsBanner />

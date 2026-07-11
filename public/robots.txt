@@ -10,3 +10,5 @@ Disallow: /login
 Disallow: /signup
 Disallow: /after-signin
 Disallow: /onboarding
+
+Sitemap: https://dennan.ug/sitemap.xml

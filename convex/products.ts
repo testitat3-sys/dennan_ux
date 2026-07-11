@@ -225,6 +225,7 @@ async function upsertSingleProduct(ctx: any, fields: any) {
     inventory: fields.inventory,
     unitsSold: fields.unitsSold,
     actual_data: fields.actual_data ?? true, // DEFAULTS TO TRUE FOR WEBHOOK UPLOADS
+    updatedAt: Date.now(),
   };
 
   if (existing) {

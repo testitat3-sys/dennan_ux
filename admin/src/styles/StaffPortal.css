@@ -4475,6 +4475,129 @@
   gap: var(--space-2-5);
 }
 
+/* ─── ERROR LOG FAB & MODAL ──────────────────────────────────────────────── */
+.error-log-fab {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-support-red, #ef4444);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.35);
+  z-index: 400;
+  transition: transform 0.2s;
+}
+
+.error-log-fab:hover {
+  transform: scale(1.06);
+}
+
+.error-log-fab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: white;
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(17, 17, 17, 0.2);
+}
+
+.error-log-modal {
+  max-width: 640px;
+}
+
+.error-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.error-log-entry {
+  background: var(--surface-container-low);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.error-log-entry-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.error-log-entry-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.error-log-entry-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+.error-log-entry-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.error-log-entry-dismiss:hover {
+  color: var(--text-primary);
+}
+
+.error-log-entry-message {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.error-log-entry-suggestion {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.error-log-entry-details {
+  margin-top: var(--space-2);
+}
+
+.error-log-entry-details summary {
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+}
+
+.error-log-entry-details pre {
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-top: 4px;
+  color: var(--text-secondary);
+}
+
 .text-link-btn:hover {
   color: var(--color-brand-secondary) !important;
 }

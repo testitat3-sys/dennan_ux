@@ -382,6 +382,10 @@ export default defineSchema({
     notifiedAt: v.optional(v.number()),
     /** Unix timestamp (ms) when the item was added */
     addedAt: v.number(),
+    /** Lead-resolution tracking, only meaningful when notifyBackInStock is true. Undefined = "new". */
+    status: v.optional(v.union(v.literal("new"), v.literal("resolved"))),
+    resolvedAt: v.optional(v.number()),
+    resolvedByStaffId: v.optional(v.id("users")),
   })
     .index("by_user", ["userId"])
     .index("by_user_and_product", ["userId", "productId"])
@@ -633,6 +637,10 @@ export default defineSchema({
     ),
     itemDescription: v.optional(v.string()),
     createdAt: v.number(),
+    /** Lead-resolution tracking. Undefined = "new". */
+    status: v.optional(v.union(v.literal("new"), v.literal("resolved"))),
+    resolvedAt: v.optional(v.number()),
+    resolvedByStaffId: v.optional(v.id("users")),
   }).index("by_user", ["userId"]).index("by_email", ["email"]),
 
   referralSources: defineTable({
@@ -643,6 +651,7 @@ export default defineSchema({
       v.literal("instagram"),
       v.literal("friend"),
       v.literal("google"),
+      v.literal("chatgpt"),
       v.literal("other")
     ),
     otherDetail: v.optional(v.string()),
@@ -1021,6 +1030,29 @@ export default defineSchema({
     voucherCode: v.optional(v.string()),
   })
     .index("by_order", ["orderId"]),
+
+  /**
+   * errorLogs — client-reported errors (render crashes, unhandled rejections)
+   * from the admin/staff app. Rows are de-duplicated by fingerprint (same
+   * error within 24h increments occurrenceCount instead of inserting a new
+   * row) and the table is kept bounded by pruning the oldest rows past a
+   * fixed cap on every new-fingerprint insert — see convex/errorLogs.ts.
+   */
+  errorLogs: defineTable({
+    fingerprint: v.string(),
+    message: v.string(),
+    details: v.optional(v.string()),
+    suggestion: v.optional(v.string()),
+    source: v.optional(v.string()),
+    userId: v.optional(v.id("users")),
+    userName: v.optional(v.string()),
+    accountRole: v.optional(v.string()),
+    occurrenceCount: v.number(),
+    firstSeenAt: v.number(),
+    lastSeenAt: v.number(),
+  })
+    .index("by_fingerprint", ["fingerprint"])
+    .index("by_lastSeenAt", ["lastSeenAt"]),
 });
 
 

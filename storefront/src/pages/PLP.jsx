@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Package } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
@@ -52,19 +53,19 @@ const SUBCATEGORY_MAP = {
   "support belts": "Comfort",
   "sleep aids": "Comfort",
   "relaxation kits": "Comfort",
-  
+
   // Apparel subcategories
   "nightdresses": "Apparel",
   "nursing pajamas": "Apparel",
   "cozy robes": "Apparel",
   "slippers & footwear": "Apparel",
-  
+
   // Nursing subcategories
   "nursing bras": "Nursing",
   "breast pads": "Nursing",
   "nipple care": "Nursing",
   "breast pumps": "Nursing",
-  
+
   // Recovery subcategories
   "postpartum care": "Recovery",
   "soothe & heal": "Recovery",
@@ -125,7 +126,7 @@ const PLP = () => {
   const { stageId, collectionId } = useParams();
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
-  
+
   // Live fetch products and stage list from Convex
   const allProducts = useQuery(api.data.getProducts);
   const stages = useQuery(api.data.getStages);
@@ -151,10 +152,10 @@ const PLP = () => {
     if (!query) {
       return;
     }
-    
+
     const lowQuery = query.toLowerCase().trim();
     const mappedCategory = SUBCATEGORY_MAP[lowQuery];
-    
+
     if (mappedCategory) {
       setActiveFilters([mappedCategory]);
     } else {
@@ -176,7 +177,7 @@ const PLP = () => {
       results = results.filter(p => p.slug !== 'developer-product');
     }
 
-    
+
     // 1. Filter by collection or stage
     if (collectionId) {
       if (collectionId === 'curated-picks') {
@@ -193,17 +194,17 @@ const PLP = () => {
     } else if (stageId && stageId !== 'all') {
       results = results.filter(p => p.stage === stageId);
     }
-    
+
     // 2. Apply search query
     if (query) {
       const lowQuery = query.toLowerCase().trim();
       const mappedCategory = SUBCATEGORY_MAP[lowQuery];
-      
+
       // If search matches a mapped subcategory category, we do not double-filter by the query text,
       // as that might return empty results due to randomized seed name generations.
       if (!mappedCategory) {
-        results = results.filter(p => 
-          p.name.toLowerCase().includes(lowQuery) || 
+        results = results.filter(p =>
+          p.name.toLowerCase().includes(lowQuery) ||
           p.category.toLowerCase().includes(lowQuery) ||
           p.description?.toLowerCase().includes(lowQuery) ||
           (p.tier && p.tier.toLowerCase().includes(lowQuery)) ||
@@ -211,7 +212,7 @@ const PLP = () => {
         );
       }
     }
-    
+
     // 3. Apply active sidebar filters: AND across categories/tiers, OR within them
     const activeCategories = activeFilters.filter(f => !TIERS_LIST.includes(f));
     const activeTiers = activeFilters.filter(f => TIERS_LIST.includes(f));
@@ -230,7 +231,7 @@ const PLP = () => {
         });
       });
     }
-    
+
     setFilteredProducts(results);
     window.scrollTo(0, 0);
   }, [stageId, collectionId, activeFilters, query, allProducts, loading]);
@@ -259,16 +260,16 @@ const PLP = () => {
 
   // Resolve page header and lifestyle banner details
   const isCollectionView = !!collectionId;
-  const viewData = isCollectionView 
+  const viewData = isCollectionView
     ? (COLLECTIONS_METADATA[collectionId] || COLLECTIONS_METADATA['curated-picks'])
     : (stages?.find(s => s.type === stageId) || {
-        title: 'Curated Essentials',
-        subtext: 'High-quality essentials hand-selected by our pediatric specialists.',
-        heroImage: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=1200'
-      });
+      title: 'Curated Essentials',
+      subtext: 'High-quality essentials hand-selected by our pediatric specialists.',
+      heroImage: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=1200'
+    });
 
   const toggleFilter = (filter) => {
-    setActiveFilters(prev => 
+    setActiveFilters(prev =>
       prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
     );
   };
@@ -285,41 +286,54 @@ const PLP = () => {
   };
 
   // Derive page-specific products based on the stage/collection context
-  const pageProducts = allProducts 
+  const pageProducts = allProducts
     ? allProducts.filter(p => {
-        if (collectionId) {
-          if (collectionId === 'curated-picks') return p.isCuratedForYou || p.isCurated;
-          if (collectionId === 'most-loved') return p.isMostLoved;
-          if (collectionId === 'essentials') return p.isEssentials;
-          if (collectionId === 'must-haves') return p.isMustHave;
-          if (collectionId === 'luxuries') return p.isLuxury;
-          return true;
-        }
-        return stageId === 'all' ? true : p.stage === stageId;
-      })
+      if (collectionId) {
+        if (collectionId === 'curated-picks') return p.isCuratedForYou || p.isCurated;
+        if (collectionId === 'most-loved') return p.isMostLoved;
+        if (collectionId === 'essentials') return p.isEssentials;
+        if (collectionId === 'must-haves') return p.isMustHave;
+        if (collectionId === 'luxuries') return p.isLuxury;
+        return true;
+      }
+      return stageId === 'all' ? true : p.stage === stageId;
+    })
     : [];
 
   // Derive categories for the sidebar based on the current stage/collection context
   const categories = pageProducts.length > 0
     ? [...new Set(pageProducts.map(p => p.category).filter(Boolean))]
     : [];
-  
+
   const tiers = TIERS_LIST;
 
   // Build breadcrumb trail based on route type
   const breadcrumbs = isCollectionView
     ? [
-        { label: 'Home', href: '/' },
-        { label: 'Collections', href: null },
-        { label: viewData.title || collectionId, href: null },
-      ]
+      { label: 'Home', href: '/' },
+      { label: 'Collections', href: null },
+      { label: viewData.title || collectionId, href: null },
+    ]
     : [
-        { label: 'Home', href: '/' },
-        { label: viewData.title || stageId, href: null },
-      ];
+      { label: 'Home', href: '/' },
+      { label: viewData.title || stageId, href: null },
+    ];
+
+  const plpPathSegment = isCollectionView ? `collection/${collectionId}` : `category/${stageId}`;
+  const plpCanonicalUrl = `https://dennan.ug/${plpPathSegment}`;
+  const plpTitle = `${viewData.title || 'Shop'} | Dennan`;
+  const plpDescription = viewData.subtext || viewData.copy || `Shop ${viewData.title || 'baby, kid and mum care essentials'} at Dennan — ${filteredProducts.length} products available, priced in UGX with delivery in Kampala.`;
 
   return (
     <Page noPaddingTop={true} padding="inset" bottomSpacing="loose">
+      <Helmet>
+        <title>{plpTitle}</title>
+        <meta name="description" content={plpDescription} />
+        <link rel="canonical" href={plpCanonicalUrl} />
+        <meta property="og:title" content={plpTitle} />
+        <meta property="og:description" content={plpDescription} />
+        <meta property="og:url" content={plpCanonicalUrl} />
+      </Helmet>
       <Page.Section as="header" fullBleed className={`plp__hero ${isCollectionView ? 'plp__hero--banner' : ''}`}>
         <div className="plp__hero-bg">
           <img src={viewData.heroImage || viewData.image || ''} alt={viewData.title || ''} />
@@ -343,17 +357,17 @@ const PLP = () => {
 
           <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
             <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-              <Text 
-                role="display-lg" 
-                color="#ffffff" 
-                className="plp__hero-title" 
-                dangerouslySetInnerHTML={{ __html: viewData.title || '' }} 
+              <Text
+                role="display-lg"
+                color="#ffffff"
+                className="plp__hero-title"
+                dangerouslySetInnerHTML={{ __html: viewData.title || '' }}
               />
             </Card>
             <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-              <Text 
-                role="body-sm" 
-                color="rgba(255, 255, 255, 0.9)" 
+              <Text
+                role="body-sm"
+                color="rgba(255, 255, 255, 0.9)"
                 className="plp__hero-subtext"
               >
                 {viewData.subtext || viewData.copy || ''}
@@ -386,21 +400,21 @@ const PLP = () => {
                     {categories.map(cat => {
                       const isActive = activeFilters.includes(cat);
                       return (
-                        <li 
-                          key={cat} 
+                        <li
+                          key={cat}
                           className={`filter-item ${isActive ? 'is-active' : ''}`}
                           onClick={() => toggleFilter(cat)}
                         >
                           <div className="filter-item__checkbox">
                             {isActive && (
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                <polyline points="20 6 9 17 4 12"/>
+                                <polyline points="20 6 9 17 4 12" />
                               </svg>
                             )}
                           </div>
-                          <Text 
-                            role={isActive ? "title-sm" : "body-sm"} 
-                            color={isActive ? "primary" : "secondary"} 
+                          <Text
+                            role={isActive ? "title-sm" : "body-sm"}
+                            color={isActive ? "primary" : "secondary"}
                             className="filter-item__label"
                           >
                             {cat}
@@ -422,21 +436,21 @@ const PLP = () => {
                   {tiers.map(tier => {
                     const isActive = activeFilters.some(f => f.toLowerCase() === tier.toLowerCase() || (f.toLowerCase() === 'must-haves' && tier.toLowerCase() === 'must-haves'));
                     return (
-                      <li 
-                        key={tier} 
+                      <li
+                        key={tier}
                         className={`filter-item ${isActive ? 'is-active' : ''}`}
                         onClick={() => toggleFilter(tier)}
                       >
                         <div className="filter-item__checkbox">
                           {isActive && (
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                              <polyline points="20 6 9 17 4 12"/>
+                              <polyline points="20 6 9 17 4 12" />
                             </svg>
                           )}
                         </div>
-                        <Text 
-                          role={isActive ? "title-sm" : "body-sm"} 
-                          color={isActive ? "primary" : "secondary"} 
+                        <Text
+                          role={isActive ? "title-sm" : "body-sm"}
+                          color={isActive ? "primary" : "secondary"}
                           className="filter-item__label"
                         >
                           {tier}
@@ -454,16 +468,18 @@ const PLP = () => {
           <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
             <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
               <div className="plp__toolbar">
-                <Text role="body-sm" color="tertiary" className="plp__count">
-                  <Package size={16} strokeWidth={2} aria-hidden="true" />
-                  {filteredProducts.length} products found
-                </Text>
+                {filteredProducts.length > 0 && (
+                  <Text role="body-sm" color="tertiary" className="plp__count">
+                    <Package size={16} strokeWidth={2} aria-hidden="true" />
+                    {filteredProducts.length} products found
+                  </Text>
+                )}
                 <button
                   className="plp__mobile-filter-btn"
                   onClick={() => setIsMobileFilterOpen(true)}
                   aria-label={`Filter products${activeFilters.length > 0 ? `, ${activeFilters.length} active` : ''}`}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" /></svg>
                   <span className="plp__mobile-filter-label">Filter</span>
                   {activeFilters.length > 0 && (
                     <span className="plp__mobile-filter-badge">{activeFilters.length}</span>
@@ -475,21 +491,18 @@ const PLP = () => {
             <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
               <CardGrid columns={3} mobileColumns={2} gap="default" className="plp__grid">
                 {filteredProducts.map(product => (
-                  <ProductCard 
-                    key={product._id || product.id} 
-                    product={product} 
+                  <ProductCard
+                    key={product._id || product.id}
+                    product={product}
                     onAddToCart={handleAddToCart}
                   />
                 ))}
               </CardGrid>
             </Card>
-            
+
             {filteredProducts.length === 0 && (
               <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
                 <div className="plp__empty">
-                  <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-                    <Text role="body-lg" color="secondary">No products match your current filters.</Text>
-                  </Card>
                   <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', alignItems: 'center' }}>
                       {activeFilters.length > 0 && (
@@ -500,8 +513,14 @@ const PLP = () => {
                       <Text role="title-sm" as="p" color="primary" style={{ fontWeight: 700, margin: 0 }}>
                         Can't find what you're looking for?
                       </Text>
+                      <img
+                        src="/assets/coming%20soon.png"
+                        alt="Can't find what you're looking for?"
+                        className="plp__empty-image"
+                        style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 'var(--radius-lg)' }}
+                      />
                       <Button variant="primary" size="sm" onClick={() => setShowStoreRequestModal(true)}>
-                        Request from physical store
+                        Check our physical store
                       </Button>
                     </div>
                   </Card>
@@ -513,10 +532,10 @@ const PLP = () => {
       </Page.Section>
 
       {selectedProduct && (
-        <QuickViewModal 
-          product={selectedProduct} 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
+        <QuickViewModal
+          product={selectedProduct}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
           onSuccess={handleModalSuccess}
         />
       )}
@@ -540,16 +559,16 @@ const PLP = () => {
             <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePaddingHorizontal={true} className="plp__filter-drawer-header">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                 <Text role="headline-sm" as="h3" color="primary">Filter Products</Text>
-                <Button 
-                  variant="ghost" 
-                  className="plp__filter-drawer-close" 
-                  aria-label="Close filters" 
+                <Button
+                  variant="ghost"
+                  className="plp__filter-drawer-close"
+                  aria-label="Close filters"
                   onClick={() => setIsMobileFilterOpen(false)}
-                  icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>}
+                  icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12" /></svg>}
                 />
               </div>
             </Card>
-            
+
             <div className="plp__filter-drawer-body">
               <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePaddingHorizontal={true}>
                 {categories.length > 0 && (
@@ -562,21 +581,21 @@ const PLP = () => {
                         {categories.map(cat => {
                           const isActive = activeFilters.includes(cat);
                           return (
-                            <li 
-                              key={cat} 
+                            <li
+                              key={cat}
                               className={`filter-item ${isActive ? 'is-active' : ''}`}
                               onClick={() => toggleFilter(cat)}
                             >
                               <div className="filter-item__checkbox">
                                 {isActive && (
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                    <polyline points="20 6 9 17 4 12"/>
+                                    <polyline points="20 6 9 17 4 12" />
                                   </svg>
                                 )}
                               </div>
-                              <Text 
-                                role={isActive ? "title-sm" : "body-sm"} 
-                                color={isActive ? "primary" : "secondary"} 
+                              <Text
+                                role={isActive ? "title-sm" : "body-sm"}
+                                color={isActive ? "primary" : "secondary"}
                                 className="filter-item__label"
                               >
                                 {cat}
@@ -600,21 +619,21 @@ const PLP = () => {
                       {tiers.map(tier => {
                         const isActive = activeFilters.some(f => f.toLowerCase() === tier.toLowerCase() || (f.toLowerCase() === 'must-haves' && tier.toLowerCase() === 'must-haves'));
                         return (
-                          <li 
-                            key={tier} 
+                          <li
+                            key={tier}
                             className={`filter-item ${isActive ? 'is-active' : ''}`}
                             onClick={() => toggleFilter(tier)}
                           >
                             <div className="filter-item__checkbox">
                               {isActive && (
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                  <polyline points="20 6 9 17 4 12"/>
+                                  <polyline points="20 6 9 17 4 12" />
                                 </svg>
                               )}
                             </div>
-                            <Text 
-                              role={isActive ? "title-sm" : "body-sm"} 
-                              color={isActive ? "primary" : "secondary"} 
+                            <Text
+                              role={isActive ? "title-sm" : "body-sm"}
+                              color={isActive ? "primary" : "secondary"}
                               className="filter-item__label"
                             >
                               {tier}

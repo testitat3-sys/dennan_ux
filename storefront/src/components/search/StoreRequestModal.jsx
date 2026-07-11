@@ -98,13 +98,14 @@ const StoreRequestModal = ({ isOpen, onClose }) => {
     const cleanedPhone = phone.replace(/\s+/g, '').trim();
     if (!cleanedPhone) next.phone = 'Phone number is required.';
     else if (!UG_PHONE_RE.test(cleanedPhone)) next.phone = 'Enter a valid Ugandan phone number (e.g. 0772123456).';
+    if (!stage) next.stage = 'Please select where you are in the journey.';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
   const isFormValid = () =>
     firstName.trim() && lastName.trim() && email.trim() && EMAIL_RE.test(email.trim()) &&
-    UG_PHONE_RE.test(phone.replace(/\s+/g, '').trim());
+    UG_PHONE_RE.test(phone.replace(/\s+/g, '').trim()) && !!stage;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -139,9 +140,15 @@ const StoreRequestModal = ({ isOpen, onClose }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="store-request-modal__header">
-            <Text role="headline-md" as="h3" className="store-request-modal__title">
-              {showSuccess ? 'Request Sent' : "Can't find what you're looking for?"}
-            </Text>
+            {showSuccess ? (
+              <Text role="headline-md" as="h3" className="store-request-modal__title">Request Sent</Text>
+            ) : (
+              <img
+                src="/assets/coming%20soon.png"
+                alt="Can't find what you're looking for?"
+                className="store-request-banner"
+              />
+            )}
             <Button
               variant="ghost"
               className="store-request-modal__close"
@@ -171,12 +178,12 @@ const StoreRequestModal = ({ isOpen, onClose }) => {
             ) : (
               <form onSubmit={handleSubmit} className="store-request-form animate-fadeIn">
                 <Text role="body-md" as="p" color="secondary" className="store-request-subtitle">
-                  Request from physical store — leave your details and, optionally, the item you're
-                  looking for, and our team will check stock and get back to you.
+                  We might have what you're looking for at our physical shops. Add your details below
+                  and we'll get back to you.
                 </Text>
 
                 <div className="store-request-field">
-                  <span className="store-request-label store-request-prompt">Where are you in the journey? (Optional)</span>
+                  <span className="store-request-label store-request-prompt">Where are you in the journey?</span>
                   <div className="stage-options">
                     {STAGE_OPTIONS.map((opt) => (
                       <button
@@ -189,6 +196,7 @@ const StoreRequestModal = ({ isOpen, onClose }) => {
                       </button>
                     ))}
                   </div>
+                  {errors.stage && <Text role="label-sm" color="support-red" className="form-error-hint">{errors.stage}</Text>}
                 </div>
 
                 <div className="store-request-row">

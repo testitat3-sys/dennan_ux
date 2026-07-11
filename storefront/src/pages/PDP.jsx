@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import { useCart } from '../context/CartContext';
@@ -12,10 +13,60 @@ import PDPSkeleton from '../components/ui/PDPSkeleton';
 import Page from '../components/ui/Page';
 import Card from '../components/ui/Card';
 import CardGrid from '../components/ui/CardGrid';
-import { FileText, ClipboardList, MessageSquare } from 'lucide-react';
+import { FileText, ClipboardList, MessageSquare, Flame } from 'lucide-react';
 import ReviewModal from '../components/checkout/ReviewModal';
 import DefaultProductImage from '../components/products/DefaultProductImage';
 import './PDP.css';
+
+const formatAgeRange = (product) => {
+  if (product.minMonth !== undefined && product.maxMonth !== undefined) {
+    return `${product.minMonth}–${product.maxMonth} months`;
+  }
+  if (product.minWeek !== undefined && product.maxWeek !== undefined) {
+    return `${product.minWeek}–${product.maxWeek} weeks`;
+  }
+  return null;
+};
+
+const formatDimensions = (dimensions) => {
+  if (!dimensions) return null;
+  const { length, width, height, unit } = dimensions;
+  if (!length || !width || !height) return null;
+  return `${length}×${width}×${height}${unit ? ` ${unit}` : ''}`;
+};
+
+// Builds a direct, fact-dense 40-60 word answer-first summary from real product
+// fields instead of generic marketing copy, so AI agents/answer engines can lift
+// a concrete answer without parsing the full page.
+const buildAnswerFirstSummary = (product, displayName) => {
+  const facts = [];
+  const ageRange = formatAgeRange(product);
+  if (ageRange) facts.push(`suited for ${ageRange}`);
+  if (product.material) facts.push(`made from ${product.material}`);
+  const dims = formatDimensions(product.dimensions);
+  if (dims) facts.push(`sized ${dims}`);
+  if (product.weightGrams) facts.push(`weighing ${product.weightGrams}g`);
+
+  if (facts.length === 0) {
+    return product.description ? product.description.slice(0, 220) : `${displayName} from Dennan.`;
+  }
+
+  const category = product.category ? product.category.toLowerCase() : 'baby and kids';
+  return `${displayName} is a ${category} product from ${product.brand || 'Dennan'}, ${facts.join(', ')}. Priced at UGX ${typeof product.price === 'number' ? product.price.toLocaleString() : product.price}, available for delivery in Kampala.`;
+};
+
+const buildFactBullets = (product) => {
+  const bullets = [];
+  const ageRange = formatAgeRange(product);
+  if (ageRange) bullets.push(`Recommended age: ${ageRange}`);
+  if (product.material) bullets.push(`Material: ${product.material}`);
+  const dims = formatDimensions(product.dimensions);
+  if (dims) bullets.push(`Dimensions: ${dims}`);
+  if (product.weightGrams) bullets.push(`Weight: ${product.weightGrams}g`);
+  if (product.allergens && product.allergens.length > 0) bullets.push(`Allergens: ${product.allergens.join(', ')}`);
+  if (product.usageInstructions) bullets.push(`Usage: ${product.usageInstructions}`);
+  return bullets;
+};
 
 const formatUnitsSold = (units) => {
   if (units >= 1000) {
@@ -124,6 +175,50 @@ const PDP = () => {
   const isSaved = isInWishlist(id);
   const isOutOfStock = product.inventory !== undefined && product.inventory <= 0;
 
+  const canonicalUrl = `https://dennan.ug/product/${product.slug || id}`;
+  const answerFirstSummary = buildAnswerFirstSummary(product, displayName);
+  const factBullets = buildFactBullets(product);
+  const productImages = (product.images || (product.image ? [product.image] : [])).filter(Boolean);
+
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: displayName,
+    description: answerFirstSummary,
+    sku: product.sku || String(id),
+    ...(productImages.length > 0 ? { image: productImages } : {}),
+    ...(product.brand ? { brand: { '@type': 'Brand', name: product.brand } } : {}),
+    offers: {
+      '@type': 'Offer',
+      url: canonicalUrl,
+      priceCurrency: 'UGX',
+      ...(typeof product.price === 'number' ? { price: product.price } : {}),
+      availability: isOutOfStock ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+    },
+    ...(reviews && reviews.length > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1),
+        reviewCount: reviews.length,
+      },
+    } : {}),
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://dennan.ug/' },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: product.stage ? (product.stage.charAt(0).toUpperCase() + product.stage.slice(1)) : 'Products',
+        item: `https://dennan.ug/category/${product.stage || 'all'}`,
+      },
+      { '@type': 'ListItem', position: 3, name: displayName, item: canonicalUrl },
+    ],
+  };
+
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedSize);
     setToastMessage(`${displayName} added to cart!`);
@@ -187,6 +282,21 @@ const PDP = () => {
 
   return (
     <Page className="pdp">
+      <Helmet>
+        <title>{`${displayName} | Dennan`}</title>
+        <meta name="description" content={answerFirstSummary} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={`${displayName} | Dennan`} />
+        <meta property="og:description" content={answerFirstSummary} />
+        <meta property="og:url" content={canonicalUrl} />
+        {productImages[0] && <meta property="og:image" content={productImages[0]} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${displayName} | Dennan`} />
+        <meta name="twitter:description" content={answerFirstSummary} />
+        <script type="application/ld+json">{JSON.stringify(productJsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbJsonLd)}</script>
+      </Helmet>
       <Page.Section className="pdp__container">
         {/* Breadcrumbs */}
         <nav className="pdp__breadcrumbs">
@@ -297,7 +407,8 @@ const PDP = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="pdp__brand">{product.brand}</span>
                 {product.unitsSold !== undefined && product.unitsSold > 0 && (
-                  <span className="tag tag--sales">
+                  <span className="pdp__sales-pill">
+                    <Flame size={13} strokeWidth={2.5} fill="currentColor" />
                     {formatUnitsSold(product.unitsSold)}
                   </span>
                 )}
@@ -432,7 +543,7 @@ const PDP = () => {
                       style={{ transform: 'scale(1.15)', accentColor: 'var(--color-brand-primary)' }}
                     />
                     <span style={{ fontSize: 'var(--body-sm)', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                      Notify me when back in stock
+                      Remind me
                     </span>
                   </label>
                 </Card>
@@ -474,12 +585,15 @@ const PDP = () => {
         <div className="pdp__tab-content">
           {activeTab === 'details' && (
             <div className="pdp__description">
+              <p className="pdp__answer-first">{answerFirstSummary}</p>
               <p>{product.description}</p>
-              <ul className="pdp__feature-list">
-                <li>Expertly curated for the {product.stage} stage.</li>
-                <li>Tested for safety and quality by our team.</li>
-                <li>Eligible for same-day delivery in Kampala.</li>
-              </ul>
+              {factBullets.length > 0 && (
+                <ul className="pdp__feature-list">
+                  {factBullets.map((fact, idx) => (
+                    <li key={idx}>{fact}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 

@@ -1,0 +1,28 @@
+# Dennan
+
+> Dennan Baby To Kids is Uganda's number one distributor in the baby and kids market. Founded in 2013, Dennan runs 2 physical branches in Kampala plus an online store at dennan.ug, stocking curated baby, kid, and mum care essentials imported from the UK, Turkey, Dubai, China, Vietnam, and the USA.
+
+Dennan sells everyday must-haves and gifts across three parenting stages (Expectant & New Mom, Newborn, Baby & Toddler) and three tiers (Essentials, Must-Haves, Luxuries). Prices are listed in Ugandan Shillings (UGX). Orders can be placed online for delivery, or picked up at either Kampala branch.
+
+## Shop
+- [All products](https://dennan.ug/category/all): Full catalog across every stage and category.
+- [Expectant & New Mom](https://dennan.ug/category/mother): Pregnancy comfort, nursing, and postpartum recovery essentials.
+- [Newborn 0-6 months](https://dennan.ug/category/newborn): Newborn sleep, clothing, bathing, and feeding essentials.
+- [Baby & Toddler](https://dennan.ug/category/kid): Play & learn, weaning, mobility, and safety gear.
+- [Essentials](https://dennan.ug/collection/essentials): Absolute basics tier.
+- [Must-Haves](https://dennan.ug/collection/must-haves): Highly recommended gear tier.
+- [Luxuries](https://dennan.ug/collection/luxuries): Premium tier.
+- [Most Loved](https://dennan.ug/collection/most-loved): Top-rated products by customer reviews.
+- [Curated Picks](https://dennan.ug/collection/curated-picks): Hand-selected picks backed by pediatric guidelines.
+
+## Product categories
+Expectant and New Mom Essentials, Newborn Essentials & Kids Apparel/Footwear, Nursery and Furnishing, Feeding/Nursing Essentials, Bathing and Changing, Baby Play and Safety Gear, Travel Must-Haves.
+
+## Company
+- [About Dennan](https://dennan.ug/about): Company history, founding, and heritage.
+- [Registry](https://dennan.ug/registry): Baby registry / gift list creation for expecting parents.
+
+## Notes for AI agents and crawlers
+- Individual product pages live at `https://dennan.ug/product/{productId}` and include structured product data (name, price in UGX, images, specifications, reviews).
+- Checkout, account, and dashboard routes (`/checkout`, `/profile`, `/dashboard`, `/wishlist`, `/auth`) are private/transactional and excluded from indexing — see `/robots.txt`.
+- A machine-readable sitemap is available at `https://dennan.ug/sitemap.xml`.

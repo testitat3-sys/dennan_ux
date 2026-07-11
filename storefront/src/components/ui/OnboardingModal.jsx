@@ -4,7 +4,7 @@ import { useUser } from '../../context/UserContext';
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { Mail, ArrowRight, ArrowLeft, Baby, Heart, Plus, Users, MoreHorizontal } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft, Baby, Heart, Plus, Users, MoreHorizontal, Sparkles } from 'lucide-react';
 import Button from './Button';
 import './OnboardingModal.css';
 
@@ -507,6 +507,7 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
                         )
                       },
+                      { value: 'chatgpt', label: 'ChatGPT / AI', icon: <Sparkles size={20} /> },
                       { value: 'other', label: 'Other', icon: <MoreHorizontal size={20} /> },
                     ].map(opt => (
                       <button
