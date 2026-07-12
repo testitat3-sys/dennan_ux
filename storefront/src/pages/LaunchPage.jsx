@@ -10,6 +10,7 @@ import ProductCard from '../components/products/ProductCard';
 import SearchStrip from '../components/home/SearchStrip';
 import QuickViewModal from '../components/products/QuickViewModal';
 import LaunchGate from '../components/registry/LaunchGate';
+import OfferCountdownBanner from '../components/registry/OfferCountdownBanner';
 import Toast from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import Page from '../components/ui/Page';
@@ -132,11 +133,15 @@ const LaunchPage = () => {
   }
 
   return (
-    <Page padding="inset" bottomSpacing="loose">
+    <Page padding="inset" bottomSpacing="loose" noPaddingTop={true}>
       <Helmet>
         <title>Launch Offers | Dennan</title>
         <meta name="description" content={HERO.subtext} />
       </Helmet>
+
+      <Page.Section fullBleed noPadding>
+        <OfferCountdownBanner />
+      </Page.Section>
 
       <Page.Section className="plp__search-wrap plp__search-wrap--no-hero">
         <SearchStrip initialQuery={query} products={discountedProducts} onSubmit={handleSearchSubmit} />

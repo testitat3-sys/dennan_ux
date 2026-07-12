@@ -127,6 +127,7 @@ const Navbar = () => {
 
   const isProfileActive = location.pathname === '/dashboard' || location.pathname === '/profile';
   const isWishlistActive = location.pathname === '/wishlist';
+  const isLaunchPage = location.pathname === '/launch';
   const [activeMenu, setActiveMenu] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
@@ -609,9 +610,9 @@ const Navbar = () => {
         </div>
       </div>
 
-      <OnboardingModal 
-        isOpen={showOnboarding} 
-        onClose={() => setShowOnboarding(false)} 
+      <OnboardingModal
+        isOpen={showOnboarding && !isLaunchPage}
+        onClose={() => setShowOnboarding(false)}
       />
 
       <CartModal />

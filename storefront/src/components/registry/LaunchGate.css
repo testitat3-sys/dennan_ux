@@ -34,6 +34,7 @@
 
 .launch-gate__headline--form {
   font-size: clamp(1.75rem, 4vw, var(--headline-lg));
+  color: var(--color-brand-accent);
 }
 
 .launch-gate__subtext {
@@ -48,33 +49,23 @@
 /* ─── Hero band ─────────────────────────────────────────────────────── */
 
 .launch-gate__band--hero {
-  min-height: 82vh;
+  height: 75vh;
+  min-height: 320px;
   justify-content: center;
-  background: linear-gradient(180deg, var(--color-brand-secondary) 0%, color-mix(in srgb, var(--color-brand-secondary) 100%, black 30%) 100%);
-  color: var(--color-on-primary);
+  align-items: center;
+  padding: var(--space-8) var(--space-4);
+  background: #931963;
+  box-sizing: border-box;
 }
 
-.launch-gate__accent {
-  color: var(--color-brand-accent);
-}
-
-.launch-gate__cta-row {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: var(--space-1);
-}
-
-.launch-gate__band--hero .btn--outline {
-  color: var(--color-on-primary);
-  border-color: rgba(255, 255, 255, 0.7);
-}
-
-.launch-gate__band--hero .btn--outline:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--color-on-primary);
-  border-color: var(--color-on-primary);
+.launch-gate__hero-image {
+  display: block;
+  width: 50%;
+  max-width: 420px;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  margin: 0 auto;
 }
 
 /* ─── Form band ──────────────────────────────────────────────────────── */
@@ -82,6 +73,11 @@
 .launch-gate__band--form {
   background: var(--color-brand-purple-launch);
   color: var(--color-on-primary);
+  padding-top: 0;
+}
+
+.launch-gate__band--form .offer-countdown-banner {
+  margin-bottom: clamp(var(--space-8), 6vw, var(--space-12));
 }
 
 .launch-gate__form {

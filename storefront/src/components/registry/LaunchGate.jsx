@@ -4,6 +4,7 @@ import { api } from "@convex/_generated/api";
 import Page from '../ui/Page';
 import Button from '../ui/Button';
 import Toast from '../ui/Toast';
+import OfferCountdownBanner from './OfferCountdownBanner';
 import { useLeadCapture } from '../../context/LeadCaptureContext';
 import { STAGE_OPTIONS, validateNotifySignup } from '../../utils/notifySignup';
 import './LaunchGate.css';
@@ -21,10 +22,6 @@ const LaunchGate = () => {
   const [loading, setLoading] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
-
-  const scrollToForm = () => {
-    document.getElementById('launch-gate-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,21 +51,15 @@ const LaunchGate = () => {
   return (
     <div className="launch-gate">
       <Page.Section as="section" fullBleed className="launch-gate__band launch-gate__band--hero">
-        <div className="launch-gate__inner">
-          <h1 className="launch-gate__headline">
-            Save up to <span className="launch-gate__accent">UGX 190,000</span>
-          </h1>
-          <p className="launch-gate__subtext">
-            Create your Dennan account, build your registry, and unlock discounts across every category — before launch.
-          </p>
-          <div className="launch-gate__cta-row">
-            <Button variant="primary" onClick={scrollToForm}>See Offers</Button>
-            <Button variant="outline" to="/">Back to home</Button>
-          </div>
-        </div>
+        <img
+          className="launch-gate__hero-image"
+          src="/assets/launch%20offers.png"
+          alt="Launch Offers"
+        />
       </Page.Section>
 
       <Page.Section as="section" fullBleed id="launch-gate-form" className="launch-gate__band launch-gate__band--form">
+        <OfferCountdownBanner />
         <div className="launch-gate__inner">
           <h2 className="launch-gate__headline launch-gate__headline--form">Create your Dennan account</h2>
           <p className="launch-gate__subtext">

@@ -1,0 +1,18 @@
+.offer-countdown-banner {
+  position: relative;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-brand-purple-launch);
+  color: var(--color-on-primary);
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  box-sizing: border-box;
+}
+
+.offer-countdown-banner__timer {
+  font-weight: 700;
+  color: var(--color-brand-accent);
+}
