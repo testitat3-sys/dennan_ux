@@ -47,6 +47,18 @@ const LaunchPage = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  if (!hasLeadInfo) {
+    return (
+      <Page noPaddingTop={true} padding="inset" bottomSpacing="loose">
+        <Helmet>
+          <title>Launch Offers | Dennan</title>
+          <meta name="description" content={HERO.subtext} />
+        </Helmet>
+        <LaunchGate />
+      </Page>
+    );
+  }
+
   if (loading) {
     return <PLPSkeleton />;
   }
@@ -119,18 +131,6 @@ const LaunchPage = () => {
       setSearchParams({});
     }
   };
-
-  if (!hasLeadInfo) {
-    return (
-      <Page noPaddingTop={true} padding="inset" bottomSpacing="loose">
-        <Helmet>
-          <title>Launch Offers | Dennan</title>
-          <meta name="description" content={HERO.subtext} />
-        </Helmet>
-        <LaunchGate />
-      </Page>
-    );
-  }
 
   return (
     <Page padding="inset" bottomSpacing="loose" noPaddingTop={true}>
