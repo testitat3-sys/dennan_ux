@@ -1,0 +1,681 @@
+<title>Dennan — Launch Hero Options</title>
+<style>
+  :root {
+    --color-brand-primary: #d35097;
+    --color-brand-secondary: #832c7a;
+    --color-brand-secondary-deep: #5f1f58;
+    --color-brand-accent: #e1d328;
+    --color-brand-purple-launch: #603093;
+    --color-brand-purple-deep: #43206a;
+    --color-on-primary: #ffffff;
+    --surface: #ffffff;
+    --surface-low: #faf9f8;
+    --surface-high: #ede9e5;
+    --ink: #201223;
+    --ink-soft: #6b5b6c;
+
+    --font-display: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    --font-body: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+
+    --container: 1200px;
+    --page-bg: #f1ece9;
+    --chrome-bg: #ffffff;
+    --chrome-border: #e4dedd;
+    --chrome-text: #201223;
+    --chrome-text-soft: #7a6f78;
+    --pill-active-bg: var(--color-brand-purple-launch);
+    --pill-active-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page-bg: #14101a;
+      --chrome-bg: #1d1722;
+      --chrome-border: #322a38;
+      --chrome-text: #f2eef4;
+      --chrome-text-soft: #a599ab;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #14101a;
+    --chrome-bg: #1d1722;
+    --chrome-border: #322a38;
+    --chrome-text: #f2eef4;
+    --chrome-text-soft: #a599ab;
+  }
+  :root[data-theme="light"] {
+    --page-bg: #f1ece9;
+    --chrome-bg: #ffffff;
+    --chrome-border: #e4dedd;
+    --chrome-text: #201223;
+    --chrome-text-soft: #7a6f78;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-bg);
+    font-family: var(--font-body);
+    color: var(--chrome-text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Chrome: switcher + notes ─────────────────────────────────── */
+  .chrome-top {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--chrome-bg);
+    border-bottom: 1px solid var(--chrome-border);
+  }
+  .chrome-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 14px clamp(16px, 4vw, 32px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .chrome-brand {
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    font-size: 0.95rem;
+    color: var(--chrome-text);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .chrome-brand span {
+    font-weight: 500;
+    color: var(--chrome-text-soft);
+    font-size: 0.78rem;
+  }
+  .switcher {
+    display: flex;
+    gap: 6px;
+    background: var(--page-bg);
+    padding: 4px;
+    border-radius: 999px;
+    border: 1px solid var(--chrome-border);
+  }
+  .switcher button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--chrome-text-soft);
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+    white-space: nowrap;
+  }
+  .switcher button:hover { color: var(--chrome-text); }
+  .switcher button.active {
+    background: var(--pill-active-bg);
+    color: var(--pill-active-text);
+  }
+  .switcher button:focus-visible {
+    outline: 2px solid var(--color-brand-primary);
+    outline-offset: 2px;
+  }
+
+  .chrome-note {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 clamp(16px, 4vw, 32px) 14px;
+    font-size: 0.85rem;
+    color: var(--chrome-text-soft);
+    line-height: 1.5;
+  }
+  .chrome-note strong { color: var(--chrome-text); }
+
+  /* ─── Mockup viewport ───────────────────────────────────────────── */
+  .mockup { display: none; }
+  .mockup.active { display: block; }
+
+  .band {
+    padding: clamp(56px, 10vw, 128px) clamp(20px, 5vw, 40px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .band-inner {
+    max-width: 760px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(16px, 3vw, 24px);
+  }
+
+  .eyebrow {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+  .headline {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+    font-size: clamp(2.1rem, 6.2vw, 4.5rem);
+    text-wrap: balance;
+    margin: 0;
+  }
+  .subtext {
+    font-size: clamp(1rem, 1.6vw, 1.15rem);
+    line-height: 1.55;
+    max-width: 42ch;
+    opacity: 0.92;
+  }
+
+  /* Section 1 — Hero */
+  .sec-hero {
+    background: linear-gradient(180deg, var(--color-brand-secondary) 0%, var(--color-brand-secondary-deep) 100%);
+    color: var(--color-on-primary);
+  }
+  .sec-hero .eyebrow { color: var(--color-brand-accent); }
+  .accent-word { color: var(--color-brand-accent); }
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+  .btn {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 14px 28px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  .btn-primary {
+    background: var(--color-brand-accent);
+    color: #3a3406;
+  }
+  .btn-primary:hover { box-shadow: 0 8px 24px rgba(225, 211, 40, 0.35); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-on-primary);
+    border: 1.5px solid rgba(255,255,255,0.5);
+  }
+  .btn-ghost:hover { border-color: #fff; }
+  .scroll-cue {
+    margin-top: clamp(24px, 5vw, 48px);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .scroll-cue::after {
+    content: "";
+    width: 1px;
+    height: 28px;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  /* Section 2 — Form */
+  .sec-form {
+    background: linear-gradient(180deg, var(--color-brand-purple-launch) 0%, var(--color-brand-purple-deep) 100%);
+    color: var(--color-on-primary);
+  }
+  .sec-form .eyebrow { color: rgba(255,255,255,0.72); }
+  .sec-form .headline { font-size: clamp(1.9rem, 4.5vw, 3rem); }
+  .form-card {
+    margin-top: 8px;
+    width: 100%;
+    max-width: 460px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 20px;
+    padding: clamp(24px, 4vw, 36px);
+    backdrop-filter: blur(6px);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+  }
+  .field input, .field select {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.28);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+  }
+  .field input::placeholder { color: rgba(255,255,255,0.45); }
+  .field-row { display: flex; gap: 12px; }
+  .field-row .field { flex: 1; min-width: 0; }
+  .form-card .btn-primary { width: 100%; margin-top: 4px; }
+  .form-fineprint {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.55);
+    text-align: center;
+    margin-top: -4px;
+  }
+
+  @media (max-width: 480px) {
+    .field-row { flex-direction: column; }
+  }
+
+  /* Section 3 shared */
+  .sec-third { color: var(--ink); }
+  .sec-third .band-inner { max-width: var(--container); }
+  .sec-third .eyebrow { color: var(--color-brand-primary); }
+  .sec-third .headline { color: var(--ink); font-size: clamp(1.8rem, 4vw, 3rem); }
+  .sec-third .subtext { color: var(--ink-soft); max-width: 52ch; }
+
+  /* Option A — how it works steps */
+  .sec-third.opt-a { background: var(--surface-low); }
+  .steps {
+    margin-top: clamp(24px, 4vw, 40px);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(20px, 3vw, 32px);
+    width: 100%;
+  }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--surface-high);
+    border-radius: 18px;
+    padding: 28px 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    position: relative;
+  }
+  .step-num {
+    width: 40px; height: 40px;
+    border-radius: 999px;
+    background: var(--color-brand-purple-launch);
+    color: #fff;
+    font-weight: 800;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step h3 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+  .step p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); line-height: 1.5; }
+  @media (max-width: 760px) {
+    .steps { grid-template-columns: 1fr; }
+  }
+
+  /* Option B — benefits grid */
+  .sec-third.opt-b { background: #fdf9e3; }
+  .benefits {
+    margin-top: clamp(24px, 4vw, 40px);
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(16px, 2.5vw, 24px);
+    width: 100%;
+  }
+  .benefit {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    box-shadow: 0 1px 0 rgba(32,18,35,0.04);
+  }
+  .benefit-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--color-brand-accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+  }
+  .benefit h3 { margin: 0; font-size: 0.95rem; font-weight: 800; }
+  .benefit p { margin: 0; font-size: 0.82rem; color: var(--ink-soft); line-height: 1.45; }
+  @media (max-width: 860px) {
+    .benefits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 480px) {
+    .benefits { grid-template-columns: 1fr; }
+  }
+
+  /* Option C — social proof / marquee */
+  .sec-third.opt-c { background: var(--surface); padding-left: 0; padding-right: 0; }
+  .sec-third.opt-c .band-inner { max-width: 100%; }
+  .marquee {
+    width: 100%;
+    overflow: hidden;
+    background: var(--color-brand-secondary);
+    color: #fff;
+    padding: 14px 0;
+    margin-top: clamp(24px, 4vw, 36px);
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: scroll-left 22s linear infinite;
+    gap: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; }
+  }
+  .marquee-track span {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+    padding: 0 28px;
+    white-space: nowrap;
+  }
+  .marquee-track span::after { content: "•"; margin-left: 28px; color: var(--color-brand-accent); }
+  @keyframes scroll-left {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .brand-strip {
+    margin-top: clamp(28px, 4vw, 40px);
+    display: flex;
+    gap: clamp(24px, 4vw, 48px);
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 0 clamp(20px, 5vw, 40px);
+  }
+  .brand-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--surface-high);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .brand-chip .pct {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--color-brand-primary);
+    background: rgba(211,80,151,0.1);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  footer.credit {
+    text-align: center;
+    padding: 28px 16px 48px;
+    font-size: 0.78rem;
+    color: var(--chrome-text-soft);
+  }
+</style>
+
+<div class="chrome-top">
+  <div class="chrome-inner">
+    <div class="chrome-brand">DENNAN<span>launch page — hero options</span></div>
+    <div class="switcher" role="tablist" aria-label="Layout option">
+      <button class="active" data-target="a" role="tab" aria-selected="true">A — How it works</button>
+      <button data-target="b" role="tab" aria-selected="false">B — What you get</button>
+      <button data-target="c" role="tab" aria-selected="false">C — Social proof</button>
+    </div>
+  </div>
+  <div class="chrome-note" id="note">
+    Section 3 idea: <strong>a 3-step "how it works" band</strong> walking the parent from account → registry → discount, mirroring the reference screenshot's teal explainer band but reframed around the registry flow instead of a clinic checkup.
+  </div>
+</div>
+
+<!-- OPTION A -->
+<main class="mockup active" id="mockup-a">
+  <section class="band sec-hero">
+    <div class="band-inner">
+      <div class="eyebrow">Registry</div>
+      <h1 class="headline">Save up to <span class="accent-word">UGX 190,000</span></h1>
+      <p class="subtext">Create your Dennan account, build your registry, and unlock discounts across every category — before launch.</p>
+      <div class="cta-row">
+        <button class="btn btn-primary">Unlock offers</button>
+        <button class="btn btn-ghost">See how it works</button>
+      </div>
+      <div class="scroll-cue">Scroll</div>
+    </div>
+  </section>
+
+  <section class="band sec-form">
+    <div class="band-inner">
+      <div class="eyebrow">Step 1 of 1</div>
+      <h2 class="headline">Create your Dennan account</h2>
+      <p class="subtext">Takes under a minute — we'll email your discount codes the moment offers go live.</p>
+      <div class="form-card">
+        <div class="field-row">
+          <div class="field"><label for="a-fn">First name</label><input id="a-fn" placeholder="e.g. Sarah" /></div>
+          <div class="field"><label for="a-ln">Last name</label><input id="a-ln" placeholder="e.g. Nakato" /></div>
+        </div>
+        <div class="field"><label for="a-em">Email</label><input id="a-em" placeholder="e.g. sarah@example.com" /></div>
+        <div class="field"><label for="a-ph">Phone number</label><input id="a-ph" placeholder="e.g. 0772 123456" /></div>
+        <div class="field">
+          <label for="a-st">Stage</label>
+          <select id="a-st">
+            <option>Expectant mother</option>
+            <option>Newborn parent</option>
+            <option>Toddler parent</option>
+            <option>Not a parent yet</option>
+          </select>
+        </div>
+        <button class="btn btn-primary">Unlock offers</button>
+      </div>
+      <div class="form-fineprint">No spam — just launch offers and registry updates.</div>
+    </div>
+  </section>
+
+  <section class="band sec-third opt-a">
+    <div class="band-inner">
+      <div class="eyebrow">How it works</div>
+      <h2 class="headline">Three steps to your discount</h2>
+      <p class="subtext">The registry rewards you for planning ahead — the earlier you set up, the more you save.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Create your account</h3>
+          <p>Tell us your stage — expectant, newborn, or toddler — so we can tailor offers to you.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Build your registry</h3>
+          <p>Add the products you actually need from our curated parenting catalogue.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Unlock up to 50% off</h3>
+          <p>Discounts land in your inbox the moment launch offers go live — no waiting in line.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- OPTION B -->
+<main class="mockup" id="mockup-b">
+  <section class="band sec-hero">
+    <div class="band-inner">
+      <div class="eyebrow">Registry</div>
+      <h1 class="headline">Save up to <span class="accent-word">UGX 190,000</span></h1>
+      <p class="subtext">Create your Dennan account, build your registry, and unlock discounts across every category — before launch.</p>
+      <div class="cta-row">
+        <button class="btn btn-primary">Unlock offers</button>
+        <button class="btn btn-ghost">What you get</button>
+      </div>
+      <div class="scroll-cue">Scroll</div>
+    </div>
+  </section>
+
+  <section class="band sec-form">
+    <div class="band-inner">
+      <div class="eyebrow">Step 1 of 1</div>
+      <h2 class="headline">Create your Dennan account</h2>
+      <p class="subtext">Takes under a minute — we'll email your discount codes the moment offers go live.</p>
+      <div class="form-card">
+        <div class="field-row">
+          <div class="field"><label for="b-fn">First name</label><input id="b-fn" placeholder="e.g. Sarah" /></div>
+          <div class="field"><label for="b-ln">Last name</label><input id="b-ln" placeholder="e.g. Nakato" /></div>
+        </div>
+        <div class="field"><label for="b-em">Email</label><input id="b-em" placeholder="e.g. sarah@example.com" /></div>
+        <div class="field"><label for="b-ph">Phone number</label><input id="b-ph" placeholder="e.g. 0772 123456" /></div>
+        <div class="field">
+          <label for="b-st">Stage</label>
+          <select id="b-st">
+            <option>Expectant mother</option>
+            <option>Newborn parent</option>
+            <option>Toddler parent</option>
+            <option>Not a parent yet</option>
+          </select>
+        </div>
+        <button class="btn btn-primary">Unlock offers</button>
+      </div>
+      <div class="form-fineprint">No spam — just launch offers and registry updates.</div>
+    </div>
+  </section>
+
+  <section class="band sec-third opt-b">
+    <div class="band-inner">
+      <div class="eyebrow">What you get</div>
+      <h2 class="headline">Every account unlocks this</h2>
+      <p class="subtext">The registry isn't just a discount code — it's a running head start on everything ahead.</p>
+      <div class="benefits">
+        <div class="benefit">
+          <div class="benefit-icon">%</div>
+          <h3>Exclusive discounts</h3>
+          <p>10–50% off, reserved for registry members only.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">♥</div>
+          <h3>Curated for your stage</h3>
+          <p>Products picked for expectant, newborn, and toddler parents.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">⏰</div>
+          <h3>Milestone reminders</h3>
+          <p>We nudge you before you need to restock, not after.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">✉</div>
+          <h3>First look at launches</h3>
+          <p>New offers land in your inbox before they go public.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- OPTION C -->
+<main class="mockup" id="mockup-c">
+  <section class="band sec-hero">
+    <div class="band-inner">
+      <div class="eyebrow">Registry</div>
+      <h1 class="headline">Save up to <span class="accent-word">UGX 190,000</span></h1>
+      <p class="subtext">Create your Dennan account, build your registry, and unlock discounts across every category — before launch.</p>
+      <div class="cta-row">
+        <button class="btn btn-primary">Unlock offers</button>
+        <button class="btn btn-ghost">See who's joined</button>
+      </div>
+      <div class="scroll-cue">Scroll</div>
+    </div>
+  </section>
+
+  <section class="band sec-form">
+    <div class="band-inner">
+      <div class="eyebrow">Step 1 of 1</div>
+      <h2 class="headline">Create your Dennan account</h2>
+      <p class="subtext">Takes under a minute — we'll email your discount codes the moment offers go live.</p>
+      <div class="form-card">
+        <div class="field-row">
+          <div class="field"><label for="c-fn">First name</label><input id="c-fn" placeholder="e.g. Sarah" /></div>
+          <div class="field"><label for="c-ln">Last name</label><input id="c-ln" placeholder="e.g. Nakato" /></div>
+        </div>
+        <div class="field"><label for="c-em">Email</label><input id="c-em" placeholder="e.g. sarah@example.com" /></div>
+        <div class="field"><label for="c-ph">Phone number</label><input id="c-ph" placeholder="e.g. 0772 123456" /></div>
+        <div class="field">
+          <label for="c-st">Stage</label>
+          <select id="c-st">
+            <option>Expectant mother</option>
+            <option>Newborn parent</option>
+            <option>Toddler parent</option>
+            <option>Not a parent yet</option>
+          </select>
+        </div>
+        <button class="btn btn-primary">Unlock offers</button>
+      </div>
+      <div class="form-fineprint">No spam — just launch offers and registry updates.</div>
+    </div>
+  </section>
+
+  <section class="band sec-third opt-c">
+    <div class="band-inner">
+      <div class="eyebrow">Trusted by Ugandan parents</div>
+      <h2 class="headline">Most loved brands, one registry</h2>
+      <p class="subtext">Your registry pulls from the brands parents already reach for — each one carrying a launch-day discount.</p>
+    </div>
+    <div class="marquee">
+      <div class="marquee-track">
+        <span>Trusted by Ugandan Parents</span>
+        <span>2,400+ Registries Created</span>
+        <span>Trusted by Ugandan Parents</span>
+        <span>2,400+ Registries Created</span>
+        <span>Trusted by Ugandan Parents</span>
+        <span>2,400+ Registries Created</span>
+        <span>Trusted by Ugandan Parents</span>
+        <span>2,400+ Registries Created</span>
+      </div>
+    </div>
+    <div class="brand-strip">
+      <div class="brand-chip">Pampers <span class="pct">-25%</span></div>
+      <div class="brand-chip">NUK <span class="pct">-10%</span></div>
+      <div class="brand-chip">Chicco <span class="pct">-50%</span></div>
+      <div class="brand-chip">Philips Avent <span class="pct">-15%</span></div>
+      <div class="brand-chip">Medela <span class="pct">-20%</span></div>
+    </div>
+  </section>
+</main>
+
+<footer class="credit">Non-functional visual mockup — colors and type pulled from <code>storefront/src/variables.css</code>.</footer>
+
+<script>
+  const notes = {
+    a: 'Section 3 idea: <strong>a 3-step "how it works" band</strong> walking the parent from account → registry → discount, mirroring the reference screenshot\'s teal explainer band but reframed around the registry flow instead of a clinic checkup.',
+    b: 'Section 3 idea: <strong>a benefits grid ("what you get")</strong> — a direct parallel to the reference\'s "what we check" list, but itemizing registry perks instead of medical checks.',
+    c: 'Section 3 idea: <strong>a social-proof band</strong> — a scrolling marquee plus a brand-discount strip (echoing the existing "Most Loved Brands" component), giving Section 3 a credibility role instead of an explainer role.'
+  };
+  const buttons = document.querySelectorAll('.switcher button');
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-target');
+      buttons.forEach((b) => {
+        b.classList.toggle('active', b === btn);
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      document.querySelectorAll('.mockup').forEach((m) => {
+        m.classList.toggle('active', m.id === 'mockup-' + target);
+      });
+      document.getElementById('note').innerHTML = notes[target];
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+</script>

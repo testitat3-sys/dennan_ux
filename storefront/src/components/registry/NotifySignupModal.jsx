@@ -4,33 +4,8 @@ import { api } from "@convex/_generated/api";
 import { X } from 'lucide-react';
 import Button from '../ui/Button';
 import Toast from '../ui/Toast';
+import { STAGE_OPTIONS, splitName, mapUserStage, validateNotifySignup } from '../../utils/notifySignup';
 import './NotifySignupModal.css';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const splitName = (name) => {
-  if (!name) return { firstName: '', lastName: '' };
-  const parts = name.trim().split(/\s+/);
-  return {
-    firstName: parts[0] || '',
-    lastName: parts.slice(1).join(' ') || '',
-  };
-};
-
-const STAGE_OPTIONS = [
-  { value: 'expectant', label: 'Expectant Mother' },
-  { value: 'newborn', label: 'Newborn Parent' },
-  { value: 'toddler', label: 'Toddler Parent' },
-  { value: 'not_a_mother', label: 'Not a Parent Yet' },
-];
-
-// Maps the app-wide user stage (mother/newborn/kid) to this form's options
-const mapUserStage = (userStage) => {
-  if (userStage === 'mother') return 'expectant';
-  if (userStage === 'newborn') return 'newborn';
-  if (userStage === 'kid') return 'toddler';
-  return '';
-};
 
 const NotifySignupModal = ({
   isOpen,
@@ -41,6 +16,7 @@ const NotifySignupModal = ({
   specifications,
   title = 'Get notified at launch',
   subtext = "Leave your details and we'll email you the moment the Registry is ready.",
+  buttonLabel = 'Notify Me',
 }) => {
   const submitNotifySignup = useMutation(api.registry.submitNotifySignup);
 
@@ -92,19 +68,10 @@ const NotifySignupModal = ({
   if (!isMounted) return null;
 
   const validate = () => {
-    const next = {};
-    if (!firstName.trim()) next.firstName = 'First name is required.';
-    if (!lastName.trim()) next.lastName = 'Last name is required.';
-    if (!email.trim()) next.email = 'Email is required.';
-    else if (!EMAIL_RE.test(email.trim())) next.email = 'Enter a valid email address.';
-    if (!phone.trim()) next.phone = 'Phone number is required.';
-    if (!stage) next.stage = 'Please select your stage.';
+    const next = validateNotifySignup({ firstName, lastName, email, phone, stage });
     setErrors(next);
     return Object.keys(next).length === 0;
   };
-
-  const isFormValid = () =>
-    firstName.trim() && lastName.trim() && email.trim() && EMAIL_RE.test(email.trim()) && phone.trim() && stage;
 
   const handleConfirm = async () => {
     if (!validate()) return;
@@ -242,11 +209,11 @@ const NotifySignupModal = ({
             <Button
               variant="primary"
               fullWidth
-              disabled={!isFormValid() || loading}
+              disabled={loading}
               loading={loading}
               onClick={handleConfirm}
             >
-              Notify Me
+              {buttonLabel}
             </Button>
           </div>
 

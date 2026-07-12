@@ -77,16 +77,55 @@
   line-height: 1.2;
 }
 
-.notify-signup-modal--launch .notify-signup-headline {
-  color: #603093;
-}
-
 .notify-signup-subtext {
   font-family: var(--font-sans);
   font-size: var(--body-sm);
   color: var(--text-secondary);
   margin: var(--space-2) 0 0;
   line-height: 1.5;
+}
+
+/* ─── Launch variant (experimental) ─────────────────────────────────────── */
+
+.notify-signup-modal--launch {
+  background: var(--color-brand-purple-launch);
+}
+
+.notify-signup-modal--launch .notify-signup-headline {
+  color: var(--color-brand-accent);
+}
+
+.notify-signup-modal--launch .notify-signup-eyebrow,
+.notify-signup-modal--launch .notify-signup-subtext,
+.notify-signup-modal--launch .notify-signup-label {
+  color: var(--color-on-primary);
+}
+
+.notify-signup-modal--launch .notify-signup-close {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--color-on-primary);
+}
+
+.notify-signup-modal--launch .notify-signup-close:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--color-on-primary);
+}
+
+.notify-signup-modal--launch .notify-signup-input {
+  color: var(--color-on-primary);
+  border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+.notify-signup-modal--launch .notify-signup-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.notify-signup-modal--launch .notify-signup-input:focus {
+  border-bottom-color: var(--color-brand-accent);
+}
+
+.notify-signup-modal--launch select.notify-signup-input option {
+  color: var(--color-anchor);
 }
 
 .notify-signup-close {
@@ -127,14 +166,15 @@
 
 .notify-signup-input {
   width: 100%;
-  padding: var(--space-3) var(--space-4);
-  border: 1.5px solid var(--surface-container-high);
-  border-radius: var(--radius-md);
+  padding: var(--space-2) 0;
+  border: none;
+  border-bottom: 1.5px solid var(--surface-container-high);
+  border-radius: 0;
   font-family: var(--font-sans);
   font-size: var(--body-md);
   color: var(--text-primary);
-  background: var(--surface);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background: transparent;
+  transition: border-color 0.15s ease;
   box-sizing: border-box;
 }
 
@@ -144,8 +184,7 @@
 
 .notify-signup-input:focus {
   outline: none;
-  border-color: var(--color-brand-primary);
-  box-shadow: 0 0 0 3px rgba(211, 80, 151, 0.1);
+  border-bottom-color: var(--color-brand-primary);
 }
 
 .notify-signup-input-error {

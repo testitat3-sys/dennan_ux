@@ -249,12 +249,16 @@
   justify-content: center;
   border-radius: var(--radius-pill);
   transition: background 0.2s;
-  color: var(--color-brand-primary);
+  color: #000000;
   background: transparent;
 }
 
 .btn--nav-icon:hover {
   background: var(--surface-container-low);
+}
+
+.btn--nav-icon.is-active {
+  color: var(--color-brand-primary);
 }
 
 /* Search Submit: Rounded submit button for search bars */

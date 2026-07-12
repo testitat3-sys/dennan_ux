@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Package } from 'lucide-react';
 import { useQuery } from 'convex/react';
@@ -9,6 +9,7 @@ import { useLeadCapture } from '../context/LeadCaptureContext';
 import ProductCard from '../components/products/ProductCard';
 import SearchStrip from '../components/home/SearchStrip';
 import QuickViewModal from '../components/products/QuickViewModal';
+import LaunchGate from '../components/registry/LaunchGate';
 import Toast from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import Page from '../components/ui/Page';
@@ -31,7 +32,7 @@ const DISCOUNT_BUCKETS = [
 ];
 
 const LaunchPage = () => {
-  const { hasLeadInfo, openLeadModal } = useLeadCapture();
+  const { hasLeadInfo } = useLeadCapture();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
 
@@ -44,17 +45,6 @@ const LaunchPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-
-  useEffect(() => {
-    if (!hasLeadInfo) {
-      openLeadModal({
-        source: 'launch',
-        title: 'Save up to 190,000',
-        subtext: "Create your Dennan account to claim your discount",
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   if (loading) {
     return <PLPSkeleton />;
@@ -129,76 +119,29 @@ const LaunchPage = () => {
     }
   };
 
+  if (!hasLeadInfo) {
+    return (
+      <Page noPaddingTop={true} padding="inset" bottomSpacing="loose">
+        <Helmet>
+          <title>Launch Offers | Dennan</title>
+          <meta name="description" content={HERO.subtext} />
+        </Helmet>
+        <LaunchGate />
+      </Page>
+    );
+  }
+
   return (
-    <Page noPaddingTop={true} padding="inset" bottomSpacing="loose">
+    <Page padding="inset" bottomSpacing="loose">
       <Helmet>
         <title>Launch Offers | Dennan</title>
         <meta name="description" content={HERO.subtext} />
       </Helmet>
 
-      <Page.Section as="header" fullBleed className="plp__hero plp__hero--purple">
-        <div className="plp__hero-bg">
-          <img src={HERO.heroImage} alt={HERO.title} />
-        </div>
-        <div className="plp__hero-content">
-          <div className="plp__hero-shape" aria-hidden="true"></div>
-
-          <nav className="plp__breadcrumbs" aria-label="Breadcrumb">
-            <Link to="/" className="plp__breadcrumb-link">Home</Link>
-            <span className="plp__breadcrumb-sep" aria-hidden="true">›</span>
-            <span className="plp__breadcrumb-current">Offers</span>
-          </nav>
-
-          <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-              <Text role="display-lg" color="brand-accent" className="plp__hero-title">
-                {HERO.title}
-              </Text>
-            </Card>
-            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-              <Text role="body-sm" color="rgba(255, 255, 255, 0.9)" className="plp__hero-subtext">
-                {HERO.subtext}
-              </Text>
-            </Card>
-          </Card>
-
-          <div className="plp__hero-search">
-            <SearchStrip initialQuery={query} products={discountedProducts} onSubmit={handleSearchSubmit} />
-          </div>
-        </div>
-      </Page.Section>
-
-      <Page.Section className="plp__search-wrap plp__search-wrap--desktop">
+      <Page.Section className="plp__search-wrap plp__search-wrap--no-hero">
         <SearchStrip initialQuery={query} products={discountedProducts} onSubmit={handleSearchSubmit} />
       </Page.Section>
 
-      {!hasLeadInfo ? (
-        <Page.Section className="plp__container">
-          <div className="plp__empty">
-            <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', alignItems: 'center' }}>
-                <Text role="title-sm" as="p" color="primary" style={{ fontWeight: 700, margin: 0 }}>
-                  Sign up to view launch offers
-                </Text>
-                <Text role="body-sm" as="p" color="secondary" style={{ margin: 0 }}>
-                  Create your Dennan account to unlock these discounts.
-                </Text>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => openLeadModal({
-                    source: 'launch',
-                    title: 'Save up to 190,000',
-                    subtext: "Create your Dennan account to claim your discount",
-                  })}
-                >
-                  Unlock offers
-                </Button>
-              </div>
-            </Card>
-          </div>
-        </Page.Section>
-      ) : (
       <Page.Section className="plp__container">
         <aside className="plp__sidebar">
           <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
@@ -320,7 +263,6 @@ const LaunchPage = () => {
           </Card>
         </section>
       </Page.Section>
-      )}
 
       {selectedProduct && (
         <QuickViewModal

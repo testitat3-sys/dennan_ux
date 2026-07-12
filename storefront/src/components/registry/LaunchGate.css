@@ -1,0 +1,160 @@
+/* ─── Launch Gate (Option A: hero → form → more) ──────────────────────── */
+
+/* Page.Section adds a gap between adjacent sections by default; the bands here should sit flush */
+.launch-gate .page-section + .page-section {
+  margin-top: 0 !important;
+}
+
+.launch-gate__band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: clamp(var(--space-12), 10vw, var(--space-24)) var(--space-4);
+}
+
+.launch-gate__inner {
+  max-width: var(--width-medium);
+  width: 100%;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.launch-gate__headline {
+  font-family: var(--font-editorial);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  font-size: clamp(2rem, 5.5vw, var(--display-lg));
+  margin: 0;
+}
+
+.launch-gate__headline--form {
+  font-size: clamp(1.75rem, 4vw, var(--headline-lg));
+}
+
+.launch-gate__subtext {
+  font-family: var(--font-sans);
+  font-size: var(--body-lg);
+  line-height: 1.55;
+  max-width: 42ch;
+  margin: 0;
+  opacity: 0.92;
+}
+
+/* ─── Hero band ─────────────────────────────────────────────────────── */
+
+.launch-gate__band--hero {
+  min-height: 82vh;
+  justify-content: center;
+  background: linear-gradient(180deg, var(--color-brand-secondary) 0%, color-mix(in srgb, var(--color-brand-secondary) 100%, black 30%) 100%);
+  color: var(--color-on-primary);
+}
+
+.launch-gate__accent {
+  color: var(--color-brand-accent);
+}
+
+.launch-gate__cta-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-1);
+}
+
+.launch-gate__band--hero .btn--outline {
+  color: var(--color-on-primary);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.launch-gate__band--hero .btn--outline:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--color-on-primary);
+  border-color: var(--color-on-primary);
+}
+
+/* ─── Form band ──────────────────────────────────────────────────────── */
+
+.launch-gate__band--form {
+  background: var(--color-brand-purple-launch);
+  color: var(--color-on-primary);
+}
+
+.launch-gate__form {
+  margin-top: var(--space-2);
+  width: 100%;
+  max-width: var(--width-narrow);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  text-align: left;
+}
+
+.launch-gate__field-row {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.launch-gate__field-row .launch-gate__field {
+  flex: 1;
+  min-width: 0;
+}
+
+.launch-gate__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.launch-gate__label {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.launch-gate__input {
+  width: 100%;
+  padding: var(--space-2) 0;
+  border: none;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 0;
+  font-family: var(--font-sans);
+  font-size: var(--body-md);
+  color: var(--color-on-primary);
+  background: transparent;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.launch-gate__input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.launch-gate__input:focus {
+  outline: none;
+  border-bottom-color: var(--color-brand-accent);
+}
+
+.launch-gate__input option {
+  color: var(--color-anchor);
+}
+
+.launch-gate__error {
+  font-family: var(--font-sans);
+  font-size: var(--label-md);
+  color: var(--color-support-red);
+}
+
+@media (max-width: 480px) {
+  .launch-gate__field-row {
+    flex-direction: column;
+  }
+}

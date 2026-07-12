@@ -151,6 +151,11 @@
   display: block;
 }
 
+/* Used when the search strip sits directly under the navbar with no hero above it */
+.plp__search-wrap--no-hero {
+  padding-top: var(--space-8);
+}
+
 /* ─── MAIN LAYOUT ────────────────────────────────────────────────── */
 .plp__container {
   display: flex;
