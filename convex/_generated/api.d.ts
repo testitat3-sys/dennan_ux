@@ -14,6 +14,7 @@ import type * as barcodeCounters from "../barcodeCounters.js";
 import type * as brands from "../brands.js";
 import type * as cart from "../cart.js";
 import type * as coupons from "../coupons.js";
+import type * as crons from "../crons.js";
 import type * as customerActivities from "../customerActivities.js";
 import type * as data from "../data.js";
 import type * as delivery from "../delivery.js";
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   brands: typeof brands;
   cart: typeof cart;
   coupons: typeof coupons;
+  crons: typeof crons;
   customerActivities: typeof customerActivities;
   data: typeof data;
   delivery: typeof delivery;

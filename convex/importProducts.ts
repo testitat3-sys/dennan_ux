@@ -1,5 +1,6 @@
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { applyStockCounterDelta } from "./stockCounters";
 
 export const upsertProductsBatch = internalMutation({
   args: {
@@ -63,6 +64,12 @@ export const upsertProductsBatch = internalMutation({
           isActive: true,
           updatedAt: Date.now(),
         });
+        await applyStockCounterDelta(
+          ctx,
+          { inventory: existing.inventory, reorderPoint: existing.reorderPoint },
+          { inventory: p.inventory, reorderPoint: existing.reorderPoint },
+          existing._id
+        );
         updated++;
       } else {
         // Insert new product
@@ -72,6 +79,7 @@ export const upsertProductsBatch = internalMutation({
           isActive: true,
           updatedAt: Date.now(),
         });
+        await applyStockCounterDelta(ctx, null, { inventory: p.inventory, reorderPoint: undefined });
         added++;
       }
     }

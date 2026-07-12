@@ -53,7 +53,7 @@ const LaunchGate = () => {
       <Page.Section as="section" fullBleed className="launch-gate__band launch-gate__band--hero">
         <img
           className="launch-gate__hero-image"
-          src="/assets/launch%20offers.png"
+          src="/assets/launch_offers_2.png"
           alt="Launch Offers"
         />
       </Page.Section>
@@ -61,9 +61,9 @@ const LaunchGate = () => {
       <Page.Section as="section" fullBleed id="launch-gate-form" className="launch-gate__band launch-gate__band--form">
         <OfferCountdownBanner />
         <div className="launch-gate__inner">
-          <h2 className="launch-gate__headline launch-gate__headline--form">Create your Dennan account</h2>
+          <h2 className="launch-gate__headline launch-gate__headline--form">Save up to UGX 190,000</h2>
           <p className="launch-gate__subtext">
-            Takes under a minute — we'll email your discount codes the moment offers go live.
+            Create your Dennan account to claim your discount.
           </p>
 
           <form className="launch-gate__form" onSubmit={handleSubmit} noValidate>

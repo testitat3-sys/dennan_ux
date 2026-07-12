@@ -25,7 +25,9 @@ const HomeSkeleton = () => {
             <div className="skeleton-btn-mock skeleton-shimmer" />
             <div className="skeleton-btn-mock skeleton-shimmer" />
           </div>
-          
+
+          <div className="skeleton-hero__launch-banner skeleton-shimmer" />
+
           <div className="skeleton-hero__heritage">
             {[1, 2, 3].map((i) => (
               <div key={i} className="skeleton-heritage-card">

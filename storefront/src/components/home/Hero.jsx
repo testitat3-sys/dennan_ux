@@ -77,6 +77,14 @@ const Hero = ({ content }) => {
             Browse all
           </Button>
         </div>
+
+        <Link to="/launch" className="hero__launch-banner" aria-label="See launch offers">
+          <img
+            src="/assets/launch_offers_home_2.png"
+            alt="Launch offers — up to UGX 190,000 off"
+            className="hero__launch-banner-image"
+          />
+        </Link>
       </div>
 
       <div className="hero__image-wrap" aria-hidden="true">

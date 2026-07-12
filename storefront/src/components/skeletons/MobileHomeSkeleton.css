@@ -66,6 +66,13 @@
   background-color: var(--surface-container-high);
 }
 
+.skel-m-hero__launch-banner {
+  width: calc(100% + 2 * var(--space-4));
+  margin: var(--space-4) calc(-1 * var(--space-4)) 0;
+  height: 100px;
+  background-color: var(--surface-container-high);
+}
+
 /* 1b. Heritage / Stats Cards Skeleton Styles */
 .skel-m-heritage-list {
   display: flex;

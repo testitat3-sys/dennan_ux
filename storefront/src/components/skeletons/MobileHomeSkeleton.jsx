@@ -21,6 +21,8 @@ const MobileHomeSkeleton = () => {
           <div className="skel-m-hero__btn-ghost skeleton-shimmer" />
         </div>
 
+        <div className="skel-m-hero__launch-banner skeleton-shimmer" />
+
         {/* 1b. Heritage / Stats Cards Skeleton */}
         <div className="skel-m-heritage-list">
           {[1, 2, 3].map((i) => (
