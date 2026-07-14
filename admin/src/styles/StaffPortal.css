@@ -1240,12 +1240,23 @@
   flex-shrink: 0;
 }
 
+.sidebar-nav-group-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
 .sidebar-nav-group-label {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: inherit;
   text-transform: uppercase;
+}
+
+.sidebar-nav-badge--group {
+  margin-left: 0;
 }
 
 .sidebar-nav-group-items {
@@ -1599,6 +1610,11 @@
 .active-badge--off {
   background: var(--surface-container);
   color: var(--text-tertiary);
+}
+
+.active-badge--purple {
+  background: color-mix(in srgb, #a855f7, transparent 85%);
+  color: #6b21a8;
 }
 
 .active-dot {

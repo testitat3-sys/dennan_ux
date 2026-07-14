@@ -23,6 +23,7 @@ import type * as emails from "../emails.js";
 import type * as errorLogs from "../errorLogs.js";
 import type * as giftVouchers from "../giftVouchers.js";
 import type * as http from "../http.js";
+import type * as importPreLaunch from "../importPreLaunch.js";
 import type * as importProducts from "../importProducts.js";
 import type * as inspect from "../inspect.js";
 import type * as leads from "../leads.js";
@@ -72,6 +73,7 @@ declare const fullApi: ApiFromModules<{
   errorLogs: typeof errorLogs;
   giftVouchers: typeof giftVouchers;
   http: typeof http;
+  importPreLaunch: typeof importPreLaunch;
   importProducts: typeof importProducts;
   inspect: typeof inspect;
   leads: typeof leads;

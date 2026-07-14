@@ -87,9 +87,48 @@ export const getLeads = trackedQuery("leads.getLeads", {
       };
     });
 
-    return [...storeRequestLeads, ...wishlistLeads, ...notifySignupLeads].sort(
-      (a, b) => b.createdAt - a.createdAt
-    );
+    // ── Pre-launch sign-ups ───────────────────────────────────────────────
+    // Imported customers from the old pre-launch Convex project. They live
+    // directly on the users table, identified by importSource = "pre_launch".
+    const preLaunchUsers = await ctx.db
+      .query("users")
+      .withIndex("by_importSource", (q) => q.eq("importSource", "pre_launch"))
+      .collect();
+
+    const STAGE_DISPLAY: Record<string, string> = {
+      expecting: "Expecting",
+      parent: "Parent",
+    };
+
+    const preLaunchLeads = preLaunchUsers.map((u) => {
+      const stageLabel = u.role ? STAGE_DISPLAY[u.role] : undefined;
+      const detail = [
+        stageLabel ? `Stage: ${stageLabel}` : null,
+        u.customerNotes ?? null,
+      ]
+        .filter(Boolean)
+        .join(" · ") || "Pre-launch sign-up";
+
+      return {
+        id: u._id,
+        kind: "preLaunchSignup" as const,
+        userId: u._id,        // always set → Notes & Reminder always enabled
+        name: u.name ?? "—",
+        email: u.email,
+        phone: u.phone,
+        detail,
+        createdAt: u._creationTime,   // original sign-up timestamp preserved
+        status: u.leadStatus ?? "new",
+        resolvedAt: u.leadResolvedAt,
+      };
+    });
+
+    return [
+      ...storeRequestLeads,
+      ...wishlistLeads,
+      ...notifySignupLeads,
+      ...preLaunchLeads,
+    ].sort((a, b) => b.createdAt - a.createdAt);
   },
 });
 
@@ -103,25 +142,43 @@ export const resolveLead = mutation({
     storeRequestId: v.optional(v.id("storeRequests")),
     wishlistItemId: v.optional(v.id("wishlistItems")),
     notifySignupId: v.optional(v.id("registryNotifySignups")),
+    preLaunchUserId: v.optional(v.id("users")),
     resolved: v.boolean(),
   },
   handler: async (ctx, args) => {
     const { user: staffUser } = await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
 
-    const id = args.storeRequestId ?? args.wishlistItemId ?? args.notifySignupId;
+    const id =
+      args.storeRequestId ??
+      args.wishlistItemId ??
+      args.notifySignupId ??
+      args.preLaunchUserId;
+
     if (!id) {
-      throw new Error("Either storeRequestId, wishlistItemId, or notifySignupId is required.");
+      throw new Error(
+        "Either storeRequestId, wishlistItemId, notifySignupId, or preLaunchUserId is required."
+      );
     }
     const row = await ctx.db.get(id);
     if (!row) {
       throw new Error("Lead not found.");
     }
 
-    await ctx.db.patch(id, {
-      status: args.resolved ? "resolved" : "new",
-      resolvedAt: args.resolved ? Date.now() : undefined,
-      resolvedByStaffId: args.resolved ? staffUser._id : undefined,
-    });
+    // Pre-launch leads resolve on the users table using lead-specific fields
+    // so they don't collide with existing user status fields.
+    if (args.preLaunchUserId) {
+      await ctx.db.patch(args.preLaunchUserId, {
+        leadStatus: args.resolved ? "resolved" : "new",
+        leadResolvedAt: args.resolved ? Date.now() : undefined,
+        leadResolvedByStaffId: args.resolved ? staffUser._id : undefined,
+      });
+    } else {
+      await ctx.db.patch(id, {
+        status: args.resolved ? "resolved" : "new",
+        resolvedAt: args.resolved ? Date.now() : undefined,
+        resolvedByStaffId: args.resolved ? staffUser._id : undefined,
+      });
+    }
 
     return { success: true };
   },

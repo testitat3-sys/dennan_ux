@@ -13,12 +13,18 @@ import profileImg from "../assets/about-dennan.png";
  */
 export default function Sidebar({ groups, brandSub, user, onLogout, storageKey = "dennan_sidebar_collapsed" }) {
   const [collapsedGroups, setCollapsedGroups] = useState(() => {
+    const activeGroupId = groups.find((g) => g.items.some((i) => i.isActive))?.id;
     try {
-      const activeGroupId = groups.find((g) => g.items.some((i) => i.isActive))?.id;
-      const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      return new Set(stored.filter((id) => id !== activeGroupId));
+      const stored = localStorage.getItem(storageKey);
+      // No stored preference yet: collapse every group by default (except
+      // whichever one holds the active tab) instead of showing everything open.
+      if (stored === null) {
+        return new Set(groups.map((g) => g.id).filter((id) => id !== activeGroupId));
+      }
+      const parsed = JSON.parse(stored);
+      return new Set(parsed.filter((id) => id !== activeGroupId));
     } catch {
-      return new Set();
+      return new Set(groups.map((g) => g.id).filter((id) => id !== activeGroupId));
     }
   });
 
@@ -45,6 +51,7 @@ export default function Sidebar({ groups, brandSub, user, onLogout, storageKey =
       <nav className="sidebar-nav">
         {groups.map((group) => {
           const isCollapsed = collapsedGroups.has(group.id);
+          const groupBadgeTotal = group.items.reduce((sum, i) => sum + (i.badge > 0 ? i.badge : 0), 0);
           return (
             <div key={group.id} className="sidebar-nav-group">
               <button
@@ -53,7 +60,12 @@ export default function Sidebar({ groups, brandSub, user, onLogout, storageKey =
                 onClick={() => toggleGroup(group.id)}
                 aria-expanded={!isCollapsed}
               >
-                <span className="sidebar-nav-group-label">{group.label}</span>
+                <span className="sidebar-nav-group-label-wrap">
+                  <span className="sidebar-nav-group-label">{group.label}</span>
+                  {isCollapsed && groupBadgeTotal > 0 && (
+                    <span className="sidebar-nav-badge sidebar-nav-badge--group">{groupBadgeTotal}</span>
+                  )}
+                </span>
                 {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
               </button>
               {!isCollapsed && (

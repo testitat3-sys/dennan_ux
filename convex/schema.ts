@@ -109,9 +109,25 @@ export default defineSchema({
     // their own column. Every key ever written here must be documented in
     // docs/user-details-schema.md.
     details: v.optional(v.record(v.string(), v.string())),
+
+    // ==========================================
+    // PRE-LAUNCH IMPORT & LEAD-RESOLUTION FIELDS
+    // ==========================================
+    /** Old-DB _id from the pre-launch Convex project; used for idempotent re-imports. */
+    preLaunchId: v.optional(v.string()),
+    /** Marks how this user row was created. "pre_launch" = imported from pre-launch site. */
+    importSource: v.optional(
+      v.union(v.literal("pre_launch"), v.literal("manual"))
+    ),
+    /** Lead-resolution tracking for pre-launch sign-ups shown in the Leads panel. */
+    leadStatus: v.optional(v.union(v.literal("new"), v.literal("resolved"))),
+    leadResolvedAt: v.optional(v.number()),
+    leadResolvedByStaffId: v.optional(v.id("users")),
   })
     .index("email", ["email"])
-    .index("by_accountRole", ["accountRole"]),
+    .index("by_accountRole", ["accountRole"])
+    .index("by_importSource", ["importSource"])
+    .index("by_preLaunchId", ["preLaunchId"]),
 
   testLinks: defineTable({
     email: v.string(),
@@ -992,10 +1008,15 @@ export default defineSchema({
     staffName: v.string(),
     createdAt: v.number(),
     completedAt: v.optional(v.number()),
+    /** Old-DB _id from the pre-launch Convex project; used for idempotent re-imports. */
+    preLaunchId: v.optional(v.string()),
+    /** "pre_launch" when this row was imported from the pre-launch site. */
+    importSource: v.optional(v.string()),
   }).index("by_customerId", ["customerId"])
     .index("by_scheduledDate", ["scheduledDate"])
     .index("by_status", ["status"])
-    .index("by_orderId", ["orderId"]),
+    .index("by_orderId", ["orderId"])
+    .index("by_preLaunchId", ["preLaunchId"]),
 
   giftVouchers: defineTable({
     code: v.string(),

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
-import { Copy, CheckCircle, RotateCcw, Search, Inbox, ShoppingBag, Bell, Megaphone } from "lucide-react";
+import { Copy, CheckCircle, RotateCcw, Search, Inbox, ShoppingBag, Bell, Megaphone, UserPlus } from "lucide-react";
 import CustomerActivityModal from "./CustomerActivityModal";
 
 const STATUS_TABS = [
@@ -34,6 +34,7 @@ export default function LeadsPanel({ token }) {
         storeRequestId: lead.kind === "storeRequest" ? lead.id : undefined,
         wishlistItemId: lead.kind === "restockNotify" ? lead.id : undefined,
         notifySignupId: lead.kind === "notifySignup" ? lead.id : undefined,
+        preLaunchUserId: lead.kind === "preLaunchSignup" ? lead.id : undefined,
         resolved: lead.status !== "resolved",
       });
     } catch (err) {
@@ -159,16 +160,20 @@ export default function LeadsPanel({ token }) {
                         )}
                       </td>
                       <td>
-                        <span className={`active-badge ${lead.kind === "storeRequest" ? "active-badge--on" : "active-badge--off"}`}>
+                        <span className={`active-badge ${lead.kind === "storeRequest" ? "active-badge--on" : lead.kind === "preLaunchSignup" ? "active-badge--purple" : "active-badge--off"}`}>
                           {lead.kind === "storeRequest" && <ShoppingBag size={12} />}
                           {lead.kind === "restockNotify" && <Bell size={12} />}
                           {lead.kind === "notifySignup" && <Megaphone size={12} />}
+                          {lead.kind === "preLaunchSignup" && <UserPlus size={12} />}
                           {lead.kind === "storeRequest" && "Store Request"}
                           {lead.kind === "restockNotify" && "Restock Notify"}
                           {lead.kind === "notifySignup" && "Launch Signup"}
+                          {lead.kind === "preLaunchSignup" && "Pre-Launch"}
                         </span>
                       </td>
-                      <td>{lead.detail}</td>
+                      <td title={lead.detail}>
+                        {lead.detail && lead.detail.length > 60 ? lead.detail.substring(0, 60) + "..." : lead.detail}
+                      </td>
                       <td>{new Date(lead.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</td>
                       <td>
                         <span className={`active-badge ${lead.status === "resolved" ? "active-badge--on" : "active-badge--off"}`}>

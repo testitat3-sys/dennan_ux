@@ -32,3 +32,23 @@ dist-ssr
 scratch/
 skills-lock.json
 
+# Project Documentation & Guides
+/docs/
+*.md
+!/README.md
+!/CLAUDE.md
+!/AGENTS.md
+!/convex/_generated/ai/guidelines.md
+
+# Data Exports and Spreadsheets
+/exports/
+*.xls
+
+# Python Scripts
+*.py
+
+# Root JSON files not needed for app runtime
+/*.json
+!/package.json
+!/package-lock.json
+!/vercel.json
