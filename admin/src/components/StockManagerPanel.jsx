@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { Search, AlertCircle, Pencil, Plus, Printer } from "lucide-react";
 import BarcodeLabelModal from "./BarcodeLabelModal";
 
@@ -19,7 +20,7 @@ export default function StockManagerPanel({ token, navigate }) {
   );
   const isStockSearching = stockSearch.trim().length > 0;
   const stockList = isStockSearching ? stockSearchResults : stockBrowseResults;
-  const stockSummary = useQuery(api.stockCounters.getStockSummary, { token });
+  const stockSummary = useTrackedQuery(api.stockCounters.getStockSummary, { token });
   const adjustStockMutation = useMutation(api.products.adjustStock);
   const [stockAdjustment, setStockAdjustment] = useState({}); // productId -> delta
   const [labelProduct, setLabelProduct] = useState(null);

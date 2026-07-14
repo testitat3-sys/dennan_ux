@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import {
   ResponsiveContainer,
   LineChart,
@@ -137,7 +138,7 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
     }
   }, [datePreset, customStart, customEnd, todayStr]);
 
-  const metrics = useQuery(api.orders.adminGetSalesMetrics, {
+  const metrics = useTrackedQuery(api.orders.adminGetSalesMetrics, {
     token,
     startDate,
     endDate,

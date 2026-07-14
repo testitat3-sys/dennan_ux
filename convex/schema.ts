@@ -1057,6 +1057,34 @@ export default defineSchema({
   })
     .index("by_fingerprint", ["fingerprint"])
     .index("by_lastSeenAt", ["lastSeenAt"]),
+
+  /**
+   * dbIOCounters — per (functionName, day) denormalized read-count counters
+   * powering the admin DB I/O baseline dashboard. Kept in sync incrementally
+   * (get-or-init then patch, same idiom as stockCounters) by
+   * convex/lib/ioTracking.ts's bumpIOCounters — never scanned/recomputed from
+   * raw per-call logs.
+   */
+  dbIOCounters: defineTable({
+    functionName: v.string(),
+    day: v.string(), // "YYYY-MM-DD", server-local
+    reads: v.number(),
+    invocations: v.number(),
+  })
+    .index("by_functionName_and_day", ["functionName", "day"])
+    .index("by_day", ["day"]),
+
+  /**
+   * dbIOAllTimeCounters — one row per functionName, running total across all
+   * days. Updated in the same write as dbIOCounters so the admin dashboard's
+   * "cumulative" figure is always an O(#functions) read, never a scan across
+   * historical days.
+   */
+  dbIOAllTimeCounters: defineTable({
+    functionName: v.string(),
+    reads: v.number(),
+    invocations: v.number(),
+  }).index("by_functionName", ["functionName"]),
 });
 
 

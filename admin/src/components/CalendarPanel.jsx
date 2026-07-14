@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { ChevronLeft, ChevronRight, Calendar, Phone, Mail, Users, Bell, FileText, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { getTodayStr, getLocalDateString, formatScheduledDate, getUrgency, priorityRank } from "../utils/reminderHelpers";
 
@@ -27,7 +28,7 @@ export default function CalendarPanel({ token, onOpenOrder }) {
   const [selectedDateStr, setSelectedDateStr] = useState(todayStr);
   const [completingId, setCompletingId] = useState(null);
 
-  const allActivities = useQuery(api.customerActivities.getAllActivities, { token });
+  const allActivities = useTrackedQuery(api.customerActivities.getAllActivities, { token });
   const completeActivityMutation = useMutation(api.customerActivities.completeActivity);
   const deleteActivityMutation = useMutation(api.customerActivities.deleteActivity);
 

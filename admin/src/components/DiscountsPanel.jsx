@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 
 export default function DiscountsPanel({ token }) {
   // Discount list
-  const discountList = useQuery(api.products.getDiscountList, { token });
+  const discountList = useTrackedQuery(api.products.getDiscountList, { token });
   const setDiscountMutation = useMutation(api.products.setDiscount);
   const [discountForm, setDiscountForm] = useState({
     productId: "",

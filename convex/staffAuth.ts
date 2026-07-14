@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
+import { trackedQuery } from "./lib/ioTracking";
 
 declare const process: {
   env: Record<string, string | undefined>;
@@ -303,7 +304,7 @@ export const rotateSessionToken = mutation({
 /**
  * Admin-only query: retrieves list of staff users and their claimed orders performance.
  */
-export const getStaffList = query({
+export const getStaffList = trackedQuery("staffAuth.getStaffList", {
   args: {
     token: v.string(),
   },
@@ -346,7 +347,7 @@ export const getStaffList = query({
 // Lightweight staff+admin name roster for the POS "staff who worked on this" picker.
 // Unlike getStaffList (admin-only, includes every claimed order's details), this is
 // accessible to any staff/admin and returns only what's needed to populate a dropdown.
-export const getStaffRoster = query({
+export const getStaffRoster = trackedQuery("staffAuth.getStaffRoster", {
   args: {
     token: v.string(),
   },

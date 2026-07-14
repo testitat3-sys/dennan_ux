@@ -5,6 +5,7 @@ import { verifyStaffSession } from "./staffAuth";
 import { applyStockCounterDelta } from "./stockCounters";
 import { allocateNextBarcode } from "./barcodeCounters";
 import { parseDateStrToMs } from "./orders";
+import { trackedQuery } from "./lib/ioTracking";
 
 // Reusable product field validators matching the products schema
 const productFieldsValidator = {
@@ -692,7 +693,7 @@ export const setDiscount = mutation({
   },
 });
 
-export const getDiscountList = query({
+export const getDiscountList = trackedQuery("products.getDiscountList", {
   args: {
     token: v.string(),
   },

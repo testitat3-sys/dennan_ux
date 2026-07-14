@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { Copy, CheckCircle, RotateCcw, Search, Inbox, ShoppingBag, Bell, Megaphone } from "lucide-react";
 import CustomerActivityModal from "./CustomerActivityModal";
 
@@ -11,7 +12,7 @@ const STATUS_TABS = [
 ];
 
 export default function LeadsPanel({ token }) {
-  const leads = useQuery(api.leads.getLeads, { token });
+  const leads = useTrackedQuery(api.leads.getLeads, { token });
   const resolveLeadMutation = useMutation(api.leads.resolveLead);
 
   const [statusTab, setStatusTab] = useState("unresolved");

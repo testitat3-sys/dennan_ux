@@ -4,7 +4,6 @@
    Based on reference/staff_reference/staff.css
  ───────────────────────────────────────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import './tokens.css';
 @import './Button.css';
 
@@ -1221,13 +1220,38 @@
   margin-top: 0;
 }
 
+.sidebar-nav-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-1) var(--space-4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+}
+
+.sidebar-nav-group-header:hover {
+  color: var(--text-secondary);
+}
+
+.sidebar-nav-group-header svg {
+  flex-shrink: 0;
+}
+
 .sidebar-nav-group-label {
-  padding: 0 var(--space-4) var(--space-1);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: var(--text-tertiary);
+  color: inherit;
   text-transform: uppercase;
+}
+
+.sidebar-nav-group-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .sidebar-nav-item {
@@ -3336,7 +3360,7 @@
 
 .product-edit-title {
   font-size: var(--headline-sm, 24px);
-  font-family: var(--font-editorial, 'Plus Jakarta Sans', sans-serif);
+  font-family: var(--font-editorial);
   color: var(--text-primary);
   font-weight: 800;
 }

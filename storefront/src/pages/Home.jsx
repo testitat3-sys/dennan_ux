@@ -15,6 +15,7 @@ import QuickViewModal from '../components/products/QuickViewModal';
 import Toast from '../components/ui/Toast';
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from '../hooks/useTrackedQuery';
 import { staticData } from '../constants/staticData';
 import { stripBrandFromName } from '../utils/productNameUtils';
 import HomeSkeleton from '../components/home/HomeSkeleton';
@@ -33,7 +34,7 @@ const Home = () => {
   // Live Convex queries for hero/trust content, featured products, stages, tiers
   const heroData = useQuery(api.data.getHero);
   const trustItemsData = useQuery(api.data.getTrustItems);
-  const featuredProducts = useQuery(api.data.getHomeFeaturedProducts);
+  const featuredProducts = useTrackedQuery(api.data.getHomeFeaturedProducts, {}, 20);
   const liveStages = useQuery(api.data.getStages);
   const liveTiers = useQuery(api.data.getTiers);
 

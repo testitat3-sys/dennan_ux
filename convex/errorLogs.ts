@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { verifyStaffSession } from "./staffAuth";
+import { trackedQuery, trackedMutation } from "./lib/ioTracking";
 
 const DEDUPE_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MAX_DETAILS_LENGTH = 2000;
@@ -86,7 +87,7 @@ export const logError = mutation({
 /**
  * Admin-only: retrieves the full error log history, most recent first.
  */
-export const getErrorLogs = query({
+export const getErrorLogs = trackedQuery("errorLogs.getErrorLogs", {
   args: {
     token: v.string(),
   },
@@ -104,7 +105,7 @@ export const getErrorLogs = query({
 /**
  * Admin-only: clears the entire error log history.
  */
-export const clearErrorLogs = mutation({
+export const clearErrorLogs = trackedMutation("errorLogs.clearErrorLogs", {
   args: {
     token: v.string(),
   },

@@ -1,9 +1,10 @@
 import React from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 
 export default function ErrorLogSettingsPanel({ token }) {
-  const errorLogs = useQuery(api.errorLogs.getErrorLogs, { token });
+  const errorLogs = useTrackedQuery(api.errorLogs.getErrorLogs, { token });
   const clearErrorLogsMutation = useMutation(api.errorLogs.clearErrorLogs);
 
   const handleClearAll = async () => {

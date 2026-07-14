@@ -1,10 +1,10 @@
 import React from "react";
-import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { X, Calendar, MapPin, CreditCard, Clock, RotateCcw, User, Phone, Truck, Bell, Hand, Printer, CheckCircle, XCircle } from "lucide-react";
 
 export default function OrderDetailModal({ order, onClose, onOpenReturn, onClaim, onPrintReceipt, onDispatch, onComplete, onMarkFailed, token }) {
-  const linkedActivities = useQuery(
+  const linkedActivities = useTrackedQuery(
     api.customerActivities.getActivitiesByOrder,
     order && token ? { token, orderId: order._id } : "skip"
   );

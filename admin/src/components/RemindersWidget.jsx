@@ -1,6 +1,7 @@
 import React from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { Phone, Mail, Users, Bell, FileText, CheckCircle } from "lucide-react";
 import { getTodayStr, getUrgency, formatScheduledDate } from "../utils/reminderHelpers";
 
@@ -22,7 +23,7 @@ const priorityLabel = { high: "High Priority", normal: null, low: "Low Priority"
 
 export default function RemindersWidget({ token, onViewCalendar }) {
   const todayStr = getTodayStr();
-  const dueActivities = useQuery(api.customerActivities.getDueActivities, { token, currentDate: todayStr });
+  const dueActivities = useTrackedQuery(api.customerActivities.getDueActivities, { token, currentDate: todayStr });
   const completeActivityMutation = useMutation(api.customerActivities.completeActivity);
 
   const handleComplete = async (activityId) => {

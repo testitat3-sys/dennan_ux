@@ -70,13 +70,13 @@ const buildFactBullets = (product) => {
 
 const formatUnitsSold = (units) => {
   if (units >= 1000) {
-    return `${(units / 1000).toFixed(1).replace(/\.0$/, '')}k+ sold`;
+    return `HOT! ${(units / 1000).toFixed(1).replace(/\.0$/, '')}k+ people have just bought this`;
   }
   if (units > 20) {
     const rounded = Math.floor(units / 5) * 5;
-    return `${rounded}+ sold`;
+    return `HOT! ${rounded}+ people have just bought this`;
   }
-  return `${units} sold`;
+  return `HOT! ${units} ${units === 1 ? 'person has' : 'people have'} just bought this`;
 };
 
 const PDP = () => {
@@ -406,10 +406,10 @@ const PDP = () => {
             <div className="pdp__header">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="pdp__brand">{product.brand}</span>
-                {product.unitsSold !== undefined && product.unitsSold > 0 && (
+                {((product.unitsSold !== undefined && product.unitsSold > 0) || import.meta.env.DEV) && (
                   <span className="pdp__sales-pill">
                     <Flame size={13} strokeWidth={2.5} fill="currentColor" />
-                    {formatUnitsSold(product.unitsSold)}
+                    {formatUnitsSold(product.unitsSold && product.unitsSold > 0 ? product.unitsSold : 28)}
                   </span>
                 )}
               </div>

@@ -83,14 +83,15 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(posProducts.some((p: any) => p.name === "Baby Bottle Premium")).toBe(true);
 
   // Query stock list as Admin
-  const stockList = await t.query(api.products.getStockList, { token: adminToken });
+  const stockListResult = await t.query(api.products.getStockList, { token: adminToken, paginationOpts: { numItems: 50, cursor: null } });
+  const stockList = stockListResult.page;
   expect(stockList.length).toBeGreaterThanOrEqual(2);
   const bottleStock = stockList.find((s: any) => s.id === productId1);
   expect(bottleStock?.inventory).toBe(10);
 
   // Query stock list as Staff should fail (admin only)
   await expect(
-    t.query(api.products.getStockList, { token: staffToken })
+    t.query(api.products.getStockList, { token: staffToken, paginationOpts: { numItems: 50, cursor: null } })
   ).rejects.toThrow("Access denied");
 
   // Adjust stock as Admin
@@ -101,7 +102,8 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   });
   expect(adjustRes.newInventory).toBe(15);
 
-  const stockListUpdated = await t.query(api.products.getStockList, { token: adminToken });
+  const stockListUpdatedResult = await t.query(api.products.getStockList, { token: adminToken, paginationOpts: { numItems: 50, cursor: null } });
+  const stockListUpdated = stockListUpdatedResult.page;
   expect(stockListUpdated.find((s: any) => s.id === productId1)?.inventory).toBe(15);
 
   // Set promotional discount as Admin
@@ -114,7 +116,8 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   });
 
   // Verify discount list
-  const discountList = await t.query(api.products.getDiscountList, { token: adminToken });
+  const discountListResult = await t.query(api.products.getDiscountList, { token: adminToken });
+  const discountList = discountListResult.data;
   expect(discountList.length).toBeGreaterThanOrEqual(1);
   expect(discountList.some((d: any) => d._id === productId1)).toBe(true);
 
@@ -139,12 +142,14 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   });
 
   // List customers as Admin
-  const customerList = await t.query(api.customerActivities.getCustomerList, { token: adminToken });
+  const customerListResult = await t.query(api.customerActivities.getCustomerList, { token: adminToken });
+  const customerList = customerListResult.data;
   expect(customerList.length).toBeGreaterThanOrEqual(1);
   expect(customerList.some((c: any) => c.id === customerId)).toBe(true);
 
   // List customers as Staff should also succeed (used in Staff CRM tab)
-  const staffCustomerList = await t.query(api.customerActivities.getCustomerList, { token: staffToken });
+  const staffCustomerListResult = await t.query(api.customerActivities.getCustomerList, { token: staffToken });
+  const staffCustomerList = staffCustomerListResult.data;
   expect(staffCustomerList.length).toBeGreaterThanOrEqual(1);
 
   // Update customer notes as Staff
@@ -154,7 +159,8 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     customerNotes: "Olivia prefers organic products and fast deliveries.",
   });
 
-  const customerListNotes = await t.query(api.customerActivities.getCustomerList, { token: adminToken });
+  const customerListNotesResult = await t.query(api.customerActivities.getCustomerList, { token: adminToken });
+  const customerListNotes = customerListNotesResult.data;
   expect(customerListNotes.find((c: any) => c.id === customerId)?.customerNotes).toBe(
     "Olivia prefers organic products and fast deliveries."
   );
@@ -171,10 +177,11 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   const activityId = actRes.activityId;
 
   // Retrieve CRM Activities
-  const activities = await t.query(api.customerActivities.getActivitiesByCustomer, {
+  const activitiesResult = await t.query(api.customerActivities.getActivitiesByCustomer, {
     token: staffToken,
     customerId,
   });
+  const activities = activitiesResult.data;
   expect(activities.length).toBe(1);
   expect(activities[0].note).toBe("Followed up on her baby bottle preferences.");
   expect(activities[0].status).toBe("pending");
@@ -186,10 +193,11 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     activityId,
   });
 
-  const activitiesCompleted = await t.query(api.customerActivities.getActivitiesByCustomer, {
+  const activitiesCompletedResult = await t.query(api.customerActivities.getActivitiesByCustomer, {
     token: staffToken,
     customerId,
   });
+  const activitiesCompleted = activitiesCompletedResult.data;
   expect(activitiesCompleted[0].status).toBe("completed");
   expect(activitiesCompleted[0].completedAt).toBeDefined();
 
@@ -212,7 +220,8 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   const orderId = orderRes.orderId;
 
   // Verify stock was deducted
-  const stockListAfterOrder = await t.query(api.products.getStockList, { token: adminToken });
+  const stockListAfterOrderResult = await t.query(api.products.getStockList, { token: adminToken, paginationOpts: { numItems: 50, cursor: null } });
+  const stockListAfterOrder = stockListAfterOrderResult.page;
   expect(stockListAfterOrder.find((s: any) => s.id === productId1)?.inventory).toBe(13);
   expect(stockListAfterOrder.find((s: any) => s.id === productId2)?.inventory).toBe(15);
 
@@ -243,10 +252,10 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(claimedOrder.history.length).toBe(1);
   expect(claimedOrder.history[0].status).toBe("packing");
 
-  // Staff dispatches order
+  // Admin dispatches order (even though Staff claimed it)
   const deliveryTime = Date.now() + 60 * 60 * 1000; // 1 hr future
   await t.mutation(api.orders.handoverToDelivery, {
-    token: staffToken,
+    token: adminToken,
     orderId,
     deliveryPersonName: "Kateregga John",
     riderPhone: "+256701234567",
@@ -261,9 +270,9 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(dispatchedOrder.riderPhone).toBe("+256701234567");
   expect(dispatchedOrder.timeToDispatch).toBeDefined();
 
-  // Test completeOrder
+  // Admin completes order (even though Staff claimed it)
   await t.mutation(api.orders.completeOrder, {
-    token: staffToken,
+    token: adminToken,
     orderId,
   });
 
@@ -312,7 +321,8 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(returnedOrderDoc.status).toBe("partially_returned");
 
   // Verify product inventory was replenished
-  const stockListAfterReturn = await t.query(api.products.getStockList, { token: adminToken });
+  const stockListAfterReturnResult = await t.query(api.products.getStockList, { token: adminToken, paginationOpts: { numItems: 50, cursor: null } });
+  const stockListAfterReturn = stockListAfterReturnResult.page;
   expect(stockListAfterReturn.find((s: any) => s.id === productId1)?.inventory).toBe(14); // 13 + 1
   expect(stockListAfterReturn.find((s: any) => s.id === productId2)?.inventory).toBe(17); // 15 + 2
 
@@ -353,7 +363,8 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(returnedOrderDoc2.status).toBe("returned");
 
   // Verify product inventory was fully replenished
-  const stockListAfterFinalReturn = await t.query(api.products.getStockList, { token: adminToken });
+  const stockListAfterFinalReturnResult = await t.query(api.products.getStockList, { token: adminToken, paginationOpts: { numItems: 50, cursor: null } });
+  const stockListAfterFinalReturn = stockListAfterFinalReturnResult.page;
   expect(stockListAfterFinalReturn.find((s: any) => s.id === productId1)?.inventory).toBe(15); // 14 + 1 = 15 original
   expect(stockListAfterFinalReturn.find((s: any) => s.id === productId2)?.inventory).toBe(20); // 17 + 3 = 20 original
 
@@ -395,17 +406,19 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(ivan?.customerNotes).toBe("Cash payment received at counter");
 
   // Verify CRM note activity was logged for Ivan
-  const ivanActivities = await t.query(api.customerActivities.getActivitiesByCustomer, {
+  const ivanActivitiesResult = await t.query(api.customerActivities.getActivitiesByCustomer, {
     token: staffToken,
     customerId: ivan!._id,
   });
+  const ivanActivities = ivanActivitiesResult.data;
   expect(ivanActivities.length).toBe(1);
   expect(ivanActivities[0].type).toBe("note");
   expect(ivanActivities[0].note).toBe("Cash payment received at counter");
   expect(ivanActivities[0].status).toBe("completed");
 
   // Verify POS stock deduction
-  const stockListAfterPos = await t.query(api.products.getStockList, { token: adminToken });
+  const stockListAfterPosResult = await t.query(api.products.getStockList, { token: adminToken, paginationOpts: { numItems: 50, cursor: null } });
+  const stockListAfterPos = stockListAfterPosResult.page;
   expect(stockListAfterPos.find((s: any) => s.id === productId1)?.inventory).toBe(12);
 
   // Verify physical order was created as delivered immediately

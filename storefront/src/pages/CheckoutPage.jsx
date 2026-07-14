@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useConvex, useQuery, useMutation, useConvexAuth, useAction } from 'convex/react';
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from '../hooks/useTrackedQuery';
 import CheckoutStepper from '../components/checkout/CheckoutStepper';
 import CheckoutSkeleton from '../components/checkout/CheckoutSkeleton';
 import LocationModal from '../components/checkout/LocationModal';
@@ -100,7 +101,7 @@ const CheckoutPage = () => {
   const [showDevPanel, setShowDevPanel] = useState(false);
   // Only used by the dev-mode mock order confirmation below — gated behind
   // isDev so real checkouts don't pay for a full-catalog scan they never use.
-  const allProducts = useQuery(api.data.getProducts, isDev ? {} : 'skip');
+  const allProducts = useTrackedQuery(api.data.getProducts, isDev ? {} : 'skip', 20);
 
   // Payment states
   const [selectedPayment, setSelectedPayment] = useState('momo');

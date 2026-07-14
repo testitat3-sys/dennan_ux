@@ -194,8 +194,8 @@
   gap: var(--space-1-5);
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-pill);
-  background: var(--color-brand-secondary);
-  color: #e0c0ff;
+  background: var(--color-support-blue);
+  color: var(--color-on-primary);
   font-size: var(--label-md);
   font-weight: 700;
   letter-spacing: 0.02em;

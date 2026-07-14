@@ -1,12 +1,13 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { verifyStaffSession } from "./staffAuth";
+import { trackedQuery } from "./lib/ioTracking";
 
 /**
  * Retrieves a list of all customers (users without an accountRole),
  * enriched with their total order count and CRM activity count.
  */
-export const getCustomerList = query({
+export const getCustomerList = trackedQuery("customerActivities.getCustomerList", {
   args: {
     token: v.string(),
   },
@@ -83,7 +84,7 @@ export const updateCustomerNotes = mutation({
 /**
  * Fetches all CRM activities for a specific customer, sorted chronologically descending.
  */
-export const getActivitiesByCustomer = query({
+export const getActivitiesByCustomer = trackedQuery("customerActivities.getActivitiesByCustomer", {
   args: {
     token: v.string(),
     customerId: v.id("users"),
@@ -154,7 +155,7 @@ export const addActivity = mutation({
  * contact info, sorted soonest-and-highest-priority first. Used to drive the
  * "up to 3 reminders" dashboard widget and the sidebar due-count badge.
  */
-export const getDueActivities = query({
+export const getDueActivities = trackedQuery("customerActivities.getDueActivities", {
   args: {
     token: v.string(),
     currentDate: v.string(), // "YYYY-MM-DD"
@@ -196,7 +197,7 @@ export const getDueActivities = query({
  * Returns CRM activities linked to a specific order (e.g. a follow-up
  * reminder scheduled at walk-in checkout), newest first.
  */
-export const getActivitiesByOrder = query({
+export const getActivitiesByOrder = trackedQuery("customerActivities.getActivitiesByOrder", {
   args: {
     token: v.string(),
     orderId: v.id("orders"),
@@ -217,7 +218,7 @@ export const getActivitiesByOrder = query({
  * Returns every CRM activity (any status), enriched with customer contact
  * info, for the Calendar tab's month view.
  */
-export const getAllActivities = query({
+export const getAllActivities = trackedQuery("customerActivities.getAllActivities", {
   args: {
     token: v.string(),
   },

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { X, Calendar, Phone, Mail, Users, Bell, FileText, Trash } from "lucide-react";
 
 export default function CustomerActivityModal({ customer, token, onClose }) {
@@ -15,7 +16,7 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
   const [activityError, setActivityError] = useState("");
 
   // Queries and mutations
-  const activities = useQuery(api.customerActivities.getActivitiesByCustomer, {
+  const activities = useTrackedQuery(api.customerActivities.getActivitiesByCustomer, {
     token,
     customerId: customer.id
   });

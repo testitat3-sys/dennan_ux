@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import OrderDetailModal from "../components/OrderDetailModal";
 import HandoverModal from "../components/HandoverModal";
@@ -21,10 +22,10 @@ import { useOfflineOrderSync } from "../hooks/useOfflineOrderSync";
 import { addPendingOrder, listPendingOrders } from "../lib/offlineDb";
 import OfflineBanner from "../components/OfflineBanner";
 import CatalogDownloadBanner from "../components/CatalogDownloadBanner";
+import Sidebar from "../components/Sidebar";
+import ProductPickerGrid from "../components/ProductPickerGrid";
 import LeadsPanel from "../components/LeadsPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
-import sosLogo from "../assets/SOS.png";
-import profileImg from "../assets/about-dennan.png";
 import {
   ClipboardList,
   ShoppingCart,
@@ -38,7 +39,6 @@ import {
   X,
   Eye,
   Sparkles,
-  LogOut,
   ChevronRight,
   Banknote,
   Smartphone,
@@ -58,7 +58,10 @@ export default function StaffDashboard() {
   const navigate = useNavigate();
   const { user, token, logout } = useStaffAuth();
   const [activeTab, setActiveTabState] = useState(
-    () => localStorage.getItem(LAST_TAB_KEY) || "orders"
+    () =>
+      new URLSearchParams(window.location.search).get("tab") ||
+      localStorage.getItem(LAST_TAB_KEY) ||
+      "orders"
   );
   const setActiveTab = (tab) => {
     setActiveTabState(tab);
@@ -74,6 +77,41 @@ export default function StaffDashboard() {
   const [crmCustomer, setCrmCustomer] = useState(null);
 
   const { toasts, showToast, dismissToast } = useToast();
+
+  // Queries for badges
+  const pendingOrdersList = useQuery(api.orders.getPendingOrders, { token });
+  const pendingReturnsList = useTrackedQuery(api.returns.getPendingReturns, { token });
+
+  // Unseen logic
+  const [lastSeenOrders, setLastSeenOrders] = useState(() => parseInt(localStorage.getItem("dennan_staff_last_seen_orders") || "0"));
+  const [lastSeenReturns, setLastSeenReturns] = useState(() => parseInt(localStorage.getItem("dennan_staff_last_seen_returns") || "0"));
+
+  useEffect(() => {
+    if (location.state?.toast) {
+      showToast(location.state.toast.message, location.state.toast.type);
+      // Clean up state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, showToast, navigate]);
+
+  useEffect(() => {
+    if (activeTab === "orders" && pendingOrdersList && pendingOrdersList.length > 0) {
+      const maxTime = Math.max(...pendingOrdersList.map(o => o.createdAt));
+      localStorage.setItem("dennan_staff_last_seen_orders", maxTime.toString());
+      setLastSeenOrders(maxTime);
+    }
+  }, [activeTab, pendingOrdersList]);
+
+  useEffect(() => {
+    if (activeTab === "returns" && pendingReturnsList && pendingReturnsList.length > 0) {
+      const maxTime = Math.max(...pendingReturnsList.map(r => r.createdAt));
+      localStorage.setItem("dennan_staff_last_seen_returns", maxTime.toString());
+      setLastSeenReturns(maxTime);
+    }
+  }, [activeTab, pendingReturnsList]);
+
+  const unseenOrdersCount = pendingOrdersList ? pendingOrdersList.filter(o => o.createdAt > lastSeenOrders).length : 0;
+  const unseenReturnsCount = pendingReturnsList ? pendingReturnsList.filter(r => r.createdAt > lastSeenReturns).length : 0;
 
   // --- TAB 1: ORDERS QUEUE ---
   const { results: ordersList, status: ordersStatus, loadMore: loadMoreOrders } = usePaginatedQuery(
@@ -227,7 +265,7 @@ export default function StaffDashboard() {
     }
   };
 
-  const staffRoster = useQuery(api.staffAuth.getStaffRoster, { token });
+  const staffRoster = useTrackedQuery(api.staffAuth.getStaffRoster, { token });
 
   const [posSearch, setPosSearch] = useState("");
   const [cart, setCart] = useState([]);
@@ -263,7 +301,7 @@ export default function StaffDashboard() {
 
   // --- Linked-order lookup, used when a Calendar reminder references an order ---
   const [pendingOrderId, setPendingOrderId] = useState(null);
-  const pendingOrderDetail = useQuery(
+  const pendingOrderDetail = useTrackedQuery(
     api.orders.getOrderDetailById,
     pendingOrderId ? { token, orderId: pendingOrderId } : "skip"
   );
@@ -575,15 +613,15 @@ export default function StaffDashboard() {
   };
 
   // --- TAB 3: CUSTOMERS CRM ---
-  const customerList = useQuery(api.customerActivities.getCustomerList, { token });
+  const customerList = useTrackedQuery(api.customerActivities.getCustomerList, { token });
   const [customerSearch, setCustomerSearch] = useState("");
 
   // --- LEADS (store requests + back-in-stock signups) ---
-  const leadsList = useQuery(api.leads.getLeads, { token });
+  const leadsList = useTrackedQuery(api.leads.getLeads, { token });
   const unresolvedLeadsCount = leadsList?.filter((l) => l.status !== "resolved").length || 0;
 
   // --- TAB 4: CALENDAR / REMINDERS ---
-  const dueActivities = useQuery(api.customerActivities.getDueActivities, { token, currentDate: todayStr });
+  const dueActivities = useTrackedQuery(api.customerActivities.getDueActivities, { token, currentDate: todayStr });
 
   const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0) +
     voucherCartItems.reduce((sum, item) => sum + item.amount, 0);
@@ -669,6 +707,28 @@ export default function StaffDashboard() {
     c.phone?.includes(customerSearch)
   ) || [];
 
+  const staffSidebarGroups = [
+    {
+      id: "orders",
+      label: "Orders",
+      items: [
+        { key: "orders", label: "Online Orders", icon: ClipboardList, badge: unseenOrdersCount > 0 ? unseenOrdersCount : undefined, isActive: activeTab === "orders", onClick: () => setActiveTab("orders") },
+        { key: "pos", label: "Physical Orders", icon: ShoppingCart, badge: pendingCount + failedOfflineOrders.length, isActive: activeTab === "pos", onClick: () => setActiveTab("pos") },
+        { key: "history", label: "My Order History", icon: History, isActive: activeTab === "history", onClick: () => setActiveTab("history") },
+        { key: "returns", label: "Returns", icon: RotateCcw, badge: unseenReturnsCount > 0 ? unseenReturnsCount : undefined, isActive: activeTab === "returns", onClick: () => setActiveTab("returns") },
+      ],
+    },
+    {
+      id: "customersPlanning",
+      label: "Customers & Planning",
+      items: [
+        { key: "customers", label: "Customers CRM", icon: Users, isActive: activeTab === "customers", onClick: () => setActiveTab("customers") },
+        { key: "leads", label: "Leads", icon: Inbox, badge: unresolvedLeadsCount, isActive: activeTab === "leads", onClick: () => setActiveTab("leads") },
+        { key: "calendar", label: "Calendar", icon: CalendarIcon, badge: dueActivities?.length || 0, isActive: activeTab === "calendar", onClick: () => setActiveTab("calendar") },
+      ],
+    },
+  ];
+
   return (
     <div className="staff-portal-body">
       <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} failedCount={failedOfflineOrders.length} />
@@ -679,100 +739,13 @@ export default function StaffDashboard() {
         onDismiss={() => setCatalogPromptDismissed(true)}
       />
       <div className="admin-layout">
-        {/* Sidebar Navigation */}
-        <aside className="sidebar">
-          <div className="sidebar-brand">
-            <img src={sosLogo} alt="Dennan" className="sidebar-logo" />
-            <span className="sidebar-brand-sub">Growth Team</span>
-          </div>
-
-          <nav className="sidebar-nav">
-            <div className="sidebar-nav-group">
-              <span className="sidebar-nav-group-label">Orders</span>
-              <button
-                className={`sidebar-nav-item ${activeTab === "orders" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("orders")}
-              >
-                <ClipboardList size={18} />
-                <span>Online Orders</span>
-                {pendingOrders.length > 0 && (
-                  <span className="sidebar-nav-badge">{pendingOrders.length}</span>
-                )}
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "pos" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("pos")}
-              >
-                <ShoppingCart size={18} />
-                <span>Physical Orders</span>
-                {(pendingCount > 0 || failedOfflineOrders.length > 0) && (
-                  <span className="sidebar-nav-badge">{pendingCount + failedOfflineOrders.length}</span>
-                )}
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "history" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("history")}
-              >
-                <History size={18} />
-                <span>My Order History</span>
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "returns" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("returns")}
-              >
-                <RotateCcw size={18} />
-                <span>Returns</span>
-              </button>
-            </div>
-
-            <div className="sidebar-nav-group">
-              <span className="sidebar-nav-group-label">Customers & Planning</span>
-              <button
-                className={`sidebar-nav-item ${activeTab === "customers" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("customers")}
-              >
-                <Users size={18} />
-                <span>Customers CRM</span>
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "leads" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("leads")}
-              >
-                <Inbox size={18} />
-                <span>Leads</span>
-                {unresolvedLeadsCount > 0 && (
-                  <span className="sidebar-nav-badge">{unresolvedLeadsCount}</span>
-                )}
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "calendar" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("calendar")}
-              >
-                <CalendarIcon size={18} />
-                <span>Calendar</span>
-                {dueActivities && dueActivities.length > 0 && (
-                  <span className="sidebar-nav-badge">{dueActivities.length}</span>
-                )}
-              </button>
-            </div>
-          </nav>
-
-          <div className="sidebar-footer">
-            <div className="sidebar-user">
-              <div className="avatar">
-                <img src={profileImg} alt={user?.name || "Profile"} className="avatar-img" />
-              </div>
-              <div className="sidebar-user-info">
-                <span className="sidebar-user-name">{user?.name}</span>
-                <span className="sidebar-user-role">{user?.accountRole?.toUpperCase()}</span>
-              </div>
-            </div>
-            <button className="logout-btn" onClick={logout} type="button">
-              <LogOut size={16} />
-              <span>Sign Out</span>
-            </button>
-          </div>
-        </aside>
+        <Sidebar
+          storageKey="dennan_sidebar_collapsed_staff"
+          brandSub="Growth Team"
+          user={user}
+          onLogout={logout}
+          groups={staffSidebarGroups}
+        />
 
         {/* Main Content Area */}
         <main className="admin-main">
@@ -865,129 +838,47 @@ export default function StaffDashboard() {
               </div>
 
               <div className="pos-layout">
-                <div className="pos-products-container">
-                  <div className="stock-search-wrap">
-                    <Search className="stock-search-icon" size={15} />
-                    <input
-                      className="stock-search-input"
-                      type="text"
-                      placeholder="Search barcode, description..."
-                      value={posSearch}
-                      onChange={(e) => setPosSearch(e.target.value)}
-                    />
-                    {posSearch && (
-                      <button className="stock-search-clear" onClick={() => setPosSearch("")}>
-                        <X size={12} />
-                      </button>
-                    )}
-                  </div>
-
-                  {posProducts.length === 0 && isPosCatalogSyncing ? (
-                    <div className="empty-state">
-                      <div className="empty-title">Loading POS database...</div>
-                    </div>
-                  ) : (
-                    <div className="pos-products-grid">
-                      {/* Permanent Sell Gift Voucher tile */}
-                      <button
-                        key="gift-voucher-tile"
-                        onClick={() => setShowVoucherModal(true)}
-                        disabled={isCheckoutSubmitting}
-                        type="button"
-                        style={{
-                          background: "linear-gradient(135deg, var(--surface-container-low), var(--surface-container))",
-                          border: "1px dashed var(--color-brand-primary)",
-                          borderRadius: "var(--radius-lg)",
-                          padding: "var(--space-3)",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                          height: "172px"
-                        }}
-                      >
-                        <div style={{ width: "100%", height: "90px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "var(--radius-md)", background: "rgba(99, 102, 241, 0.1)", color: "var(--color-brand-primary)" }}>
-                          <Sparkles size={36} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>Sell Gift Voucher</div>
-                          <div style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>Free-form amount</div>
-                        </div>
-                      </button>
-
-                      {filteredPosProducts.map(p => {
-                        const availableInventory = getEffectiveInventory(p);
-                        const inStock = availableInventory === undefined || availableInventory > 0;
-                        const cartItem = cart.find(item => item.id === p._id);
-                        const atMax = cartItem && availableInventory !== undefined && cartItem.quantity >= availableInventory;
-                        return (
-                          <button
-                            key={p._id}
-                            onClick={() => addToCart(p)}
-                            disabled={!inStock || atMax}
-                            style={{
-                              background: "var(--surface-container-low)",
-                              border: cartItem ? "2px solid var(--color-brand-primary)" : "1px solid var(--surface-container-highest)",
-                              borderRadius: "var(--radius-lg)",
-                              padding: "var(--space-3)",
-                              cursor: inStock ? "pointer" : "not-allowed",
-                              opacity: inStock ? 1 : 0.5,
-                              textAlign: "left",
-                              position: "relative",
-                            }}
-                          >
-                            {p.image ? (
-                              <img
-                                src={p.image}
-                                alt={p.name}
-                                style={{ width: "100%", height: "90px", objectFit: "cover", borderRadius: "var(--radius-md)", marginBottom: "var(--space-2)", display: "block" }}
-                              />
-                            ) : (
-                              <div style={{
-                                width: "100%",
-                                height: "90px",
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                borderRadius: "var(--radius-md)",
-                                marginBottom: "var(--space-2)",
-                                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(236, 72, 153, 0.08))",
-                                border: "1px solid rgba(99, 102, 241, 0.15)",
-                                position: "relative",
-                                overflow: "hidden"
-                              }}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8, marginBottom: "4px" }}>
-                                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-                                  <line x1="3" y1="6" x2="21" y2="6" />
-                                  <path d="M16 10a4 4 0 0 1-8 0" />
-                                </svg>
-                                <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", letterSpacing: "0.5px" }}>
-                                  {p.brand || "Dennan"}
-                                </span>
-                              </div>
-                            )}
-
-                            <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3, marginBottom: "3px" }}>{p.name}</div>
-                            <div style={{ fontSize: "11px", color: "var(--text-tertiary)", marginBottom: "var(--space-2)" }}>Barcode: {p.barcode}</div>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                               <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-brand-primary)" }}>UGX {getOriginalPrice(p).toLocaleString()}</span>
-                              <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "20px", background: !inStock ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)", color: !inStock ? "#ef4444" : "#16a34a" }}>
-                                {availableInventory !== undefined ? (!inStock ? "Out" : `${availableInventory} left`) : "In Stock"}
-                              </span>
-                            </div>
-                            {cartItem && (
-                              <div style={{ position: "absolute", top: 8, right: 8, background: "var(--color-brand-primary)", color: "#fff", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700 }}>
-                                {cartItem.quantity}
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                <ProductPickerGrid
+                  products={filteredPosProducts}
+                  search={posSearch}
+                  onSearchChange={setPosSearch}
+                  searchPlaceholder="Search barcode, description..."
+                  isLoading={isPosCatalogSyncing}
+                  loadingLabel="Loading POS database..."
+                  disabled={isCheckoutSubmitting}
+                  getPrice={getOriginalPrice}
+                  getInventory={getEffectiveInventory}
+                  getCartQuantity={(productId) => cart.find(item => item.id === productId)?.quantity || 0}
+                  onSelect={addToCart}
+                  extraTile={
+                    <button
+                      key="gift-voucher-tile"
+                      onClick={() => setShowVoucherModal(true)}
+                      disabled={isCheckoutSubmitting}
+                      type="button"
+                      style={{
+                        background: "linear-gradient(135deg, var(--surface-container-low), var(--surface-container))",
+                        border: "1px dashed var(--color-brand-primary)",
+                        borderRadius: "var(--radius-lg)",
+                        padding: "var(--space-3)",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        height: "172px"
+                      }}
+                    >
+                      <div style={{ width: "100%", height: "90px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "var(--radius-md)", background: "rgba(99, 102, 241, 0.1)", color: "var(--color-brand-primary)" }}>
+                        <Sparkles size={36} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>Sell Gift Voucher</div>
+                        <div style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>Free-form amount</div>
+                      </div>
+                    </button>
+                  }
+                />
 
                 {/* Cart Drawer and Checkout Info */}
                 <div style={{ position: "sticky", top: "20px" }}>
@@ -1611,7 +1502,7 @@ export default function StaffDashboard() {
 
           {/* TAB 5: RETURNS / EXCHANGES */}
           {activeTab === "returns" && (
-            <ReturnsPanel token={token} />
+            <ReturnsPanel token={token} showToast={showToast} />
           )}
         </main>
       </div>

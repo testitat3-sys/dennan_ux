@@ -1,12 +1,12 @@
 import React from 'react';
 import './PredictiveFeed.css';
-import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from '../../hooks/useTrackedQuery';
 import ProductCard from '../products/ProductCard';
 import ProductCardSkeleton from '../products/ProductCardSkeleton';
 
 const PredictiveFeed = ({ type, stageInfo, onAddToCart }) => {
-  const rawProducts = useQuery(api.data.getProducts);
+  const rawProducts = useTrackedQuery(api.data.getProducts, {}, 20);
   const loading = rawProducts === undefined;
 
   if (loading) {

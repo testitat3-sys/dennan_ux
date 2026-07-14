@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { Package } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from '../hooks/useTrackedQuery';
 import { stripBrandFromName } from '../utils/productNameUtils';
 import { useLeadCapture } from '../context/LeadCaptureContext';
 import ProductCard from '../components/products/ProductCard';
@@ -37,7 +38,7 @@ const LaunchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
 
-  const allProducts = useQuery(api.data.getProducts);
+  const allProducts = useTrackedQuery(api.data.getProducts, {}, 20);
   const loading = allProducts === undefined;
 
   const [activeCategories, setActiveCategories] = useState([]);

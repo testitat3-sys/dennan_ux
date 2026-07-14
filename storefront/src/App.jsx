@@ -15,6 +15,7 @@ const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const PaymentCallbackPage = lazy(() => import('./pages/PaymentCallbackPage'));
 const PDP = lazy(() => import('./pages/PDP'));
 const DesignSystemPage = lazy(() => import('./pages/DesignSystemPage'));
+const PDPDemo = lazy(() => import('./pages/PDPDemo'));
 const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'));
 const LaunchPage = lazy(() => import('./pages/LaunchPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
@@ -89,6 +90,7 @@ function App() {
           <Route path="/checkout/callback" element={<PaymentCallbackPage />} />
           <Route path="/product/:productId" element={<PDP />} />
           <Route path="/design-system" element={<DesignSystemPage />} />
+          <Route path="/pdp-demo" element={<PDPDemo />} />
           <Route path="/launch" element={<LaunchPage />} />
           
           {/* Unimplemented placeholder routes */}

@@ -78,8 +78,8 @@ test("staff auth session lifecycle", async () => {
   // 10. Test getStaffList as admin (should succeed)
   const staffList = await t.query(api.staffAuth.getStaffList, { token: adminToken });
   expect(staffList).toBeDefined();
-  expect(staffList.length).toBeGreaterThan(0);
-  expect(staffList.some((s: any) => s.name === "Matovu")).toBe(true);
+  expect(staffList.data.length).toBeGreaterThan(0);
+  expect(staffList.data.some((s: any) => s.name === "Matovu")).toBe(true);
 
   // 11. Logout
   const logoutResult = await t.mutation(api.staffAuth.logout, { token: newToken });

@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { verifyStaffSession } from "./staffAuth";
+import { trackedQuery } from "./lib/ioTracking";
 
 const STAGE_LABELS: Record<string, string> = {
   expectant: "Expectant",
@@ -18,7 +19,7 @@ const STAGE_LABELS: Record<string, string> = {
  * resolved/unresolved filtering and counts are done client-side since this
  * is a small dataset (mirrors getCustomerList's pattern).
  */
-export const getLeads = query({
+export const getLeads = trackedQuery("leads.getLeads", {
   args: {
     token: v.string(),
   },

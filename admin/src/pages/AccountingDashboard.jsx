@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import OrderDetailModal from "../components/OrderDetailModal";
 import SalesMetricsPanel from "../components/SalesMetricsPanel";
@@ -17,7 +17,7 @@ export default function AccountingDashboard() {
 
   const [viewingOrder, setViewingOrder] = useState(null);
   const [pendingOrderId, setPendingOrderId] = useState(null);
-  const pendingOrderDetail = useQuery(
+  const pendingOrderDetail = useTrackedQuery(
     api.orders.getOrderDetailById,
     pendingOrderId ? { token, orderId: pendingOrderId } : "skip"
   );

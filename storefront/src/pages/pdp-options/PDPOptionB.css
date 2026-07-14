@@ -1,0 +1,315 @@
+.pdpB {
+  font-family: var(--font-sans);
+  padding-bottom: var(--space-20);
+}
+
+.pdpB__hero {
+  position: relative;
+  width: 100%;
+  height: 60vh;
+  min-height: 420px;
+  overflow: hidden;
+  background: var(--surface-container);
+}
+
+.pdpB__hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pdpB__hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.65) 100%);
+}
+
+.pdpB__oos-badge {
+  position: absolute;
+  top: var(--space-6);
+  left: var(--space-8);
+  background: var(--color-support-red);
+  color: white;
+  font-weight: 700;
+  font-size: var(--label-md);
+  text-transform: uppercase;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+}
+
+.pdpB__sales-badge {
+  position: absolute;
+  top: var(--space-6);
+  right: var(--space-8);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(6px);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: var(--label-md);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+}
+
+.pdpB__hero-text {
+  position: absolute;
+  left: var(--space-8);
+  bottom: var(--space-10);
+  right: var(--space-8);
+  color: white;
+}
+
+.pdpB__brand {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: var(--label-md);
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+  opacity: 0.9;
+}
+
+.pdpB__title {
+  font-family: var(--font-editorial);
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 1.05;
+  margin: 0;
+  max-width: 800px;
+}
+
+.pdpB__filmstrip {
+  position: absolute;
+  right: var(--space-8);
+  bottom: var(--space-10);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.pdpB__filmstrip-item {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.5);
+  padding: 0;
+  cursor: pointer;
+}
+
+.pdpB__filmstrip-item.is-active {
+  border-color: white;
+}
+
+.pdpB__filmstrip-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pdpB__body {
+  max-width: var(--width-container);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-8) 0;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-16);
+  align-items: start;
+}
+
+.pdpB__story {
+  max-width: var(--width-medium);
+}
+
+.pdpB__chip-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.pdpB__chip {
+  font-size: var(--label-md);
+  font-weight: 600;
+  border: 1.5px solid var(--surface-container-high);
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+}
+
+.pdpB__chip--red {
+  border-color: var(--color-support-red);
+  color: var(--color-support-red);
+}
+
+.pdpB__lede {
+  font-family: var(--font-editorial);
+  font-size: var(--title-lg);
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-bottom: var(--space-10);
+}
+
+.pdpB__accordion-item {
+  border-top: 1px solid var(--surface-container);
+}
+
+.pdpB__accordion-item:last-child {
+  border-bottom: 1px solid var(--surface-container);
+}
+
+.pdpB__accordion-head {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-5) 0;
+  font-family: var(--font-editorial);
+  font-size: var(--title-lg);
+  color: var(--text-primary);
+}
+
+.pdpB__accordion-head svg {
+  transition: transform 0.2s;
+  color: var(--text-tertiary);
+}
+
+.pdpB__accordion-head svg.is-open {
+  transform: rotate(180deg);
+  color: var(--color-brand-primary);
+}
+
+.pdpB__accordion-body {
+  padding-bottom: var(--space-6);
+  color: var(--text-secondary);
+}
+
+.pdpB__accordion-body ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: var(--space-6);
+}
+
+.pdpB__specs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pdpB__specs-table th,
+.pdpB__specs-table td {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--surface-container-low);
+  text-align: left;
+}
+
+.pdpB__reviews {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.pdpB__review-rating {
+  color: var(--color-brand-accent);
+  letter-spacing: 2px;
+}
+
+.pdpB__buybox-col {
+  position: sticky;
+  top: var(--space-24);
+}
+
+.pdpB__buybox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.pdpB__price-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.pdpB__price {
+  font-family: var(--font-editorial);
+  font-size: var(--headline-md);
+  font-weight: 700;
+}
+
+.pdpB__was-price {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+
+.pdpB__age-scale {
+  background: var(--surface-container-low);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.pdpB__age-scale-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--label-md);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.pdpB__age-scale-track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-container-high);
+}
+
+.pdpB__age-scale-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-primary);
+}
+
+.pdpB__control-label {
+  display: block;
+  font-size: var(--label-md);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.pdpB__stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  border: 1.5px solid var(--surface-container-high);
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-4);
+}
+
+.pdpB__stepper button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--color-brand-primary);
+}
+
+.pdpB__notify {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--body-sm);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 968px) {
+  .pdpB__body {
+    grid-template-columns: 1fr;
+  }
+  .pdpB__buybox-col {
+    position: static;
+  }
+}

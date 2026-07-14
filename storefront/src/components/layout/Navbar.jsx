@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import MegaMenu from './MegaMenu';
 import OnboardingModal from '../ui/OnboardingModal';
@@ -141,6 +141,8 @@ const Navbar = () => {
   const [desktopSearchQuery, setDesktopSearchQuery] = useState('');
   const [showDesktopSuggestions, setShowDesktopSuggestions] = useState(false);
   const [desktopSuggestions, setDesktopSuggestions] = useState([]);
+  const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState(-1);
+  const desktopSearchRef = useRef(null);
   let timeoutId = null;
 
   useEffect(() => {
@@ -222,6 +224,44 @@ const Navbar = () => {
     setIsDesktopSearchActive(false);
   };
 
+  const handleDesktopSearchKeyDown = (e) => {
+    if (!showDesktopSuggestions || desktopSuggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedSuggestionIndex((prev) => 
+        prev < desktopSuggestions.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedSuggestionIndex((prev) => 
+        prev > 0 ? prev - 1 : desktopSuggestions.length - 1
+      );
+    } else if (e.key === 'Enter') {
+      if (focusedSuggestionIndex >= 0 && focusedSuggestionIndex < desktopSuggestions.length) {
+        e.preventDefault();
+        handleDesktopSuggestionClick(desktopSuggestions[focusedSuggestionIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setShowDesktopSuggestions(false);
+      setFocusedSuggestionIndex(-1);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (desktopSearchRef.current && !desktopSearchRef.current.contains(event.target)) {
+        setShowDesktopSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setFocusedSuggestionIndex(-1);
+  }, [desktopSuggestions]);
+
   useEffect(() => {
     if (mobileSearchQuery.length > 1) {
       const allLinks = navData.flatMap(item => 
@@ -286,7 +326,7 @@ const Navbar = () => {
       </Link>
 
       {isDesktopSearchActive ? (
-        <div className="nav__desktop-search animate-fadeIn">
+        <div className="nav__desktop-search animate-fadeIn" ref={desktopSearchRef}>
           <form className="nav__desktop-search-form" onSubmit={handleDesktopSearchSubmit}>
             <div className="mobile-menu__search-inner">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mobile-menu__search-icon">
@@ -299,6 +339,7 @@ const Navbar = () => {
                 value={desktopSearchQuery}
                 onChange={(e) => setDesktopSearchQuery(e.target.value)}
                 onFocus={() => desktopSearchQuery.length > 1 && setShowDesktopSuggestions(true)}
+                onKeyDown={handleDesktopSearchKeyDown}
                 autoFocus={true}
               />
               {desktopSearchQuery && (
@@ -333,7 +374,7 @@ const Navbar = () => {
                       key={index} 
                       variant="ghost"
                       fullWidth
-                      className="mobile-menu__suggestion-item"
+                      className={`mobile-menu__suggestion-item ${index === focusedSuggestionIndex ? 'is-focused' : ''}`}
                       onClick={() => handleDesktopSuggestionClick(suggestion)}
                       style={{ textAlign: 'left', justifyContent: 'flex-start' }}
                       icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>}

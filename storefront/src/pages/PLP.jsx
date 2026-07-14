@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { Package } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from '../hooks/useTrackedQuery';
 import { stripBrandFromName } from '../utils/productNameUtils';
 import ProductCard from '../components/products/ProductCard';
 import ProductCardSkeleton from '../components/products/ProductCardSkeleton';
@@ -128,7 +129,7 @@ const PLP = () => {
   const query = searchParams.get('q') || '';
 
   // Live fetch products and stage list from Convex
-  const allProducts = useQuery(api.data.getProducts);
+  const allProducts = useTrackedQuery(api.data.getProducts, {}, 20);
   const stages = useQuery(api.data.getStages);
 
   const [activeFilters, setActiveFilters] = useState([]);

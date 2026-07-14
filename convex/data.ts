@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { normalizeProductPrice, shouldKeepProduct } from "./products";
+import { trackedQuery } from "./lib/ioTracking";
 
 export const getHero = query({
   args: {},
@@ -16,7 +17,7 @@ export const getBrands = query({
   },
 });
 
-export const getProducts = query({
+export const getProducts = trackedQuery("data.getProducts", {
   args: {
     category: v.optional(v.string()),
     tier: v.optional(v.string()),
@@ -105,7 +106,7 @@ export const searchProducts = query({
   },
 });
 
-export const getHomeFeaturedProducts = query({
+export const getHomeFeaturedProducts = trackedQuery("data.getHomeFeaturedProducts", {
   args: {},
   handler: async (ctx) => {
     const products = await ctx.db.query("products").collect();

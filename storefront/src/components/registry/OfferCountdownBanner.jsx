@@ -4,23 +4,17 @@ import './OfferCountdownBanner.css';
 const STORAGE_KEY = 'launchOfferCountdown';
 const DURATION_MS = (7 * 3600 + 56 * 60 + 40) * 1000;
 
-const getTodayKey = () => {
-  const now = new Date();
-  return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-};
-
 const getEndTime = () => {
-  const today = getTodayKey();
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (stored && stored.date === today && typeof stored.endTime === 'number') {
+    if (stored && typeof stored.endTime === 'number' && stored.endTime > Date.now()) {
       return stored.endTime;
     }
   } catch {
     // fall through to reset
   }
   const endTime = Date.now() + DURATION_MS;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, endTime }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ endTime }));
   return endTime;
 };
 
@@ -38,14 +32,7 @@ const OfferCountdownBanner = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const today = getTodayKey();
-      let stored = null;
-      try {
-        stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      } catch {
-        // ignore
-      }
-      if (!stored || stored.date !== today) {
+      if (Date.now() >= endTime) {
         const newEndTime = getEndTime();
         setEndTime(newEndTime);
         setRemainingMs(newEndTime - Date.now());

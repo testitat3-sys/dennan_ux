@@ -2,7 +2,15 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePaginatedQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { CheckCircle, XCircle, PackageCheck, PackageX, RotateCcw } from "lucide-react";
+import {
+  CheckCircle,
+  XCircle,
+  PackageCheck,
+  PackageX,
+  RotateCcw,
+  X,
+  ChevronRight,
+} from "lucide-react";
 
 function getTodayDateStr() {
   const d = new Date();
@@ -12,32 +20,66 @@ function getTodayDateStr() {
   return `${y}-${m}-${day}`;
 }
 
-export default function ReturnsPanel({ token }) {
-  const navigate = useNavigate();
-  const todayStr = getTodayDateStr();
-  const [startDate, setStartDate] = useState(todayStr);
-  const [endDate, setEndDate] = useState(todayStr);
+/** Derive a single overall status label for a return envelope. */
+function getReturnOverallStatus(ret) {
+  const allItems = ret.items || [];
+  if (allItems.length === 0) return "pending";
+  const allResolved = allItems.every((i) => i.status !== "pending");
+  const allRejected = allItems.every((i) => i.status === "rejected");
+  if (allRejected) return "rejected";
+  if (allResolved) return "resolved";
+  return "pending";
+}
 
-  const { results: returns, status: returnsStatus, loadMore } = usePaginatedQuery(
-    api.returns.getReturnsByDateRange,
-    { token, startDate, endDate },
-    { initialNumItems: 25 }
+/** Small pill badge matching the existing status-badge design system. */
+function OverallStatusBadge({ status }) {
+  const map = {
+    pending: { cls: "status-badge--new", label: "Pending" },
+    resolved: { cls: "status-badge--done", label: "Resolved" },
+    rejected: { cls: "status-badge--failed", label: "Rejected" },
+  };
+  const { cls, label } = map[status] || map.pending;
+  return (
+    <span className={`status-badge ${cls}`} style={{ fontFamily: "var(--font-sans)" }}>
+      <span className="status-dot" />
+      {label}
+    </span>
   );
+}
 
+/** Per-item outcome label shown inside the modal for non-pending items. */
+function ItemOutcomeLabel({ item }) {
+  if (item.status === "approved") {
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "var(--color-support-green, #4ade80)", fontSize: "var(--label-md)", fontWeight: 600, fontFamily: "var(--font-sans)" }}>
+        <CheckCircle size={13} /> Approved{item.restocked ? " & Restocked" : ""}
+      </span>
+    );
+  }
+  if (item.status === "rejected") {
+    return (
+      <span style={{ color: "var(--color-support-red, #ef4444)", fontSize: "var(--label-md)", fontFamily: "var(--font-sans)" }}>
+        Rejected{item.rejectedReason ? `: ${item.rejectedReason}` : ""}
+      </span>
+    );
+  }
+  return <span className="returns-panel-meta" style={{ fontFamily: "var(--font-sans)" }}>—</span>;
+}
+
+/* ─── RETURN DETAIL MODAL ───────────────────────────────────────────── */
+function ReturnDetailModal({ ret, token, onClose, showToast, navigate }) {
   const approveReturnItem = useMutation(api.returns.approveReturnItem);
   const rejectReturnItem = useMutation(api.returns.rejectReturnItem);
   const rejectReturn = useMutation(api.returns.rejectReturn);
 
-  const isToday = startDate === todayStr && endDate === todayStr;
-
-  const handleResetToday = () => {
-    setStartDate(todayStr);
-    setEndDate(todayStr);
-  };
+  const hasPendingItems = ret.items.some((i) => i.status === "pending");
+  const hasExchange = ret.exchangeItems && ret.exchangeItems.length > 0;
+  const isResolved = !hasPendingItems;
 
   const handleApprove = async (returnItemId, restock) => {
     try {
       await approveReturnItem({ token, returnItemId, restock });
+      showToast?.(`Return item approved${restock ? " & restocked" : ""}.`, "success");
     } catch (err) {
       alert("Failed to approve return item: " + err.message);
     }
@@ -47,27 +89,247 @@ export default function ReturnsPanel({ token }) {
     const rejectedReason = window.prompt("Reason for rejecting this item (optional):") || undefined;
     try {
       await rejectReturnItem({ token, returnItemId, rejectedReason });
+      showToast?.("Return item rejected.", "success");
     } catch (err) {
       alert("Failed to reject return item: " + err.message);
     }
   };
 
-  const handleRejectReturn = async (returnId) => {
+  const handleRejectReturn = async () => {
     const rejectedReason = window.prompt("Reason for refusing this return:") || undefined;
     if (rejectedReason === undefined) return;
     try {
-      await rejectReturn({ token, returnId, rejectedReason });
+      await rejectReturn({ token, returnId: ret.returnId, rejectedReason });
+      showToast?.("Return refused and rejected.", "success");
+      onClose();
     } catch (err) {
       alert("Failed to reject return: " + err.message);
     }
   };
 
   return (
-    <div className="admin-tab-panel is-active">
-      <h1 className="admin-page-title">Returns</h1>
+    <div className="modal-overlay is-open" onClick={(e) => e.target === e.currentTarget && onClose()} style={{ fontFamily: "var(--font-sans)" }}>
+      <div className="modal" style={{ maxWidth: "720px", fontFamily: "var(--font-sans)" }}>
+        {/* ── Modal header ── */}
+        <div className="modal-header" style={{ alignItems: "flex-start", gap: "var(--space-4)" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 className="modal-title" style={{ marginBottom: "2px", fontFamily: "var(--font-editorial)" }}>
+              {ret.customerName}
+            </h2>
+            <div className="returns-panel-meta" style={{ marginTop: "2px", fontFamily: "var(--font-sans)" }}>
+              Submitted by {ret.staffName} on{" "}
+              {new Date(ret.createdAt).toLocaleString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </div>
+            {ret.note && (
+              <div className="returns-panel-note" style={{ marginTop: "var(--space-1)", fontFamily: "var(--font-sans)" }}>
+                Note: {ret.note}
+              </div>
+            )}
+            {(ret.returnedTotal !== undefined || ret.exchangeTotal !== undefined) && (
+              <div className="returns-panel-note" style={{ marginTop: "var(--space-1)", fontFamily: "var(--font-sans)" }}>
+                Returned value: UGX {(ret.returnedTotal || 0).toLocaleString()} · Exchange
+                value: UGX {(ret.exchangeTotal || 0).toLocaleString()}
+                {ret.topUpAmount > 0 &&
+                  ` · Top-up collected: UGX ${ret.topUpAmount.toLocaleString()} (${ret.topUpMethod})`}
+              </div>
+            )}
+          </div>
 
-      <div className="date-filter-bar" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-3)", flexWrap: "wrap" }}>
-        <label className="form-label" style={{ margin: 0 }}>
+          {/* Header-level action buttons — only for unresolved returns */}
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexShrink: 0 }}>
+            {!isResolved && hasPendingItems && !hasExchange && (
+              <>
+                <button
+                  className="btn btn--secondary btn--sm"
+                  onClick={() => { onClose(); navigate(`/admin/returns/${ret.returnId}/trade`); }}
+                  title="Resolve by trading for a replacement product"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  <RotateCcw size={13} /> Trade
+                </button>
+                <button
+                  className="btn btn--ghost btn--danger btn--sm"
+                  onClick={handleRejectReturn}
+                  title="Refuse this return altogether"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  <XCircle size={13} /> Reject Return
+                </button>
+              </>
+            )}
+            <button
+              className="btn btn--ghost btn--sm"
+              onClick={onClose}
+              aria-label="Close"
+              style={{ padding: "6px" }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Returned items table ── */}
+        <div className="table-wrap">
+          <table className="data-table" style={{ fontFamily: "var(--font-sans)" }}>
+            <thead>
+              <tr>
+                <th style={{ fontFamily: "var(--font-sans)" }}>Product</th>
+                <th style={{ fontFamily: "var(--font-sans)" }}>Qty</th>
+                <th style={{ fontFamily: "var(--font-sans)" }}>Unit Price</th>
+                <th style={{ fontFamily: "var(--font-sans)" }}>Reason</th>
+                <th style={{ fontFamily: "var(--font-sans)" }}>Source</th>
+                <th style={{ fontFamily: "var(--font-sans)" }}>Status</th>
+                {!isResolved && <th style={{ width: "150px", fontFamily: "var(--font-sans)" }}>Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {ret.items.map((item) => (
+                <tr key={item._id}>
+                  <td className="item-name" style={{ fontFamily: "var(--font-sans)" }}>{item.productName}</td>
+                  <td className="item-qty" style={{ fontFamily: "var(--font-sans)" }}>{item.quantity}</td>
+                  <td style={{ fontFamily: "var(--font-sans)" }}>UGX {item.unitPrice.toLocaleString()}</td>
+                  <td style={{ fontFamily: "var(--font-sans)" }}>{item.reason || "—"}</td>
+                  <td style={{ fontFamily: "var(--font-sans)" }}>
+                    {item.source === "delivery_failure" ? "Delivery Failure" : "Manual Return"}
+                  </td>
+                  <td style={{ textTransform: "capitalize", fontFamily: "var(--font-sans)" }}>{item.status}</td>
+                  {!isResolved && (
+                    <td className="td-action">
+                      {item.status === "pending" ? (
+                        <div style={{ display: "flex", gap: "5px" }}>
+                          <button
+                            className="btn btn--secondary btn--sm"
+                            onClick={() => handleApprove(item._id, true)}
+                            title="Approve and restock to shelf"
+                            style={{ fontFamily: "var(--font-sans)" }}
+                          >
+                            <PackageCheck size={13} />
+                          </button>
+                          <button
+                            className="btn btn--secondary btn--sm"
+                            onClick={() => handleApprove(item._id, false)}
+                            title="Approve without restocking (item not sellable)"
+                            style={{ fontFamily: "var(--font-sans)" }}
+                          >
+                            <PackageX size={13} />
+                          </button>
+                          <button
+                            className="btn btn--ghost btn--danger btn--sm"
+                            onClick={() => handleReject(item._id)}
+                            title="Reject"
+                            style={{ fontFamily: "var(--font-sans)" }}
+                          >
+                            <XCircle size={13} />
+                          </button>
+                        </div>
+                      ) : (
+                        <ItemOutcomeLabel item={item} />
+                      )}
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Outcome labels for fully-resolved returns (no actions column) */}
+        {isResolved && (
+          <div style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-1)", fontFamily: "var(--font-sans)" }}>
+            {ret.items.map((item) => (
+              <div key={item._id} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", fontSize: "var(--label-md)" }}>
+                <span style={{ color: "var(--text-secondary)", fontWeight: 500, fontFamily: "var(--font-sans)" }}>{item.productName}:</span>
+                <ItemOutcomeLabel item={item} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Exchange items ── */}
+        {hasExchange && (
+          <div style={{ marginTop: "var(--space-4)" }}>
+            <div className="returns-panel-meta" style={{ marginBottom: "var(--space-2)", display: "flex", alignItems: "center", gap: "4px", fontFamily: "var(--font-sans)" }}>
+              <CheckCircle size={12} style={{ verticalAlign: "-2px" }} />
+              Given in exchange:
+            </div>
+            <div className="table-wrap">
+              <table className="data-table" style={{ fontFamily: "var(--font-sans)" }}>
+                <thead>
+                  <tr>
+                    <th style={{ fontFamily: "var(--font-sans)" }}>Product</th>
+                    <th style={{ fontFamily: "var(--font-sans)" }}>Qty</th>
+                    <th style={{ fontFamily: "var(--font-sans)" }}>Unit Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ret.exchangeItems.map((item) => (
+                    <tr key={item._id}>
+                      <td className="item-name" style={{ fontFamily: "var(--font-sans)" }}>{item.productName}</td>
+                      <td className="item-qty" style={{ fontFamily: "var(--font-sans)" }}>{item.quantity}</td>
+                      <td style={{ fontFamily: "var(--font-sans)" }}>UGX {item.unitPrice.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── Footer close button ── */}
+        <div style={{ marginTop: "var(--space-6)", display: "flex", justifyContent: "flex-end" }}>
+          <button className="btn btn--secondary btn--md" onClick={onClose} style={{ fontFamily: "var(--font-sans)" }}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── RETURNS PANEL ───────────────────────────────────────────── */
+export default function ReturnsPanel({ token, showToast }) {
+  const navigate = useNavigate();
+  const todayStr = getTodayDateStr();
+  const [startDate, setStartDate] = useState(todayStr);
+  const [endDate, setEndDate] = useState(todayStr);
+  const [selectedReturn, setSelectedReturn] = useState(null);
+
+  const { results: returns, status: returnsStatus, loadMore } = usePaginatedQuery(
+    api.returns.getReturnsByDateRange,
+    { token, startDate, endDate },
+    { initialNumItems: 25 }
+  );
+
+  const isToday = startDate === todayStr && endDate === todayStr;
+
+  const handleResetToday = () => {
+    setStartDate(todayStr);
+    setEndDate(todayStr);
+  };
+
+  return (
+    <div className="admin-tab-panel is-active" style={{ fontFamily: "var(--font-sans)" }}>
+      <h1 className="admin-page-title" style={{ fontFamily: "var(--font-editorial)" }}>Returns</h1>
+
+      {/* ── Date filter bar ── */}
+      <div
+        className="date-filter-bar"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--space-2)",
+          marginBottom: "var(--space-3)",
+          flexWrap: "wrap",
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        <label className="form-label" style={{ margin: 0, fontFamily: "var(--font-sans)" }}>
           From
           <input
             type="date"
@@ -75,10 +337,10 @@ export default function ReturnsPanel({ token }) {
             value={startDate}
             max={endDate}
             onChange={(e) => setStartDate(e.target.value)}
-            style={{ marginLeft: "6px" }}
+            style={{ marginLeft: "6px", fontFamily: "var(--font-sans)" }}
           />
         </label>
-        <label className="form-label" style={{ margin: 0 }}>
+        <label className="form-label" style={{ margin: 0, fontFamily: "var(--font-sans)" }}>
           To
           <input
             type="date"
@@ -86,167 +348,131 @@ export default function ReturnsPanel({ token }) {
             value={endDate}
             min={startDate}
             onChange={(e) => setEndDate(e.target.value)}
-            style={{ marginLeft: "6px" }}
+            style={{ marginLeft: "6px", fontFamily: "var(--font-sans)" }}
           />
         </label>
         {!isToday && (
-          <button className="btn btn--secondary btn--sm" onClick={handleResetToday}>
+          <button className="btn btn--secondary btn--sm" onClick={handleResetToday} style={{ fontFamily: "var(--font-sans)" }}>
             Reset to Today
           </button>
         )}
       </div>
 
+      {/* ── List ── */}
       {returnsStatus === "LoadingFirstPage" ? (
-        <div className="empty-state">
-          <div className="empty-title">Loading returns...</div>
+        <div className="empty-state" style={{ fontFamily: "var(--font-sans)" }}>
+          <div className="empty-title" style={{ fontFamily: "var(--font-editorial)" }}>Loading returns...</div>
         </div>
       ) : returns.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-title">No returns in this period.</div>
+        <div className="empty-state" style={{ fontFamily: "var(--font-sans)" }}>
+          <div className="empty-title" style={{ fontFamily: "var(--font-editorial)" }}>No returns in this period.</div>
           <div className="empty-sub">Delivery-failure and customer returns will appear here.</div>
         </div>
       ) : (
         <>
-          <div className="returns-panel-list">
+          <div className="returns-panel-list" style={{ gap: "var(--space-2)", fontFamily: "var(--font-sans)" }}>
             {returns.map((ret) => {
-              const hasPendingItems = ret.items.some((item) => item.status === "pending");
-              const hasExchange = ret.exchangeItems && ret.exchangeItems.length > 0;
+              const overallStatus = getReturnOverallStatus(ret);
+              const isResolved = overallStatus !== "pending";
+
+              const productSummary = (ret.items || [])
+                .map((i) => `${i.productName} x${i.quantity}`)
+                .join(", ");
+
               return (
-                <div key={ret.returnId} className="returns-panel-card">
-                  <div className="returns-panel-card-header">
-                    <div>
-                      <strong>{ret.customerName}</strong>
-                      <div className="returns-panel-meta">
-                        Submitted by {ret.staffName} on {new Date(ret.createdAt).toLocaleString("en-GB", {
-                          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-                        })}
+                <button
+                  key={ret.returnId}
+                  className="returns-panel-card"
+                  onClick={() => setSelectedReturn(ret)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    padding: "var(--space-3) var(--space-4)",
+                    gap: 0,
+                    opacity: isResolved ? 0.82 : 1,
+                    fontFamily: "var(--font-sans)",
+                  }}
+                  aria-label={`View return for ${ret.customerName}`}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "var(--space-3)",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                        <strong style={{ fontSize: "var(--body-md)", fontFamily: "var(--font-body-heavy)" }}>{ret.customerName}</strong>
+                        <OverallStatusBadge status={overallStatus} />
                       </div>
-                      {ret.note && <div className="returns-panel-note">Note: {ret.note}</div>}
-                      {(ret.returnedTotal !== undefined || ret.exchangeTotal !== undefined) && (
-                        <div className="returns-panel-note" style={{ marginTop: "4px" }}>
-                          Returned value: UGX {(ret.returnedTotal || 0).toLocaleString()} · Exchange value: UGX {(ret.exchangeTotal || 0).toLocaleString()}
-                          {ret.topUpAmount > 0 && ` · Top-up collected: UGX ${ret.topUpAmount.toLocaleString()} (${ret.topUpMethod})`}
+                      <div
+                        className="returns-panel-meta"
+                        style={{
+                          marginTop: "3px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontFamily: "var(--font-sans)",
+                        }}
+                        title={productSummary}
+                      >
+                        {productSummary}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "var(--space-4)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "var(--body-sm)", fontFamily: "var(--font-body-heavy)" }}>
+                          UGX {(ret.returnedTotal || 0).toLocaleString()}
                         </div>
-                      )}
+                        <div style={{ fontSize: "var(--label-md)", color: "var(--text-tertiary)", fontFamily: "var(--font-sans)" }}>
+                          {new Date(ret.createdAt).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </div>
+                      </div>
+                      <ChevronRight size={16} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
                     </div>
-                    {hasPendingItems && !hasExchange && (
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <button
-                          className="btn btn--secondary btn--sm"
-                          onClick={() => navigate(`/admin/returns/${ret.returnId}/trade`)}
-                          title="Resolve by trading for a replacement product"
-                        >
-                          <RotateCcw size={13} /> Trade
-                        </button>
-                        <button
-                          className="btn btn--ghost btn--danger btn--sm"
-                          onClick={() => handleRejectReturn(ret.returnId)}
-                          title="Refuse this return altogether"
-                        >
-                          <XCircle size={13} /> Reject Return
-                        </button>
-                      </div>
-                    )}
                   </div>
-
-                  <div className="table-wrap">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Product</th>
-                          <th>Qty</th>
-                          <th>Unit Price</th>
-                          <th>Reason</th>
-                          <th>Source</th>
-                          <th>Status</th>
-                          <th style={{ width: "220px" }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ret.items.map((item) => (
-                          <tr key={item._id}>
-                            <td className="item-name">{item.productName}</td>
-                            <td className="item-qty">{item.quantity}</td>
-                            <td>UGX {item.unitPrice.toLocaleString()}</td>
-                            <td>{item.reason || "—"}</td>
-                            <td>{item.source === "delivery_failure" ? "Delivery Failure" : "Manual Return"}</td>
-                            <td style={{ textTransform: "capitalize" }}>{item.status}</td>
-                            <td className="td-action">
-                              {item.status === "pending" ? (
-                                <div style={{ display: "flex", gap: "5px" }}>
-                                  <button
-                                    className="btn btn--secondary btn--sm"
-                                    onClick={() => handleApprove(item._id, true)}
-                                    title="Approve and restock to shelf"
-                                  >
-                                    <PackageCheck size={13} />
-                                  </button>
-                                  <button
-                                    className="btn btn--secondary btn--sm"
-                                    onClick={() => handleApprove(item._id, false)}
-                                    title="Approve without restocking (item not sellable)"
-                                  >
-                                    <PackageX size={13} />
-                                  </button>
-                                  <button
-                                    className="btn btn--ghost btn--danger btn--sm"
-                                    onClick={() => handleReject(item._id)}
-                                    title="Reject"
-                                  >
-                                    <XCircle size={13} />
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="returns-panel-meta">
-                                  {item.status === "rejected" && item.rejectedReason ? `Rejected: ${item.rejectedReason}` : "—"}
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {hasExchange && (
-                    <div style={{ marginTop: "var(--space-2)" }}>
-                      <div className="returns-panel-meta" style={{ marginBottom: "4px" }}>
-                        <CheckCircle size={12} style={{ verticalAlign: "-2px", marginRight: "4px" }} />
-                        Given in exchange:
-                      </div>
-                      <div className="table-wrap">
-                        <table className="data-table">
-                          <thead>
-                            <tr>
-                              <th>Product</th>
-                              <th>Qty</th>
-                              <th>Unit Price</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {ret.exchangeItems.map((item) => (
-                              <tr key={item._id}>
-                                <td className="item-name">{item.productName}</td>
-                                <td className="item-qty">{item.quantity}</td>
-                                <td>UGX {item.unitPrice.toLocaleString()}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                </button>
               );
             })}
           </div>
 
           {returnsStatus === "CanLoadMore" && (
-            <button className="btn btn--secondary btn--md" onClick={() => loadMore(25)} style={{ marginTop: "var(--space-3)" }}>
+            <button
+              className="btn btn--secondary btn--md"
+              onClick={() => loadMore(25)}
+              style={{ marginTop: "var(--space-3)", fontFamily: "var(--font-sans)" }}
+            >
               Load More Returns
             </button>
           )}
         </>
+      )}
+
+      {/* ── Detail modal ── */}
+      {selectedReturn && (
+        <ReturnDetailModal
+          ret={selectedReturn}
+          token={token}
+          onClose={() => setSelectedReturn(null)}
+          showToast={showToast}
+          navigate={navigate}
+        />
       )}
     </div>
   );

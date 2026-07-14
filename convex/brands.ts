@@ -2,12 +2,13 @@ import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { Doc } from "./_generated/dataModel";
 import { normalizeProductPrice, shouldKeepProduct } from "./products";
+import { trackedQuery } from "./lib/ioTracking";
 
 /**
  * Fetch a specific brand by its slug, along with all of its associated products.
  * Uses index lookups for optimal performance and adheres to Convex best practices.
  */
-export const getBrandBySlug = query({
+export const getBrandBySlug = trackedQuery("brands.getBrandBySlug", {
   args: { slug: v.string() },
   handler: async (ctx, args) => {
     // 1. Fetch the brand metadata by slug

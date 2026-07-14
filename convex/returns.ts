@@ -6,6 +6,7 @@ import { appendAttribute } from "./attributes";
 import { applyStockCounterDelta } from "./stockCounters";
 import { Id } from "./_generated/dataModel";
 import { parseDateStrToMs } from "./orders";
+import { trackedQuery, trackedMutation } from "./lib/ioTracking";
 
 // Restocks a product (and any barcode-matching duplicate product rows) by `quantity`.
 async function restockByBarcode(ctx: any, productId: Id<"products">, quantity: number) {
@@ -43,7 +44,7 @@ async function restockByBarcode(ctx: any, productId: Id<"products">, quantity: n
   }
 }
 
-export const submitReturn = mutation({
+export const submitReturn = trackedMutation("returns.submitReturn", {
   args: {
     token: v.string(),
     orderId: v.id("orders"),
@@ -194,7 +195,7 @@ export const processReturn = submitReturn;
  * is pricier than what they returned, or accepting that any leftover value on
  * a cheaper exchange is forfeited (never paid back in cash).
  */
-export const submitExchange = mutation({
+export const submitExchange = trackedMutation("returns.submitExchange", {
   args: {
     token: v.string(),
     orderId: v.id("orders"),
@@ -409,7 +410,7 @@ export const submitExchange = mutation({
   },
 });
 
-export const approveReturnItem = mutation({
+export const approveReturnItem = trackedMutation("returns.approveReturnItem", {
   args: {
     token: v.string(),
     returnItemId: v.id("returnItems"),
@@ -477,7 +478,7 @@ export const rejectReturnItem = mutation({
  * returned goods into inventory (or rejecting them) stays a separate step
  * via approveReturnItem/rejectReturnItem.
  */
-export const attachExchangeToReturn = mutation({
+export const attachExchangeToReturn = trackedMutation("returns.attachExchangeToReturn", {
   args: {
     token: v.string(),
     returnId: v.id("returns"),
@@ -611,7 +612,7 @@ export const attachExchangeToReturn = mutation({
  * returnItem for the given return is rejected with the same reason. Items
  * already approved/rejected in the same return are left untouched.
  */
-export const rejectReturn = mutation({
+export const rejectReturn = trackedMutation("returns.rejectReturn", {
   args: {
     token: v.string(),
     returnId: v.id("returns"),
@@ -644,7 +645,7 @@ export const rejectReturn = mutation({
   },
 });
 
-export const getPendingReturns = query({
+export const getPendingReturns = trackedQuery("returns.getPendingReturns", {
   args: { token: v.string() },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
@@ -694,6 +695,8 @@ export const getPendingReturns = query({
           reason: i.reason,
           status: i.status,
           source: i.source,
+          rejectedReason: i.rejectedReason,
+          restocked: i.restocked,
         })),
         exchangeItems: exchangeItems.map((e) => ({
           _id: e._id,
@@ -717,6 +720,9 @@ export const getPendingReturns = query({
  * pattern against the returns table's by_createdAt index, then reuses the
  * same per-return enrichment shape as getPendingReturns.
  */
+// NOTE: consumed via usePaginatedQuery on the frontend, which requires the
+// raw PaginationResult shape - trackedQuery's {data, _io} envelope would
+// break pagination, so this stays a plain query.
 export const getReturnsByDateRange = query({
   args: {
     token: v.string(),
@@ -778,6 +784,8 @@ export const getReturnsByDateRange = query({
           reason: i.reason,
           status: i.status,
           source: i.source,
+          rejectedReason: i.rejectedReason,
+          restocked: i.restocked,
         })),
         exchangeItems: exchangeItems.map((e) => ({
           _id: e._id,
@@ -796,7 +804,7 @@ export const getReturnsByDateRange = query({
   },
 });
 
-export const getReturnItemsForOrder = query({
+export const getReturnItemsForOrder = trackedQuery("returns.getReturnItemsForOrder", {
   args: { token: v.string(), orderId: v.id("orders") },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
@@ -813,7 +821,7 @@ export const getReturnItemsForOrder = query({
  * getReturnsByDateRange - powers TradeReturnPage, which fetches its own
  * data via a returnId route param instead of receiving it as a prop.
  */
-export const getReturnById = query({
+export const getReturnById = trackedQuery("returns.getReturnById", {
   args: { token: v.string(), returnId: v.id("returns") },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["staff", "admin"]);

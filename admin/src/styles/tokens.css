@@ -96,10 +96,11 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* Fonts */
-  --font-sans: 'Antipasto', 'Plus Jakarta Sans', sans-serif;
+  /* Fonts — must match storefront/src/variables.css exactly: title copy uses
+     --font-editorial, body copy uses --font-sans, no CDN fallback fonts. */
+  --font-sans: 'Antipasto', sans-serif;
   --font-editorial: 'Trimen Drawing Demo', sans-serif;
-  --font-body-heavy: 'Antipasto ExtraBold', 'Antipasto', sans-serif;
+  --font-body-heavy: 'Antipasto ExtraBold', sans-serif;
 
   /* Additional Spacing Variables */
   --space-0-75: 3px;

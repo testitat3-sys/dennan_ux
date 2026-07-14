@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "convex/react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
+import { useToast } from "../hooks/useToast";
+import Toast from "../components/Toast";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import OfflineBanner from "../components/OfflineBanner";
+import Sidebar from "../components/Sidebar";
 import CustomerActivityModal from "../components/CustomerActivityModal";
 import OrderDetailModal from "../components/OrderDetailModal";
+import HandoverModal from "../components/HandoverModal";
+import DeliveryFailureModal from "../components/DeliveryFailureModal";
 import RemindersWidget from "../components/RemindersWidget";
 import CalendarPanel from "../components/CalendarPanel";
 import SalesMetricsPanel from "../components/SalesMetricsPanel";
@@ -17,10 +23,9 @@ import DiscountsPanel from "../components/DiscountsPanel";
 import ProductSalesPanel from "../components/ProductSalesPanel";
 import OnlineOrdersPanel from "../components/OnlineOrdersPanel";
 import ErrorLogSettingsPanel from "../components/ErrorLogSettingsPanel";
+import DbIOPanel from "../components/DbIOPanel";
 import LeadsPanel from "../components/LeadsPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
-import sosLogo from "../assets/SOS.png";
-import profileImg from "../assets/about-dennan.png";
 import {
   LayoutDashboard,
   Boxes,
@@ -30,7 +35,6 @@ import {
   TrendingUp,
   CheckCircle,
   XCircle,
-  LogOut,
   ChevronRight,
   DollarSign,
   BarChart3,
@@ -41,7 +45,8 @@ import {
   Search,
   Package,
   Settings,
-  Inbox
+  Inbox,
+  Database
 } from "lucide-react";
 
 const LAST_TAB_KEY = "dennan_admin_last_tab";
@@ -49,6 +54,7 @@ const LAST_TAB_KEY = "dennan_admin_last_tab";
 export default function AdminDashboard() {
   const { user, token, logout } = useStaffAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const isOnline = useOnlineStatus();
   const [activeTab, setActiveTab] = useState(
     () =>
@@ -61,17 +67,55 @@ export default function AdminDashboard() {
     localStorage.setItem(LAST_TAB_KEY, activeTab);
   }, [activeTab]);
 
+  // Toast System
+  const { toasts, showToast, dismissToast } = useToast();
+
+  useEffect(() => {
+    if (location.state?.toast) {
+      showToast(location.state.toast.message, location.state.toast.type);
+      // Clean up state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, showToast, navigate]);
+
+  // Queries for badges and overview
+  const pendingOrders = useQuery(api.orders.getPendingOrders, { token });
+  const pendingReturns = useTrackedQuery(api.returns.getPendingReturns, { token });
+
+  // Unseen logic
+  const [lastSeenOrders, setLastSeenOrders] = useState(() => parseInt(localStorage.getItem("dennan_admin_last_seen_orders") || "0"));
+  const [lastSeenReturns, setLastSeenReturns] = useState(() => parseInt(localStorage.getItem("dennan_admin_last_seen_returns") || "0"));
+
+  useEffect(() => {
+    if (activeTab === "onlineOrders" && pendingOrders && pendingOrders.length > 0) {
+      const maxTime = Math.max(...pendingOrders.map(o => o.createdAt));
+      localStorage.setItem("dennan_admin_last_seen_orders", maxTime.toString());
+      setLastSeenOrders(maxTime);
+    }
+  }, [activeTab, pendingOrders]);
+
+  useEffect(() => {
+    if (activeTab === "returns" && pendingReturns && pendingReturns.length > 0) {
+      const maxTime = Math.max(...pendingReturns.map(r => r.createdAt));
+      localStorage.setItem("dennan_admin_last_seen_returns", maxTime.toString());
+      setLastSeenReturns(maxTime);
+    }
+  }, [activeTab, pendingReturns]);
+
+  const unseenOrdersCount = pendingOrders ? pendingOrders.filter(o => o.createdAt > lastSeenOrders).length : 0;
+  const unseenReturnsCount = pendingReturns ? pendingReturns.filter(r => r.createdAt > lastSeenReturns).length : 0;
+
   // CRM customer modal state
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   // Reminders / Calendar
   const todayStr = getTodayStr();
-  const dueActivities = useQuery(api.customerActivities.getDueActivities, { token, currentDate: todayStr });
+  const dueActivities = useTrackedQuery(api.customerActivities.getDueActivities, { token, currentDate: todayStr });
 
   // Linked-order lookup, used when a Calendar reminder references an order
   const [viewingOrder, setViewingOrder] = useState(null);
   const [pendingOrderId, setPendingOrderId] = useState(null);
-  const pendingOrderDetail = useQuery(
+  const pendingOrderDetail = useTrackedQuery(
     api.orders.getOrderDetailById,
     pendingOrderId ? { token, orderId: pendingOrderId } : "skip"
   );
@@ -82,26 +126,76 @@ export default function AdminDashboard() {
     }
   }, [pendingOrderDetail]);
 
+  // Fulfillment actions on the order detail modal (Order History / Calendar entry points)
+  const [handoverOrder, setHandoverOrder] = useState(null);
+  const [failureOrder, setFailureOrder] = useState(null);
+  const claimOrderMutation = useMutation(api.orders.claimOrder);
+  const handoverMutation = useMutation(api.orders.handoverToDelivery);
+  const completeOrderMutation = useMutation(api.orders.completeOrder);
+  const reportDeliveryFailureMutation = useMutation(api.orders.reportDeliveryFailure);
+
+  const handleClaimOrder = async (orderId) => {
+    try {
+      await claimOrderMutation({ token, orderId });
+    } catch (err) {
+      alert("Failed to claim order: " + err.message);
+    }
+  };
+
+  const handleHandoverSubmit = async (data) => {
+    try {
+      await handoverMutation({
+        token,
+        orderId: data.orderId,
+        deliveryPersonName: data.deliveryPersonName,
+        riderPhone: data.riderPhone,
+        expectedDeliveryTime: data.expectedDeliveryTime,
+      });
+      setHandoverOrder(null);
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const handleCompleteOrder = async (orderId) => {
+    try {
+      await completeOrderMutation({ token, orderId });
+    } catch (err) {
+      alert("Error completing order: " + err.message);
+    }
+  };
+
+  const handleReportDeliveryFailure = async (data) => {
+    try {
+      await reportDeliveryFailureMutation({
+        token,
+        orderId: data.orderId,
+        failedItems: data.failedItems,
+        note: data.note,
+      });
+      setFailureOrder(null);
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   // Stats Query
   const stats = useQuery(api.orders.adminGetOverviewStats, { token });
 
   // Staff roster
-  const staffList = useQuery(api.staffAuth.getStaffList, { token });
+  const staffList = useTrackedQuery(api.staffAuth.getStaffList, { token });
 
   // Customer List
-  const customerList = useQuery(api.customerActivities.getCustomerList, { token });
+  const customerList = useTrackedQuery(api.customerActivities.getCustomerList, { token });
   const [customerSearch, setCustomerSearch] = useState("");
 
   // Leads (store requests + back-in-stock signups)
-  const leadsList = useQuery(api.leads.getLeads, { token });
+  const leadsList = useTrackedQuery(api.leads.getLeads, { token });
   const unresolvedLeadsCount = leadsList?.filter((l) => l.status !== "resolved").length || 0;
-
-  const initials = (user?.name || "?")
-    .split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   const filteredCustomers = customerList?.filter(c =>
     c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
@@ -109,152 +203,64 @@ export default function AdminDashboard() {
     c.phone?.includes(customerSearch)
   ) || [];
 
+  const adminSidebarGroups = [
+    {
+      id: "overview",
+      label: "Overview",
+      items: [
+        { key: "overview", label: "Dashboard", icon: LayoutDashboard, isActive: activeTab === "overview", onClick: () => setActiveTab("overview") },
+      ],
+    },
+    {
+      id: "salesOrders",
+      label: "Sales & Orders",
+      items: [
+        { key: "onlineOrders", label: "Online Orders", icon: Package, badge: unseenOrdersCount > 0 ? unseenOrdersCount : undefined, isActive: activeTab === "onlineOrders", onClick: () => setActiveTab("onlineOrders") },
+        { key: "metrics", label: "Sales Metrics", icon: BarChart3, isActive: activeTab === "metrics", onClick: () => setActiveTab("metrics") },
+        { key: "history", label: "Order History", icon: History, isActive: activeTab === "history", onClick: () => setActiveTab("history") },
+        { key: "returns", label: "Returns", icon: RotateCcw, badge: unseenReturnsCount > 0 ? unseenReturnsCount : undefined, isActive: activeTab === "returns", onClick: () => setActiveTab("returns") },
+      ],
+    },
+    {
+      id: "catalogue",
+      label: "Catalogue",
+      items: [
+        { key: "stock", label: "Stock Manager", icon: Boxes, isActive: activeTab === "stock", onClick: () => setActiveTab("stock") },
+        { key: "salesReport", label: "Sales Report", icon: ClipboardList, isActive: activeTab === "salesReport", onClick: () => setActiveTab("salesReport") },
+        { key: "discounts", label: "Discounts & Promos", icon: Tag, isActive: activeTab === "discounts", onClick: () => setActiveTab("discounts") },
+      ],
+    },
+    {
+      id: "peoplePlanning",
+      label: "People & Planning",
+      items: [
+        { key: "customers", label: "Customers", icon: Users, isActive: activeTab === "customers", onClick: () => setActiveTab("customers") },
+        { key: "leads", label: "Leads", icon: Inbox, badge: unresolvedLeadsCount, isActive: activeTab === "leads", onClick: () => setActiveTab("leads") },
+        { key: "calendar", label: "Calendar", icon: CalendarIcon, badge: dueActivities?.length || 0, isActive: activeTab === "calendar", onClick: () => setActiveTab("calendar") },
+        { key: "staff", label: "Staff Roster", icon: UserCheck, isActive: activeTab === "staff", onClick: () => setActiveTab("staff") },
+      ],
+    },
+    {
+      id: "system",
+      label: "System",
+      items: [
+        { key: "settings", label: "Settings", icon: Settings, isActive: activeTab === "settings", onClick: () => setActiveTab("settings") },
+        { key: "dbio", label: "DB I/O", icon: Database, isActive: activeTab === "dbio", onClick: () => setActiveTab("dbio") },
+      ],
+    },
+  ];
+
   return (
     <div className="staff-portal-body">
       <OfflineBanner isOnline={isOnline} />
       <div className="admin-layout">
-        {/* Sidebar Navigation */}
-        <aside className="sidebar">
-          <div className="sidebar-brand">
-            <img src={sosLogo} alt="Dennan" className="sidebar-logo" />
-            <span className="sidebar-brand-sub">Admin Hub</span>
-          </div>
-
-          <nav className="sidebar-nav">
-            <div className="sidebar-nav-group">
-              <span className="sidebar-nav-group-label">Overview</span>
-              <button
-                className={`sidebar-nav-item ${activeTab === "overview" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("overview")}
-              >
-                <LayoutDashboard size={18} />
-                <span>Dashboard</span>
-              </button>
-            </div>
-
-            <div className="sidebar-nav-group">
-              <span className="sidebar-nav-group-label">Sales & Orders</span>
-              <button
-                className={`sidebar-nav-item ${activeTab === "onlineOrders" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("onlineOrders")}
-              >
-                <Package size={18} />
-                <span>Online Orders</span>
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "metrics" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("metrics")}
-              >
-                <BarChart3 size={18} />
-                <span>Sales Metrics</span>
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "history" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("history")}
-              >
-                <History size={18} />
-                <span>Order History</span>
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "returns" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("returns")}
-              >
-                <RotateCcw size={18} />
-                <span>Returns</span>
-              </button>
-            </div>
-
-            <div className="sidebar-nav-group">
-              <span className="sidebar-nav-group-label">Catalogue</span>
-              <button
-                className={`sidebar-nav-item ${activeTab === "stock" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("stock")}
-              >
-                <Boxes size={18} />
-                <span>Stock Manager</span>
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "salesReport" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("salesReport")}
-              >
-                <ClipboardList size={18} />
-                <span>Sales Report</span>
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "discounts" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("discounts")}
-              >
-                <Tag size={18} />
-                <span>Discounts & Promos</span>
-              </button>
-            </div>
-
-            <div className="sidebar-nav-group">
-              <span className="sidebar-nav-group-label">People & Planning</span>
-              <button
-                className={`sidebar-nav-item ${activeTab === "customers" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("customers")}
-              >
-                <Users size={18} />
-                <span>Customers</span>
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "leads" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("leads")}
-              >
-                <Inbox size={18} />
-                <span>Leads</span>
-                {unresolvedLeadsCount > 0 && (
-                  <span className="sidebar-nav-badge">{unresolvedLeadsCount}</span>
-                )}
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "calendar" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("calendar")}
-              >
-                <CalendarIcon size={18} />
-                <span>Calendar</span>
-                {dueActivities && dueActivities.length > 0 && (
-                  <span className="sidebar-nav-badge">{dueActivities.length}</span>
-                )}
-              </button>
-              <button
-                className={`sidebar-nav-item ${activeTab === "staff" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("staff")}
-              >
-                <UserCheck size={18} />
-                <span>Staff Roster</span>
-              </button>
-            </div>
-
-            <div className="sidebar-nav-group">
-              <span className="sidebar-nav-group-label">System</span>
-              <button
-                className={`sidebar-nav-item ${activeTab === "settings" ? "is-active" : ""}`}
-                onClick={() => setActiveTab("settings")}
-              >
-                <Settings size={18} />
-                <span>Settings</span>
-              </button>
-            </div>
-          </nav>
-
-          <div className="sidebar-footer">
-            <div className="sidebar-user">
-              <div className="avatar">
-                <img src={profileImg} alt={user?.name || "Profile"} className="avatar-img" />
-              </div>
-              <div className="sidebar-user-info">
-                <span className="sidebar-user-name">{user?.name}</span>
-                <span className="sidebar-user-role">{user?.accountRole?.toUpperCase()}</span>
-              </div>
-            </div>
-            <button className="logout-btn" onClick={logout} type="button">
-              <LogOut size={16} />
-              <span>Sign Out</span>
-            </button>
-          </div>
-        </aside>
+        <Sidebar
+          storageKey="dennan_sidebar_collapsed_admin"
+          brandSub="Admin Hub"
+          user={user}
+          onLogout={logout}
+          groups={adminSidebarGroups}
+        />
 
         {/* Main Content Area */}
         <main className="admin-main">
@@ -303,7 +309,116 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="section-header">
+                  <div className="section-header" style={{ marginTop: "var(--space-4)" }}>
+                    <h2 className="section-title">Pending Orders</h2>
+                  </div>
+                  {pendingOrders === undefined ? (
+                    <div className="empty-state">
+                      <div className="empty-title">Loading pending orders...</div>
+                    </div>
+                  ) : pendingOrders.length === 0 ? (
+                    <div className="empty-state">
+                      <div className="empty-title">No pending orders. All caught up!</div>
+                    </div>
+                  ) : (
+                    <div className="table-wrap">
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>Customer</th>
+                            <th>Status</th>
+                            <th>Grand Total</th>
+                            <th>Assigned Staff</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pendingOrders.map((order) => (
+                            <tr key={order._id}>
+                              <td>
+                                <strong>{order.customerName}</strong>
+                                {order.customerPhone && <div style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>{order.customerPhone}</div>}
+                              </td>
+                              <td>
+                                <span className={`status-badge status-badge--${order.status}`}>
+                                  <span className="status-dot" />
+                                  {order.status.toUpperCase()}
+                                </span>
+                              </td>
+                              <td>UGX {order.grandTotal.toLocaleString()}</td>
+                              <td>{order.claimantName || "Unassigned"}</td>
+                              <td>{new Date(order.createdAt).toLocaleString()}</td>
+                              <td>
+                                <button
+                                  className="btn btn--secondary btn--sm"
+                                  onClick={() => setViewingOrder(order)}
+                                >
+                                  View Details
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  <div className="section-header" style={{ marginTop: "var(--space-4)" }}>
+                    <h2 className="section-title">Pending Returns</h2>
+                  </div>
+                  {pendingReturns === undefined ? (
+                    <div className="empty-state">
+                      <div className="empty-title">Loading pending returns...</div>
+                    </div>
+                  ) : pendingReturns.length === 0 ? (
+                    <div className="empty-state">
+                      <div className="empty-title">No pending returns.</div>
+                    </div>
+                  ) : (
+                    <div className="table-wrap">
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>Customer</th>
+                            <th>Submitted By</th>
+                            <th>Returned Total</th>
+                            <th>Exchange Total</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pendingReturns.map((ret) => (
+                            <tr key={ret.returnId}>
+                              <td><strong>{ret.customerName}</strong></td>
+                              <td>{ret.staffName}</td>
+                              <td>UGX {(ret.returnedTotal || 0).toLocaleString()}</td>
+                              <td>UGX {(ret.exchangeTotal || 0).toLocaleString()}</td>
+                              <td>{new Date(ret.createdAt).toLocaleString()}</td>
+                              <td>
+                                <button
+                                  className="btn btn--secondary btn--sm"
+                                  onClick={() => {
+                                    const hasExchange = ret.exchangeItems && ret.exchangeItems.length > 0;
+                                    if (hasExchange) {
+                                      setActiveTab("returns");
+                                    } else {
+                                      navigate(`/admin/returns/${ret.returnId}/trade`);
+                                    }
+                                  }}
+                                >
+                                  {ret.exchangeItems && ret.exchangeItems.length > 0 ? "Review Return" : "Trade Exchange"}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  <div className="section-header" style={{ marginTop: "var(--space-4)" }}>
                     <h2 className="section-title">Fulfillment Leaderboard</h2>
                   </div>
                   {stats.leaderboard.length === 0 ? (
@@ -494,12 +609,17 @@ export default function AdminDashboard() {
 
           {/* TAB 8: RETURNS APPROVAL */}
           {activeTab === "returns" && (
-            <ReturnsPanel token={token} />
+            <ReturnsPanel token={token} showToast={showToast} />
           )}
 
           {/* TAB 9: SETTINGS */}
           {activeTab === "settings" && (
             <ErrorLogSettingsPanel token={token} />
+          )}
+
+          {/* TAB 10: DB I/O BASELINE */}
+          {activeTab === "dbio" && (
+            <DbIOPanel token={token} />
           )}
         </main>
       </div>
@@ -516,14 +636,41 @@ export default function AdminDashboard() {
         />
       )}
 
-      {/* Order Detail Modal (opened from a Calendar reminder linked to an order) */}
+      {/* Order Detail Modal (opened from Order History or a Calendar reminder linked to an order) */}
       {viewingOrder && (
         <OrderDetailModal
           order={viewingOrder}
           onClose={() => setViewingOrder(null)}
+          onClaim={(id) => { handleClaimOrder(id); setViewingOrder(null); }}
+          onDispatch={() => { setHandoverOrder(viewingOrder); setViewingOrder(null); }}
+          onComplete={(id) => { handleCompleteOrder(id); setViewingOrder(null); }}
+          onMarkFailed={(order) => { setFailureOrder(order); setViewingOrder(null); }}
           token={token}
         />
       )}
+
+      {/* Rider Handover Modal */}
+      {handoverOrder && (
+        <HandoverModal
+          orderId={handoverOrder._id}
+          customerName={handoverOrder.customerName}
+          customerPhone={handoverOrder.customerPhone}
+          deliveryAddress={handoverOrder.deliveryAddress}
+          onClose={() => setHandoverOrder(null)}
+          onSubmit={handleHandoverSubmit}
+        />
+      )}
+
+      {/* Delivery failure / returns-to-approval modal */}
+      {failureOrder && (
+        <DeliveryFailureModal
+          order={failureOrder}
+          onClose={() => setFailureOrder(null)}
+          onSubmit={handleReportDeliveryFailure}
+        />
+      )}
+
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

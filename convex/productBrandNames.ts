@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { verifyStaffSession } from "./staffAuth";
 import { slugify } from "./products";
+import { trackedQuery, trackedMutation } from "./lib/ioTracking";
 
 /**
  * Lists all known brand names for the admin product create/edit brand
@@ -9,7 +10,7 @@ import { slugify } from "./products";
  * small, admin-curated set of names (seeded with ~21, growing only via
  * explicit "+ Add new brand" actions), nowhere near products-table scale.
  */
-export const listProductBrandNames = query({
+export const listProductBrandNames = trackedQuery("productBrandNames.listProductBrandNames", {
   args: { token: v.string() },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["admin"]);
@@ -17,7 +18,7 @@ export const listProductBrandNames = query({
   },
 });
 
-export const createProductBrandName = mutation({
+export const createProductBrandName = trackedMutation("productBrandNames.createProductBrandName", {
   args: { token: v.string(), name: v.string() },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["admin"]);

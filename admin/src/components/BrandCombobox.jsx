@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 
 const ADD_NEW_VALUE = "__add_new__";
 const NO_BRAND = "no-brand";
 
 export default function BrandCombobox({ token, value, onChange }) {
-  const brandOptions = useQuery(api.productBrandNames.listProductBrandNames, { token });
+  const brandOptions = useTrackedQuery(api.productBrandNames.listProductBrandNames, { token });
   const createBrandName = useMutation(api.productBrandNames.createProductBrandName);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newBrandName, setNewBrandName] = useState("");

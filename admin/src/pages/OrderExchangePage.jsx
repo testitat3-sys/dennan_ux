@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import { useOfflineProducts } from "../hooks/useOfflineProducts";
-import { ArrowLeft, RotateCcw, AlertTriangle, Search, Minus, Plus } from "lucide-react";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import Sidebar from "../components/Sidebar";
+import ProductPickerGrid from "../components/ProductPickerGrid";
+import CatalogDownloadBanner from "../components/CatalogDownloadBanner";
+import { getReturnPageSidebarGroups } from "../utils/sidebarGroups";
+import { ArrowLeft, RotateCcw, AlertTriangle, Minus, Plus } from "lucide-react";
 
 /**
  * Exchange-only returns flow, triggered from the "return" button on an
@@ -14,13 +20,15 @@ import { ArrowLeft, RotateCcw, AlertTriangle, Search, Minus, Plus } from "lucide
  *
  * A dedicated page rather than a modal so the product list is exactly what
  * this device has cached locally (via useOfflineProducts) with no
- * live-fetch fallback — if the catalog isn't downloaded yet, staff are
- * pointed at the POS tab, the one canonical place that triggers a download.
+ * live-fetch fallback — if the catalog isn't downloaded yet, an inline
+ * CatalogDownloadBanner lets staff (or an admin, who has no POS tab) fetch
+ * it right here instead of being sent elsewhere.
  */
 export default function OrderExchangePage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { token } = useStaffAuth();
+  const { user, token, logout } = useStaffAuth();
+  const sidebarGroups = getReturnPageSidebarGroups(user?.accountRole, navigate);
 
   const [returnQuantities, setReturnQuantities] = useState({});
   const [exchangeCart, setExchangeCart] = useState([]);
@@ -32,12 +40,18 @@ export default function OrderExchangePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const order = useQuery(
+  const order = useTrackedQuery(
     api.orders.getOrderDetailById,
     token && orderId ? { token, orderId } : "skip"
   );
-  const { products, needsBootstrap } = useOfflineProducts(token);
+  const { products, needsBootstrap, requestBootstrap } = useOfflineProducts(token);
   const submitExchangeMutation = useMutation(api.returns.submitExchange);
+  const isOnline = useOnlineStatus();
+  const [catalogPromptDismissed, setCatalogPromptDismissed] = useState(false);
+
+  const handleDownloadCatalog = async () => {
+    await requestBootstrap();
+  };
 
   useEffect(() => {
     if (order && order.items) {
@@ -168,7 +182,7 @@ export default function OrderExchangePage() {
         } : undefined,
         note: note.trim() || undefined
       });
-      navigate("/");
+      navigate("/", { state: { toast: { message: "Exchange processed successfully.", type: "success" } } });
     } catch (err) {
       setError("Failed to process exchange: " + err.message);
     } finally {
@@ -178,9 +192,16 @@ export default function OrderExchangePage() {
 
   if (order === undefined) {
     return (
-      <div className="admin-tab-panel is-active">
-        <div className="empty-state">
-          <div className="empty-title">Loading order...</div>
+      <div className="staff-portal-body">
+        <div className="admin-layout">
+          <Sidebar storageKey={`dennan_sidebar_collapsed_${user?.accountRole}`} brandSub="Dennan" user={user} onLogout={logout} groups={sidebarGroups} />
+          <main className="admin-main">
+            <div className="admin-tab-panel is-active">
+              <div className="empty-state">
+                <div className="empty-title">Loading order...</div>
+              </div>
+            </div>
+          </main>
         </div>
       </div>
     );
@@ -188,19 +209,30 @@ export default function OrderExchangePage() {
 
   if (order === null) {
     return (
-      <div className="admin-tab-panel is-active">
-        <div className="empty-state">
-          <div className="empty-title">Order not found.</div>
-          <Link to="/" className="btn btn--secondary btn--md" style={{ marginTop: "var(--space-3)" }}>
-            <ArrowLeft size={16} /> Back
-          </Link>
+      <div className="staff-portal-body">
+        <div className="admin-layout">
+          <Sidebar storageKey={`dennan_sidebar_collapsed_${user?.accountRole}`} brandSub="Dennan" user={user} onLogout={logout} groups={sidebarGroups} />
+          <main className="admin-main">
+            <div className="admin-tab-panel is-active">
+              <div className="empty-state">
+                <div className="empty-title">Order not found.</div>
+                <Link to="/" className="btn btn--secondary btn--md" style={{ marginTop: "var(--space-3)" }}>
+                  <ArrowLeft size={16} /> Back
+                </Link>
+              </div>
+            </div>
+          </main>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="admin-tab-panel is-active" style={{ maxWidth: "760px", margin: "0 auto" }}>
+    <div className="staff-portal-body">
+      <div className="admin-layout">
+        <Sidebar storageKey={`dennan_sidebar_collapsed_${user?.accountRole}`} brandSub="Dennan" user={user} onLogout={logout} groups={sidebarGroups} />
+        <main className="admin-main">
+        <div className="admin-tab-panel is-active" style={{ maxWidth: "760px", margin: "0 auto" }}>
       <Link to="/" className="btn btn--ghost btn--sm" style={{ marginBottom: "var(--space-3)" }}>
         <ArrowLeft size={16} /> Back
       </Link>
@@ -267,65 +299,31 @@ export default function OrderExchangePage() {
           <h3 className="section-title">Step 2 — Select Replacement Product(s)</h3>
         </div>
 
+        <CatalogDownloadBanner
+          show={needsBootstrap && !catalogPromptDismissed}
+          isOnline={isOnline}
+          onDownload={handleDownloadCatalog}
+          onDismiss={() => setCatalogPromptDismissed(true)}
+          message="Product catalog isn't downloaded on this device — pick a replacement product below once it's downloaded."
+        />
+
         {needsBootstrap ? (
           <div className="empty-state">
             <div className="empty-title">Product catalog isn't downloaded on this device yet.</div>
-            <div className="empty-sub">
-              Visit the POS tab and click "Download Products" first, then come back here.
-            </div>
+            <div className="empty-sub">Click "Download Products" above to fetch it, then come back here.</div>
           </div>
         ) : (
-          <>
-            <div className="stock-search-wrap">
-              <Search className="stock-search-icon" size={15} />
-              <input
-                className="stock-search-input"
-                type="text"
-                placeholder="Search barcode, name..."
-                value={exchangeSearch}
-                onChange={(e) => setExchangeSearch(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div style={{ maxHeight: "320px", overflowY: "auto", border: "1px solid var(--surface-container-highest)", borderRadius: "var(--radius-md)", marginTop: "var(--space-2)" }}>
-              {filteredProducts.slice(0, 40).map(p => {
-                const inStock = p.inventory === undefined || p.inventory > 0;
-                const cartItem = exchangeCart.find(item => item.productId === p._id);
-                const atMax = cartItem && p.inventory !== undefined && cartItem.quantity >= p.inventory;
-                return (
-                  <button
-                    type="button"
-                    key={p._id}
-                    onClick={() => addExchangeItem(p)}
-                    disabled={!inStock || atMax || isSubmitting}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "8px 12px",
-                      borderBottom: "1px solid var(--surface-container-highest)",
-                      background: cartItem ? "rgba(211, 80, 151, 0.08)" : "transparent",
-                      cursor: inStock ? "pointer" : "not-allowed",
-                      opacity: inStock ? 1 : 0.5,
-                      textAlign: "left"
-                    }}
-                  >
-                    <span style={{ fontSize: "13px", fontWeight: 600 }}>{p.name}</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
-                        {p.inventory !== undefined ? (!inStock ? "Out of stock" : `${p.inventory} left`) : ""}
-                      </span>
-                      <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-brand-primary)" }}>
-                        UGX {getOriginalPrice(p).toLocaleString()}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </>
+          <ProductPickerGrid
+            products={filteredProducts}
+            search={exchangeSearch}
+            onSearchChange={setExchangeSearch}
+            searchPlaceholder="Search barcode, name..."
+            disabled={isSubmitting}
+            getPrice={getOriginalPrice}
+            getInventory={(p) => p.inventory}
+            getCartQuantity={(productId) => exchangeCart.find(item => item.productId === productId)?.quantity || 0}
+            onSelect={addExchangeItem}
+          />
         )}
 
         {exchangeCart.length > 0 && (
@@ -459,6 +457,9 @@ export default function OrderExchangePage() {
           </button>
         </div>
       </form>
+        </div>
+        </main>
+      </div>
     </div>
   );
 }

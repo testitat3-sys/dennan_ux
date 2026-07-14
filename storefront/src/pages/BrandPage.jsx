@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from '../hooks/useTrackedQuery';
 import ProductCard from '../components/products/ProductCard';
 import { stripBrandFromName } from '../utils/productNameUtils';
 import SearchStrip from '../components/home/SearchStrip';
@@ -24,7 +25,7 @@ const BrandPage = () => {
   const navigate = useNavigate();
   
   // Fetch live brand metadata and associated products from Convex
-  const brand = useQuery(api.brands.getBrandBySlug, { slug: brandId || '' });
+  const brand = useTrackedQuery(api.brands.getBrandBySlug, { slug: brandId || '' }, 20);
 
   const [activeFilters, setActiveFilters] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);

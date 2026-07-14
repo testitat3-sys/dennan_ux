@@ -10,6 +10,7 @@ import { verifyStaffSession } from "./staffAuth";
 import { generateUniqueVoucherCode } from "./giftVouchers";
 import { computeDeliveryQuote, computeDeliveryQuoteByName } from "./delivery";
 import { applyStockCounterDelta } from "./stockCounters";
+import { trackedQuery, trackedMutation } from "./lib/ioTracking";
 
 async function syncStockDeductionByBarcode(
   ctx: MutationCtx,
@@ -608,6 +609,10 @@ export async function calculateDeliveryFeeAndDistance(
 
 // ─── Order Fulfillment Endpoints ───
 
+// NOTE: consumed via usePaginatedQuery on the frontend, which calls this
+// function reference directly (bypassing useTrackedQuery) and requires the
+// raw PaginationResult shape - trackedQuery's {data, _io} envelope would
+// break pagination, so this stays a plain query.
 export const getOrdersForStaff = query({
   args: {
     token: v.string(),
@@ -674,6 +679,8 @@ export const getOrdersForStaff = query({
  * this file; function declarations are hoisted so this is safe to reference
  * here) and the same by_createdAt index range pattern as adminGetSalesMetrics.
  */
+// NOTE: consumed via usePaginatedQuery - see getOrdersForStaff above for why
+// this must stay a plain query rather than trackedQuery.
 export const adminGetOrdersByDateRange = query({
   args: {
     token: v.string(),
@@ -742,7 +749,7 @@ export const adminGetOrdersByDateRange = query({
  * orders, returns `truncated: true` and no rows so the client can ask staff
  * to narrow the range instead.
  */
-export const adminExportOrdersByDateRange = query({
+export const adminExportOrdersByDateRange = trackedQuery("orders.adminExportOrdersByDateRange", {
   args: {
     token: v.string(),
     startDate: v.string(), // "YYYY-MM-DD"
@@ -795,7 +802,7 @@ export const adminExportOrdersByDateRange = query({
   },
 });
 
-export const getOrderDetailById = query({
+export const getOrderDetailById = trackedQuery("orders.getOrderDetailById", {
   args: {
     token: v.string(),
     orderId: v.id("orders"),
@@ -835,6 +842,9 @@ export const getOrderDetailById = query({
   },
 });
 
+// NOTE: paginated (.paginate() below) - kept as a plain query in case a
+// future consumer uses usePaginatedQuery, same reasoning as
+// getOrdersForStaff above.
 export const getMyHandledOrders = query({
   args: {
     token: v.string(),
@@ -877,6 +887,53 @@ export const getMyHandledOrders = query({
     return { ...result, page: enrichedPage };
   },
 });
+
+export const getPendingOrders = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
+
+    const pendingOrders = await ctx.db
+      .query("orders")
+      .filter((q) =>
+        q.and(
+          q.neq(q.field("isWalkIn"), true),
+          q.or(
+            q.eq(q.field("status"), "preparing"),
+            q.eq(q.field("status"), "packing"),
+            q.eq(q.field("status"), "dispatched")
+          )
+        )
+      )
+      .collect();
+
+    const enriched = [];
+    for (const order of pendingOrders) {
+      const customer = await ctx.db.get(order.userId);
+      const items = await ctx.db
+        .query("orderItems")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+      let claimantName = null;
+      if (order.claimedBy) {
+        const claimant = await ctx.db.get(order.claimedBy);
+        claimantName = claimant?.name || null;
+      }
+      enriched.push({
+        ...order,
+        customerName: customer?.name || "Unnamed Customer",
+        customerPhone: customer?.phone,
+        items,
+        claimantName,
+      });
+    }
+
+    // Sort by createdAt descending
+    enriched.sort((a, b) => b.createdAt - a.createdAt);
+    return enriched;
+  },
+});
+
 
 export const claimOrder = mutation({
   args: {
@@ -936,9 +993,7 @@ export const handoverToDelivery = mutation({
       throw new Error(`Cannot dispatch order in status: ${order.status}`);
     }
 
-    if (!order.claimedBy || order.claimedBy !== user._id) {
-      throw new Error("Only the staff member who claimed this order can hand it over to delivery");
-    }
+    // Relaxed claimant restriction: any staff member or admin can dispatch/handover any order, despite not being the one who claimed it.
 
     const dispatchedAt = Date.now();
     const claimedTime = order.claimedAt ?? order.createdAt;
@@ -981,9 +1036,7 @@ export const completeOrder = mutation({
       throw new Error(`Cannot complete order in status: ${order.status}`);
     }
 
-    if (!order.claimedBy || order.claimedBy !== user._id) {
-      throw new Error("Only the claiming staff member can complete this order");
-    }
+    // Relaxed claimant restriction: any staff member or admin can complete any order, despite not being the one who claimed it.
 
     const completedAt = Date.now();
     const startTime = order.dispatchedAt ?? order.claimedAt ?? order.createdAt;
@@ -1012,7 +1065,7 @@ export const completeOrder = mutation({
 // the same atomic mutation, submit the affected items into the returns-approval
 // pipeline (source: "delivery_failure"). No inventory is restocked here — that only
 // happens once an admin approves each returnItems row (see convex/returns.ts).
-export const reportDeliveryFailure = mutation({
+export const reportDeliveryFailure = trackedMutation("orders.reportDeliveryFailure", {
   args: {
     token: v.string(),
     orderId: v.id("orders"),
@@ -1037,9 +1090,7 @@ export const reportDeliveryFailure = mutation({
       throw new Error(`Cannot mark order as failed from status: ${order.status}`);
     }
 
-    if (!order.claimedBy || order.claimedBy !== user._id) {
-      throw new Error("Only the claiming staff member can mark this order as failed");
-    }
+    // Relaxed claimant restriction: any staff member or admin can mark any order as failed, despite not being the one who claimed it.
 
     const orderItems = await ctx.db
       .query("orderItems")
@@ -1111,7 +1162,7 @@ export const reportDeliveryFailure = mutation({
   },
 });
 
-export const adminCreateOrder = mutation({
+export const adminCreateOrder = trackedMutation("orders.adminCreateOrder", {
   args: {
     token: v.string(),
     userId: v.id("users"),
@@ -1943,7 +1994,7 @@ function toDateStr(ms: number): string {
   return `${y}-${m}-${d}`;
 }
 
-export const adminGetSalesMetrics = query({
+export const adminGetSalesMetrics = trackedQuery("orders.adminGetSalesMetrics", {
   args: {
     token: v.string(),
     startDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
@@ -2243,15 +2294,17 @@ export const adminGetProductAnalytics = query({
     for (const [key, agg] of productAgg.entries()) {
       const product = await ctx.db.get(agg.productId);
 
-      if (args.brand && product?.brand !== args.brand) continue;
-
-      // Brand grouping respects the same filter as everything else below,
-      // so byBrand only ever contains the selected brand once one is chosen.
+      // Brand grouping always runs, ahead of the args.brand filter below, so
+      // byBrand keeps every brand's data regardless of which one (if any) is
+      // selected - it's both the comparison chart and this filter's own
+      // option list, so it can't be narrowed down to just the chosen brand.
       const brandKey = product?.brand || "Unknown";
       const brandEntry = byBrandMap.get(brandKey) || { key: brandKey, label: brandKey, unitsSold: 0, revenue: 0 };
       brandEntry.unitsSold += agg.unitsSold;
       brandEntry.revenue += agg.revenue;
       byBrandMap.set(brandKey, brandEntry);
+
+      if (args.brand && product?.brand !== args.brand) continue;
 
       const name = product?.name || "Unknown Product";
       const costPrice = product?.costPrice;

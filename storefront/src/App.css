@@ -645,9 +645,11 @@
   border-bottom: none;
 }
 
-.mobile-menu__suggestion-item:hover {
+.mobile-menu__suggestion-item:hover,
+.mobile-menu__suggestion-item.is-focused {
   background: var(--surface-container-low);
   color: var(--text-primary);
+  outline: none;
 }
 
 .mobile-menu__suggestion-item svg {
@@ -922,6 +924,16 @@
   overflow: hidden;
   z-index: 1000;
   animation: slideDownMobile 0.2s ease-out;
+}
+
+/* Fix desktop stacking context so search input stays interactive and backdrop sits behind suggestions */
+.nav__desktop-search .mobile-menu__search-inner {
+  position: relative;
+  z-index: 101;
+}
+
+.nav__desktop-search .mobile-menu__search-backdrop {
+  z-index: 90;
 }
 
 

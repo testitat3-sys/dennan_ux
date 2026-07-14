@@ -65,7 +65,10 @@ export default function OrderHistoryPanel({ token, onOpenOrder }) {
   const handleDownload = async () => {
     setDownloadStatus("Preparing download...");
     try {
-      const result = await convex.query(api.orders.adminExportOrdersByDateRange, {
+      // adminExportOrdersByDateRange is a trackedQuery, so its return is
+      // wrapped as { data, _io } - this is a one-off imperative call (not a
+      // hook), so we just unwrap .data here rather than reporting _io.
+      const { data: result } = await convex.query(api.orders.adminExportOrdersByDateRange, {
         token,
         startDate,
         endDate,

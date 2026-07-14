@@ -1,10 +1,11 @@
-import { query, internalMutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { verifyStaffSession } from "./staffAuth";
 import { shouldKeepProduct } from "./products";
+import { trackedQuery } from "./lib/ioTracking";
 
 type StockBucket = "ok" | "low" | "out";
 
@@ -59,7 +60,7 @@ export async function applyStockCounterDelta(
   await ctx.db.patch(counters._id, patch);
 }
 
-export const getStockSummary = query({
+export const getStockSummary = trackedQuery("stockCounters.getStockSummary", {
   args: { token: v.string() },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
