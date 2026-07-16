@@ -10,6 +10,9 @@ export const getHero = query({
   },
 });
 
+// Unbounded collect is accepted here — `brands` is a small, admin-curated
+// table (same scale as `productBrandNames`, seeded ~dozens of rows), nowhere
+// near products-table scale, so an index isn't worth the schema overhead.
 export const getBrands = query({
   args: {},
   handler: async (ctx) => {
@@ -26,13 +29,20 @@ export const getProducts = trackedQuery("data.getProducts", {
   handler: async (ctx, args) => {
     // Use an index when a category is supplied, since `by_category_tier_stage`
     // and `by_category` cover the common filtered-page case and avoid a full
-    // table scan. Tier/stage still need a JS pass since the schema's tier
-    // literal casing may not match the lowercased arg, and stage-only combos
-    // aren't covered by an index prefix here.
+    // table scan. Tier still needs a JS pass since the schema's tier literal
+    // casing may not match the lowercased arg. When only stage is supplied
+    // (no category), use `by_stage` instead of falling through to a full
+    // scan. With neither filter, this is an intentional "browse everything"
+    // page and stays a full collect.
     let results = args.category
       ? await ctx.db
           .query("products")
           .withIndex("by_category", (q) => q.eq("category", args.category))
+          .collect()
+      : args.stage
+      ? await ctx.db
+          .query("products")
+          .withIndex("by_stage", (q) => q.eq("stage", args.stage as any))
           .collect()
       : await ctx.db.query("products").collect();
 
@@ -109,15 +119,25 @@ export const searchProducts = query({
 export const getHomeFeaturedProducts = trackedQuery("data.getHomeFeaturedProducts", {
   args: {},
   handler: async (ctx) => {
-    const products = await ctx.db.query("products").collect();
-    const kept = products.filter((p) => shouldKeepProduct(p));
+    // Indexed lookups instead of a full products scan. Buffered above the
+    // final 8/4 to absorb rows dropped by shouldKeepProduct.
+    const [mostLovedCandidates, curatedCandidates] = await Promise.all([
+      ctx.db
+        .query("products")
+        .withIndex("by_isMostLoved", (q) => q.eq("isMostLoved", true))
+        .take(20),
+      ctx.db
+        .query("products")
+        .withIndex("by_isCuratedForYou", (q) => q.eq("isCuratedForYou", true))
+        .take(12),
+    ]);
 
-    const mostLoved = kept
-      .filter((p) => p.isMostLoved)
+    const mostLoved = mostLovedCandidates
+      .filter((p) => shouldKeepProduct(p))
       .slice(0, 8)
       .map(normalizeProductPrice);
-    const curated = kept
-      .filter((p) => p.isCuratedForYou)
+    const curated = curatedCandidates
+      .filter((p) => shouldKeepProduct(p))
       .slice(0, 4)
       .map(normalizeProductPrice);
 

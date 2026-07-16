@@ -63,6 +63,7 @@ const products = rawData.map((item) => {
 
   return {
     name,
+    old_name: item.old_name,
     brand: 'Tommee Tippee',
     slug,
     barcode: item.barcode,

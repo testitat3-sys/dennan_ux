@@ -44,6 +44,7 @@ import type * as seedCloseMatches from "../seedCloseMatches.js";
 import type * as seedProductBrandNames from "../seedProductBrandNames.js";
 import type * as seedProduction from "../seedProduction.js";
 import type * as seedProducts from "../seedProducts.js";
+import type * as settings from "../settings.js";
 import type * as staffAuth from "../staffAuth.js";
 import type * as stockCounters from "../stockCounters.js";
 import type * as storeOnlyProducts from "../storeOnlyProducts.js";
@@ -94,6 +95,7 @@ declare const fullApi: ApiFromModules<{
   seedProductBrandNames: typeof seedProductBrandNames;
   seedProduction: typeof seedProduction;
   seedProducts: typeof seedProducts;
+  settings: typeof settings;
   staffAuth: typeof staffAuth;
   stockCounters: typeof stockCounters;
   storeOnlyProducts: typeof storeOnlyProducts;

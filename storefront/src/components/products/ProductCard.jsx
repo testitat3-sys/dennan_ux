@@ -232,13 +232,15 @@ const ProductCard = ({
               )}
             </div>
           ) : (
-            <Button
-              variant="card-add"
-              fullWidth
-              onClick={handleRemindClick}
-            >
-              {isSaved ? "You'll be notified" : 'Remind me when available'}
-            </Button>
+            <div className="card-remind-btn-wrapper">
+              <Button
+                variant="card-add"
+                fullWidth
+                onClick={handleRemindClick}
+              >
+                {isSaved ? "You'll be notified" : 'Remind me when back in stock'}
+              </Button>
+            </div>
           )
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>

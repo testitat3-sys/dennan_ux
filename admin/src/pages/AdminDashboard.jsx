@@ -23,6 +23,7 @@ import DiscountsPanel from "../components/DiscountsPanel";
 import ProductSalesPanel from "../components/ProductSalesPanel";
 import OnlineOrdersPanel from "../components/OnlineOrdersPanel";
 import ErrorLogSettingsPanel from "../components/ErrorLogSettingsPanel";
+import ProductDisplaySettingsPanel from "../components/ProductDisplaySettingsPanel";
 import DbIOPanel from "../components/DbIOPanel";
 import LeadsPanel from "../components/LeadsPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
@@ -489,8 +490,8 @@ export default function AdminDashboard() {
               ) : (
                 <div className="staff-grid">
                   {staffList.map((member) => {
-                    const totalOrders = member.orders?.length || 0;
-                    const totalSales = member.orders?.reduce((sum, o) => sum + o.amountPaid, 0) || 0;
+                    const totalOrders = member.totalOrders || 0;
+                    const totalSales = member.totalSales || 0;
                     const memberInitials = (member.name || "?")
                       .split(" ")
                       .map((p) => p[0])
@@ -614,7 +615,10 @@ export default function AdminDashboard() {
 
           {/* TAB 9: SETTINGS */}
           {activeTab === "settings" && (
-            <ErrorLogSettingsPanel token={token} />
+            <>
+              <ProductDisplaySettingsPanel token={token} />
+              <ErrorLogSettingsPanel token={token} />
+            </>
           )}
 
           {/* TAB 10: DB I/O BASELINE */}

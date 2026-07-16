@@ -288,8 +288,10 @@ export const placeGuestOrder = mutation({
     let guestUser = null;
 
     if (args.guestPhone) {
-      const allUsers = await ctx.db.query("users").collect();
-      guestUser = allUsers.find((u) => u.phone === args.guestPhone) || null;
+      guestUser = await ctx.db
+        .query("users")
+        .withIndex("by_phone", (q) => q.eq("phone", args.guestPhone))
+        .first();
     }
 
     if (!guestUser && args.guestEmail) {
@@ -623,47 +625,17 @@ export const getOrdersForStaff = query({
     await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
 
     // Query orders in reverse chronological order, excluding walk-in sales
-    // (those are already complete on creation and belong only in Order History)
+    // (those are already complete on creation and belong only in Order History).
+    // Relies on convex/migrations.ts backfillOrdersIsWalkIn having stamped
+    // isWalkIn: false on every legacy order, so this index's `.eq(false)`
+    // matches all non-walk-in orders, not just ones written after the field existed.
     const result = await ctx.db
       .query("orders")
+      .withIndex("by_isWalkIn_and_createdAt", (q) => q.eq("isWalkIn", false))
       .order("desc")
-      .filter((q) => q.neq(q.field("isWalkIn"), true))
       .paginate(args.paginationOpts);
 
-    const enrichedPage = [];
-    for (const order of result.page) {
-      // Resolve customer details
-      const customer = await ctx.db.get(order.userId);
-
-      // Fetch matching orderItems
-      const items = await ctx.db
-        .query("orderItems")
-        .withIndex("by_order", (q) => q.eq("orderId", order._id))
-        .collect();
-
-      // Fetch matching orderPayments
-      const payments = await ctx.db
-        .query("orderPayments")
-        .withIndex("by_order", (q) => q.eq("orderId", order._id))
-        .collect();
-
-      // Resolve claimant name
-      let claimantName = null;
-      if (order.claimedBy) {
-        const claimant = await ctx.db.get(order.claimedBy);
-        claimantName = claimant?.name || null;
-      }
-
-      enrichedPage.push({
-        ...order,
-        customerName: customer?.name || "Unnamed Customer",
-        customerEmail: customer?.email,
-        customerPhone: customer?.phone,
-        items,
-        payments,
-        claimantName,
-      });
-    }
+    const enrichedPage = await enrichOrders(ctx, result.page);
 
     return {
       ...result,
@@ -705,36 +677,7 @@ export const adminGetOrdersByDateRange = query({
       .order("desc")
       .paginate(args.paginationOpts);
 
-    const enrichedPage = [];
-    for (const order of result.page) {
-      const customer = await ctx.db.get(order.userId);
-
-      const items = await ctx.db
-        .query("orderItems")
-        .withIndex("by_order", (q) => q.eq("orderId", order._id))
-        .collect();
-
-      const payments = await ctx.db
-        .query("orderPayments")
-        .withIndex("by_order", (q) => q.eq("orderId", order._id))
-        .collect();
-
-      let claimantName = null;
-      if (order.claimedBy) {
-        const claimant = await ctx.db.get(order.claimedBy);
-        claimantName = claimant?.name || null;
-      }
-
-      enrichedPage.push({
-        ...order,
-        customerName: customer?.name || "Unnamed Customer",
-        customerEmail: customer?.email,
-        customerPhone: customer?.phone,
-        items,
-        payments,
-        claimantName,
-      });
-    }
+    const enrichedPage = await enrichOrders(ctx, result.page);
 
     return {
       ...result,
@@ -773,30 +716,17 @@ export const adminExportOrdersByDateRange = trackedQuery("orders.adminExportOrde
       return { truncated: true, cap: HARD_CAP, rows: [] as any[] };
     }
 
-    const rows = [];
-    for (const order of orders) {
-      const customer = await ctx.db.get(order.userId);
-      const items = await ctx.db
-        .query("orderItems")
-        .withIndex("by_order", (q) => q.eq("orderId", order._id))
-        .collect();
+    const enrichedOrders = await enrichOrders(ctx, orders, { includePayments: false });
 
-      let claimantName = "";
-      if (order.claimedBy) {
-        const claimant = await ctx.db.get(order.claimedBy);
-        claimantName = claimant?.name || "";
-      }
-
-      rows.push({
-        date: new Date(order.createdAt).toISOString(),
-        customerName: customer?.name || "Unnamed Customer",
-        type: order.isWalkIn ? "Walk-in" : "Online",
-        itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
-        total: order.grandTotal,
-        status: order.status,
-        claimantName,
-      });
-    }
+    const rows = enrichedOrders.map((order) => ({
+      date: new Date(order.createdAt).toISOString(),
+      customerName: order.customerName,
+      type: order.isWalkIn ? "Walk-in" : "Online",
+      itemCount: order.items.reduce((sum: number, i: any) => sum + i.quantity, 0),
+      total: order.grandTotal,
+      status: order.status,
+      claimantName: order.claimantName || "",
+    }));
 
     return { truncated: false, cap: HARD_CAP, rows };
   },
@@ -813,32 +743,8 @@ export const getOrderDetailById = trackedQuery("orders.getOrderDetailById", {
     const order = await ctx.db.get(args.orderId);
     if (!order) return null;
 
-    const customer = await ctx.db.get(order.userId);
-    const items = await ctx.db
-      .query("orderItems")
-      .withIndex("by_order", (q) => q.eq("orderId", order._id))
-      .collect();
-
-    const payments = await ctx.db
-      .query("orderPayments")
-      .withIndex("by_order", (q) => q.eq("orderId", order._id))
-      .collect();
-
-    let claimantName = null;
-    if (order.claimedBy) {
-      const claimant = await ctx.db.get(order.claimedBy);
-      claimantName = claimant?.name || null;
-    }
-
-    return {
-      ...order,
-      customerName: customer?.name || "Unnamed Customer",
-      customerEmail: customer?.email,
-      customerPhone: customer?.phone,
-      items,
-      payments,
-      claimantName,
-    };
+    const [enriched] = await enrichOrders(ctx, [order]);
+    return enriched;
   },
 });
 
@@ -859,74 +765,45 @@ export const getMyHandledOrders = query({
       .order("desc")
       .paginate(args.paginationOpts);
 
-    const enrichedPage = [];
-    for (const order of result.page) {
-      const customer = await ctx.db.get(order.userId);
-
-      const items = await ctx.db
-        .query("orderItems")
-        .withIndex("by_order", (q) => q.eq("orderId", order._id))
-        .collect();
-
-      const payments = await ctx.db
-        .query("orderPayments")
-        .withIndex("by_order", (q) => q.eq("orderId", order._id))
-        .collect();
-
-      enrichedPage.push({
-        ...order,
-        customerName: customer?.name || "Unnamed Customer",
-        customerEmail: customer?.email,
-        customerPhone: customer?.phone,
-        items,
-        payments,
-        claimantName: staffUser.name || null,
-      });
-    }
+    const enrichedPage = await enrichOrders(ctx, result.page, {
+      claimantNameOverride: staffUser.name || null,
+    });
 
     return { ...result, page: enrichedPage };
   },
 });
 
+const PENDING_STATUSES = ["preparing", "packing", "dispatched"] as const;
+const DEFAULT_PENDING_ORDERS_LIMIT = 200;
+
 export const getPendingOrders = query({
-  args: { token: v.string() },
+  args: {
+    token: v.string(),
+    limit: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
 
-    const pendingOrders = await ctx.db
-      .query("orders")
-      .filter((q) =>
-        q.and(
-          q.neq(q.field("isWalkIn"), true),
-          q.or(
-            q.eq(q.field("status"), "preparing"),
-            q.eq(q.field("status"), "packing"),
-            q.eq(q.field("status"), "dispatched")
-          )
-        )
-      )
-      .collect();
+    const limit = args.limit ?? DEFAULT_PENDING_ORDERS_LIMIT;
 
-    const enriched = [];
-    for (const order of pendingOrders) {
-      const customer = await ctx.db.get(order.userId);
-      const items = await ctx.db
-        .query("orderItems")
-        .withIndex("by_order", (q) => q.eq("orderId", order._id))
-        .collect();
-      let claimantName = null;
-      if (order.claimedBy) {
-        const claimant = await ctx.db.get(order.claimedBy);
-        claimantName = claimant?.name || null;
-      }
-      enriched.push({
-        ...order,
-        customerName: customer?.name || "Unnamed Customer",
-        customerPhone: customer?.phone,
-        items,
-        claimantName,
-      });
-    }
+    // withIndex can't OR across status values in one call, so run one
+    // indexed query per pending status and merge the results instead of a
+    // full unindexed table scan.
+    const ordersByStatus = await Promise.all(
+      PENDING_STATUSES.map((status) =>
+        ctx.db
+          .query("orders")
+          .withIndex("by_status_and_createdAt", (q) => q.eq("status", status))
+          .order("desc")
+          .take(limit)
+      )
+    );
+    const pendingOrders = ordersByStatus.flat().filter((o) => o.isWalkIn !== true);
+
+    const enriched = await enrichOrders(ctx, pendingOrders, {
+      includePayments: false,
+      includeCustomerEmail: false,
+    });
 
     // Sort by createdAt descending
     enriched.sort((a, b) => b.createdAt - a.createdAt);
@@ -1407,8 +1284,10 @@ export const createPhysicalOrder = mutation({
     let customerUser = null;
 
     if (args.phone) {
-      const allUsers = await ctx.db.query("users").collect();
-      customerUser = allUsers.find((u) => u.phone === args.phone) || null;
+      customerUser = await ctx.db
+        .query("users")
+        .withIndex("by_phone", (q) => q.eq("phone", args.phone))
+        .first();
     }
     
     if (!customerUser && args.email) {
@@ -1728,20 +1607,34 @@ export const createPhysicalOrder = mutation({
   },
 });
 
+// NOTE: startDate/endDate are optional and default to a rolling 30-day
+// window (see adminGetSalesMetrics for the same convention) rather than
+// all-time, so this no longer requires an unbounded orders.collect(). Any
+// existing caller passing only { token } now gets the last-30-days view
+// instead of an all-time one.
 export const adminGetOverviewStats = query({
   args: {
     token: v.string(),
+    startDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
+    endDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
   },
   handler: async (ctx, args) => {
     // 1. Verify caller is admin
     await verifyStaffSession(ctx, args.token, ["admin"]);
 
-    // 2. Fetch all orders
-    const allOrders = await ctx.db
-      .query("orders")
-      .collect();
+    // 2. Resolve the date range (default: last 30 days including today)
+    const dayMs = 24 * 60 * 60 * 1000;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayMs = startOfToday.getTime();
 
-    // 3. Compute stats
+    const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
+    const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
+
+    // 3. Fetch only orders in range via the createdAt index
+    const allOrders = await getOrdersInDateRange(ctx, rangeStartMs, rangeEndMs);
+
+    // 4. Compute stats
     const completedStatuses = ["delivered", "returned", "partially_returned"];
     const completedOrders = allOrders.filter((o: any) => completedStatuses.includes(o.status));
     const failedOrders = allOrders.filter((o: any) => o.status === "failed");
@@ -1750,23 +1643,17 @@ export const adminGetOverviewStats = query({
     const completedCount = completedOrders.length;
     const aov = completedCount > 0 ? Math.round(grossSales / completedCount) : 0;
 
-    // 4. Performance Leaderboard (count of orders claimed by each staff/admin)
-    const staffMembers = await ctx.db
-      .query("users")
-      .withIndex("by_accountRole")
-      .collect();
+    // 5. Performance Leaderboard (count of orders claimed by each staff/admin),
+    // batch-resolving only the distinct claimants that actually appear in this
+    // date-bounded set instead of scanning the entire users table.
+    const distinctClaimantIds = Array.from(
+      new Set(completedOrders.filter((o: any) => o.claimedBy).map((o: any) => o.claimedBy.toString()))
+    );
+    const claimants = await Promise.all(distinctClaimantIds.map((id) => ctx.db.get(id as any)));
+    const claimantById = new Map<string, any>();
+    distinctClaimantIds.forEach((id, idx) => claimantById.set(id, claimants[idx]));
 
     const staffMap = new Map<string, { name: string; email: string; ordersCompletedCount: number; salesCompletedAmount: number }>();
-    for (const member of staffMembers) {
-      staffMap.set(member._id.toString(), {
-        name: member.name || "Unnamed Staff",
-        email: member.email || "",
-        ordersCompletedCount: 0,
-        salesCompletedAmount: 0,
-      });
-    }
-
-    // Tally staff performance from completed orders
     for (const order of completedOrders) {
       if (order.claimedBy) {
         const staffIdStr = order.claimedBy.toString();
@@ -1775,8 +1662,7 @@ export const adminGetOverviewStats = query({
           stats.ordersCompletedCount += 1;
           stats.salesCompletedAmount += order.grandTotal;
         } else {
-          // Fallback if user details not indexed or deleted
-          const claimant = await ctx.db.get(order.claimedBy);
+          const claimant = claimantById.get(staffIdStr);
           staffMap.set(staffIdStr, {
             name: claimant?.name || "Unnamed Staff",
             email: claimant?.email || "",
@@ -1820,6 +1706,33 @@ function resolveOrderChannel(order: any): string {
   return order.channel ?? (order.isWalkIn ? "walk_in" : "online");
 }
 
+// Shared date-range order fetch — pushes the range into the `by_createdAt`
+// index instead of collecting the whole table and filtering in memory.
+async function getOrdersInDateRange(ctx: QueryCtx, rangeStartMs: number, rangeEndMs: number) {
+  return ctx.db
+    .query("orders")
+    .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
+    .collect();
+}
+
+// Per-order-payments lookup scoped to an already date-narrowed set of orders,
+// replacing a full `orderPayments` table collect with N indexed point-lookups.
+async function getPaymentsByOrderId(ctx: QueryCtx, orders: { _id: any }[]) {
+  const paymentsPerOrder = await Promise.all(
+    orders.map((o) =>
+      ctx.db
+        .query("orderPayments")
+        .withIndex("by_order", (q) => q.eq("orderId", o._id))
+        .collect()
+    )
+  );
+  const paymentsByOrderId = new Map<string, (typeof paymentsPerOrder)[number]>();
+  orders.forEach((o, i) => {
+    paymentsByOrderId.set(o._id.toString(), paymentsPerOrder[i]);
+  });
+  return paymentsByOrderId;
+}
+
 // For a single order, returns its attributed tenders: real orderPayments rows
 // if any exist (with their method-specific detail fields), else a single
 // fallback tender built from the order's summary paymentMethod/grandTotal fields.
@@ -1843,6 +1756,89 @@ function attributeOrderPayments(
     momoPhone: order.momoPhone,
     cardOrderId: order.cardOrderId,
   }];
+}
+
+// Dedup-by-id batch getter — fetches each distinct id once via Promise.all
+// instead of re-fetching the same document every time it recurs in `ids`.
+async function batchGetById(ctx: QueryCtx, ids: any[]): Promise<Map<string, any>> {
+  const distinctIds = Array.from(new Set(ids.map((id) => id.toString())));
+  const docs = await Promise.all(distinctIds.map((id) => ctx.db.get(id as any)));
+  const byId = new Map<string, any>();
+  distinctIds.forEach((id, i) => {
+    if (docs[i]) byId.set(id, docs[i]);
+  });
+  return byId;
+}
+
+// Per-order orderItems lookup, batched via Promise.all across the given
+// orders instead of one query at a time in a loop.
+async function getOrderItemsByOrderId(ctx: QueryCtx, orders: { _id: any }[]): Promise<Map<string, any[]>> {
+  const itemsPerOrder = await Promise.all(
+    orders.map((o) =>
+      ctx.db
+        .query("orderItems")
+        .withIndex("by_order", (q) => q.eq("orderId", o._id))
+        .collect()
+    )
+  );
+  const itemsByOrderId = new Map<string, (typeof itemsPerOrder)[number]>();
+  orders.forEach((o, i) => {
+    itemsByOrderId.set(o._id.toString(), itemsPerOrder[i]);
+  });
+  return itemsByOrderId;
+}
+
+type EnrichOrdersOptions = {
+  // Whether to fetch and attach `payments`. Default true — set false for
+  // callers (e.g. getPendingOrders) that never used the payments array, so
+  // they don't start paying for a fetch they didn't have before.
+  includePayments?: boolean;
+  // Whether to attach `customerEmail`. Default true.
+  includeCustomerEmail?: boolean;
+  // Skip the per-order claimant lookup entirely and stamp every row with
+  // this name instead (getMyHandledOrders already knows every order in the
+  // page is claimed by the calling staff user).
+  claimantNameOverride?: string | null;
+};
+
+// Shared batch-fetch enrichment for order rows: customer, orderItems,
+// orderPayments, and claimant, each fetched once per distinct id/order
+// instead of the previous per-order sequential ctx.db.get()/query() loop.
+async function enrichOrders(ctx: QueryCtx, orders: any[], options: EnrichOrdersOptions = {}) {
+  const includePayments = options.includePayments ?? true;
+  const includeCustomerEmail = options.includeCustomerEmail ?? true;
+
+  const claimantIds =
+    options.claimantNameOverride !== undefined
+      ? []
+      : orders.filter((o) => o.claimedBy).map((o) => o.claimedBy);
+
+  const [customersById, claimantsById, itemsByOrderId, paymentsByOrderId] = await Promise.all([
+    batchGetById(ctx, orders.map((o) => o.userId)),
+    batchGetById(ctx, claimantIds),
+    getOrderItemsByOrderId(ctx, orders),
+    includePayments ? getPaymentsByOrderId(ctx, orders) : Promise.resolve(new Map<string, any[]>()),
+  ]);
+
+  return orders.map((order) => {
+    const customer = customersById.get(order.userId.toString());
+    const claimantName =
+      options.claimantNameOverride !== undefined
+        ? options.claimantNameOverride
+        : order.claimedBy
+          ? claimantsById.get(order.claimedBy.toString())?.name || null
+          : null;
+
+    return {
+      ...order,
+      customerName: customer?.name || "Unnamed Customer",
+      ...(includeCustomerEmail ? { customerEmail: customer?.email } : {}),
+      customerPhone: customer?.phone,
+      items: itemsByOrderId.get(order._id.toString()) ?? [],
+      ...(includePayments ? { payments: paymentsByOrderId.get(order._id.toString()) ?? [] } : {}),
+      claimantName,
+    };
+  });
 }
 
 export const adminGetDailySalesDashboard = query({
@@ -1874,23 +1870,8 @@ export const adminGetDailySalesDashboard = query({
     // date field of its own, so it can't be range-scoped directly).
     const rangeStart = dayRanges[0].start;
     const rangeEnd = dayRanges[dayRanges.length - 1].end;
-    const allOrders = await ctx.db
-      .query("orders")
-      .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStart).lt("createdAt", rangeEnd))
-      .collect();
-
-    const paymentsPerOrder = await Promise.all(
-      allOrders.map((o) =>
-        ctx.db
-          .query("orderPayments")
-          .withIndex("by_order", (q) => q.eq("orderId", o._id))
-          .collect()
-      )
-    );
-    const paymentsByOrderId = new Map<string, (typeof paymentsPerOrder)[number]>();
-    allOrders.forEach((o, i) => {
-      paymentsByOrderId.set(o._id.toString(), paymentsPerOrder[i]);
-    });
+    const allOrders = await getOrdersInDateRange(ctx, rangeStart, rangeEnd);
+    const paymentsByOrderId = await getPaymentsByOrderId(ctx, allOrders);
 
     const computeDayStats = (start: number, end: number) => {
       const ordersInRange = allOrders.filter((o: any) => o.createdAt >= start && o.createdAt < end);
@@ -2019,23 +2000,8 @@ export const adminGetSalesMetrics = trackedQuery("orders.adminGetSalesMetrics", 
 
     // 2. Fetch only orders in range via the createdAt index, then only the
     // payments belonging to those orders (orderPayments has no date field).
-    const allOrders = await ctx.db
-      .query("orders")
-      .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
-      .collect();
-
-    const paymentsPerOrder = await Promise.all(
-      allOrders.map((o) =>
-        ctx.db
-          .query("orderPayments")
-          .withIndex("by_order", (q) => q.eq("orderId", o._id))
-          .collect()
-      )
-    );
-    const paymentsByOrderId = new Map<string, (typeof paymentsPerOrder)[number]>();
-    allOrders.forEach((o, i) => {
-      paymentsByOrderId.set(o._id.toString(), paymentsPerOrder[i]);
-    });
+    const allOrders = await getOrdersInDateRange(ctx, rangeStartMs, rangeEndMs);
+    const paymentsByOrderId = await getPaymentsByOrderId(ctx, allOrders);
 
     // 3. Filter to completed orders within range, then by channel (order-level filter,
     // unlike payment method which is a tender-level filter applied inside
@@ -2258,12 +2224,10 @@ export const adminGetProductAnalytics = query({
     const ordersInRange = ordersInWindow.filter((o: any) => completedStatuses.includes(o.status));
 
     // Aggregate units/revenue per product across all matching orders' line items
+    const itemsByOrderId = await getOrderItemsByOrderId(ctx, ordersInRange);
     const productAgg = new Map<string, { productId: any; unitsSold: number; revenue: number }>();
     for (const order of ordersInRange) {
-      const items = await ctx.db
-        .query("orderItems")
-        .withIndex("by_order", (q) => q.eq("orderId", order._id))
-        .collect();
+      const items = itemsByOrderId.get(order._id.toString()) ?? [];
       for (const item of items) {
         const key = item.productId.toString();
         const revenue = item.unitPrice * item.quantity;
@@ -2291,8 +2255,9 @@ export const adminGetProductAnalytics = query({
       hasCostData: boolean;
     }[] = [];
 
+    const productsById = await batchGetById(ctx, Array.from(productAgg.keys()));
     for (const [key, agg] of productAgg.entries()) {
-      const product = await ctx.db.get(agg.productId);
+      const product = productsById.get(key);
 
       // Brand grouping always runs, ahead of the args.brand filter below, so
       // byBrand keeps every brand's data regardless of which one (if any) is
@@ -2390,21 +2355,7 @@ export const adminGetPaymentMethodTransactions = query({
     const completedStatuses = ["delivered", "returned", "partially_returned"];
     const dayMs = 24 * 60 * 60 * 1000;
 
-    // 1. Fetch all orders + all order payments once
-    const allOrders = await ctx.db.query("orders").collect();
-    const allOrderPayments = await ctx.db.query("orderPayments").collect();
-    const paymentsByOrderId = new Map<string, typeof allOrderPayments>();
-    for (const payment of allOrderPayments) {
-      const key = payment.orderId.toString();
-      const existing = paymentsByOrderId.get(key);
-      if (existing) {
-        existing.push(payment);
-      } else {
-        paymentsByOrderId.set(key, [payment]);
-      }
-    }
-
-    // 2. Resolve the date range (default: last 30 days including today)
+    // 1. Resolve the date range (default: last 30 days including today)
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const todayMs = startOfToday.getTime();
@@ -2412,11 +2363,13 @@ export const adminGetPaymentMethodTransactions = query({
     const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
     const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
 
+    // 2. Fetch only orders in range via the createdAt index, then only the
+    // payments belonging to those orders.
+    const allOrders = await getOrdersInDateRange(ctx, rangeStartMs, rangeEndMs);
+    const paymentsByOrderId = await getPaymentsByOrderId(ctx, allOrders);
+
     // 3. Filter to completed orders within range (+ optional channel filter)
-    let ordersInRange = allOrders.filter(
-      (o: any) =>
-        o.createdAt >= rangeStartMs && o.createdAt < rangeEndMs && completedStatuses.includes(o.status)
-    );
+    let ordersInRange = allOrders.filter((o: any) => completedStatuses.includes(o.status));
     if (args.channel) {
       ordersInRange = ordersInRange.filter((o: any) => resolveOrderChannel(o) === args.channel);
     }
@@ -2488,19 +2441,6 @@ export const adminGetChannelTransactions = query({
     const completedStatuses = ["delivered", "returned", "partially_returned"];
     const dayMs = 24 * 60 * 60 * 1000;
 
-    const allOrders = await ctx.db.query("orders").collect();
-    const allOrderPayments = await ctx.db.query("orderPayments").collect();
-    const paymentsByOrderId = new Map<string, typeof allOrderPayments>();
-    for (const payment of allOrderPayments) {
-      const key = payment.orderId.toString();
-      const existing = paymentsByOrderId.get(key);
-      if (existing) {
-        existing.push(payment);
-      } else {
-        paymentsByOrderId.set(key, [payment]);
-      }
-    }
-
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const todayMs = startOfToday.getTime();
@@ -2508,12 +2448,13 @@ export const adminGetChannelTransactions = query({
     const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
     const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
 
+    // Fetch only orders in range via the createdAt index, then only the
+    // payments belonging to those orders.
+    const allOrders = await getOrdersInDateRange(ctx, rangeStartMs, rangeEndMs);
+    const paymentsByOrderId = await getPaymentsByOrderId(ctx, allOrders);
+
     const ordersInRange = allOrders.filter(
-      (o: any) =>
-        o.createdAt >= rangeStartMs &&
-        o.createdAt < rangeEndMs &&
-        completedStatuses.includes(o.status) &&
-        resolveOrderChannel(o) === args.channel
+      (o: any) => completedStatuses.includes(o.status) && resolveOrderChannel(o) === args.channel
     );
 
     const distinctUserIds = Array.from(new Set(ordersInRange.map((o: any) => o.userId.toString())));

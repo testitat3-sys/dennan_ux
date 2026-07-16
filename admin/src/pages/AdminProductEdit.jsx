@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
+import { useProductDisplayName } from "../hooks/useProductDisplayName";
 import BrandCombobox from "../components/BrandCombobox";
 import {
   ArrowLeft,
@@ -54,6 +55,7 @@ export default function AdminProductEdit() {
   );
   const generateCloudinarySignature = useMutation(api.products.generateCloudinarySignature);
   const updateProductMutation = useMutation(api.products.updateProduct);
+  const { getDisplayName } = useProductDisplayName(token);
 
   // Form state
   const [name, setName] = useState("");
@@ -310,7 +312,7 @@ export default function AdminProductEdit() {
             Stock Manager
           </Link>
           <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">{product.name}</span>
+          <span className="breadcrumb-current">{getDisplayName(product)}</span>
         </nav>
 
         <header className="product-edit-header">

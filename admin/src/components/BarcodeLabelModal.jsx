@@ -7,7 +7,7 @@ import JsBarcode from "jsbarcode";
 // single branch. Update if/when the app tracks branch per stock manager.
 const BRANCH_CODE = "NB";
 
-export default function BarcodeLabelModal({ product, onClose }) {
+export default function BarcodeLabelModal({ product, displayName, onClose }) {
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function BarcodeLabelModal({ product, onClose }) {
 
         <div className="barcode-label-print-wrapper">
           <div className="barcode-label-code-text">{product.barcode}</div>
-          <div className="barcode-label-name">{product.name}</div>
+          <div className="barcode-label-name">{displayName ?? product.name}</div>
           <svg ref={svgRef} className="barcode-label-svg" />
           <div className="barcode-label-price">
             {BRANCH_CODE} UGX {(product.price ?? 0).toLocaleString()}

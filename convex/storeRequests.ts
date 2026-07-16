@@ -38,8 +38,10 @@ export const submitStoreRequest = mutation({
     let user = authedUserId ? await ctx.db.get(authedUserId) : null;
 
     if (!user && args.phone) {
-      const allUsers = await ctx.db.query("users").collect();
-      user = allUsers.find((u) => u.phone === args.phone) || null;
+      user = await ctx.db
+        .query("users")
+        .withIndex("by_phone", (q) => q.eq("phone", args.phone))
+        .first();
     }
 
     if (!user && args.email) {

@@ -110,6 +110,7 @@ if (mode === 'tommee') {
 
     const mappedProduct = {
       name: name,
+      old_name: item.old_name,
       brand: 'Tommee Tippee',
       slug: slugify(name),
       barcode: barcode,
@@ -158,6 +159,7 @@ if (mode === 'tommee') {
 
     const mappedProduct = {
       name: name,
+      old_name: item.old_name,
       brand: 'Generic', // Forced to Generic
       slug: `${slugify(name)}-${barcode}`, // Unique slug using barcode suffix
       barcode: barcode,

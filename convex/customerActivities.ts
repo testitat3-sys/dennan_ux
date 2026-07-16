@@ -21,33 +21,33 @@ export const getCustomerList = trackedQuery("customerActivities.getCustomerList"
       .withIndex("by_accountRole", (q) => q.eq("accountRole", undefined))
       .collect();
 
-    const enrichedCustomers = [];
-
-    // For each customer, count their orders and activities
-    for (const c of customers) {
-      const orders = await ctx.db
-        .query("orders")
-        .withIndex("by_user", (q) => q.eq("userId", c._id))
-        .collect();
-
-      const activities = await ctx.db
-        .query("customerActivities")
-        .withIndex("by_customerId", (q) => q.eq("customerId", c._id))
-        .collect();
-
-      enrichedCustomers.push({
-        id: c._id,
-        name: c.name ?? "Unnamed Customer",
-        email: c.email,
-        phone: c.phone,
-        customerNotes: c.customerNotes,
-        ordersCount: orders.length,
-        activitiesCount: activities.length,
-        createdAt: c._creationTime,
-      });
+    // 3. Fetch orders and activities once each and group counts in memory,
+    // instead of two indexed queries per customer (2N+1 -> 3 total reads).
+    const allOrders = await ctx.db.query("orders").collect();
+    const ordersCountByUser = new Map<string, number>();
+    for (const order of allOrders) {
+      ordersCountByUser.set(order.userId, (ordersCountByUser.get(order.userId) ?? 0) + 1);
     }
 
-    return enrichedCustomers;
+    const allActivities = await ctx.db.query("customerActivities").collect();
+    const activitiesCountByCustomer = new Map<string, number>();
+    for (const activity of allActivities) {
+      activitiesCountByCustomer.set(
+        activity.customerId,
+        (activitiesCountByCustomer.get(activity.customerId) ?? 0) + 1
+      );
+    }
+
+    return customers.map((c) => ({
+      id: c._id,
+      name: c.name ?? "Unnamed Customer",
+      email: c.email,
+      phone: c.phone,
+      customerNotes: c.customerNotes,
+      ordersCount: ordersCountByUser.get(c._id) ?? 0,
+      activitiesCount: activitiesCountByCustomer.get(c._id) ?? 0,
+      createdAt: c._creationTime,
+    }));
   },
 });
 
@@ -172,16 +172,21 @@ export const getDueActivities = trackedQuery("customerActivities.getDueActivitie
 
     const priorityRank = { high: 0, normal: 1, low: 2 };
 
-    const enriched = await Promise.all(
-      due.map(async (activity) => {
-        const customer = await ctx.db.get(activity.customerId);
-        return {
-          ...activity,
-          customerName: customer?.name ?? "Unknown Customer",
-          customerPhone: customer?.phone,
-        };
-      })
+    // Dedupe customer lookups: due activities sharing a customer only fetch it once.
+    const uniqueCustomerIds = [...new Set(due.map((a) => a.customerId))];
+    const customerEntries = await Promise.all(
+      uniqueCustomerIds.map(async (customerId) => [customerId, await ctx.db.get(customerId)] as const)
     );
+    const customerById = new Map(customerEntries);
+
+    const enriched = due.map((activity) => {
+      const customer = customerById.get(activity.customerId);
+      return {
+        ...activity,
+        customerName: customer?.name ?? "Unknown Customer",
+        customerPhone: customer?.phone,
+      };
+    });
 
     return enriched.sort((a, b) => {
       const dateCompare = (a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "");
@@ -225,18 +230,25 @@ export const getAllActivities = trackedQuery("customerActivities.getAllActivitie
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
 
-    const allActivities = await ctx.db.query("customerActivities").collect();
+    // Bounded and most-recent-first, so this can't grow unbounded as activity
+    // volume increases over time.
+    const allActivities = await ctx.db.query("customerActivities").order("desc").take(2000);
 
-    return Promise.all(
-      allActivities.map(async (activity) => {
-        const customer = await ctx.db.get(activity.customerId);
-        return {
-          ...activity,
-          customerName: customer?.name ?? "Unknown Customer",
-          customerPhone: customer?.phone,
-        };
-      })
+    // Dedupe customer lookups: activities sharing a customer only fetch it once.
+    const uniqueCustomerIds = [...new Set(allActivities.map((a) => a.customerId))];
+    const customerEntries = await Promise.all(
+      uniqueCustomerIds.map(async (customerId) => [customerId, await ctx.db.get(customerId)] as const)
     );
+    const customerById = new Map(customerEntries);
+
+    return allActivities.map((activity) => {
+      const customer = customerById.get(activity.customerId);
+      return {
+        ...activity,
+        customerName: customer?.name ?? "Unknown Customer",
+        customerPhone: customer?.phone,
+      };
+    });
   },
 });
 

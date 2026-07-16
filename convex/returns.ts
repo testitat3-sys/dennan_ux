@@ -645,6 +645,87 @@ export const rejectReturn = trackedMutation("returns.rejectReturn", {
   },
 });
 
+/**
+ * Shared batch-enrichment for a set of return groups (mirrors Refactor 2's
+ * enrichOrders pattern, applied to returns): given `{ returnId, orderId,
+ * items }` groups, batches the envelope/order/user/exchangeItems lookups by
+ * unique ID via Promise.all instead of awaiting them one group at a time.
+ */
+async function enrichReturns(
+  ctx: any,
+  groups: { returnId: Id<"returns">; orderId: Id<"orders">; items: any[] }[]
+) {
+  const uniqueReturnIds = [...new Set(groups.map((g) => g.returnId))];
+  const uniqueOrderIds = [...new Set(groups.map((g) => g.orderId))];
+
+  const [returnEnvelopes, orders, exchangeItemsByReturn] = await Promise.all([
+    Promise.all(uniqueReturnIds.map((id) => ctx.db.get(id))),
+    Promise.all(uniqueOrderIds.map((id) => ctx.db.get(id))),
+    Promise.all(
+      uniqueReturnIds.map((id) =>
+        ctx.db
+          .query("returnExchangeItems")
+          .withIndex("by_return", (q: any) => q.eq("returnId", id))
+          .collect()
+      )
+    ),
+  ]);
+
+  const returnEnvelopeMap = new Map(uniqueReturnIds.map((id, i) => [id.toString(), returnEnvelopes[i]]));
+  const orderMap = new Map(uniqueOrderIds.map((id, i) => [id.toString(), orders[i]]));
+  const exchangeItemsMap = new Map(uniqueReturnIds.map((id, i) => [id.toString(), exchangeItemsByReturn[i]]));
+
+  const uniqueUserIds = [
+    ...new Set(orders.filter(Boolean).map((o: any) => o.userId.toString())),
+  ] as Id<"users">[];
+  const users = await Promise.all(uniqueUserIds.map((id) => ctx.db.get(id)));
+  const userMap = new Map(uniqueUserIds.map((id, i) => [id.toString(), users[i]]));
+
+  const results = [];
+  for (const group of groups) {
+    const returnEnvelope = returnEnvelopeMap.get(group.returnId.toString());
+    if (!returnEnvelope) continue;
+    const order = orderMap.get(group.orderId.toString());
+    const orderUser = order ? userMap.get(order.userId.toString()) : null;
+    const customerName = order?.deliveryAddress?.name || orderUser?.name || "Unknown";
+    const exchangeItems = exchangeItemsMap.get(group.returnId.toString()) ?? [];
+
+    results.push({
+      returnId: group.returnId,
+      orderId: group.orderId,
+      customerName,
+      staffName: returnEnvelope.staffName,
+      note: returnEnvelope.note,
+      createdAt: returnEnvelope.createdAt,
+      returnedTotal: returnEnvelope.returnedTotal,
+      exchangeTotal: returnEnvelope.exchangeTotal,
+      topUpAmount: returnEnvelope.topUpAmount,
+      topUpMethod: returnEnvelope.topUpMethod,
+      items: group.items.map((i) => ({
+        _id: i._id,
+        productId: i.productId,
+        productName: i.productName,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        reason: i.reason,
+        status: i.status,
+        source: i.source,
+        rejectedReason: i.rejectedReason,
+        restocked: i.restocked,
+      })),
+      exchangeItems: exchangeItems.map((e: any) => ({
+        _id: e._id,
+        productId: e.productId,
+        productName: e.productName,
+        quantity: e.quantity,
+        unitPrice: e.unitPrice,
+      })),
+    });
+  }
+
+  return results;
+}
+
 export const getPendingReturns = trackedQuery("returns.getPendingReturns", {
   args: { token: v.string() },
   handler: async (ctx, args) => {
@@ -662,52 +743,13 @@ export const getPendingReturns = trackedQuery("returns.getPendingReturns", {
       byReturnId.get(key)!.push(item);
     }
 
-    const results = [];
-    for (const [, items] of byReturnId) {
-      const returnEnvelope = await ctx.db.get(items[0].returnId);
-      if (!returnEnvelope) continue;
-      const order = await ctx.db.get(items[0].orderId);
-      const orderUser = order ? await ctx.db.get(order.userId) : null;
-      const customerName = order?.deliveryAddress?.name || orderUser?.name || "Unknown";
+    const groups = [...byReturnId.values()].map((items) => ({
+      returnId: items[0].returnId,
+      orderId: items[0].orderId,
+      items,
+    }));
 
-      const exchangeItems = await ctx.db
-        .query("returnExchangeItems")
-        .withIndex("by_return", (q) => q.eq("returnId", items[0].returnId))
-        .collect();
-
-      results.push({
-        returnId: items[0].returnId,
-        orderId: items[0].orderId,
-        customerName,
-        staffName: returnEnvelope.staffName,
-        note: returnEnvelope.note,
-        createdAt: returnEnvelope.createdAt,
-        returnedTotal: returnEnvelope.returnedTotal,
-        exchangeTotal: returnEnvelope.exchangeTotal,
-        topUpAmount: returnEnvelope.topUpAmount,
-        topUpMethod: returnEnvelope.topUpMethod,
-        items: items.map((i) => ({
-          _id: i._id,
-          productId: i.productId,
-          productName: i.productName,
-          quantity: i.quantity,
-          unitPrice: i.unitPrice,
-          reason: i.reason,
-          status: i.status,
-          source: i.source,
-          rejectedReason: i.rejectedReason,
-          restocked: i.restocked,
-        })),
-        exchangeItems: exchangeItems.map((e) => ({
-          _id: e._id,
-          productId: e.productId,
-          productName: e.productName,
-          quantity: e.quantity,
-          unitPrice: e.unitPrice,
-        })),
-      });
-    }
-
+    const results = await enrichReturns(ctx, groups);
     results.sort((a, b) => b.createdAt - a.createdAt);
     return results;
   },
@@ -747,55 +789,24 @@ export const getReturnsByDateRange = query({
       .order("desc")
       .paginate(args.paginationOpts);
 
-    const enrichedPage = [];
-    for (const returnEnvelope of result.page) {
-      const items = await ctx.db
-        .query("returnItems")
-        .withIndex("by_return", (q) => q.eq("returnId", returnEnvelope._id))
-        .collect();
-      if (items.length === 0) continue;
+    const itemsByReturn = await Promise.all(
+      result.page.map((returnEnvelope) =>
+        ctx.db
+          .query("returnItems")
+          .withIndex("by_return", (q) => q.eq("returnId", returnEnvelope._id))
+          .collect()
+      )
+    );
 
-      const order = await ctx.db.get(returnEnvelope.orderId);
-      const orderUser = order ? await ctx.db.get(order.userId) : null;
-      const customerName = order?.deliveryAddress?.name || orderUser?.name || "Unknown";
-
-      const exchangeItems = await ctx.db
-        .query("returnExchangeItems")
-        .withIndex("by_return", (q) => q.eq("returnId", returnEnvelope._id))
-        .collect();
-
-      enrichedPage.push({
+    const groups = result.page
+      .map((returnEnvelope, i) => ({
         returnId: returnEnvelope._id,
         orderId: returnEnvelope.orderId,
-        customerName,
-        staffName: returnEnvelope.staffName,
-        note: returnEnvelope.note,
-        createdAt: returnEnvelope.createdAt,
-        returnedTotal: returnEnvelope.returnedTotal,
-        exchangeTotal: returnEnvelope.exchangeTotal,
-        topUpAmount: returnEnvelope.topUpAmount,
-        topUpMethod: returnEnvelope.topUpMethod,
-        items: items.map((i) => ({
-          _id: i._id,
-          productId: i.productId,
-          productName: i.productName,
-          quantity: i.quantity,
-          unitPrice: i.unitPrice,
-          reason: i.reason,
-          status: i.status,
-          source: i.source,
-          rejectedReason: i.rejectedReason,
-          restocked: i.restocked,
-        })),
-        exchangeItems: exchangeItems.map((e) => ({
-          _id: e._id,
-          productId: e.productId,
-          productName: e.productName,
-          quantity: e.quantity,
-          unitPrice: e.unitPrice,
-        })),
-      });
-    }
+        items: itemsByReturn[i],
+      }))
+      .filter((g) => g.items.length > 0);
+
+    const enrichedPage = await enrichReturns(ctx, groups);
 
     return {
       ...result,

@@ -127,7 +127,8 @@ export default defineSchema({
     .index("email", ["email"])
     .index("by_accountRole", ["accountRole"])
     .index("by_importSource", ["importSource"])
-    .index("by_preLaunchId", ["preLaunchId"]),
+    .index("by_preLaunchId", ["preLaunchId"])
+    .index("by_phone", ["phone"]),
 
   testLinks: defineTable({
     email: v.string(),
@@ -149,6 +150,7 @@ export default defineSchema({
   products: defineTable({
 
     name: v.string(),
+    old_name: v.optional(v.string()),
     brand: v.string(),//size if any
     size: v.optional(v.string()),
     color: v.optional(v.string()),//color if any
@@ -267,6 +269,16 @@ export default defineSchema({
         })
       )
     ),
+
+    /**
+     * Denormalized, slugified copy of `brand` (same `slugify()` used for
+     * `productBrandNames`), kept in sync at every write site (createProduct,
+     * upsertSingleProduct, updateProduct) and backfilled by
+     * migrations.backfillProductBrandSlug. Lets getBrandBySlug's
+     * no-brands-row fallback do an indexed lookup instead of scanning every
+     * product and normalizing `brand` in JS on every request.
+     */
+    brandSlug: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_barcode", ["barcode"])
@@ -274,10 +286,14 @@ export default defineSchema({
     .index("by_tier", ["tier"])
     .index("by_category", ["category"])
     .index("by_brand", ["brand"])
+    .index("by_brandSlug", ["brandSlug"])
     .index("by_stage_and_tier", ["stage", "tier"])
     .index("by_category_tier_stage", ["category", "tier", "stage"])
     .index("by_sku", ["sku"])
     .index("by_updatedAt", ["updatedAt"])
+    .index("by_isMostLoved", ["isMostLoved"])
+    .index("by_isCuratedForYou", ["isCuratedForYou"])
+    .index("by_discountPrice", ["discountPrice"])
     .searchIndex("search_name", { searchField: "name" }),
 
   // ─── Product Reviews ─────────────────────────────────────────────────────────
@@ -405,7 +421,8 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_and_product", ["userId", "productId"])
-    .index("by_product", ["productId"]),
+    .index("by_product", ["productId"])
+    .index("by_notifyBackInStock", ["notifyBackInStock"]),
 
   // ─── Dashboard next-milestone cards ──────────────────────────────────────────
 
@@ -590,7 +607,9 @@ export default defineSchema({
   }).index("by_user", ["userId"])
     .index("by_claimedBy", ["claimedBy"])
     .index("by_createdAt", ["createdAt"])
-    .index("by_offlineOrderId", ["offlineOrderId"]),
+    .index("by_offlineOrderId", ["offlineOrderId"])
+    .index("by_status_and_createdAt", ["status", "createdAt"])
+    .index("by_isWalkIn_and_createdAt", ["isWalkIn", "createdAt"]),
 
   orderItems: defineTable({
     orderId: v.id("orders"),
@@ -643,7 +662,7 @@ export default defineSchema({
     status: v.optional(v.union(v.literal("new"), v.literal("resolved"))),
     resolvedAt: v.optional(v.number()),
     resolvedByStaffId: v.optional(v.id("users")),
-  }).index("by_user", ["userId"]).index("by_email", ["email"]),
+  }).index("by_user", ["userId"]).index("by_email", ["email"]).index("by_source", ["source"]),
 
   storeRequests: defineTable({
     userId: v.optional(v.id("users")),
@@ -1106,6 +1125,10 @@ export default defineSchema({
     reads: v.number(),
     invocations: v.number(),
   }).index("by_functionName", ["functionName"]),
+
+  appSettings: defineTable({
+    productNameSource: v.union(v.literal("name"), v.literal("old_name")),
+  }),
 });
 
 

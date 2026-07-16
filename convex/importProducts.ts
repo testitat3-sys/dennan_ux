@@ -7,6 +7,7 @@ export const upsertProductsBatch = internalMutation({
     products: v.array(
       v.object({
         name: v.string(),
+        old_name: v.optional(v.string()),
         brand: v.string(),
         slug: v.string(),
         barcode: v.string(),
@@ -54,22 +55,11 @@ export const upsertProductsBatch = internalMutation({
         .unique();
 
       if (existing) {
-        // updatedAt must be stamped on every write here - getProductsUpdatedSince
-        // (the offline POS delta sync) is an indexed range query on updatedAt, so
-        // a product whose updatedAt is left undefined is permanently invisible to
-        // it even after a full resync.
+        // For products that already exist, simply add/update the old_name and updatedAt.
         await ctx.db.patch(existing._id, {
-          inventory: p.inventory,
-          actual_data: true,
-          isActive: true,
+          old_name: p.old_name,
           updatedAt: Date.now(),
         });
-        await applyStockCounterDelta(
-          ctx,
-          { inventory: existing.inventory, reorderPoint: existing.reorderPoint },
-          { inventory: p.inventory, reorderPoint: existing.reorderPoint },
-          existing._id
-        );
         updated++;
       } else {
         // Insert new product

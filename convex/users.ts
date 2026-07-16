@@ -323,10 +323,17 @@ export const recalculateUserBehavioralPreferences = internalMutation({
       return { success: false, reason: "no_items" };
     }
 
-    // 3. Fetch products details for these items
+    // 3. Fetch products details for these items - dedupe by productId so a
+    // repeatedly-reordered product is only fetched once.
+    const uniqueProductIds = [...new Set(allOrderItems.map((item) => item.productId))];
+    const productEntries = await Promise.all(
+      uniqueProductIds.map(async (productId) => [productId, await ctx.db.get(productId)] as const)
+    );
+    const productById = new Map(productEntries);
+
     const productsList = [];
     for (const item of allOrderItems) {
-      const product = await ctx.db.get(item.productId);
+      const product = productById.get(item.productId);
       if (product) {
         productsList.push({
           product,

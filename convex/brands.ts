@@ -19,13 +19,13 @@ export const getBrandBySlug = trackedQuery("brands.getBrandBySlug", {
 
     let brandName = brand ? brand.name : "";
     if (!brand) {
-      // Find matching brand from products dynamically
-      const allProducts = await ctx.db.query("products").collect();
-      const matchingProduct = allProducts.find(p => {
-        if (!p.brand) return false;
-        const normalized = p.brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-        return normalized === args.slug || (args.slug === "dr-browns" && normalized.startsWith("dr-brown"));
-      });
+      // No dedicated brands row for this slug -- look up a product carrying
+      // the same slugified brand via the indexed brandSlug field instead of
+      // scanning every product and normalizing `brand` in JS.
+      const matchingProduct = await ctx.db
+        .query("products")
+        .withIndex("by_brandSlug", (q) => q.eq("brandSlug", args.slug))
+        .first();
 
       if (matchingProduct) {
         brandName = matchingProduct.brand;

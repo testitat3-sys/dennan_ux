@@ -40,9 +40,10 @@ export const getLeads = trackedQuery("leads.getLeads", {
       resolvedAt: r.resolvedAt,
     }));
 
-    const notifyRequests = (await ctx.db.query("wishlistItems").collect()).filter(
-      (w) => w.notifyBackInStock === true
-    );
+    const notifyRequests = await ctx.db
+      .query("wishlistItems")
+      .withIndex("by_notifyBackInStock", (q) => q.eq("notifyBackInStock", true))
+      .collect();
     const wishlistLeads = await Promise.all(
       notifyRequests.map(async (w) => {
         const [user, product] = await Promise.all([
@@ -64,9 +65,17 @@ export const getLeads = trackedQuery("leads.getLeads", {
       })
     );
 
-    const notifySignups = (await ctx.db.query("registryNotifySignups").collect()).filter(
-      (n) => n.source === "launch" || n.source === "launch_oos"
-    );
+    const [launchSignups, launchOosSignups] = await Promise.all([
+      ctx.db
+        .query("registryNotifySignups")
+        .withIndex("by_source", (q) => q.eq("source", "launch"))
+        .collect(),
+      ctx.db
+        .query("registryNotifySignups")
+        .withIndex("by_source", (q) => q.eq("source", "launch_oos"))
+        .collect(),
+    ]);
+    const notifySignups = [...launchSignups, ...launchOosSignups];
     const notifySignupLeads = notifySignups.map((n) => {
       const stageLabel = n.stage ? STAGE_LABELS[n.stage] ?? n.stage : undefined;
       const detail =

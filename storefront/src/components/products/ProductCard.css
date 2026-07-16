@@ -155,6 +155,15 @@
   gap: var(--space-2);
   flex: 1;
 }
+
+/* Out-of-stock "Remind me" CTA: two lines instead of one, so the button reads
+   as a taller, more deliberate action rather than a squeezed single-line label. */
+.card-remind-btn-wrapper .btn--card-add {
+  white-space: normal;
+  line-height: 1.4;
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+}
 .card-tier {
   font-size: var(--label-md);
   font-weight: 700;

@@ -4,6 +4,7 @@ import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useStaffAuth } from "../hooks/useStaffAuth";
+import { useProductDisplayName } from "../hooks/useProductDisplayName";
 import OrderDetailModal from "../components/OrderDetailModal";
 import HandoverModal from "../components/HandoverModal";
 import ReturnsPanel from "../components/ReturnsPanel";
@@ -57,6 +58,7 @@ const LAST_TAB_KEY = "dennan_staff_last_tab";
 export default function StaffDashboard() {
   const navigate = useNavigate();
   const { user, token, logout } = useStaffAuth();
+  const { getDisplayName } = useProductDisplayName(token);
   const [activeTab, setActiveTabState] = useState(
     () =>
       new URLSearchParams(window.location.search).get("tab") ||
@@ -340,7 +342,7 @@ export default function StaffDashboard() {
         }
         return prev.map(item => item.id === product._id ? { ...item, quantity: item.quantity + 1 } : item);
       }
-      return [...prev, { id: product._id, name: product.name, price: getOriginalPrice(product), quantity: 1, inventory: availableInventory }];
+      return [...prev, { id: product._id, name: getDisplayName(product), price: getOriginalPrice(product), quantity: 1, inventory: availableInventory }];
     });
   };
 
@@ -850,6 +852,7 @@ export default function StaffDashboard() {
                   getInventory={getEffectiveInventory}
                   getCartQuantity={(productId) => cart.find(item => item.id === productId)?.quantity || 0}
                   onSelect={addToCart}
+                  getDisplayName={getDisplayName}
                   extraTile={
                     <button
                       key="gift-voucher-tile"

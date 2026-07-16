@@ -40,6 +40,9 @@ skills-lock.json
 !/AGENTS.md
 !/convex/_generated/ai/guidelines.md
 
+# DB read audit working docs (local only)
+/convex/_db_audit/
+
 # Data Exports and Spreadsheets
 /exports/
 *.xls

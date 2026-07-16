@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
+import { useProductDisplayName } from "../hooks/useProductDisplayName";
 
 export default function DiscountsPanel({ token }) {
+  const { getDisplayName } = useProductDisplayName(token);
   // Discount list
   const discountList = useTrackedQuery(api.products.getDiscountList, { token });
   const setDiscountMutation = useMutation(api.products.setDiscount);
@@ -103,10 +105,10 @@ export default function DiscountsPanel({ token }) {
                             style={{ padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid var(--border-subtle)" }}
                             onClick={() => {
                               setDiscountForm(prev => ({ ...prev, productId: p.id }));
-                              setDiscountSelectedProductName(`${p.name} (Barcode: ${p.barcode})`);
+                              setDiscountSelectedProductName(`${getDisplayName(p)} (Barcode: ${p.barcode})`);
                             }}
                           >
-                            {p.name} <span style={{ color: "var(--text-tertiary)", fontSize: "12px" }}>(Barcode: {p.barcode})</span>
+                            {getDisplayName(p)} <span style={{ color: "var(--text-tertiary)", fontSize: "12px" }}>(Barcode: {p.barcode})</span>
                           </div>
                         ))
                       )}
@@ -179,7 +181,7 @@ export default function DiscountsPanel({ token }) {
                     const isActive = product.discountExpiry > Date.now();
                     return (
                       <tr key={product._id} className={isActive ? "discount-row-active" : ""}>
-                        <td><strong>{product.name}</strong></td>
+                        <td><strong>{getDisplayName(product)}</strong></td>
                         <td>UGX {product.originalPrice.toLocaleString()}</td>
                         <td>
                           <span className="discount-badge discount-badge--cash">

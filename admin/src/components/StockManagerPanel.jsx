@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
+import { useProductDisplayName } from "../hooks/useProductDisplayName";
 import { Search, AlertCircle, Pencil, Plus, Printer } from "lucide-react";
 import BarcodeLabelModal from "./BarcodeLabelModal";
 
 export default function StockManagerPanel({ token, navigate }) {
+  const { getDisplayName } = useProductDisplayName(token);
   // Stock list — browse mode is paginated (never the full ~4000-row table),
   // search mode is a small bounded server-side search.
   const {
@@ -119,7 +121,7 @@ export default function StockManagerPanel({ token, navigate }) {
                   return (
                     <tr key={product.id} className={isOut ? "stock-row-oos" : ""}>
                       <td>
-                        <strong>{product.name}</strong>
+                        <strong>{getDisplayName(product)}</strong>
                         {isLowStock && (
                           <div className="stock-very-low-hint">
                             <AlertCircle size={12} /> Low Stock Warning
@@ -191,6 +193,7 @@ export default function StockManagerPanel({ token, navigate }) {
       {labelProduct && (
         <BarcodeLabelModal
           product={labelProduct}
+          displayName={getDisplayName(labelProduct)}
           onClose={() => setLabelProduct(null)}
         />
       )}

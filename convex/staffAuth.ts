@@ -320,7 +320,9 @@ export const getStaffList = trackedQuery("staffAuth.getStaffList", {
 
     const staffPerformanceList = [];
 
-    // 3. Query claimed orders for each staff member
+    // 3. Query claimed orders for each staff member — only count/sum are
+    // consumed by the frontend (Staff Roster stat tiles), so we summarize
+    // here instead of shipping every claimed order's full detail.
     for (const u of staffUsers) {
       const claimedOrders = await ctx.db
         .query("orders")
@@ -332,11 +334,8 @@ export const getStaffList = trackedQuery("staffAuth.getStaffList", {
         name: u.name,
         email: u.email,
         accountRole: u.accountRole,
-        orders: claimedOrders.map((o) => ({
-          customerName: o.deliveryAddress.name,
-          amountPaid: o.grandTotal,
-          status: o.status,
-        })),
+        totalOrders: claimedOrders.length,
+        totalSales: claimedOrders.reduce((sum, o) => sum + o.grandTotal, 0),
       });
     }
 

@@ -82,23 +82,11 @@ export const importPreLaunchUsers = internalMutation({
       let matchedId: Id<"users"> | null = null;
 
       if (raw.phone) {
-        // phone is not indexed — scan is acceptable for this one-time import
-        const allByPhone = await ctx.db
+        const byPhone = await ctx.db
           .query("users")
-          .withIndex("email", (q) =>
-            // we can't index phone directly, so we use email as a fallback
-            // after checking phone inline below
-            q.eq("email", raw.email ?? "__no_match__")
-          )
+          .withIndex("by_phone", (q) => q.eq("phone", raw.phone))
           .first();
-        // Try phone match via email index miss — check separately
-        if (!allByPhone && raw.phone) {
-          // brute-force match on phone for this one-time import only
-          // (acceptable: small dataset, one-time operation)
-          const all = await ctx.db.query("users").take(2000);
-          const hit = all.find((u) => u.phone === raw.phone);
-          if (hit) matchedId = hit._id;
-        }
+        if (byPhone) matchedId = byPhone._id;
       }
 
       if (!matchedId && raw.email) {

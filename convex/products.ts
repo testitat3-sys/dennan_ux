@@ -10,6 +10,7 @@ import { trackedQuery } from "./lib/ioTracking";
 // Reusable product field validators matching the products schema
 const productFieldsValidator = {
   name: v.string(),
+  old_name: v.optional(v.string()),
   brand: v.optional(v.string()),
   size: v.optional(v.string()),
   color: v.optional(v.string()),
@@ -185,9 +186,12 @@ async function upsertSingleProduct(ctx: any, fields: any) {
   const inferredWasPrice = isDiscountActive ? originalPrice : undefined;
 
   // 3. Map payload with safe defaults for missing optional fields matching the schema
+  const brand = fields.brand ?? "Generic";
   const productFields = {
     name: fields.name,
-    brand: fields.brand ?? "Generic",
+    old_name: fields.old_name,
+    brand,
+    brandSlug: slugify(brand),
     size: fields.size,
     color: fields.color ?? "Default",
     slug,
@@ -407,6 +411,7 @@ function toStockRow(p: any) {
   return {
     id: p._id,
     name: p.name,
+    old_name: p.old_name,
     sku: p.sku,
     barcode: p.barcode,
     price: p.price ?? 0,
@@ -700,8 +705,11 @@ export const getDiscountList = trackedQuery("products.getDiscountList", {
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
+    // Indexed range query on discountPrice > 0 instead of a full table scan
+    // -- skips every non-discounted product index-side.
     const products = await ctx.db
       .query("products")
+      .withIndex("by_discountPrice", (q) => q.gt("discountPrice", 0))
       .collect();
 
     // Filter to keep only those with an active or pending discount
@@ -827,6 +835,9 @@ export const updateProduct = mutation({
         patch[key] = value;
       }
     }
+    if ("brand" in patch) {
+      patch.brandSlug = slugify(patch.brand as string);
+    }
 
     const resultingIsActive = "isActive" in patch ? (patch.isActive as boolean) : product.isActive;
     if (resultingIsActive) {
@@ -932,9 +943,11 @@ export const createProduct = mutation({
       barcode = await allocateNextBarcode(ctx);
     }
 
+    const brand = args.brand?.trim() || "no-brand";
     const productId = await ctx.db.insert("products", {
       name: args.name,
-      brand: args.brand?.trim() || "no-brand",
+      brand,
+      brandSlug: slugify(brand),
       barcode,
       slug,
       description: args.description?.trim() || "no-description",

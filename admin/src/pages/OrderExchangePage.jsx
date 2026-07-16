@@ -4,6 +4,7 @@ import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useStaffAuth } from "../hooks/useStaffAuth";
+import { useProductDisplayName } from "../hooks/useProductDisplayName";
 import { useOfflineProducts } from "../hooks/useOfflineProducts";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import Sidebar from "../components/Sidebar";
@@ -28,6 +29,7 @@ export default function OrderExchangePage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { user, token, logout } = useStaffAuth();
+  const { getDisplayName } = useProductDisplayName(token);
   const sidebarGroups = getReturnPageSidebarGroups(user?.accountRole, navigate);
 
   const [returnQuantities, setReturnQuantities] = useState({});
@@ -101,12 +103,12 @@ export default function OrderExchangePage() {
       const existing = prev.find(item => item.productId === product._id);
       if (existing) {
         if (product.inventory !== undefined && existing.quantity >= product.inventory) {
-          setError(`Cannot add more ${product.name}. Only ${product.inventory} available in stock.`);
+          setError(`Cannot add more ${getDisplayName(product)}. Only ${product.inventory} available in stock.`);
           return prev;
         }
         return prev.map(item => item.productId === product._id ? { ...item, quantity: item.quantity + 1 } : item);
       }
-      return [...prev, { productId: product._id, name: product.name, price: getOriginalPrice(product), quantity: 1, inventory: product.inventory }];
+      return [...prev, { productId: product._id, name: getDisplayName(product), price: getOriginalPrice(product), quantity: 1, inventory: product.inventory }];
     });
   };
 
@@ -323,6 +325,7 @@ export default function OrderExchangePage() {
             getInventory={(p) => p.inventory}
             getCartQuantity={(productId) => exchangeCart.find(item => item.productId === productId)?.quantity || 0}
             onSelect={addExchangeItem}
+            getDisplayName={getDisplayName}
           />
         )}
 

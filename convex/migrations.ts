@@ -1,6 +1,7 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
+import { slugify } from "./products";
 
 // Category mapping helper to convert legacy category strings to their strict union equivalents
 const CATEGORY_MAP: Record<string, string> = {
@@ -288,5 +289,90 @@ export const backfillLegacyReturnItems = mutation({
 
     console.log(`[migrations.ts] Backfilled ${returnsBackfilled} returns, inserted ${itemsInserted} returnItems.`);
     return { success: true, returnsScanned: returns.length, returnsBackfilled, itemsInserted };
+  }
+});
+
+/**
+ * Migration Mutation: Backfills `isWalkIn: false` on legacy orders that
+ * predate the field (isWalkIn is `undefined` rather than `false`). Needed so
+ * the new `by_isWalkIn_and_createdAt` index (see convex/orders.ts,
+ * getOrdersForStaff) can be queried with `.eq("isWalkIn", false)` and
+ * actually match every non-walk-in order, not just ones explicitly stamped
+ * `false` after this field was introduced.
+ *
+ * STATUS: run against dev on 2026-07-15 (completed, isDone: true). Still
+ * needs to be run against production once Refactor 1 is deployed there —
+ * `npx convex run migrations:backfillOrdersIsWalkIn '{}' --prod`.
+ */
+export const backfillOrdersIsWalkIn = mutation({
+  args: { cursor: v.optional(v.union(v.string(), v.null())) },
+  handler: async (ctx, args) => {
+    const BATCH_SIZE = 200;
+    const result = await ctx.db
+      .query("orders")
+      .paginate({ numItems: BATCH_SIZE, cursor: args.cursor ?? null });
+
+    let updatedCount = 0;
+    for (const order of result.page) {
+      if (order.isWalkIn === undefined) {
+        await ctx.db.patch(order._id, { isWalkIn: false });
+        updatedCount++;
+      }
+    }
+
+    console.log(
+      `[migrations.ts] backfillOrdersIsWalkIn: updated ${updatedCount} of ${result.page.length} scanned this batch${result.isDone ? " (final batch)" : ""}.`
+    );
+
+    if (!result.isDone) {
+      await ctx.scheduler.runAfter(0, api.migrations.backfillOrdersIsWalkIn, {
+        cursor: result.continueCursor,
+      });
+    }
+
+    return { batchScanned: result.page.length, batchUpdated: updatedCount, isDone: result.isDone };
+  }
+});
+
+/**
+ * Migration Mutation: Backfills `brandSlug` (slugified copy of `brand`) on
+ * existing products missing it. Needed so brands.getBrandBySlug's
+ * no-brands-row fallback can look products up via the new `by_brandSlug`
+ * index instead of scanning the whole `products` table and normalizing
+ * `brand` in JS on every request. New/edited products get `brandSlug` set
+ * at write time (createProduct, upsertSingleProduct, updateProduct) — this
+ * migration only needs to run once to cover pre-existing rows.
+ *
+ * STATUS: not yet run against dev or production as of 2026-07-15 — run
+ * `npx convex run migrations:backfillProductBrandSlug '{}'` against dev
+ * first, then `--prod` once this refactor is deployed there.
+ */
+export const backfillProductBrandSlug = mutation({
+  args: { cursor: v.optional(v.union(v.string(), v.null())) },
+  handler: async (ctx, args) => {
+    const BATCH_SIZE = 200;
+    const result = await ctx.db
+      .query("products")
+      .paginate({ numItems: BATCH_SIZE, cursor: args.cursor ?? null });
+
+    let updatedCount = 0;
+    for (const product of result.page) {
+      if (product.brandSlug === undefined) {
+        await ctx.db.patch(product._id, { brandSlug: slugify(product.brand) });
+        updatedCount++;
+      }
+    }
+
+    console.log(
+      `[migrations.ts] backfillProductBrandSlug: updated ${updatedCount} of ${result.page.length} scanned this batch${result.isDone ? " (final batch)" : ""}.`
+    );
+
+    if (!result.isDone) {
+      await ctx.scheduler.runAfter(0, api.migrations.backfillProductBrandSlug, {
+        cursor: result.continueCursor,
+      });
+    }
+
+    return { batchScanned: result.page.length, batchUpdated: updatedCount, isDone: result.isDone };
   }
 });

@@ -8,6 +8,7 @@ import LocationModal from '../components/checkout/LocationModal';
 import RiderTracking from '../components/checkout/RiderTracking';
 import ReviewModal from '../components/checkout/ReviewModal';
 import PesapalPaymentModal from '../components/checkout/PesapalPaymentModal';
+import OnboardingModal from '../components/ui/OnboardingModal';
 import Toast from '../components/ui/Toast';
 import { useCart } from '../context/CartContext';
 import { getCheckoutData } from '../services/api';
@@ -40,6 +41,7 @@ const CheckoutPage = () => {
   const [remainingTime, setRemainingTime] = useState(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pesapalRedirectUrl, setPesapalRedirectUrl] = useState(null);
   const [pendingOrderId, setPendingOrderId] = useState(null);
@@ -1360,6 +1362,7 @@ const CheckoutPage = () => {
                   <div className="secondary-promos">
                     {checkoutData?.confirmation?.promos?.map(promo => {
                       const isRefer = promo.id === 'refer' || promo.id === 'review';
+                      const isProfile = promo.id === 'profile';
                       const title = isRefer ? "Leave a Review" : promo.title;
                       const desc = isRefer ? "Share your experience with other parents and earn 50 loyalty points." : promo.desc;
                       const action = isRefer ? "Write a Review →" : promo.action;
@@ -1377,6 +1380,10 @@ const CheckoutPage = () => {
                             <Card.Actions>
                               {isRefer ? (
                                 <Button variant="link" onClick={() => setShowReviewModal(true)}>
+                                  {action}
+                                </Button>
+                              ) : isProfile ? (
+                                <Button variant="link" onClick={() => setShowOnboardingModal(true)}>
                                   {action}
                                 </Button>
                               ) : (
@@ -1417,6 +1424,11 @@ const CheckoutPage = () => {
         onClose={() => setShowReviewModal(false)}
         orderItems={placedOrderDetails?.items || []}
         user={user}
+      />
+
+      <OnboardingModal
+        isOpen={showOnboardingModal}
+        onClose={() => setShowOnboardingModal(false)}
       />
 
       <PesapalPaymentModal

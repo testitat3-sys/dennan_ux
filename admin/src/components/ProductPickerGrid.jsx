@@ -21,6 +21,7 @@ export default function ProductPickerGrid({
   getCartQuantity,
   onSelect,
   disabled = false,
+  getDisplayName = (p) => p.name,
 }) {
   return (
     <div className="pos-products-container">
@@ -75,7 +76,7 @@ export default function ProductPickerGrid({
                 {p.image ? (
                   <img
                     src={p.image}
-                    alt={p.name}
+                    alt={getDisplayName(p)}
                     style={{ width: "100%", height: "90px", objectFit: "cover", borderRadius: "var(--radius-md)", marginBottom: "var(--space-2)", display: "block" }}
                   />
                 ) : (
@@ -104,7 +105,7 @@ export default function ProductPickerGrid({
                   </div>
                 )}
 
-                <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3, marginBottom: "3px" }}>{p.name}</div>
+                <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3, marginBottom: "3px" }}>{getDisplayName(p)}</div>
                 <div style={{ fontSize: "11px", color: "var(--text-tertiary)", marginBottom: "var(--space-2)" }}>Barcode: {p.barcode}</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-brand-primary)" }}>UGX {price.toLocaleString()}</span>
