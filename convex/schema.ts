@@ -1129,6 +1129,57 @@ export default defineSchema({
   appSettings: defineTable({
     productNameSource: v.union(v.literal("name"), v.literal("old_name")),
   }),
+
+  // ─── End-of-day cash-up / balancing books ────────────────────────────────────
+
+  /**
+   * cashUpEntries — one row per calendar day, store-wide end-of-day
+   * reconciliation. `expectedTotals` is recomputed server-side from that
+   * day's orders/orderPayments every time the entry is saved (never trusted
+   * from the client). `discrepancies` = physicalCounts - expectedTotals,
+   * stored so it doesn't need recomputing on every read.
+   */
+  cashUpEntries: defineTable({
+    date: v.string(), // "YYYY-MM-DD", server-local
+    physicalCounts: v.object({
+      physical: v.number(), // Cash
+      momo: v.number(),
+      card: v.number(),
+      voucher: v.number(),
+    }),
+    expectedTotals: v.object({
+      physical: v.number(),
+      momo: v.number(),
+      card: v.number(),
+      voucher: v.number(),
+    }),
+    discrepancies: v.object({
+      physical: v.number(),
+      momo: v.number(),
+      card: v.number(),
+      voucher: v.number(),
+    }),
+    notes: v.optional(v.string()),
+    staffId: v.id("users"), // who last saved this entry
+    staffName: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  }).index("by_date", ["date"]),
+
+  /**
+   * cashUpExpenses — freeform expense log entries for a given day.
+   * Independent of cashUpEntries (an expense can be added before that day's
+   * balance is finalized) and purely informational — never netted against
+   * cashUpEntries.expectedTotals/discrepancies.
+   */
+  cashUpExpenses: defineTable({
+    date: v.string(), // "YYYY-MM-DD"
+    description: v.string(),
+    amount: v.number(),
+    staffId: v.id("users"),
+    staffName: v.string(),
+    createdAt: v.number(),
+  }).index("by_date", ["date"]),
 });
 
 

@@ -3,11 +3,13 @@ import { X, AlertTriangle, XCircle } from "lucide-react";
 
 // Reports a failed/undelivered order. All items are checked by default (i.e. assumed
 // undelivered/returned) — staff uncheck anything that was actually delivered
-// successfully so only the checked items get submitted into the returns-approval
-// pipeline via reportDeliveryFailure.
+// successfully. For each checked item, staff also choose whether it goes back on
+// the shelf (restock) or not — resolved immediately via reportDeliveryFailure, with
+// no later approval step.
 export default function DeliveryFailureModal({ order, onClose, onSubmit }) {
   const [checkedItems, setCheckedItems] = useState({});
   const [quantities, setQuantities] = useState({});
+  const [restockChoices, setRestockChoices] = useState({});
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -16,12 +18,15 @@ export default function DeliveryFailureModal({ order, onClose, onSubmit }) {
     if (order && order.items) {
       const checked = {};
       const qty = {};
+      const restock = {};
       order.items.forEach((item) => {
         checked[item.productId] = true;
         qty[item.productId] = item.quantity;
+        restock[item.productId] = true;
       });
       setCheckedItems(checked);
       setQuantities(qty);
+      setRestockChoices(restock);
     }
   }, [order]);
 
@@ -35,6 +40,10 @@ export default function DeliveryFailureModal({ order, onClose, onSubmit }) {
     setQuantities((prev) => ({ ...prev, [productId]: clamped }));
   };
 
+  const handleRestockChange = (productId, restock) => {
+    setRestockChoices((prev) => ({ ...prev, [productId]: restock }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -43,6 +52,7 @@ export default function DeliveryFailureModal({ order, onClose, onSubmit }) {
       .map((item) => ({
         productId: item.productId,
         quantity: quantities[item.productId],
+        restock: !!restockChoices[item.productId],
       }));
 
     setError("");
@@ -64,7 +74,7 @@ export default function DeliveryFailureModal({ order, onClose, onSubmit }) {
 
   return (
     <div className="modal-overlay is-open">
-      <div className="modal" style={{ maxWidth: "640px" }}>
+      <div className="modal" style={{ maxWidth: "700px" }}>
         <div className="modal-header">
           <h2 className="modal-title">Report Delivery Failure</h2>
           <button className="modal-close" onClick={onClose}>
@@ -82,7 +92,8 @@ export default function DeliveryFailureModal({ order, onClose, onSubmit }) {
 
           <p className="momo-hint">
             All items are checked by default — uncheck anything that was actually
-            delivered. Checked items will be submitted for admin return approval.
+            delivered. For each checked item, choose whether it's restocked; the
+            return is resolved immediately, no further approval needed.
           </p>
 
           <div className="table-wrap">
@@ -93,6 +104,7 @@ export default function DeliveryFailureModal({ order, onClose, onSubmit }) {
                   <th>Product</th>
                   <th>Ordered Qty</th>
                   <th style={{ width: "120px" }}>Failed Qty</th>
+                  <th style={{ width: "180px" }}>Restock?</th>
                 </tr>
               </thead>
               <tbody>
@@ -122,6 +134,30 @@ export default function DeliveryFailureModal({ order, onClose, onSubmit }) {
                         onChange={(e) => handleQuantityChange(item.productId, e.target.value, item.quantity)}
                         disabled={isSubmitting || !checkedItems[item.productId]}
                       />
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px" }}>
+                          <input
+                            type="radio"
+                            name={`restock-${item.productId}`}
+                            checked={!!restockChoices[item.productId]}
+                            onChange={() => handleRestockChange(item.productId, true)}
+                            disabled={isSubmitting || !checkedItems[item.productId]}
+                          />
+                          Restock
+                        </label>
+                        <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px" }}>
+                          <input
+                            type="radio"
+                            name={`restock-${item.productId}`}
+                            checked={!restockChoices[item.productId]}
+                            onChange={() => handleRestockChange(item.productId, false)}
+                            disabled={isSubmitting || !checkedItems[item.productId]}
+                          />
+                          Don't restock
+                        </label>
+                      </div>
                     </td>
                   </tr>
                 ))}

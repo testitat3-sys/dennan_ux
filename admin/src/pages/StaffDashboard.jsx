@@ -26,6 +26,7 @@ import CatalogDownloadBanner from "../components/CatalogDownloadBanner";
 import Sidebar from "../components/Sidebar";
 import ProductPickerGrid from "../components/ProductPickerGrid";
 import LeadsPanel from "../components/LeadsPanel";
+import CashUpPanel from "../components/CashUpPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import {
   ClipboardList,
@@ -50,7 +51,8 @@ import {
   Copy,
   RotateCcw,
   Package,
-  Inbox
+  Inbox,
+  Wallet
 } from "lucide-react";
 
 const LAST_TAB_KEY = "dennan_staff_last_tab";
@@ -727,6 +729,7 @@ export default function StaffDashboard() {
         { key: "customers", label: "Customers CRM", icon: Users, isActive: activeTab === "customers", onClick: () => setActiveTab("customers") },
         { key: "leads", label: "Leads", icon: Inbox, badge: unresolvedLeadsCount, isActive: activeTab === "leads", onClick: () => setActiveTab("leads") },
         { key: "calendar", label: "Calendar", icon: CalendarIcon, badge: dueActivities?.length || 0, isActive: activeTab === "calendar", onClick: () => setActiveTab("calendar") },
+        { key: "cashup", label: "Balance Books", icon: Wallet, isActive: activeTab === "cashup", onClick: () => setActiveTab("cashup") },
       ],
     },
   ];
@@ -1501,6 +1504,11 @@ export default function StaffDashboard() {
           {/* TAB 4: CALENDAR / REMINDERS */}
           {activeTab === "calendar" && (
             <CalendarPanel token={token} onOpenOrder={setPendingOrderId} />
+          )}
+
+          {/* TAB: BALANCE BOOKS (end-of-day cash-up) */}
+          {activeTab === "cashup" && (
+            <CashUpPanel token={token} />
           )}
 
           {/* TAB 5: RETURNS / EXCHANGES */}

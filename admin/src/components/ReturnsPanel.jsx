@@ -1,13 +1,8 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { usePaginatedQuery, useMutation } from "convex/react";
+import { usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import {
   CheckCircle,
-  XCircle,
-  PackageCheck,
-  PackageX,
-  RotateCcw,
   X,
   ChevronRight,
 } from "lucide-react";
@@ -66,46 +61,9 @@ function ItemOutcomeLabel({ item }) {
   return <span className="returns-panel-meta" style={{ fontFamily: "var(--font-sans)" }}>—</span>;
 }
 
-/* ─── RETURN DETAIL MODAL ───────────────────────────────────────────── */
-function ReturnDetailModal({ ret, token, onClose, showToast, navigate }) {
-  const approveReturnItem = useMutation(api.returns.approveReturnItem);
-  const rejectReturnItem = useMutation(api.returns.rejectReturnItem);
-  const rejectReturn = useMutation(api.returns.rejectReturn);
-
-  const hasPendingItems = ret.items.some((i) => i.status === "pending");
+/* ─── RETURN DETAIL MODAL (read-only ledger) ─────────────────────────── */
+function ReturnDetailModal({ ret, onClose }) {
   const hasExchange = ret.exchangeItems && ret.exchangeItems.length > 0;
-  const isResolved = !hasPendingItems;
-
-  const handleApprove = async (returnItemId, restock) => {
-    try {
-      await approveReturnItem({ token, returnItemId, restock });
-      showToast?.(`Return item approved${restock ? " & restocked" : ""}.`, "success");
-    } catch (err) {
-      alert("Failed to approve return item: " + err.message);
-    }
-  };
-
-  const handleReject = async (returnItemId) => {
-    const rejectedReason = window.prompt("Reason for rejecting this item (optional):") || undefined;
-    try {
-      await rejectReturnItem({ token, returnItemId, rejectedReason });
-      showToast?.("Return item rejected.", "success");
-    } catch (err) {
-      alert("Failed to reject return item: " + err.message);
-    }
-  };
-
-  const handleRejectReturn = async () => {
-    const rejectedReason = window.prompt("Reason for refusing this return:") || undefined;
-    if (rejectedReason === undefined) return;
-    try {
-      await rejectReturn({ token, returnId: ret.returnId, rejectedReason });
-      showToast?.("Return refused and rejected.", "success");
-      onClose();
-    } catch (err) {
-      alert("Failed to reject return: " + err.message);
-    }
-  };
 
   return (
     <div className="modal-overlay is-open" onClick={(e) => e.target === e.currentTarget && onClose()} style={{ fontFamily: "var(--font-sans)" }}>
@@ -141,40 +99,17 @@ function ReturnDetailModal({ ret, token, onClose, showToast, navigate }) {
             )}
           </div>
 
-          {/* Header-level action buttons — only for unresolved returns */}
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexShrink: 0 }}>
-            {!isResolved && hasPendingItems && !hasExchange && (
-              <>
-                <button
-                  className="btn btn--secondary btn--sm"
-                  onClick={() => { onClose(); navigate(`/admin/returns/${ret.returnId}/trade`); }}
-                  title="Resolve by trading for a replacement product"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  <RotateCcw size={13} /> Trade
-                </button>
-                <button
-                  className="btn btn--ghost btn--danger btn--sm"
-                  onClick={handleRejectReturn}
-                  title="Refuse this return altogether"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  <XCircle size={13} /> Reject Return
-                </button>
-              </>
-            )}
-            <button
-              className="btn btn--ghost btn--sm"
-              onClick={onClose}
-              aria-label="Close"
-              style={{ padding: "6px" }}
-            >
-              <X size={18} />
-            </button>
-          </div>
+          <button
+            className="btn btn--ghost btn--sm"
+            onClick={onClose}
+            aria-label="Close"
+            style={{ padding: "6px", flexShrink: 0 }}
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        {/* ── Returned items table ── */}
+        {/* ── Returned items table (read-only ledger) ── */}
         <div className="table-wrap">
           <table className="data-table" style={{ fontFamily: "var(--font-sans)" }}>
             <thead>
@@ -184,8 +119,7 @@ function ReturnDetailModal({ ret, token, onClose, showToast, navigate }) {
                 <th style={{ fontFamily: "var(--font-sans)" }}>Unit Price</th>
                 <th style={{ fontFamily: "var(--font-sans)" }}>Reason</th>
                 <th style={{ fontFamily: "var(--font-sans)" }}>Source</th>
-                <th style={{ fontFamily: "var(--font-sans)" }}>Status</th>
-                {!isResolved && <th style={{ width: "150px", fontFamily: "var(--font-sans)" }}>Actions</th>}
+                <th style={{ fontFamily: "var(--font-sans)" }}>Outcome</th>
               </tr>
             </thead>
             <tbody>
@@ -198,58 +132,12 @@ function ReturnDetailModal({ ret, token, onClose, showToast, navigate }) {
                   <td style={{ fontFamily: "var(--font-sans)" }}>
                     {item.source === "delivery_failure" ? "Delivery Failure" : "Manual Return"}
                   </td>
-                  <td style={{ textTransform: "capitalize", fontFamily: "var(--font-sans)" }}>{item.status}</td>
-                  {!isResolved && (
-                    <td className="td-action">
-                      {item.status === "pending" ? (
-                        <div style={{ display: "flex", gap: "5px" }}>
-                          <button
-                            className="btn btn--secondary btn--sm"
-                            onClick={() => handleApprove(item._id, true)}
-                            title="Approve and restock to shelf"
-                            style={{ fontFamily: "var(--font-sans)" }}
-                          >
-                            <PackageCheck size={13} />
-                          </button>
-                          <button
-                            className="btn btn--secondary btn--sm"
-                            onClick={() => handleApprove(item._id, false)}
-                            title="Approve without restocking (item not sellable)"
-                            style={{ fontFamily: "var(--font-sans)" }}
-                          >
-                            <PackageX size={13} />
-                          </button>
-                          <button
-                            className="btn btn--ghost btn--danger btn--sm"
-                            onClick={() => handleReject(item._id)}
-                            title="Reject"
-                            style={{ fontFamily: "var(--font-sans)" }}
-                          >
-                            <XCircle size={13} />
-                          </button>
-                        </div>
-                      ) : (
-                        <ItemOutcomeLabel item={item} />
-                      )}
-                    </td>
-                  )}
+                  <td><ItemOutcomeLabel item={item} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
-        {/* Outcome labels for fully-resolved returns (no actions column) */}
-        {isResolved && (
-          <div style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-1)", fontFamily: "var(--font-sans)" }}>
-            {ret.items.map((item) => (
-              <div key={item._id} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", fontSize: "var(--label-md)" }}>
-                <span style={{ color: "var(--text-secondary)", fontWeight: 500, fontFamily: "var(--font-sans)" }}>{item.productName}:</span>
-                <ItemOutcomeLabel item={item} />
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* ── Exchange items ── */}
         {hasExchange && (
@@ -293,8 +181,7 @@ function ReturnDetailModal({ ret, token, onClose, showToast, navigate }) {
 }
 
 /* ─── RETURNS PANEL ───────────────────────────────────────────── */
-export default function ReturnsPanel({ token, showToast }) {
-  const navigate = useNavigate();
+export default function ReturnsPanel({ token }) {
   const todayStr = getTodayDateStr();
   const [startDate, setStartDate] = useState(todayStr);
   const [endDate, setEndDate] = useState(todayStr);
@@ -468,10 +355,7 @@ export default function ReturnsPanel({ token, showToast }) {
       {selectedReturn && (
         <ReturnDetailModal
           ret={selectedReturn}
-          token={token}
           onClose={() => setSelectedReturn(null)}
-          showToast={showToast}
-          navigate={navigate}
         />
       )}
     </div>

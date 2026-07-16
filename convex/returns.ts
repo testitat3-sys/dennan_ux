@@ -204,6 +204,7 @@ export const submitExchange = trackedMutation("returns.submitExchange", {
         productId: v.id("products"),
         quantity: v.number(),
         reason: v.optional(v.string()),
+        restock: v.boolean(),
       })
     ),
     exchangeItems: v.array(
@@ -280,6 +281,7 @@ export const submitExchange = trackedMutation("returns.submitExchange", {
         quantity: retItem.quantity,
         unitPrice: originalItem.unitPrice,
         reason: retItem.reason,
+        restock: retItem.restock,
       });
     }
 
@@ -351,6 +353,8 @@ export const submitExchange = trackedMutation("returns.submitExchange", {
       topUpCardOrderId,
     });
 
+    // Returned items are resolved immediately — the restock decision is made
+    // by whoever submits the return, not deferred to a later approval step.
     for (const item of enrichedReturnedItems) {
       await ctx.db.insert("returnItems", {
         returnId,
@@ -360,10 +364,16 @@ export const submitExchange = trackedMutation("returns.submitExchange", {
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         reason: item.reason,
-        status: "pending",
+        status: "approved",
         source: "manual_return",
+        approvedBy: staffUser._id,
+        approvedAt: now,
+        restocked: item.restock,
         createdAt: now,
       });
+      if (item.restock) {
+        await restockByBarcode(ctx, item.productId, item.quantity);
+      }
     }
 
     // Exchange items leave the shop immediately — decrement stock right away
@@ -395,7 +405,7 @@ export const submitExchange = trackedMutation("returns.submitExchange", {
       status: newStatus,
       history: [
         ...(order.history ?? []),
-        { status: newStatus, timestamp: now, note: `Exchange processed by ${staffUser.name ?? "Staff"} — awaiting approval` },
+        { status: newStatus, timestamp: now, note: `Exchange processed by ${staffUser.name ?? "Staff"}` },
       ],
     });
 
@@ -466,144 +476,6 @@ export const rejectReturnItem = mutation({
     });
 
     return { success: true };
-  },
-});
-
-/**
- * Resolves an existing pending return by trading it for replacement
- * product(s), instead of at submission time (submitExchange). Reuses the
- * same pricing/top-up rules — no cash refunds, difference forfeited on a
- * cheaper exchange — but operates on returnItems that already exist rather
- * than creating new ones. Does not touch returnItems.status; accepting the
- * returned goods into inventory (or rejecting them) stays a separate step
- * via approveReturnItem/rejectReturnItem.
- */
-export const attachExchangeToReturn = trackedMutation("returns.attachExchangeToReturn", {
-  args: {
-    token: v.string(),
-    returnId: v.id("returns"),
-    exchangeItems: v.array(
-      v.object({
-        productId: v.id("products"),
-        quantity: v.number(),
-      })
-    ),
-    topUp: v.optional(
-      v.object({
-        method: v.union(v.literal("physical"), v.literal("momo"), v.literal("card")),
-        amount: v.number(),
-        momoPhone: v.optional(v.string()),
-        cardOrderId: v.optional(v.string()),
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
-
-    if (args.exchangeItems.length === 0) {
-      throw new Error("At least one exchange item is required");
-    }
-
-    const returnEnvelope = await ctx.db.get(args.returnId);
-    if (!returnEnvelope) throw new Error("Return not found");
-
-    const existingExchangeItems = await ctx.db
-      .query("returnExchangeItems")
-      .withIndex("by_return", (q) => q.eq("returnId", args.returnId))
-      .collect();
-    if (existingExchangeItems.length > 0) {
-      throw new Error("This return has already been traded for replacement product(s)");
-    }
-
-    const order = await ctx.db.get(returnEnvelope.orderId);
-    if (!order) throw new Error("Order not found");
-
-    const returnItems = await ctx.db
-      .query("returnItems")
-      .withIndex("by_return", (q) => q.eq("returnId", args.returnId))
-      .collect();
-    if (returnItems.length === 0) throw new Error("Return has no items");
-
-    // Value of the returned items, proportionally discounted like the original order.
-    let returnedTotal = 0;
-    for (const item of returnItems) {
-      returnedTotal += item.quantity * item.unitPrice;
-    }
-    if (order.subtotal > 0 && order.discountAmount > 0) {
-      const discountPercentage = order.discountAmount / order.subtotal;
-      returnedTotal = Math.round(returnedTotal * (1 - discountPercentage));
-    }
-
-    // Validate + price the exchange selection at current product prices.
-    const enrichedExchangeItems = [];
-    let exchangeTotal = 0;
-    for (const exItem of args.exchangeItems) {
-      if (exItem.quantity <= 0) {
-        throw new Error(`Invalid exchange quantity ${exItem.quantity}`);
-      }
-      const product = await ctx.db.get(exItem.productId);
-      if (!product) {
-        throw new Error(`Exchange product ${exItem.productId} not found`);
-      }
-      const currentInventory = product.inventory ?? 0;
-      if (currentInventory < exItem.quantity) {
-        throw new Error(`Insufficient stock for ${product.name}: have ${currentInventory}, need ${exItem.quantity}`);
-      }
-      const hasActiveDiscount = product.discountPrice != null && product.discountExpiry != null && product.discountExpiry > Date.now();
-      const unitPrice = (hasActiveDiscount ? product.discountPrice : product.price) ?? 0;
-      enrichedExchangeItems.push({ productId: exItem.productId, name: product.name, quantity: exItem.quantity, unitPrice });
-      exchangeTotal += exItem.quantity * unitPrice;
-    }
-
-    // Pricier exchange requires a sufficient top-up; cheaper exchange forfeits
-    // the difference outright — there is never a cash refund either way.
-    const difference = exchangeTotal - returnedTotal;
-    let topUpAmount = 0;
-    let topUpMethod: "physical" | "momo" | "card" | undefined;
-    let topUpMomoPhone: string | undefined;
-    let topUpCardOrderId: string | undefined;
-    if (difference > 0) {
-      if (!args.topUp || args.topUp.amount < difference) {
-        throw new Error(
-          `Exchange total (UGX ${exchangeTotal.toLocaleString()}) exceeds the returned value ` +
-          `(UGX ${returnedTotal.toLocaleString()}) by UGX ${difference.toLocaleString()}, but no sufficient top-up was provided.`
-        );
-      }
-      topUpAmount = args.topUp.amount;
-      topUpMethod = args.topUp.method;
-      topUpMomoPhone = args.topUp.momoPhone;
-      topUpCardOrderId = args.topUp.cardOrderId;
-    }
-
-    const now = Date.now();
-
-    // Exchange items leave the shop immediately.
-    for (const item of enrichedExchangeItems) {
-      await ctx.db.insert("returnExchangeItems", {
-        returnId: args.returnId,
-        orderId: returnEnvelope.orderId,
-        productId: item.productId,
-        productName: item.name,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        createdAt: now,
-      });
-      await restockByBarcode(ctx, item.productId, -item.quantity);
-      await appendAttribute(ctx, "products", item.productId, "sold_via_exchange");
-    }
-
-    await appendAttribute(ctx, "orders", returnEnvelope.orderId, "fulfilled_via_exchange", args.returnId.toString());
-
-    await ctx.db.patch(args.returnId, {
-      exchangeTotal,
-      returnedTotal,
-      topUpAmount,
-      topUpMethod,
-      topUpMomoPhone,
-      topUpCardOrderId,
-    });
-
-    return { success: true, returnedTotal, exchangeTotal, topUpAmount };
   },
 });
 

@@ -42,7 +42,6 @@ const FUNCTION_AVG_BYTES = {
   "returns.submitReturn": TABLE_AVG_BYTES.returnItems,
   "returns.submitExchange": TABLE_AVG_BYTES.returnItems,
   "returns.approveReturnItem": TABLE_AVG_BYTES.returnItems,
-  "returns.attachExchangeToReturn": TABLE_AVG_BYTES.returnItems,
   "returns.rejectReturn": TABLE_AVG_BYTES.returnItems,
   "returns.getPendingReturns": TABLE_AVG_BYTES.returns,
   "returns.getReturnItemsForOrder": TABLE_AVG_BYTES.returnItems,

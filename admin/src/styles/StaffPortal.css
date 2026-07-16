@@ -65,18 +65,6 @@
   }
 }
 
-/* Orchid accent stripe */
-.login-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: linear-gradient(180deg, var(--color-brand-primary) 0%, var(--color-brand-secondary) 100%);
-  border-radius: 0 0 0 var(--radius-2xl);
-}
-
 /* Soft orchid glow blob */
 .login-card::after {
   content: '';
@@ -95,30 +83,12 @@
   margin-bottom: var(--space-9);
 }
 
-.login-logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-secondary));
+.login-brand-logo {
+  display: inline-block;
+  max-width: 220px;
+  width: 100%;
+  height: auto;
   margin-bottom: var(--space-4);
-  box-shadow: 0 4px 16px var(--shadow-primary);
-}
-
-.login-logo svg {
-  width: 28px;
-  height: 28px;
-  color: white;
-}
-
-.login-brand-title {
-  display: block;
-  font-family: var(--font-editorial);
-  font-size: var(--headline-md);
-  color: var(--text-primary);
-  line-height: 1.1;
 }
 
 .login-brand-sub {

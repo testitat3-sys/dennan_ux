@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePaginatedQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import OrderDetailModal from "./OrderDetailModal";
@@ -36,6 +37,7 @@ function formatDuration(ms) {
 }
 
 export default function OnlineOrdersPanel({ token }) {
+  const navigate = useNavigate();
   const [ordersTab, setOrdersTab] = useState("pending");
   const [viewingOrder, setViewingOrder] = useState(null);
   const [handoverOrderId, setHandoverOrderId] = useState(null);
@@ -206,6 +208,7 @@ export default function OnlineOrdersPanel({ token }) {
         <OrderDetailModal
           order={viewingOrder}
           onClose={() => setViewingOrder(null)}
+          onOpenReturn={(order) => navigate(`/admin/orders/${order._id}/exchange`)}
           onClaim={(id) => { handleClaimOrder(id); setViewingOrder(null); }}
           onDispatch={(id) => { setViewingOrder(null); setHandoverOrderId(id); }}
           onComplete={(id) => { handleCompleteOrder(id); setViewingOrder(null); }}

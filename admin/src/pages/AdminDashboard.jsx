@@ -26,6 +26,7 @@ import ErrorLogSettingsPanel from "../components/ErrorLogSettingsPanel";
 import ProductDisplaySettingsPanel from "../components/ProductDisplaySettingsPanel";
 import DbIOPanel from "../components/DbIOPanel";
 import LeadsPanel from "../components/LeadsPanel";
+import CashUpPanel from "../components/CashUpPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import {
   LayoutDashboard,
@@ -47,7 +48,8 @@ import {
   Package,
   Settings,
   Inbox,
-  Database
+  Database,
+  Wallet
 } from "lucide-react";
 
 const LAST_TAB_KEY = "dennan_admin_last_tab";
@@ -239,6 +241,7 @@ export default function AdminDashboard() {
         { key: "leads", label: "Leads", icon: Inbox, badge: unresolvedLeadsCount, isActive: activeTab === "leads", onClick: () => setActiveTab("leads") },
         { key: "calendar", label: "Calendar", icon: CalendarIcon, badge: dueActivities?.length || 0, isActive: activeTab === "calendar", onClick: () => setActiveTab("calendar") },
         { key: "staff", label: "Staff Roster", icon: UserCheck, isActive: activeTab === "staff", onClick: () => setActiveTab("staff") },
+        { key: "cashup", label: "Balance Books", icon: Wallet, isActive: activeTab === "cashup", onClick: () => setActiveTab("cashup") },
       ],
     },
     {
@@ -400,16 +403,9 @@ export default function AdminDashboard() {
                               <td>
                                 <button
                                   className="btn btn--secondary btn--sm"
-                                  onClick={() => {
-                                    const hasExchange = ret.exchangeItems && ret.exchangeItems.length > 0;
-                                    if (hasExchange) {
-                                      setActiveTab("returns");
-                                    } else {
-                                      navigate(`/admin/returns/${ret.returnId}/trade`);
-                                    }
-                                  }}
+                                  onClick={() => setActiveTab("returns")}
                                 >
-                                  {ret.exchangeItems && ret.exchangeItems.length > 0 ? "Review Return" : "Trade Exchange"}
+                                  Review Return
                                 </button>
                               </td>
                             </tr>
@@ -625,6 +621,11 @@ export default function AdminDashboard() {
           {activeTab === "dbio" && (
             <DbIOPanel token={token} />
           )}
+
+          {/* TAB 11: BALANCE BOOKS (end-of-day cash-up) */}
+          {activeTab === "cashup" && (
+            <CashUpPanel token={token} />
+          )}
         </main>
       </div>
 
@@ -645,6 +646,7 @@ export default function AdminDashboard() {
         <OrderDetailModal
           order={viewingOrder}
           onClose={() => setViewingOrder(null)}
+          onOpenReturn={(order) => navigate(`/admin/orders/${order._id}/exchange`)}
           onClaim={(id) => { handleClaimOrder(id); setViewingOrder(null); }}
           onDispatch={() => { setHandoverOrder(viewingOrder); setViewingOrder(null); }}
           onComplete={(id) => { handleCompleteOrder(id); setViewingOrder(null); }}

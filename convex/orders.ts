@@ -11,6 +11,7 @@ import { generateUniqueVoucherCode } from "./giftVouchers";
 import { computeDeliveryQuote, computeDeliveryQuoteByName } from "./delivery";
 import { applyStockCounterDelta } from "./stockCounters";
 import { trackedQuery, trackedMutation } from "./lib/ioTracking";
+import { restockByBarcode } from "./returns";
 
 async function syncStockDeductionByBarcode(
   ctx: MutationCtx,
@@ -939,9 +940,9 @@ export const completeOrder = mutation({
 });
 
 // Replaces the old markOrderFailed: staff report a failed/undelivered order and, in
-// the same atomic mutation, submit the affected items into the returns-approval
-// pipeline (source: "delivery_failure"). No inventory is restocked here — that only
-// happens once an admin approves each returnItems row (see convex/returns.ts).
+// the same atomic mutation, resolve each affected item immediately — restock or
+// don't restock, chosen per item by the reporting staff member (source:
+// "delivery_failure"). No later approval step is needed.
 export const reportDeliveryFailure = trackedMutation("orders.reportDeliveryFailure", {
   args: {
     token: v.string(),
@@ -951,6 +952,7 @@ export const reportDeliveryFailure = trackedMutation("orders.reportDeliveryFailu
         productId: v.id("products"),
         quantity: v.number(),
         reason: v.optional(v.string()),
+        restock: v.boolean(),
       })
     ),
     note: v.optional(v.string()),
@@ -998,7 +1000,7 @@ export const reportDeliveryFailure = trackedMutation("orders.reportDeliveryFailu
       status: "failed",
       timestamp: failedAt,
       note: args.failedItems.length > 0
-        ? `Marked as failed/undelivered — ${args.failedItems.length} item(s) pending return approval`
+        ? `Marked as failed/undelivered — ${args.failedItems.length} item(s) processed`
         : "Marked as failed/undelivered",
     });
 
@@ -1028,10 +1030,16 @@ export const reportDeliveryFailure = trackedMutation("orders.reportDeliveryFailu
           quantity: failedItem.quantity,
           unitPrice: originalItem.unitPrice,
           reason: failedItem.reason,
-          status: "pending",
+          status: "approved",
           source: "delivery_failure",
+          approvedBy: user._id,
+          approvedAt: failedAt,
+          restocked: failedItem.restock,
           createdAt: failedAt,
         });
+        if (failedItem.restock) {
+          await restockByBarcode(ctx, failedItem.productId, failedItem.quantity);
+        }
       }
     }
 
@@ -1708,7 +1716,7 @@ function resolveOrderChannel(order: any): string {
 
 // Shared date-range order fetch — pushes the range into the `by_createdAt`
 // index instead of collecting the whole table and filtering in memory.
-async function getOrdersInDateRange(ctx: QueryCtx, rangeStartMs: number, rangeEndMs: number) {
+export async function getOrdersInDateRange(ctx: QueryCtx, rangeStartMs: number, rangeEndMs: number) {
   return ctx.db
     .query("orders")
     .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
@@ -1717,7 +1725,7 @@ async function getOrdersInDateRange(ctx: QueryCtx, rangeStartMs: number, rangeEn
 
 // Per-order-payments lookup scoped to an already date-narrowed set of orders,
 // replacing a full `orderPayments` table collect with N indexed point-lookups.
-async function getPaymentsByOrderId(ctx: QueryCtx, orders: { _id: any }[]) {
+export async function getPaymentsByOrderId(ctx: QueryCtx, orders: { _id: any }[]) {
   const paymentsPerOrder = await Promise.all(
     orders.map((o) =>
       ctx.db
@@ -1736,7 +1744,7 @@ async function getPaymentsByOrderId(ctx: QueryCtx, orders: { _id: any }[]) {
 // For a single order, returns its attributed tenders: real orderPayments rows
 // if any exist (with their method-specific detail fields), else a single
 // fallback tender built from the order's summary paymentMethod/grandTotal fields.
-function attributeOrderPayments(
+export function attributeOrderPayments(
   order: any,
   paymentsByOrderId: Map<string, { method: string; amount: number; momoPhone?: string; cardOrderId?: string; voucherCode?: string }[]>
 ): { method: string; amount: number; momoPhone?: string; cardOrderId?: string; voucherCode?: string }[] {

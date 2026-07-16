@@ -33,6 +33,7 @@ export default function OrderExchangePage() {
   const sidebarGroups = getReturnPageSidebarGroups(user?.accountRole, navigate);
 
   const [returnQuantities, setReturnQuantities] = useState({});
+  const [restockChoices, setRestockChoices] = useState({});
   const [exchangeCart, setExchangeCart] = useState([]);
   const [exchangeSearch, setExchangeSearch] = useState("");
   const [topUpMethod, setTopUpMethod] = useState("physical");
@@ -58,10 +59,13 @@ export default function OrderExchangePage() {
   useEffect(() => {
     if (order && order.items) {
       const initial = {};
+      const initialRestock = {};
       order.items.forEach(item => {
         initial[item.productId] = 0;
+        initialRestock[item.productId] = true;
       });
       setReturnQuantities(initial);
+      setRestockChoices(initialRestock);
     }
   }, [order]);
 
@@ -72,6 +76,10 @@ export default function OrderExchangePage() {
       ...prev,
       [productId]: clamped
     }));
+  };
+
+  const handleRestockChange = (productId, restock) => {
+    setRestockChoices(prev => ({ ...prev, [productId]: restock }));
   };
 
   // Value of returned items, proportionally discounted like the original order —
@@ -145,7 +153,7 @@ export default function OrderExchangePage() {
     e.preventDefault();
 
     const returnedItems = Object.entries(returnQuantities)
-      .map(([productId, quantity]) => ({ productId, quantity }))
+      .map(([productId, quantity]) => ({ productId, quantity, restock: !!restockChoices[productId] }))
       .filter(item => item.quantity > 0);
 
     if (returnedItems.length === 0) {
@@ -263,6 +271,7 @@ export default function OrderExchangePage() {
                 <th>Ordered Qty</th>
                 <th>Unit Price</th>
                 <th style={{ width: "120px" }}>Return Qty</th>
+                <th style={{ width: "180px" }}>Restock?</th>
               </tr>
             </thead>
             <tbody>
@@ -286,6 +295,32 @@ export default function OrderExchangePage() {
                       required
                       disabled={isSubmitting}
                     />
+                  </td>
+                  <td>
+                    {(returnQuantities[item.productId] ?? 0) > 0 && (
+                      <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px" }}>
+                          <input
+                            type="radio"
+                            name={`restock-${item.productId}`}
+                            checked={!!restockChoices[item.productId]}
+                            onChange={() => handleRestockChange(item.productId, true)}
+                            disabled={isSubmitting}
+                          />
+                          Restock
+                        </label>
+                        <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px" }}>
+                          <input
+                            type="radio"
+                            name={`restock-${item.productId}`}
+                            checked={!restockChoices[item.productId]}
+                            onChange={() => handleRestockChange(item.productId, false)}
+                            disabled={isSubmitting}
+                          />
+                          Don't restock
+                        </label>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

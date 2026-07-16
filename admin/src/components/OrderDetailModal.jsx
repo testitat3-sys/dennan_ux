@@ -277,7 +277,7 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, onClaim
                   )}
                 </>
               )}
-              {["delivered", "partially_returned"].includes(order.status) && onOpenReturn && (
+              {!["preparing", "packing", "dispatched"].includes(order.status) && onOpenReturn && (
                 <button
                   className="btn btn--secondary btn--md btn--full-width"
                   onClick={() => onOpenReturn(order)}

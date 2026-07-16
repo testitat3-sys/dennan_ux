@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useStaffAuth } from "../hooks/useStaffAuth";
-import { ShoppingBag, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
+import sosLogo from "../assets/SOS.png";
 
 export default function StaffLogin() {
   const { login } = useStaffAuth();
@@ -31,10 +32,7 @@ export default function StaffLogin() {
       <main className="login-page">
         <div className="login-card" role="main">
           <div className="login-brand">
-            <div className="login-logo" aria-hidden="true">
-              <ShoppingBag size={28} color="white" />
-            </div>
-            <span className="login-brand-title">Dennan</span>
+            <img src={sosLogo} alt="Dennan" className="login-brand-logo" />
             <span className="login-brand-sub">Staff Portal</span>
           </div>
 

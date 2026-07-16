@@ -106,7 +106,7 @@
   line-height: 1.5;
 }
 
-.success-actions {
+.review-modal__success .success-actions {
   width: 100%;
   max-width: 300px;
 }
