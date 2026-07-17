@@ -252,6 +252,12 @@
 
 .plp__grid {}
 
+.plp__load-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) 0;
+}
+
 /* Animations */
 @keyframes fadeUp {
   from {

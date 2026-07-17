@@ -635,14 +635,6 @@ export default function StaffDashboard() {
 
   const tendersRemainingToPay = posPayableTotal - tenders.reduce((sum, t) => sum + t.amount, 0);
 
-  React.useEffect(() => {
-    if (tenders.length === 1) {
-      setTenders(prev => [
-        { ...prev[0], amount: posPayableTotal }
-      ]);
-    }
-  }, [posPayableTotal, tenders.length]);
-
   const initials = (name) => (name || "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
 
   // Helper: map an order from history list to ReceiptModal shape
@@ -724,7 +716,7 @@ export default function StaffDashboard() {
     },
     {
       id: "customersPlanning",
-      label: "Customers & Planning",
+      label: "Customers",
       items: [
         { key: "customers", label: "Customers CRM", icon: Users, isActive: activeTab === "customers", onClick: () => setActiveTab("customers") },
         { key: "leads", label: "Leads", icon: Inbox, badge: unresolvedLeadsCount, isActive: activeTab === "leads", onClick: () => setActiveTab("leads") },
@@ -746,7 +738,6 @@ export default function StaffDashboard() {
       <div className="admin-layout">
         <Sidebar
           storageKey="dennan_sidebar_collapsed_staff"
-          brandSub="Growth Team"
           user={user}
           onLogout={logout}
           groups={staffSidebarGroups}

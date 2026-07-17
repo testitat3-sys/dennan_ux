@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useQuery } from 'convex/react';
+import { useQuery, useConvexAuth } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useLeadCapture } from '../context/LeadCaptureContext';
 import { formatPrice } from '../utils/priceUtils';
 import { stripBrandFromName } from '../utils/productNameUtils';
 import Toast from '../components/ui/Toast';
@@ -12,8 +13,7 @@ import Button from '../components/ui/Button';
 import PDPSkeleton from '../components/ui/PDPSkeleton';
 import Page from '../components/ui/Page';
 import Card from '../components/ui/Card';
-import CardGrid from '../components/ui/CardGrid';
-import { FileText, ClipboardList, MessageSquare, Flame } from 'lucide-react';
+import { Flame, Heart } from 'lucide-react';
 import ReviewModal from '../components/checkout/ReviewModal';
 import DefaultProductImage from '../components/products/DefaultProductImage';
 import './PDP.css';
@@ -68,21 +68,12 @@ const buildFactBullets = (product) => {
   return bullets;
 };
 
-const formatUnitsSold = (units) => {
-  if (units >= 1000) {
-    return `HOT! ${(units / 1000).toFixed(1).replace(/\.0$/, '')}k+ people have just bought this`;
-  }
-  if (units > 20) {
-    const rounded = Math.floor(units / 5) * 5;
-    return `HOT! ${rounded}+ people have just bought this`;
-  }
-  return `HOT! ${units} ${units === 1 ? 'person has' : 'people have'} just bought this`;
-};
-
 const PDP = () => {
   const { productId } = useParams();
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { isAuthenticated } = useConvexAuth();
+  const { hasLeadInfo, openLeadModal } = useLeadCapture();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -91,8 +82,6 @@ const PDP = () => {
   const [selectedSize, setSelectedSize] = useState('Newborn');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [activeTab, setActiveTab] = useState('details');
-  const [notifyBackInStock, setNotifyBackInStock] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showReviewModal, setShowReviewModal] = useState(false);
 
@@ -128,7 +117,7 @@ const PDP = () => {
 
     // Stagger parent containers on scroll
     const animSections = document.querySelectorAll(
-      '.pdp__gallery, .pdp__info, .pdp__details, .pdp__tab-content'
+      '.pdp__grid, .pdp__details'
     );
 
     animSections.forEach((section) => {
@@ -141,7 +130,7 @@ const PDP = () => {
     return () => {
       observer.disconnect();
     };
-  }, [loading, product, activeTab]);
+  }, [loading, product]);
 
   if (loading) {
     return <PDPSkeleton />;
@@ -226,7 +215,7 @@ const PDP = () => {
   };
 
   const handleToggleWishlist = () => {
-    toggleWishlist(product, notifyBackInStock);
+    toggleWishlist(product);
     if (!isSaved) {
       setToastMessage(`${displayName} saved to wishlist!`);
     } else {
@@ -235,14 +224,18 @@ const PDP = () => {
     setShowToast(true);
   };
 
-  const handleNotifyToggle = () => {
-    const nextState = !notifyBackInStock;
-    setNotifyBackInStock(nextState);
-    if (nextState) {
-      toggleWishlist(product, true);
-      setToastMessage(`Back-in-stock notifications activated!`);
-      setShowToast(true);
+  const handleRemindClick = () => {
+    if (!isAuthenticated && !hasLeadInfo) {
+      openLeadModal({
+        source: 'launch_oos',
+        title: 'Get notified when back in stock',
+        subtext: `Leave your details and we'll let you know the moment ${displayName} is back.`,
+        specifications: [displayName],
+        onSuccess: () => toggleWishlist(product, true),
+      });
+      return;
     }
+    toggleWishlist(product, true);
   };
 
   const sizes = ['Newborn', '0-3m', '3-6m', '6-9m'];
@@ -314,155 +307,92 @@ const PDP = () => {
         </nav>
 
         <div className="pdp__grid">
-          {/* Left: Image Gallery */}
-          <div className="pdp__gallery">
-            <div className="pdp__main-image">
-              {/* Localized Shimmer Overlay */}
-              {!loadedImages[activeImageIndex] && displayImages[activeImageIndex] !== 'placeholder' && (
-                <div className="skeleton-shimmer" style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  zIndex: 2,
-                  backgroundColor: 'var(--skeleton-base)',
-                  borderRadius: 'var(--radius-lg)'
-                }} />
-              )}
-
-              {displayImages.length > 1 && activeImageIndex > 0 && (
-                <Button
-                  variant="ghost"
-                  className="pdp__carousel-arrow pdp__carousel-arrow--left"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveImageIndex(prev => Math.max(0, prev - 1));
-                  }}
-                  aria-label="Previous image"
-                  style={{ zIndex: 3 }}
-                  icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>}
-                />
-              )}
-
-              <div
-                className="pdp__carousel-track"
-                style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
+          {/* Vertical thumbnail rail */}
+          <div className="pdp__rail">
+            {displayImages.length > 1 && displayImages.map((imgUrl, idx) => (
+              <button
+                key={idx}
+                className={`pdp__rail-item ${activeImageIndex === idx ? 'is-active' : ''}`}
+                onClick={() => setActiveImageIndex(idx)}
               >
-                {displayImages.map((imgUrl, idx) => (
-                  <div className="pdp__carousel-slide" key={idx}>
-                    {imgUrl === 'placeholder' ? (
-                      <div style={{ width: '100%', height: '100%', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-                        <DefaultProductImage />
-                      </div>
-                    ) : (
-                      <img
-                        src={imgUrl}
-                        alt={`${displayName} view ${idx + 1}`}
-                        onLoad={() => setLoadedImages(prev => ({ ...prev, [idx]: true }))}
-                        onError={() => setLoadedImages(prev => ({ ...prev, [idx]: true }))}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {displayImages.length > 1 && activeImageIndex < displayImages.length - 1 && (
-                <Button
-                  variant="ghost"
-                  className="pdp__carousel-arrow pdp__carousel-arrow--right"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveImageIndex(prev => Math.min(displayImages.length - 1, prev + 1));
-                  }}
-                  aria-label="Next image"
-                  style={{ zIndex: 3 }}
-                  icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>}
-                />
-              )}
-            </div>
-
-            <div className="pdp__thumbnails">
-              {displayImages.length > 1 && displayImages.map((imgUrl, idx) => (
-                <div
-                  key={idx}
-                  className={`pdp__thumbnail ${activeImageIndex === idx ? 'is-active' : ''}`}
-                  onClick={() => setActiveImageIndex(idx)}
-                >
-                  {imgUrl === 'placeholder' ? (
-                    <div style={{ width: '100%', height: '100%', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                      <DefaultProductImage />
-                    </div>
-                  ) : (
-                    <img src={imgUrl} alt={`${displayName} view ${idx + 1}`} />
-                  )}
-                </div>
-              ))}
-            </div>
+                {imgUrl === 'placeholder' ? (
+                  <DefaultProductImage />
+                ) : (
+                  <img src={imgUrl} alt={`${displayName} view ${idx + 1}`} />
+                )}
+              </button>
+            ))}
           </div>
 
-          {/* Right: Product Info */}
-          <div className="pdp__info">
-            <div className="pdp__header">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="pdp__brand">{product.brand}</span>
-                {((product.unitsSold !== undefined && product.unitsSold > 0) || import.meta.env.DEV) && (
-                  <span className="pdp__sales-pill">
-                    <Flame size={13} strokeWidth={2.5} fill="currentColor" />
-                    {formatUnitsSold(product.unitsSold && product.unitsSold > 0 ? product.unitsSold : 28)}
+          {/* Main image */}
+          <div className="pdp__main-image">
+            {!loadedImages[activeImageIndex] && displayImages[activeImageIndex] !== 'placeholder' && (
+              <div className="skeleton-shimmer" style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 2,
+                backgroundColor: 'var(--skeleton-base)',
+                borderRadius: 'var(--radius-lg)'
+              }} />
+            )}
+            {displayImages[activeImageIndex] === 'placeholder' ? (
+              <DefaultProductImage />
+            ) : (
+              <img
+                src={displayImages[activeImageIndex]}
+                alt={displayName}
+                onLoad={() => setLoadedImages(prev => ({ ...prev, [activeImageIndex]: true }))}
+                onError={() => setLoadedImages(prev => ({ ...prev, [activeImageIndex]: true }))}
+              />
+            )}
+          </div>
+
+          {/* Buy box */}
+          <div className="pdp__buybox-col">
+            <Card className="pdp__buybox" hasShadow>
+              <span className="pdp__brand">{product.brand}</span>
+              <h1 className="pdp__title">{displayName}</h1>
+
+              <div className="pdp__urgency">
+                {product.unitsSold > 0 && (
+                  <span className="pdp__urgency-pill">
+                    <Flame size={13} strokeWidth={2.5} fill="currentColor" /> Hot: {product.unitsSold.toLocaleString()} people have just bought this
                   </span>
                 )}
+                {isOutOfStock && <span className="pdp__urgency-pill pdp__urgency-pill--red">Out of Stock</span>}
               </div>
-              <h1 className="pdp__title">{displayName}</h1>
+
               <div className="pdp__price-wrap">
                 <span className="pdp__price">{formatPrice(product.price)}</span>
                 {product.wasPrice && <span className="pdp__was-price">{formatPrice(product.wasPrice)}</span>}
               </div>
-            </div>
 
-            {/* Age Fit Scale */}
-            <div className="pdp__age-scale">
-              <div className="age-scale__header">
-                <span className="age-scale__label">Age Appropriateness</span>
-                <span className="age-scale__status">{product.ageScale?.label}</span>
-              </div>
-              <div className="age-scale__bar">
-                <div
-                  className="age-scale__progress"
-                  style={{ width: `${(product.ageScale?.current || 0.5) * 100}%` }}
-                >
-                  <div className="age-scale__pointer"></div>
-                </div>
-                <div className="age-scale__markers">
-                  <span>Expectant</span>
-                  <span>Newborn</span>
-                  <span>Toddler</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Product Badges & Tags (DesignSystem) */}
-            <div className="pdp__tags-list">
-              {isOutOfStock && (
-                <span className="tag tag--support-red">
-                  Out of Stock
-                </span>
-              )}
-              {product.tags && product.tags
-                .filter(tag => tag && tag.text && tag.text.toLowerCase() !== 'in stock')
-                .map((tag, idx) => {
-                  const tagClass = `tag tag--${tag.type || 'primary'}`;
-                  return (
-                    <span key={idx} className={tagClass}>
+              {/* Product Tags */}
+              <div className="pdp__tags-list">
+                {product.tags && product.tags
+                  .filter(tag => tag && tag.text && tag.text.toLowerCase() !== 'in stock')
+                  .map((tag, idx) => (
+                    <span key={idx} className="pdp__tag">
                       {tag.text}
                     </span>
-                  );
-                })
-              }
-            </div>
+                  ))
+                }
+              </div>
 
-            {/* Selection Controls Row */}
-            <div className="pdp__controls-row">
+              {/* Age Fit Scale */}
+              <div className="pdp__age-scale">
+                <div className="age-scale__header">
+                  <span>Age Appropriateness</span>
+                  <span>{product.ageScale?.label}</span>
+                </div>
+                <div className="age-scale__track">
+                  <div className="age-scale__fill" style={{ width: `${(product.ageScale?.current || 0.5) * 100}%` }} />
+                </div>
+              </div>
+
               {product.category === 'Apparel' && (
                 <div className="pdp__sizes">
                   <span className="control-label">Select Size</span>
@@ -483,143 +413,93 @@ const PDP = () => {
                 </div>
               )}
 
-              <div className="pdp__quantity">
-                <span className="control-label">Quantity</span>
-                <div className="stepping-component pdp__stepping">
-                  <Button variant="ghost" size="sm" onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={isOutOfStock}>—</Button>
-                  <span>{quantity}</span>
-                  <Button variant="ghost" size="sm" onClick={() => setQuantity(quantity + 1)} disabled={isOutOfStock}>+</Button>
+              <div className="pdp__row">
+                <div className="pdp__quantity">
+                  <span className="control-label">Quantity</span>
+                  <div className="pdp__stepper">
+                    <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={isOutOfStock}>−</button>
+                    <span>{quantity}</span>
+                    <button onClick={() => setQuantity((q) => q + 1)} disabled={isOutOfStock}>+</button>
+                  </div>
+                </div>
+                <div className="pdp__wishlist-btn">
+                  <Button
+                    variant="secondary"
+                    onClick={handleToggleWishlist}
+                    icon={<Heart size={18} fill={isSaved ? 'var(--color-brand-primary)' : 'none'} stroke={isSaved ? 'var(--color-brand-primary)' : 'currentColor'} />}
+                  >
+                    {isSaved ? 'Saved' : 'Save'}
+                  </Button>
                 </div>
               </div>
-            </div>
 
-            {/* Actions Row */}
-            <div className="pdp__actions" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="pdp__actions-row">
-                {/* <Button variant='primary'>test</Button> */}
-                <Button
-                  variant="primary"
-                  // className="pdp__add-btn"
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock}
-                >
-                  Add to cart
-                </Button>
-
-                <Button
-                  variant="secondary"
-                  className="pdp__wishlist-btn"
-                  onClick={handleToggleWishlist}
-                  icon={
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill={isSaved ? "var(--color-brand-primary)" : "none"}
-                      stroke={isSaved ? "var(--color-brand-primary)" : "currentColor"}
-                      strokeWidth="2"
-                    >
-                      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                    </svg>
-                  }
-                >
-                  {isSaved ? 'In Wishlist' : 'Save to Wishlist'}
-                </Button>
+              <div className="pdp__cta">
+                {isOutOfStock ? (
+                  <Button variant="primary" fullWidth onClick={handleRemindClick}>
+                    {isSaved ? "You'll be notified" : 'Remind me when back in stock'}
+                  </Button>
+                ) : (
+                  <Button variant="primary" fullWidth onClick={handleAddToCart}>
+                    Add to cart · {formatPrice(product.price * quantity)}
+                  </Button>
+                )}
               </div>
-
-              {isOutOfStock && (
-                <Card variant="compact" hasShadow={false} className="pdp__notify-block" style={{
-                  backgroundColor: 'var(--surface-container-low)',
-                  padding: '16px',
-                  borderRadius: 'var(--radius-md)',
-                  width: '100%',
-                  marginTop: '4px'
-                }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={notifyBackInStock}
-                      onChange={handleNotifyToggle}
-                      style={{ transform: 'scale(1.15)', accentColor: 'var(--color-brand-primary)' }}
-                    />
-                    <span style={{ fontSize: 'var(--body-sm)', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                      Remind me
-                    </span>
-                  </label>
-                </Card>
-              )}
-            </div>
+            </Card>
           </div>
         </div>
       </Page.Section>
 
-      {/* Product Details Tabs */}
+      {/* Mobile sticky add-to-cart bar */}
+      <div className="pdp__sticky-bar">
+        <div className="pdp__sticky-price">{formatPrice(product.price)}</div>
+        <div className="pdp__sticky-cta">
+          {isOutOfStock ? (
+            <Button variant="primary" onClick={handleRemindClick}>
+              {isSaved ? "You'll be notified" : 'Remind me when back in stock'}
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={handleAddToCart}>
+              Add to cart
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Product Details — stacked sections (Option C layout, no tabs) */}
       <Page.Section className="pdp__details">
-        <div className="pdp__tabs">
-          <Button
-            variant={activeTab === 'details' ? 'primary' : 'ghost'}
-            className={`pdp__tab ${activeTab === 'details' ? 'is-active' : ''}`}
-            onClick={() => setActiveTab('details')}
-          >
-            <FileText className={`pdp__tab-icon ${activeTab === 'details' ? 'is-active' : ''}`} />
-            <span>Description</span>
-          </Button>
-          <Button
-            variant={activeTab === 'specs' ? 'primary' : 'ghost'}
-            className={`pdp__tab ${activeTab === 'specs' ? 'is-active' : ''}`}
-            onClick={() => setActiveTab('specs')}
-          >
-            <ClipboardList className={`pdp__tab-icon ${activeTab === 'specs' ? 'is-active' : ''}`} />
-            <span>Specifications</span>
-          </Button>
-          <Button
-            variant={activeTab === 'reviews' ? 'primary' : 'ghost'}
-            className={`pdp__tab pdp__tab--reviews ${activeTab === 'reviews' ? 'is-active' : ''}`}
-            onClick={() => setActiveTab('reviews')}
-          >
-            <MessageSquare className={`pdp__tab-icon ${activeTab === 'reviews' ? 'is-active' : ''}`} />
-            <span>Reviews ({reviews?.length || 0})</span>
-          </Button>
+        <div className="pdp__section">
+          <h2>Description</h2>
+          <div className="pdp__description">
+            <p className="pdp__answer-first">{answerFirstSummary}</p>
+            <p>{product.description}</p>
+            {factBullets.length > 0 && (
+              <ul className="pdp__feature-list">
+                {factBullets.map((fact, idx) => (
+                  <li key={idx}>{fact}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
-        <div className="pdp__tab-content">
-          {activeTab === 'details' && (
-            <div className="pdp__description">
-              <p className="pdp__answer-first">{answerFirstSummary}</p>
-              <p>{product.description}</p>
-              {factBullets.length > 0 && (
-                <ul className="pdp__feature-list">
-                  {factBullets.map((fact, idx) => (
-                    <li key={idx}>{fact}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'specs' && (
-            <div className="pdp__specs">
-              <table className="specs-table">
-                <tbody>
-                  {product.specifications?.map((spec, idx) => (
-                    <tr key={idx}>
-                      <th>{spec.label}</th>
-                      <td>{spec.value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {activeTab === 'reviews' && renderReviewsList()}
+        <div className="pdp__section">
+          <h2>Specifications</h2>
+          <table className="specs-table">
+            <tbody>
+              {product.specifications?.map((spec, idx) => (
+                <tr key={idx}>
+                  <th>{spec.label}</th>
+                  <td>{spec.value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </Page.Section>
 
-      {/* Mobile Reviews Section (only visible on mobile, positioned below the tabs) */}
-      <Page.Section className="pdp__mobile-reviews">
-        <h3 className="pdp__mobile-reviews-title">Reviews ({reviews?.length || 0})</h3>
-        {renderReviewsList()}
+        <div className="pdp__section">
+          <h2>Reviews ({reviews?.length || 0})</h2>
+          {renderReviewsList()}
+        </div>
       </Page.Section>
 
       <Toast

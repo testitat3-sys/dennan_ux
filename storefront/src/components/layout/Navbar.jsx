@@ -25,26 +25,26 @@ const exploreBrands = REAL_BRANDS.filter(b => b.maxDiscount === 0 && b.count < 4
   href: `/brand/${b.id}`
 }));
 
+// Resolve new link pathing to search-empty state
+export const resolveNavLink = (link) => {
+  if (link.href === '#') {
+    return `/category/all?q=${encodeURIComponent(link.text)}`;
+  }
+  return link.href;
+};
+
 const navData = [
   {
     title: 'Mother',
     type: 'mother',
     icon: <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/>,
     menu: {
-      featured: { image: '/assets/stage_expectant.webp', alt: 'Maternity essentials', title: 'Motherhood Lookbook', link: '/category/mother', linkText: 'View Guide' },
+      featured: { image: '/assets/maternity_essentials.webp', alt: 'Maternity essentials', title: 'Motherhood Lookbook', link: '/category/mother', linkText: 'View Guide' },
       columns: [
-        { 
-          title: 'Maternity', 
-          links: [{ text: 'Maternity Wear & Care', href: '/category/mother?q=maternity' }] 
-        },
-        { 
-          title: 'Nursing', 
-          links: [{ text: 'Breastfeeding & Nursing', href: '/category/mother?q=nursing' }] 
-        },
-        { 
-          title: 'Pumps', 
-          links: [{ text: 'Breast Pumps & Accessories', href: '/category/mother?q=pump' }] 
-        }
+        { title: 'Comfort', links: [{ text: 'Pregnancy Pillows', href: '#' }, { text: 'Support Belts', href: '#' }, { text: 'Sleep Aids', href: '#' }, { text: 'Relaxation Kits', href: '#' }] },
+        { title: 'Apparel', links: [{ text: 'Maternity Wear & Care', href: '/category/mother?q=maternity' }, { text: 'Nightdresses', href: '#' }, { text: 'Nursing Pajamas', href: '#' }, { text: 'Cozy Robes', href: '#' }, { text: 'Slippers & Footwear', href: '#' }] },
+        { title: 'Nursing', links: [{ text: 'Breastfeeding & Nursing', href: '/category/mother?q=nursing' }, { text: 'Nursing Bras', href: '#' }, { text: 'Breast Pads', href: '#' }, { text: 'Nipple Care', href: '#' }, { text: 'Breast Pumps & Accessories', href: '/category/mother?q=pump' }] },
+        { title: 'Recovery', links: [{ text: 'Postpartum Care', href: '#' }, { text: 'Soothe & Heal', href: '#' }, { text: 'Wellness', href: '#' }] }
       ]
     }
   },
@@ -53,20 +53,12 @@ const navData = [
     type: 'newborn',
     icon: <><path d="M12 21a9 9 0 0 1 0-18c4.97 0 9 3.58 9 8 0 4.42-4.03 8-9 8Z"/><path d="M8 12h.01"/><path d="M16 12h.01"/><path d="M10 16c.5 1 1.5 1 2 1s1.5 0 2-1"/></>,
     menu: {
-      featured: { image: '/assets/stage_newborn.webp', alt: 'Newborn Apparel', title: 'The Newborn Starter Kit', link: '/category/newborn', linkText: 'Explore' },
+      featured: { image: '/assets/newborn_apparel.webp', alt: 'Newborn Apparel', title: 'The Newborn Starter Kit', link: '/category/newborn', linkText: 'Explore' },
       columns: [
-        { 
-          title: 'Feeding', 
-          links: [{ text: 'Feeding & Bottles', href: '/category/newborn?q=feeding' }] 
-        },
-        { 
-          title: 'Bath & Skin', 
-          links: [{ text: 'Bath & Skincare', href: '/brand/dalin' }] 
-        },
-        { 
-          title: 'Laundry & Care', 
-          links: [{ text: 'Laundry & Cleaning', href: '/category/newborn?q=laundry' }] 
-        }
+        { title: 'Clothing', links: [{ text: 'Sleepsuits', href: '#' }, { text: 'Bodysuits', href: '#' }, { text: 'Knitted Sets', href: '#' }, { text: 'Organic Cotton', href: '#' }] },
+        { title: 'Sleep', links: [{ text: 'Swaddles', href: '#' }, { text: 'Sleeping Bags', href: '#' }, { text: 'Crib Bedding', href: '#' }, { text: 'Night Lights', href: '#' }] },
+        { title: 'Bath & Care', links: [{ text: 'Bath & Skincare', href: '/brand/dalin' }, { text: 'Baby Bathtubs', href: '#' }, { text: 'Grooming Kits', href: '#' }, { text: 'Hooded Towels', href: '#' }] },
+        { title: 'Essentials', links: [{ text: 'Feeding & Bottles', href: '/category/newborn?q=feeding' }, { text: 'Laundry & Cleaning', href: '/category/newborn?q=laundry' }, { text: 'Changing Mats', href: '#' }, { text: 'Nappy Caddies', href: '#' }, { text: 'First Gifts', href: '#' }] }
       ]
     }
   },
@@ -77,18 +69,10 @@ const navData = [
     menu: {
       featured: { image: '/assets/stage_toddler.webp', alt: 'Play & Safety', title: 'Playtime Curated', link: '/category/kid', linkText: 'Shop Play' },
       columns: [
-        { 
-          title: 'Nutrition', 
-          links: [{ text: 'Weaning & Food', href: '/category/kid?q=weaning' }] 
-        },
-        { 
-          title: 'Tableware', 
-          links: [{ text: 'Cups & Tableware', href: '/category/kid?q=cup' }] 
-        },
-        { 
-          title: 'Gear & Safety', 
-          links: [{ text: 'Travel & Safety', href: '/category/kid?q=travel' }] 
-        }
+        { title: 'Play & Learn', links: [{ text: 'Activity Mats', href: '#' }, { text: 'Wooden Toys', href: '#' }, { text: 'Educational', href: '#' }, { text: 'Board Books', href: '#' }] },
+        { title: 'Weaning', links: [{ text: 'Weaning & Food', href: '/category/kid?q=weaning' }, { text: 'Cups & Tableware', href: '/category/kid?q=cup' }, { text: 'High Chairs', href: '#' }, { text: 'Bowls & Plates', href: '#' }, { text: 'Baby Spoons', href: '#' }, { text: 'Food Blenders', href: '#' }] },
+        { title: 'On the Move', links: [{ text: 'Travel & Safety', href: '/category/kid?q=travel' }, { text: 'Strollers', href: '#' }, { text: 'Car Seats', href: '#' }, { text: 'Baby Carriers', href: '#' }, { text: 'Travel Bags', href: '#' }] },
+        { title: 'Safety', links: [{ text: 'Baby Monitors', href: '#' }, { text: 'Safety Gates', href: '#' }, { text: 'Corner Protectors', href: '#' }, { text: 'Socket Plugs', href: '#' }] }
       ]
     }
   },
@@ -412,7 +396,7 @@ const Navbar = () => {
                   {item.title}
                 </div>
               )}
-              <MegaMenu isOpen={activeMenu === item.type} data={item.menu} categoryType={item.type} />
+              <MegaMenu isOpen={activeMenu === item.type} data={item.menu} categoryType={item.type} resolveNavLink={resolveNavLink} />
             </li>
           ))}
         </ul>
@@ -450,7 +434,7 @@ const Navbar = () => {
         </Link>
 
         <button 
-          className={`btn btn--nav-icon nav__action-cart ${isCartOpen ? 'is-active' : ''}`}
+          className={`btn btn--nav-icon nav__action-cart nav__cart-badge ${isCartOpen ? 'is-active' : ''}`}
           aria-label="Cart"
           onClick={() => setIsCartOpen(true)}
         >
@@ -631,9 +615,7 @@ const Navbar = () => {
                             </a>
                           ) : (
                             <Link
-                              to={link.href === '#' && ['mother', 'newborn', 'kid'].includes(activeCategory.type)
-                                ? `/category/${activeCategory.type}?q=${encodeURIComponent(link.text)}`
-                                : link.href}
+                              to={resolveNavLink(link)}
                               className="mobile-menu__link"
                               onClick={() => setIsMenuOpen(false)}
                             >

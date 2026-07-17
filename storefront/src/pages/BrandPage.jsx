@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery } from 'convex/react';
+import { usePaginatedQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from '../hooks/useTrackedQuery';
 import ProductCard from '../components/products/ProductCard';
@@ -18,17 +18,35 @@ import './PLP.css';
 import './BrandPage.css';
 
 
+// Fixed enums from convex/schema.ts products table - always shown regardless
+// of what's actually present for a given brand, so the sidebar never needs
+// to read every product just to know which filters to offer.
+const CATEGORIES_LIST = [
+  'Expectant and New Mom Essentials',
+  'Newborn Essentials & Kids Apparel/Footwear',
+  'Nursery and Furnishing',
+  'Feeding/Nursing Essentials',
+  'Bathing and Changing',
+  'Baby Play and Safety Gear',
+  'Travel Must-Haves',
+];
 const TIERS_LIST = ['Essentials', 'Must-Haves', 'Luxuries'];
+const TIER_LABEL_TO_SCHEMA_VALUE = {
+  'Essentials': 'essentials',
+  'Must-Haves': 'musthaves',
+  'Luxuries': 'luxuries',
+};
+
+const PAGE_SIZE = 24;
 
 const BrandPage = () => {
   const { brandId } = useParams();
   const navigate = useNavigate();
-  
-  // Fetch live brand metadata and associated products from Convex
+
+  // Fetch live brand metadata from Convex (product listing is paginated separately below)
   const brand = useTrackedQuery(api.brands.getBrandBySlug, { slug: brandId || '' }, 20);
 
   const [activeFilters, setActiveFilters] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -36,6 +54,24 @@ const BrandPage = () => {
   const [toastMessage, setToastMessage] = useState('');
 
   const loading = brand === undefined;
+
+  // Sidebar allows one active category and one active tier at a time,
+  // since the server query filters on a single category/tier value each.
+  const selectedCategory = activeFilters.find(f => !TIERS_LIST.includes(f)) || undefined;
+  const selectedTierLabel = activeFilters.find(f => TIERS_LIST.includes(f)) || undefined;
+  const selectedTier = selectedTierLabel ? TIER_LABEL_TO_SCHEMA_VALUE[selectedTierLabel] : undefined;
+
+  const {
+    results: pagedProducts,
+    status: pageStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    api.products.getProductsByBrand,
+    brand ? { brand: brand.name, category: selectedCategory, tier: selectedTier } : "skip",
+    { initialNumItems: PAGE_SIZE }
+  );
+
+  const filteredProducts = pagedProducts || [];
 
   // Clear sidebar filters whenever the brand changes
   useEffect(() => {
@@ -47,38 +83,13 @@ const BrandPage = () => {
     window.scrollTo(0, 0);
   }, [brandId]);
 
-  // Client-side filtering logic matching PLP.jsx
-  useEffect(() => {
-    if (loading || !brand || !brand.products) return;
-
-    let results = [...brand.products];
-    
-    // Apply active sidebar filters: AND across categories/tiers, OR within them
-    const activeCategories = activeFilters.filter(f => !TIERS_LIST.includes(f));
-    const activeTiers = activeFilters.filter(f => TIERS_LIST.includes(f));
-
-    if (activeCategories.length > 0) {
-      results = results.filter(p => activeCategories.includes(p.category));
-    }
-
-    if (activeTiers.length > 0) {
-      results = results.filter(p => {
-        if (!p.tier) return false;
-        const pl = p.tier.toLowerCase();
-        return activeTiers.some(t => {
-          const tl = t.toLowerCase();
-          return tl === pl || (tl === 'must-haves' && pl === 'musthaves') || (tl === 'musthaves' && pl === 'must-haves');
-        });
-      });
-    }
-    
-    setFilteredProducts(results);
-  }, [activeFilters, brand, loading]);
-
   const toggleFilter = (filter) => {
-    setActiveFilters(prev => 
-      prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
-    );
+    const isTier = TIERS_LIST.includes(filter);
+    setActiveFilters(prev => {
+      const already = prev.includes(filter);
+      const others = prev.filter(f => (isTier ? !TIERS_LIST.includes(f) : TIERS_LIST.includes(f)));
+      return already ? others : [...others, filter];
+    });
   };
 
   const handleAddToCart = (product) => {
@@ -120,11 +131,7 @@ const BrandPage = () => {
     );
   }
 
-  // Derive categories dynamically from the brand's products
-  const categories = brand.products 
-    ? [...new Set(brand.products.map(p => p.category).filter(Boolean))]
-    : [];
-
+  const categories = CATEGORIES_LIST;
   const tiers = TIERS_LIST;
 
   const breadcrumbs = [
@@ -171,7 +178,7 @@ const BrandPage = () => {
 
       {/* Search strip — shown on both desktop and mobile, right after the hero */}
       <Page.Section className="plp__search-wrap">
-        <SearchStrip products={brand?.products} />
+        <SearchStrip products={filteredProducts} />
       </Page.Section>
 
       <Page.Section className="plp__container">
@@ -257,7 +264,7 @@ const BrandPage = () => {
           <Card hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
             <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
               <div className="plp__toolbar">
-                <Text role="body-sm" color="tertiary" className="plp__count">{filteredProducts.length} products found</Text>
+                <Text role="body-sm" color="tertiary" className="plp__count">{filteredProducts.length} products loaded</Text>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
                   <button 
                     className="plp__mobile-filter-btn" 
@@ -292,7 +299,7 @@ const BrandPage = () => {
               </CardGrid>
             </Card>
             
-            {filteredProducts.length === 0 && (
+            {filteredProducts.length === 0 && pageStatus !== "LoadingFirstPage" && (
               <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
                 <div className="plp__empty">
                   <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
@@ -301,6 +308,14 @@ const BrandPage = () => {
                   <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
                     <Button variant="ghost" size="sm" onClick={() => setActiveFilters([])}>Clear all filters</Button>
                   </Card>
+                </div>
+              </Card>
+            )}
+
+            {pageStatus === "CanLoadMore" && (
+              <Card variant="section" hasBorder={false} hasShadow={false} hasBackground={false} removePadding={true}>
+                <div className="plp__load-more">
+                  <Button variant="secondary" onClick={() => loadMore(PAGE_SIZE)}>Load more</Button>
                 </div>
               </Card>
             )}

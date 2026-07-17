@@ -407,6 +407,45 @@ export const getProductsUpdatedSince = query({
   },
 });
 
+/**
+ * Paginated product listing for a single brand, driving BrandPage.jsx's grid.
+ * Uses by_brand_and_category when a category filter is given (indexed, no
+ * scan) or plain by_brand otherwise. Tier has only 3 possible values so it's
+ * filtered in-memory on the already-bounded page rather than via its own
+ * compound index.
+ */
+export const getProductsByBrand = query({
+  args: {
+    brand: v.string(),
+    category: v.optional(v.string()),
+    tier: v.optional(v.string()),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const result = args.category
+      ? await ctx.db
+          .query("products")
+          .withIndex("by_brand_and_category", (q) =>
+            q.eq("brand", args.brand).eq("category", args.category as any)
+          )
+          .paginate(args.paginationOpts)
+      : await ctx.db
+          .query("products")
+          .withIndex("by_brand", (q) => q.eq("brand", args.brand))
+          .paginate(args.paginationOpts);
+
+    let page = result.page.filter((p) => p.isActive !== false && shouldKeepProduct(p));
+    if (args.tier) {
+      page = page.filter((p) => p.tier === args.tier);
+    }
+
+    return {
+      ...result,
+      page: page.map(normalizeProductPrice),
+    };
+  },
+});
+
 function toStockRow(p: any) {
   return {
     id: p._id,

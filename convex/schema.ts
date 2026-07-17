@@ -286,6 +286,7 @@ export default defineSchema({
     .index("by_tier", ["tier"])
     .index("by_category", ["category"])
     .index("by_brand", ["brand"])
+    .index("by_brand_and_category", ["brand", "category"])
     .index("by_brandSlug", ["brandSlug"])
     .index("by_stage_and_tier", ["stage", "tier"])
     .index("by_category_tier_stage", ["category", "tier", "stage"])

@@ -7,7 +7,7 @@
 .pdp__container {
   max-width: var(--width-container);
   margin: 0 auto;
-  padding: 0 var(--space-8) var(--space-20);
+  padding: 0 var(--space-8) var(--space-12);
 }
 
 /* Breadcrumbs */
@@ -38,301 +38,190 @@
   font-weight: 500;
 }
 
-/* Grid Layout */
+/* Page.Section applies a flex-column gap to all children by default; these
+   two sections already provide their own spacing (breadcrumb margin, and
+   each .pdp__section's own padding/border), so neutralize the extra gap
+   layer instead of double-stacking it. */
+.pdp__container,
+.pdp__details {
+  display: block;
+  gap: 0;
+}
+
+/* Grid Layout — ported from PDPOptionC's .pdpC__grid */
 .pdp__grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: var(--space-16);
+  grid-template-columns: 72px 585px 380px;
+  gap: var(--space-6);
   align-items: start;
+  justify-content: center;
 }
 
-/* Gallery */
-.pdp__gallery {
+/* Vertical thumbnail rail — ported from .pdpC__rail */
+.pdp__rail {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-3);
 }
 
-.pdp__main-image {
-  position: relative;
-  aspect-ratio: 4/5;
-  background: var(--surface-container);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  display: flex;
-}
-
-.pdp__carousel-track {
-  display: flex;
+.pdp__rail-item {
   width: 100%;
-  height: 100%;
-  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.pdp__carousel-slide {
-  flex: 0 0 100%;
-  width: 100%;
-  height: 100%;
-}
-
-.pdp__carousel-slide img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Carousel Arrow Buttons */
-.pdp__carousel-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%) scale(0.9);
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: var(--text-primary);
-  width: var(--space-10);
-  height: var(--space-10);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-  box-shadow: 0 4px 12px var(--shadow-ambient);
-}
-
-.pdp__carousel-arrow:hover {
-  background: white;
-  color: var(--color-brand-primary);
-  transform: translateY(-50%) scale(1);
-  box-shadow: 0 6px 16px var(--shadow-deep);
-}
-
-.pdp__carousel-arrow--left {
-  left: var(--space-4);
-}
-
-.pdp__carousel-arrow--right {
-  right: var(--space-4);
-}
-
-/* Hovering over main image shows arrows */
-.pdp__main-image:hover .pdp__carousel-arrow {
-  opacity: 1;
-  transform: translateY(-50%) scale(1);
-}
-
-.pdp__thumbnails {
-  display: flex;
-  gap: var(--space-4);
-  overflow-x: auto;
-  padding-bottom: var(--space-2);
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-brand-primary-light) transparent;
-}
-
-.pdp__thumbnails::-webkit-scrollbar {
-  height: 4px;
-}
-
-.pdp__thumbnails::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.pdp__thumbnails::-webkit-scrollbar-thumb {
-  background-color: var(--color-brand-primary-light);
-  border-radius: var(--radius-pill);
-}
-
-.pdp__thumbnail {
-  flex: 0 0 76px;
   aspect-ratio: 1/1;
-  background: var(--surface-container);
   border-radius: var(--radius-md);
   overflow: hidden;
-  cursor: pointer;
   border: 2px solid transparent;
-  transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+  padding: 0;
+  cursor: pointer;
+  background: var(--surface-container);
 }
 
-.pdp__thumbnail.is-active,
-.pdp__thumbnail:hover {
+.pdp__rail-item.is-active {
   border-color: var(--color-brand-primary);
-  transform: scale(0.96);
 }
 
-.pdp__thumbnail img {
+.pdp__rail-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* Info Section */
-.pdp__info {
+/* Main image — ported from .pdpC__main-image */
+.pdp__main-image {
+  position: relative;
+  width: 100%;
+  max-width: 585px;
+  aspect-ratio: 4/5;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface-container);
+}
+
+.pdp__main-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Buy box — ported from .pdpC__buybox */
+.pdp__buybox {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-4);
+  position: sticky;
+  top: var(--space-24);
 }
 
 .pdp__brand {
-  font-family: var(--font-sans);
   font-size: var(--label-md);
   font-weight: 700;
   color: var(--color-brand-primary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin-bottom: var(--space-2);
   display: block;
 }
 
-.pdp__sales-pill {
+.pdp__urgency {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pdp__urgency-pill {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-pill);
   background: var(--color-support-blue);
-  color: var(--color-on-primary);
+  color: white;
   font-size: var(--label-md);
   font-weight: 700;
-  letter-spacing: 0.02em;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
   white-space: nowrap;
 }
 
-.pdp__sales-pill svg {
+.pdp__urgency-pill svg {
   color: var(--color-brand-accent);
   flex-shrink: 0;
 }
 
+.pdp__urgency-pill--red {
+  background: var(--color-support-red);
+}
+
 .pdp__title {
   font-family: var(--font-editorial);
-  font-size: var(--headline-lg);
+  font-size: var(--headline-sm);
   color: var(--text-primary);
-  margin: 0 0 var(--space-4) 0;
-  line-height: 1.1;
+  margin: 0;
+  line-height: 1.15;
 }
 
 .pdp__price-wrap {
   display: flex;
   align-items: baseline;
-  gap: var(--space-4);
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--surface-container-high);
 }
 
 .pdp__price {
-  font-family: var(--font-editorial);
-  font-size: var(--headline-lg);
+  font-family: var(--font-sans);
+  font-size: var(--headline-sm);
+  font-weight: 400;
   color: var(--text-primary);
 }
 
 .pdp__was-price {
-  font-family: var(--font-editorial);
-  font-size: var(--headline-sm);
   color: var(--text-tertiary);
   text-decoration: line-through;
 }
 
-/* Age Scale */
+/* Age Scale — ported from .pdpC__age-scale (header + track/fill, no pointer/markers) */
 .pdp__age-scale {
   background: var(--surface-container-low);
-  padding: var(--space-6);
   border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
 }
 
 .age-scale__header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: var(--space-4);
-}
-
-.age-scale__label {
   font-size: var(--label-md);
   font-weight: 600;
-  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
 }
 
-.age-scale__status {
-  font-size: var(--label-md);
-  font-weight: 700;
-  color: var(--color-brand-primary);
+.age-scale__track {
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-container-high);
 }
 
-.age-scale__bar {
-  height: var(--space-1);
-  background: color-mix(in srgb, var(--color-brand-primary), transparent 85%);
-  border-radius: 2px;
-  position: relative;
-  margin: var(--space-6) 0 var(--space-8);
-}
-
-.age-scale__progress {
+.age-scale__fill {
   height: 100%;
+  border-radius: var(--radius-pill);
   background: var(--color-brand-primary);
-  border-radius: 2px;
-  position: relative;
 }
 
-.age-scale__pointer {
-  position: absolute;
-  right: calc(-1 * var(--space-1-5));
-  top: 50%;
-  transform: translateY(-50%);
-  width: var(--space-3);
-  height: var(--space-3);
-  background: var(--color-brand-primary);
-  border-radius: 50%;
-  box-shadow: 0 0 0 var(--space-1) white;
-}
-
-.age-scale__markers {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--label-md);
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  letter-spacing: 0.05em;
-}
-
-/* Urgency */
-.pdp__urgency {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-6);
-  background: var(--surface-container-highest);
-  border-radius: var(--radius-md);
-  font-family: var(--font-sans);
-  font-size: var(--body-sm);
-  color: var(--text-primary);
-}
-
-.urgency__icon {
-  color: var(--color-brand-primary);
-}
-
-/* Controls */
-.pdp__controls-row {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-10);
-  flex-wrap: wrap;
-}
-
-.pdp__sizes,
-.pdp__quantity {
-  flex: 1;
-  min-width: 160px;
-}
-
-/* Product DesignSystem Tags */
+/* Product Tags — ported from PDPOptionC's .pdpC__tag (plain neutral pill) */
 .pdp__tags-list {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2-5);
-  margin-top: calc(-1 * var(--space-2));
+}
+
+.pdp__tag {
+  font-size: var(--label-md);
+  font-weight: 600;
+  background: var(--surface-container-low);
+  color: var(--text-secondary);
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-sm);
+}
+
+/* Size selector (Apparel only) */
+.pdp__sizes {
+  width: 100%;
 }
 
 .control-label {
@@ -373,60 +262,49 @@
   color: white;
 }
 
-.pdp__stepping {
-  width: fit-content;
-}
-
-/* Actions */
-.pdp__actions {
-  display: flex;
-  flex-direction: column;
+/* Quantity stepper — ported from .pdpC__stepper */
+.pdp__stepper {
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-3);
+  border: 1.5px solid var(--surface-container-high);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1-5) var(--space-3);
 }
 
-.pdp__actions-row {
+.pdp__stepper button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--color-brand-primary);
+}
+
+.pdp__stepper button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Quantity + wishlist row — ported from .pdpC__row */
+.pdp__row {
   display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: var(--space-4);
-  align-items: center;
+}
+
+.pdp__wishlist-btn {
+  display: flex;
+}
+
+.pdp__cta,
+.pdp__sticky-cta {
   width: 100%;
 }
 
-.pdp__actions-row .pdp__add-btn {
-  flex: 2;
-  width: 100%;
-  justify-content: center;
-}
-
-.pdp__actions-row .pdp__wishlist-btn {
-  flex: 1;
-  width: auto;
-  justify-content: center;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-/* Trust */
-.pdp__trust {
-  display: flex;
-  gap: var(--space-8);
-  padding-top: var(--space-4);
-}
-
-.trust-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--label-md);
-  color: var(--text-tertiary);
-  font-weight: 500;
-}
-
-/* Details Tabs */
+/* Details — stacked sections, ported from .pdpC__details / .pdpC__section */
 .pdp__details {
-  margin-top: var(--space-20);
-  border-top: 1px solid var(--surface-container);
-
+  margin-top: var(--space-16);
   max-width: var(--width-container);
   margin-left: auto;
   margin-right: auto;
@@ -434,63 +312,15 @@
   box-sizing: border-box;
 }
 
-.pdp__tabs {
-  display: flex;
-  gap: var(--space-12);
+.pdp__section {
   padding: var(--space-8) 0;
-  border-bottom: 1px solid var(--surface-container);
+  border-top: 1px solid var(--surface-container);
 }
 
-.pdp__tab {
-  background: transparent;
-  border: none;
+.pdp__section h2 {
   font-family: var(--font-editorial);
   font-size: var(--title-lg);
-  color: var(--text-tertiary);
-  cursor: pointer;
-  padding: var(--space-2) 0;
-  position: relative;
-  transition: color 0.3s;
-}
-
-.pdp__tab-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--text-tertiary);
-  transition: color 0.3s;
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: var(--space-2);
-}
-
-.pdp__tab-icon.is-active {
-  color: var(--color-brand-primary) !important;
-}
-
-.pdp__tab.is-active {
-  color: var(--text-primary);
-}
-
-.pdp__tab.is-active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: var(--color-brand-primary);
-}
-
-.pdp__tab-content {
-  padding: var(--space-12) 0;
-
-
-}
-
-.pdp__tab-content * {}
-
-.pdp__mobile-reviews {
-  display: none;
+  margin-bottom: var(--space-4);
 }
 
 .pdp__description p {
@@ -596,11 +426,24 @@
   color: var(--text-secondary);
 }
 
+/* Rail collapses to a horizontal row, buybox unsticks — ported from PDPOptionC's 968px breakpoint */
 @media (max-width: 968px) {
   .pdp__grid {
     grid-template-columns: 1fr;
-    gap: var(--space-10);
     width: 100%;
+  }
+
+  .pdp__rail {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .pdp__rail-item {
+    flex: 0 0 64px;
+  }
+
+  .pdp__buybox {
+    position: static;
   }
 
   .pdp__container {
@@ -628,20 +471,13 @@
     overflow-x: hidden;
   }
 
-  .pdp__grid {
-    gap: var(--space-8);
-  }
-
-  .pdp__gallery,
-  .pdp__info {
+  .pdp__rail,
+  .pdp__main-image,
+  .pdp__buybox-col {
     width: 100%;
     max-width: 100%;
     min-width: 0;
     /* Let grid layouts contract below child width */
-  }
-
-  .pdp__thumbnails {
-    max-width: 100%;
   }
 
   .pdp__title {
@@ -650,29 +486,8 @@
     word-break: break-word;
   }
 
-  .pdp__controls-row {
-    gap: var(--space-4);
-  }
-
-  .pdp__sizes,
-  .pdp__quantity {
-    min-width: 100%;
-    /* Stack elements fully on mobile */
-  }
-
-  .pdp__actions-row {
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .pdp__actions-row .pdp__add-btn,
-  .pdp__actions-row .pdp__wishlist-btn {
-    flex: none;
-    width: 100%;
-  }
-
-  .pdp__trust {
-    display: none;
+  .pdp__row {
+    flex-wrap: wrap;
   }
 
   .pdp__details {
@@ -681,55 +496,56 @@
     width: 100%;
   }
 
-  .pdp__tab {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: var(--space-2) var(--space-4) !important;
-    gap: var(--space-1) !important;
-    font-size: var(--body-sm) !important;
+  .pdp__section {
+    padding: var(--space-6) 0;
+  }
+}
+
+/* Mobile sticky add-to-cart bar — ported from PDPOptionC's .pdpC__sticky-bar */
+.pdp__sticky-bar {
+  display: none;
+}
+
+/* Remind-me button: allow the full-text label to wrap to a second line
+   instead of being clipped by the base .btn's white-space: nowrap. */
+.pdp__cta .btn-text,
+.pdp__sticky-cta .btn-text {
+  white-space: normal;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .pdp {
+    padding-bottom: 100px;
   }
 
-  .pdp__tab-icon {
-    margin-right: 0 !important;
-    margin-bottom: var(--space-1) !important;
-    width: 24px !important;
-    height: 24px !important;
+  .pdp__sticky-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    box-shadow: 0 -4px 16px var(--shadow-ambient);
+    padding: var(--space-3) var(--space-4);
+    z-index: 20;
   }
 
-  .pdp__tab-content {
-    padding: var(--space-4) var(--space-6);
-    box-sizing: border-box;
-    width: 100%;
-  }
-
-  .pdp__tab--reviews {
-    display: none !important;
-  }
-
-  .pdp__mobile-reviews {
-    display: block !important;
-    margin-top: var(--space-8);
-    border-top: 1px solid var(--surface-container);
-    padding: var(--space-8) var(--space-6);
-
-    box-sizing: border-box;
-    width: 100%;
-  }
-
-  .pdp__mobile-reviews-title {
+  .pdp__sticky-price {
     font-family: var(--font-editorial);
+    font-weight: 700;
     font-size: var(--title-lg);
-    color: var(--text-primary);
-    margin-bottom: var(--space-6);
   }
 
-  .pdp__mobile-reviews .pdp__reviews {
-
-    padding: var(--space-4);
-    border-radius: var(--radius-md);
+  .pdp__sticky-cta {
+    flex: 1;
+    max-width: 200px;
   }
 
-
+  .pdp__sticky-cta .btn {
+    width: 100%;
+  }
 }

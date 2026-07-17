@@ -1,11 +1,11 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { Doc } from "./_generated/dataModel";
-import { normalizeProductPrice, shouldKeepProduct } from "./products";
 import { trackedQuery } from "./lib/ioTracking";
 
 /**
- * Fetch a specific brand by its slug, along with all of its associated products.
+ * Fetch a specific brand's metadata by its slug. Product listing is handled
+ * separately by products.getProductsByBrand (paginated) - see BrandPage.jsx.
  * Uses index lookups for optimal performance and adheres to Convex best practices.
  */
 export const getBrandBySlug = trackedQuery("brands.getBrandBySlug", {
@@ -46,21 +46,7 @@ export const getBrandBySlug = trackedQuery("brands.getBrandBySlug", {
       return null;
     }
 
-    // 2. Fetch products associated with this brand
-    const products = await ctx.db
-      .query("products")
-      .withIndex("by_brand", (q) => q.eq("brand", brandName))
-      .collect();
-
-    // 3. Filter out inactive/legacy products in memory to avoid un-indexed database filtering
-    const activeProducts = products
-      .filter((p) => p.isActive !== false && shouldKeepProduct(p))
-      .map(normalizeProductPrice);
-
-    return {
-      ...brand,
-      products: activeProducts,
-    };
+    return brand;
   },
 });
 

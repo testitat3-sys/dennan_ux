@@ -4,6 +4,7 @@ import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { Copy, CheckCircle, RotateCcw, Search, Inbox, ShoppingBag, Bell, Megaphone, UserPlus } from "lucide-react";
 import CustomerActivityModal from "./CustomerActivityModal";
+import LeadDetailModal from "./LeadDetailModal";
 
 const STATUS_TABS = [
   { key: "unresolved", label: "Unresolved" },
@@ -18,6 +19,7 @@ export default function LeadsPanel({ token }) {
   const [statusTab, setStatusTab] = useState("unresolved");
   const [search, setSearch] = useState("");
   const [activityCustomer, setActivityCustomer] = useState(null);
+  const [viewingLead, setViewingLead] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
   const handleCopyPhone = (lead) => {
@@ -138,7 +140,11 @@ export default function LeadsPanel({ token }) {
                 </thead>
                 <tbody>
                   {filteredLeads.map((lead) => (
-                    <tr key={`${lead.kind}-${lead.id}`}>
+                    <tr
+                      key={`${lead.kind}-${lead.id}`}
+                      onClick={() => setViewingLead(lead)}
+                      style={{ cursor: "pointer" }}
+                    >
                       <td className="td-customer">{lead.name}</td>
                       <td className="td-phone">
                         {lead.phone ? (
@@ -148,7 +154,7 @@ export default function LeadsPanel({ token }) {
                               type="button"
                               className="btn btn--ghost btn--sm"
                               title="Copy phone number"
-                              onClick={() => handleCopyPhone(lead)}
+                              onClick={(e) => { e.stopPropagation(); handleCopyPhone(lead); }}
                               style={{ padding: "2px 6px", height: "auto" }}
                             >
                               <Copy size={12} />
@@ -165,7 +171,7 @@ export default function LeadsPanel({ token }) {
                           {lead.kind === "restockNotify" && <Bell size={12} />}
                           {lead.kind === "notifySignup" && <Megaphone size={12} />}
                           {lead.kind === "preLaunchSignup" && <UserPlus size={12} />}
-                          {lead.kind === "storeRequest" && "Store Request"}
+                          {lead.kind === "storeRequest" && "Order Reminder"}
                           {lead.kind === "restockNotify" && "Restock Notify"}
                           {lead.kind === "notifySignup" && "Launch Signup"}
                           {lead.kind === "preLaunchSignup" && "Pre-Launch"}
@@ -181,7 +187,7 @@ export default function LeadsPanel({ token }) {
                           {lead.status === "resolved" ? "Resolved" : "New"}
                         </span>
                       </td>
-                      <td className="td-action">
+                      <td className="td-action" onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: "flex", gap: "5px" }}>
                           <button
                             className="btn btn--secondary btn--sm"
@@ -222,6 +228,13 @@ export default function LeadsPanel({ token }) {
           customer={activityCustomer}
           token={token}
           onClose={() => setActivityCustomer(null)}
+        />
+      )}
+
+      {viewingLead && (
+        <LeadDetailModal
+          lead={viewingLead}
+          onClose={() => setViewingLead(null)}
         />
       )}
     </div>

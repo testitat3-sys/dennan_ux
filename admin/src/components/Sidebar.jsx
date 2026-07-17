@@ -4,39 +4,29 @@ import sosLogo from "../assets/SOS.png";
 import profileImg from "../assets/about-dennan.png";
 
 /**
- * Shared admin/staff sidebar. Nav is organized into collapsible groups so
- * the list stays scannable as more tabs get added - the group containing
- * the active tab always starts expanded, everything else remembers the
- * user's last collapsed/expanded choice via localStorage.
+ * Shared admin/staff sidebar. Nav is organized into collapsible groups,
+ * accordion-style — opening one group closes any other that's open. The
+ * group containing the active tab starts open; otherwise the last-opened
+ * group is remembered via localStorage.
  *
  * groups: [{ id, label, items: [{ key, label, icon: Component, badge, onClick, isActive }] }]
  */
-export default function Sidebar({ groups, brandSub, user, onLogout, storageKey = "dennan_sidebar_collapsed" }) {
-  const [collapsedGroups, setCollapsedGroups] = useState(() => {
+export default function Sidebar({ groups, user, onLogout, storageKey = "dennan_sidebar_collapsed" }) {
+  const [openGroupId, setOpenGroupId] = useState(() => {
     const activeGroupId = groups.find((g) => g.items.some((i) => i.isActive))?.id;
+    if (activeGroupId) return activeGroupId;
     try {
       const stored = localStorage.getItem(storageKey);
-      // No stored preference yet: collapse every group by default (except
-      // whichever one holds the active tab) instead of showing everything open.
-      if (stored === null) {
-        return new Set(groups.map((g) => g.id).filter((id) => id !== activeGroupId));
-      }
-      const parsed = JSON.parse(stored);
-      return new Set(parsed.filter((id) => id !== activeGroupId));
+      return stored || null;
     } catch {
-      return new Set(groups.map((g) => g.id).filter((id) => id !== activeGroupId));
+      return null;
     }
   });
 
   const toggleGroup = (groupId) => {
-    setCollapsedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(groupId)) {
-        next.delete(groupId);
-      } else {
-        next.add(groupId);
-      }
-      localStorage.setItem(storageKey, JSON.stringify(Array.from(next)));
+    setOpenGroupId((prev) => {
+      const next = prev === groupId ? null : groupId;
+      localStorage.setItem(storageKey, next || "");
       return next;
     });
   };
@@ -45,12 +35,11 @@ export default function Sidebar({ groups, brandSub, user, onLogout, storageKey =
     <aside className="sidebar">
       <div className="sidebar-brand">
         <img src={sosLogo} alt="Dennan" className="sidebar-logo" />
-        <span className="sidebar-brand-sub">{brandSub}</span>
       </div>
 
       <nav className="sidebar-nav">
         {groups.map((group) => {
-          const isCollapsed = collapsedGroups.has(group.id);
+          const isCollapsed = group.id !== openGroupId;
           const groupBadgeTotal = group.items.reduce((sum, i) => sum + (i.badge > 0 ? i.badge : 0), 0);
           return (
             <div key={group.id} className="sidebar-nav-group">

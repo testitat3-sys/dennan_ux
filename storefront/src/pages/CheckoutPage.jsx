@@ -782,6 +782,121 @@ const CheckoutPage = () => {
 
       {!isOrderConfirmed ? (
         <div className="checkout-container">
+          {/* Sidebar and Order Summary Card */}
+          <div className="checkout-sidebar">
+            <Page.Section className="checkout-sidebar-section">
+              <Card className="order-summary-card">
+                <Card.Header>
+                  <Text role="headline-sm" as="h3" className="summary-title">Order Summary</Text>
+                </Card.Header>
+
+                <Card.Body>
+                  <div className="summary-rows">
+                    <div className="summary-row">
+                      <Text role="body-lg" as="span" color="secondary">Subtotal</Text>
+                      <Text role="body-lg" as="span" color="secondary">{formatPrice(subtotal)}</Text>
+                    </div>
+
+                    {/* Real-time Coupon verification display row */}
+                    {appliedCoupon && (
+                      <div className="summary-row discount-row">
+                        <Text role="body-lg" as="span" color="support-green">Discount ({appliedCoupon.coupon.code})</Text>
+                        <Text role="body-lg" as="span" color="support-green">-{formatPrice(discountAmount)}</Text>
+                      </div>
+                    )}
+
+                    <div className="summary-row">
+                      <Text role="body-lg" as="span" color="secondary">Delivery</Text>
+                      <Text role="body-lg" as="span" color="secondary">{selectedAddress ? (deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)) : "--"}</Text>
+                    </div>
+
+                    <div className="summary-row timer-row">
+                      <Text role="body-lg" as="span" color="secondary">Estimated Arrival</Text>
+                      {remainingTime !== null ? (
+                        <Text role="title-sm" as="span" color="support-green" className="live-timer">{remainingTime} mins</Text>
+                      ) : (
+                        <Text role="body-lg" as="span" color="tertiary" className="ghost-timer">-- mins</Text>
+                      )}
+                    </div>
+
+                    <div className="summary-row total">
+                      <Text role="title-sm" as="span" color="primary">Total</Text>
+                      <Text role="title-sm" as="span" color="primary">{formatPrice(grandTotal)}</Text>
+                    </div>
+                  </div>
+
+                  {/* Promo Coupon Card (nested, automatically borderless) */}
+                  <Card
+                    hasShadow={false}
+                    hasBackground={true}
+                    className="coupon-card"
+                  >
+                    <Card.Header>
+                      <Text role="label-md" as="h4" color="primary" className="coupon-title">Promo / Referral Code</Text>
+                    </Card.Header>
+                    <Card.Body style={{ padding: 0 }}>
+                      <div className="coupon-input-group">
+                        <input
+                          type="text"
+                          placeholder="e.g. MOMMYUG"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          disabled={appliedCoupon !== null || isValidatingCoupon}
+                        />
+                        {!appliedCoupon ? (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={handleApplyCoupon}
+                            loading={isValidatingCoupon}
+                            disabled={!couponCode}
+                          >
+                            Apply
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setAppliedCoupon(null);
+                              setCouponCode('');
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      {couponError && <Text role="label-md" as="p" color="support-red" className="coupon-error-text">{couponError}</Text>}
+                      {appliedCoupon && (
+                        <Text role="label-md" as="p" color="support-green" className="coupon-success-text">
+                          <Check size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                          Code applied! Saved {formatPrice(discountAmount)}
+                        </Text>
+                      )}
+                    </Card.Body>
+                  </Card>
+                </Card.Body>
+
+                <Button
+                  variant="action"
+                  fullWidth
+                  loading={isProcessing}
+                  onClick={handlePlaceOrder}
+                >
+                  {selectedPayment === 'cod' ? 'Place Order' : 'Complete Payment'}
+                </Button>
+
+                <Text role="label-sm" as="p" color="tertiary" className="secure-text">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  Secure encrypted payment
+                </Text>
+              </Card>
+            </Page.Section>
+          </div>
+
           <div className="checkout-main">
             {/* Delivery Location Section */}
             <div ref={addressSectionRef}>
@@ -1033,121 +1148,6 @@ const CheckoutPage = () => {
                   )}
                 </Card>
               </div>
-            </Page.Section>
-          </div>
-
-          {/* Sidebar and Order Summary Card */}
-          <div className="checkout-sidebar">
-            <Page.Section className="checkout-sidebar-section">
-              <Card className="order-summary-card">
-                <Card.Header>
-                  <Text role="headline-sm" as="h3" className="summary-title">Order Summary</Text>
-                </Card.Header>
-
-                <Card.Body>
-                  <div className="summary-rows">
-                    <div className="summary-row">
-                      <Text role="body-lg" as="span" color="secondary">Subtotal</Text>
-                      <Text role="body-lg" as="span" color="secondary">{formatPrice(subtotal)}</Text>
-                    </div>
-
-                    {/* Real-time Coupon verification display row */}
-                    {appliedCoupon && (
-                      <div className="summary-row discount-row">
-                        <Text role="body-lg" as="span" color="support-green">Discount ({appliedCoupon.coupon.code})</Text>
-                        <Text role="body-lg" as="span" color="support-green">-{formatPrice(discountAmount)}</Text>
-                      </div>
-                    )}
-
-                    <div className="summary-row">
-                      <Text role="body-lg" as="span" color="secondary">Delivery</Text>
-                      <Text role="body-lg" as="span" color="secondary">{selectedAddress ? (deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)) : "--"}</Text>
-                    </div>
-
-                    <div className="summary-row timer-row">
-                      <Text role="body-lg" as="span" color="secondary">Estimated Arrival</Text>
-                      {remainingTime !== null ? (
-                        <Text role="title-sm" as="span" color="support-green" className="live-timer">{remainingTime} mins</Text>
-                      ) : (
-                        <Text role="body-lg" as="span" color="tertiary" className="ghost-timer">-- mins</Text>
-                      )}
-                    </div>
-
-                    <div className="summary-row total">
-                      <Text role="title-sm" as="span" color="primary">Total</Text>
-                      <Text role="title-sm" as="span" color="primary">{formatPrice(grandTotal)}</Text>
-                    </div>
-                  </div>
-
-                  {/* Promo Coupon Card (nested, automatically borderless) */}
-                  <Card
-                    hasShadow={false}
-                    hasBackground={true}
-                    className="coupon-card"
-                  >
-                    <Card.Header>
-                      <Text role="label-md" as="h4" color="primary" className="coupon-title">Promo / Referral Code</Text>
-                    </Card.Header>
-                    <Card.Body style={{ padding: 0 }}>
-                      <div className="coupon-input-group">
-                        <input
-                          type="text"
-                          placeholder="e.g. MOMMYUG"
-                          value={couponCode}
-                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                          disabled={appliedCoupon !== null || isValidatingCoupon}
-                        />
-                        {!appliedCoupon ? (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleApplyCoupon}
-                            loading={isValidatingCoupon}
-                            disabled={!couponCode}
-                          >
-                            Apply
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setAppliedCoupon(null);
-                              setCouponCode('');
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        )}
-                      </div>
-                      {couponError && <Text role="label-md" as="p" color="support-red" className="coupon-error-text">{couponError}</Text>}
-                      {appliedCoupon && (
-                        <Text role="label-md" as="p" color="support-green" className="coupon-success-text">
-                          <Check size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                          Code applied! Saved {formatPrice(discountAmount)}
-                        </Text>
-                      )}
-                    </Card.Body>
-                  </Card>
-                </Card.Body>
-
-                <Button
-                  variant="action"
-                  fullWidth
-                  loading={isProcessing}
-                  onClick={handlePlaceOrder}
-                >
-                  {selectedPayment === 'cod' ? 'Place Order' : 'Complete Payment'}
-                </Button>
-
-                <Text role="label-sm" as="p" color="tertiary" className="secure-text">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  Secure encrypted payment
-                </Text>
-              </Card>
             </Page.Section>
           </div>
         </div>

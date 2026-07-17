@@ -3,7 +3,7 @@ import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useProductDisplayName } from "../hooks/useProductDisplayName";
-import { Search, AlertCircle, Pencil, Plus, Printer } from "lucide-react";
+import { Search, AlertCircle, Pencil, Plus, Minus, Check, Printer } from "lucide-react";
 import BarcodeLabelModal from "./BarcodeLabelModal";
 
 export default function StockManagerPanel({ token, navigate }) {
@@ -24,14 +24,26 @@ export default function StockManagerPanel({ token, navigate }) {
   const stockList = isStockSearching ? stockSearchResults : stockBrowseResults;
   const stockSummary = useTrackedQuery(api.stockCounters.getStockSummary, { token });
   const adjustStockMutation = useMutation(api.products.adjustStock);
-  const [stockAdjustment, setStockAdjustment] = useState({}); // productId -> delta
+  const [setTargetInputs, setSetTargetInputs] = useState({}); // productId -> string ("set to" value in progress)
   const [labelProduct, setLabelProduct] = useState(null);
 
-  const handleStockAdjustment = async (productId, delta) => {
+  const quickAdjust = async (product, delta) => {
     try {
-      await adjustStockMutation({ token, productId, delta });
-      // Reset input value
-      setStockAdjustment(prev => ({ ...prev, [productId]: "" }));
+      await adjustStockMutation({ token, productId: product.id, delta });
+    } catch (err) {
+      alert("Failed to adjust stock: " + err.message);
+    }
+  };
+
+  const handleSetAbsolute = async (product) => {
+    const raw = setTargetInputs[product.id];
+    const parsed = parseInt(raw);
+    if (raw === undefined || raw === "" || isNaN(parsed) || parsed < 0 || parsed === product.inventory) {
+      return;
+    }
+    try {
+      await adjustStockMutation({ token, productId: product.id, delta: parsed - product.inventory });
+      setSetTargetInputs(prev => ({ ...prev, [product.id]: "" }));
     } catch (err) {
       alert("Failed to adjust stock: " + err.message);
     }
@@ -96,7 +108,7 @@ export default function StockManagerPanel({ token, navigate }) {
                   <th>Inventory</th>
                   <th>Units Sold</th>
                   <th>Status</th>
-                  <th style={{ width: "200px" }}>Stock Adjustment</th>
+                  <th style={{ width: "180px" }}>Stock Adjustment</th>
                   <th style={{ width: "110px" }}>Actions</th>
                 </tr>
               </thead>
@@ -105,7 +117,10 @@ export default function StockManagerPanel({ token, navigate }) {
                   const isOut = product.inventory <= 0;
                   const isLowStock = !isOut && product.inventory <= product.reorderPoint;
                   const isVeryLow = isLowStock && product.inventory <= product.reorderPoint / 2;
-                  const adjustVal = stockAdjustment[product.id] || "";
+                  const setTargetVal = setTargetInputs[product.id] || "";
+                  const parsedSetTarget = parseInt(setTargetVal);
+                  const isSetValid = setTargetVal !== "" && !isNaN(parsedSetTarget) &&
+                    parsedSetTarget >= 0 && parsedSetTarget !== product.inventory;
                   const qtyClass = isOut
                     ? "stock-qty-badge--out"
                     : isVeryLow
@@ -135,24 +150,45 @@ export default function StockManagerPanel({ token, navigate }) {
                       <td><span className={`stock-status-badge ${statusClass}`}>{isOut ? "Out" : isLowStock ? "Low" : "OK"}</span></td>
                       <td>
                         <div className="stock-adj-btns">
-                          <input
-                            type="number"
-                            className="form-input"
-                            style={{ width: "60px" }}
-                            placeholder="+/-"
-                            value={adjustVal}
-                            onChange={(e) => setStockAdjustment(prev => ({
-                              ...prev,
-                              [product.id]: e.target.value
-                            }))}
-                          />
-                          <button
-                            className="stock-adj-btn stock-adj-btn--plus"
-                            onClick={() => handleStockAdjustment(product.id, parseInt(adjustVal))}
-                            disabled={!adjustVal || isNaN(parseInt(adjustVal))}
-                          >
-                            Apply
-                          </button>
+                          <div className="stock-adj-stepper">
+                            <button
+                              type="button"
+                              className="stock-adj-btn stock-adj-btn--minus"
+                              onClick={() => quickAdjust(product, -1)}
+                              disabled={product.inventory <= 0}
+                              title="Decrease by 1"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className="stock-adj-btn stock-adj-btn--plus"
+                              onClick={() => quickAdjust(product, 1)}
+                              title="Increase by 1"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                          <div className="stock-adj-set-row">
+                            <input
+                              type="number"
+                              className="form-input stock-adj-set-input"
+                              placeholder="Set inventory to…"
+                              min={0}
+                              value={setTargetVal}
+                              onChange={(e) => setSetTargetInputs(prev => ({ ...prev, [product.id]: e.target.value }))}
+                              onKeyDown={(e) => { if (e.key === "Enter") handleSetAbsolute(product); }}
+                            />
+                            <button
+                              type="button"
+                              className="stock-adj-save-btn"
+                              onClick={() => handleSetAbsolute(product)}
+                              disabled={!isSetValid}
+                              title="Save exact quantity"
+                            >
+                              <Check size={14} />
+                            </button>
+                          </div>
                         </div>
                       </td>
                       <td>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const MegaMenu = ({ isOpen, data, categoryType }) => {
+const MegaMenu = ({ isOpen, data, categoryType, resolveNavLink }) => {
   if (!data) return null;
   const { featured, columns } = data;
 
@@ -25,9 +25,7 @@ const MegaMenu = ({ isOpen, data, categoryType }) => {
                     {link.text}
                   </a>
                 ) : (
-                  <Link to={link.href === '#' && ['mother', 'newborn', 'kid'].includes(categoryType)
-                    ? `/category/${categoryType}?q=${encodeURIComponent(link.text)}`
-                    : link.href}>
+                  <Link to={resolveNavLink ? resolveNavLink(link) : link.href}>
                     {link.text}
                   </Link>
                 )}

@@ -158,7 +158,8 @@ export default function CashUpPanel({ token }) {
           </div>
 
           <button
-            className={`btn btn--primary ${isSaving ? "is-loading" : ""}`}
+            className={`btn btn--primary btn--md ${isSaving ? "is-loading" : ""}`}
+            style={{ marginTop: "var(--space-4)" }}
             onClick={handleSave}
             disabled={isSaving}
           >

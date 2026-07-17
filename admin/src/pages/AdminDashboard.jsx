@@ -260,7 +260,6 @@ export default function AdminDashboard() {
       <div className="admin-layout">
         <Sidebar
           storageKey="dennan_sidebar_collapsed_admin"
-          brandSub="Admin Hub"
           user={user}
           onLogout={logout}
           groups={adminSidebarGroups}
@@ -529,7 +528,7 @@ export default function AdminDashboard() {
           {activeTab === "customers" && (
             <div className="admin-tab-panel is-active">
               <div className="page-header">
-                <h1 className="admin-page-title">CRM Client Roster</h1>
+                <h1 className="admin-page-title">Customers</h1>
                 <div className="stock-search-wrap">
                   <Search className="stock-search-icon" size={16} />
                   <input

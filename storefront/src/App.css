@@ -154,7 +154,8 @@
 .cart-count-dot {
   position: absolute;
   top: -2px; right: -2px;
-  width: var(--space-4-5); height: var(--space-4-5);
+  min-width: var(--space-4-5); height: var(--space-4-5);
+  padding: 0 4px;
   border-radius: var(--radius-pill);
   background: var(--color-brand-primary);
   color: #fff;
@@ -163,7 +164,7 @@
   display: flex; align-items: center; justify-content: center;
   line-height: 1;
   border: 2px solid var(--surface);
-  box-sizing: content-box;
+  box-sizing: border-box;
 }
 
 
@@ -375,7 +376,7 @@
     margin: 0 auto;
   }
   .nav__logo {
-    height: var(--space-7);
+    height: var(--space-6);
   }
   .nav__actions {
     order: 3;

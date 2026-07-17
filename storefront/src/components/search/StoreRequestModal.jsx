@@ -27,7 +27,7 @@ const splitName = (name) => {
   };
 };
 
-const StoreRequestModal = ({ isOpen, onClose }) => {
+const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => {
   const submitStoreRequest = useMutation(api.storeRequests.submitStoreRequest);
   const user = useQuery(api.users.viewer);
 
@@ -37,7 +37,7 @@ const StoreRequestModal = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [stage, setStage] = useState(null);
-  const [itemDescription, setItemDescription] = useState('');
+  const [itemDescription, setItemDescription] = useState(initialItemDescription);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -71,6 +71,13 @@ const StoreRequestModal = ({ isOpen, onClose }) => {
       setHasPrefilled(true);
     }
   }, [isOpen, user, hasPrefilled]);
+
+  // Pre-fill item description when modal opens
+  useEffect(() => {
+    if (isOpen && initialItemDescription) {
+      setItemDescription(initialItemDescription);
+    }
+  }, [isOpen, initialItemDescription]);
 
   // Reset on close
   useEffect(() => {
@@ -175,7 +182,7 @@ const StoreRequestModal = ({ isOpen, onClose }) => {
               <form onSubmit={handleSubmit} className="store-request-form animate-fadeIn">
                 <Text role="body-md" as="p" color="secondary" className="store-request-subtitle">
                   We might have what you're looking for at our physical shops. Add your details below
-                  and we'll get back to you.
+                  and we'll talk to you.
                 </Text>
 
                 <div className="store-request-field">

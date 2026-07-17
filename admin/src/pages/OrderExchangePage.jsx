@@ -204,7 +204,7 @@ export default function OrderExchangePage() {
     return (
       <div className="staff-portal-body">
         <div className="admin-layout">
-          <Sidebar storageKey={`dennan_sidebar_collapsed_${user?.accountRole}`} brandSub="Dennan" user={user} onLogout={logout} groups={sidebarGroups} />
+          <Sidebar storageKey={`dennan_sidebar_collapsed_${user?.accountRole}`} user={user} onLogout={logout} groups={sidebarGroups} />
           <main className="admin-main">
             <div className="admin-tab-panel is-active">
               <div className="empty-state">
@@ -221,7 +221,7 @@ export default function OrderExchangePage() {
     return (
       <div className="staff-portal-body">
         <div className="admin-layout">
-          <Sidebar storageKey={`dennan_sidebar_collapsed_${user?.accountRole}`} brandSub="Dennan" user={user} onLogout={logout} groups={sidebarGroups} />
+          <Sidebar storageKey={`dennan_sidebar_collapsed_${user?.accountRole}`} user={user} onLogout={logout} groups={sidebarGroups} />
           <main className="admin-main">
             <div className="admin-tab-panel is-active">
               <div className="empty-state">
@@ -240,7 +240,7 @@ export default function OrderExchangePage() {
   return (
     <div className="staff-portal-body">
       <div className="admin-layout">
-        <Sidebar storageKey={`dennan_sidebar_collapsed_${user?.accountRole}`} brandSub="Dennan" user={user} onLogout={logout} groups={sidebarGroups} />
+        <Sidebar storageKey={`dennan_sidebar_collapsed_${user?.accountRole}`} user={user} onLogout={logout} groups={sidebarGroups} />
         <main className="admin-main">
         <div className="admin-tab-panel is-active" style={{ maxWidth: "760px", margin: "0 auto" }}>
       <Link to="/" className="btn btn--ghost btn--sm" style={{ marginBottom: "var(--space-3)" }}>

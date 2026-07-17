@@ -550,6 +550,7 @@ const PLP = () => {
       <StoreRequestModal
         isOpen={showStoreRequestModal}
         onClose={() => setShowStoreRequestModal(false)}
+        initialItemDescription={query}
       />
 
       {/* Mobile Bottom Sheet Filter Drawer */}
