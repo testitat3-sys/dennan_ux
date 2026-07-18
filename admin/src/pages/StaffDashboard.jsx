@@ -617,7 +617,10 @@ export default function StaffDashboard() {
   };
 
   // --- TAB 3: CUSTOMERS CRM ---
-  const customerList = useTrackedQuery(api.customerActivities.getCustomerList, { token });
+  const customerList = useTrackedQuery(
+    api.customerActivities.getCustomerList,
+    activeTab === "customers" ? { token } : "skip"
+  );
   const [customerSearch, setCustomerSearch] = useState("");
 
   // --- LEADS (store requests + back-in-stock signups) ---

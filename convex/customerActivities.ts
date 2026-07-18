@@ -21,33 +21,29 @@ export const getCustomerList = trackedQuery("customerActivities.getCustomerList"
       .withIndex("by_accountRole", (q) => q.eq("accountRole", undefined))
       .collect();
 
-    // 3. Fetch orders and activities once each and group counts in memory,
-    // instead of two indexed queries per customer (2N+1 -> 3 total reads).
-    const allOrders = await ctx.db.query("orders").collect();
-    const ordersCountByUser = new Map<string, number>();
-    for (const order of allOrders) {
-      ordersCountByUser.set(order.userId, (ordersCountByUser.get(order.userId) ?? 0) + 1);
-    }
-
-    const allActivities = await ctx.db.query("customerActivities").collect();
-    const activitiesCountByCustomer = new Map<string, number>();
-    for (const activity of allActivities) {
-      activitiesCountByCustomer.set(
-        activity.customerId,
-        (activitiesCountByCustomer.get(activity.customerId) ?? 0) + 1
-      );
-    }
-
-    return customers.map((c) => ({
-      id: c._id,
-      name: c.name ?? "Unnamed Customer",
-      email: c.email,
-      phone: c.phone,
-      customerNotes: c.customerNotes,
-      ordersCount: ordersCountByUser.get(c._id) ?? 0,
-      activitiesCount: activitiesCountByCustomer.get(c._id) ?? 0,
-      createdAt: c._creationTime,
-    }));
+    // 3. Count orders/activities per customer via their indexes, run
+    // concurrently. Scans the whole orders/customerActivities tables
+    // subscribe this query to every write in the store, not just
+    // customer-relevant ones - indexed per-customer ranges keep the
+    // read set (and reactive invalidation) bounded to actual customer data.
+    return await Promise.all(
+      customers.map(async (c) => {
+        const [orders, activities] = await Promise.all([
+          ctx.db.query("orders").withIndex("by_user", (q) => q.eq("userId", c._id)).collect(),
+          ctx.db.query("customerActivities").withIndex("by_customerId", (q) => q.eq("customerId", c._id)).collect(),
+        ]);
+        return {
+          id: c._id,
+          name: c.name ?? "Unnamed Customer",
+          email: c.email,
+          phone: c.phone,
+          customerNotes: c.customerNotes,
+          ordersCount: orders.length,
+          activitiesCount: activities.length,
+          createdAt: c._creationTime,
+        };
+      })
+    );
   },
 });
 

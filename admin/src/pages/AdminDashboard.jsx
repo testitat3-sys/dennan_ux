@@ -193,7 +193,10 @@ export default function AdminDashboard() {
   const staffList = useTrackedQuery(api.staffAuth.getStaffList, { token });
 
   // Customer List
-  const customerList = useTrackedQuery(api.customerActivities.getCustomerList, { token });
+  const customerList = useTrackedQuery(
+    api.customerActivities.getCustomerList,
+    activeTab === "customers" ? { token } : "skip"
+  );
   const [customerSearch, setCustomerSearch] = useState("");
 
   // Leads (store requests + back-in-stock signups)

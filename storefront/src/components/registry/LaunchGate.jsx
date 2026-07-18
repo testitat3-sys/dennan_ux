@@ -142,7 +142,7 @@ const LaunchGate = () => {
 
             <Button
               type="submit"
-              variant="primary"
+              variant="white-active"
               fullWidth
               disabled={loading}
               loading={loading}

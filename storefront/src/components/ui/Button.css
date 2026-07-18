@@ -302,6 +302,26 @@
   transform: translateY(calc(-1 * var(--space-0-5)));
 }
 
+/* White Active: Same shape as white, but starts in the pink "active" look */
+.btn--white-active {
+  width: 100%;
+  padding: var(--space-3-5);
+  background: var(--color-brand-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--body-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn--white-active:hover {
+  background: var(--color-brand-primary-dark);
+  transform: translateY(calc(-1 * var(--space-0-5)));
+}
+
 /* Segment: Segmented control buttons (Selector Tabs) */
 .btn--segment {
   border: none;

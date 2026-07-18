@@ -13,7 +13,7 @@ import { trackedQuery, trackedMutation } from "./lib/ioTracking";
 export const listProductBrandNames = trackedQuery("productBrandNames.listProductBrandNames", {
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
     return await ctx.db.query("productBrandNames").withIndex("by_name").take(500);
   },
 });
@@ -21,7 +21,7 @@ export const listProductBrandNames = trackedQuery("productBrandNames.listProduct
 export const createProductBrandName = trackedMutation("productBrandNames.createProductBrandName", {
   args: { token: v.string(), name: v.string() },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
     const trimmed = args.name.trim();
     if (!trimmed) {
