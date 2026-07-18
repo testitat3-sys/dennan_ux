@@ -58,6 +58,7 @@ export default function AdminProductCreate() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [reorderPoint, setReorderPoint] = useState("");
+  const [initialInventory, setInitialInventory] = useState("");
   const [category, setCategory] = useState("");
   const [subCategory, setSubCategory] = useState("");
   const [stage, setStage] = useState("");
@@ -86,12 +87,12 @@ export default function AdminProductCreate() {
   useEffect(() => {
     const dirty =
       name || brand || description || price ||
-      reorderPoint || category || subCategory || stage || tier ||
+      reorderPoint || initialInventory || category || subCategory || stage || tier ||
       size || color || material || pattern || targetGender || minMonth ||
       maxMonth || image || images.length > 0;
     setIsDirty(Boolean(dirty));
   }, [
-    name, brand, description, price, reorderPoint,
+    name, brand, description, price, reorderPoint, initialInventory,
     category, subCategory, stage, tier, size, color, material,
     pattern, targetGender, minMonth, maxMonth, image, images,
   ]);
@@ -219,6 +220,10 @@ export default function AdminProductCreate() {
       showToast("Min age cannot be greater than max age.", "error");
       return;
     }
+    if (initialInventory !== "" && Number(initialInventory) < 0) {
+      showToast("Initial inventory cannot be negative.", "error");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -230,6 +235,7 @@ export default function AdminProductCreate() {
         price: priceNum,
         originalPrice: priceNum,
         reorderPoint: reorderPoint ? parseInt(reorderPoint) : undefined,
+        initialInventory: initialInventory !== "" ? parseInt(initialInventory) : undefined,
         category,
         subCategory: subCategory.trim() || undefined,
         stage,
@@ -594,6 +600,19 @@ export default function AdminProductCreate() {
                   <div className="form-group flex-1">
                     <label className="form-label">Reorder Point</label>
                     <input type="number" className="form-input-box" value={reorderPoint} onChange={(e) => setReorderPoint(e.target.value)} />
+                  </div>
+                </div>
+                <div className="product-edit-fields-row">
+                  <div className="form-group flex-1">
+                    <label className="form-label">Initial Inventory</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="form-input-box"
+                      value={initialInventory}
+                      onChange={(e) => setInitialInventory(e.target.value)}
+                      placeholder="0"
+                    />
                   </div>
                 </div>
               </div>

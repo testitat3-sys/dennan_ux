@@ -295,6 +295,9 @@ export default defineSchema({
     .index("by_isMostLoved", ["isMostLoved"])
     .index("by_isCuratedForYou", ["isCuratedForYou"])
     .index("by_discountPrice", ["discountPrice"])
+    .index("by_actual_data", ["actual_data"])
+    .index("by_category_and_actual_data", ["category", "actual_data"])
+    .index("by_stage_and_actual_data", ["stage", "actual_data"])
     .searchIndex("search_name", { searchField: "name" }),
 
   // ─── Product Reviews ─────────────────────────────────────────────────────────

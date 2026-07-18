@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from "react";
-import { useQuery } from "convex/react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useConvex, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import {
   ResponsiveContainer,
   LineChart,
@@ -17,7 +16,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { TrendingUp, CheckCircle, DollarSign } from "lucide-react";
+import { TrendingUp, CheckCircle, DollarSign, RefreshCw } from "lucide-react";
 import { getTodayStr } from "../utils/reminderHelpers";
 import PaymentMethodDetailModal from "./PaymentMethodDetailModal";
 import ChannelDetailModal from "./ChannelDetailModal";
@@ -138,14 +137,40 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
     }
   }, [datePreset, customStart, customEnd, todayStr]);
 
-  const metrics = useTrackedQuery(api.orders.adminGetSalesMetrics, {
-    token,
-    startDate,
-    endDate,
-    paymentMethod: paymentMethodFilter === "all" ? undefined : paymentMethodFilter,
-    channel: channelFilter === "all" ? undefined : channelFilter,
-    brand: brandFilter === "all" ? undefined : brandFilter,
-  });
+  const convex = useConvex();
+  const recordIO = useMutation(api.dbIOStats.recordIO);
+  const [metrics, setMetrics] = useState(undefined);
+  const [productAnalytics, setProductAnalytics] = useState(undefined);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const refresh = useCallback(async () => {
+    if (!token) return;
+    setIsRefreshing(true);
+    try {
+      const { data, _io } = await convex.query(api.orders.adminGetSalesAndProductAnalytics, {
+        token,
+        startDate,
+        endDate,
+        paymentMethod: paymentMethodFilter === "all" ? undefined : paymentMethodFilter,
+        channel: channelFilter === "all" ? undefined : channelFilter,
+        brand: brandFilter === "all" ? undefined : brandFilter,
+      });
+      setMetrics(data.salesMetrics);
+      setProductAnalytics(data.productAnalytics);
+      recordIO({ fn: _io.fn, reads: _io.reads }).catch(() => {});
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [convex, token, startDate, endDate, paymentMethodFilter, channelFilter, brandFilter, recordIO]);
+
+  // Refetch on mount and whenever a filter changes - not reactively on every
+  // unrelated order write, since this dashboard doesn't need second-by-second
+  // freshness. Use the manual Refresh button for that.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, startDate, endDate, paymentMethodFilter, channelFilter, brandFilter]);
 
   const pieData = useMemo(() => {
     if (!metrics) return [];
@@ -156,13 +181,6 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
     if (!metrics) return [];
     return metrics.byChannel.map((c) => ({ name: c.label, value: c.amount, channel: c.channel }));
   }, [metrics]);
-
-  const productAnalytics = useQuery(api.orders.adminGetProductAnalytics, {
-    token,
-    startDate,
-    endDate,
-    brand: brandFilter === "all" ? undefined : brandFilter,
-  });
 
   const brandChartData = useMemo(
     () => groupBrandsForChart(productAnalytics?.byBrand),
@@ -253,6 +271,15 @@ export default function SalesMetricsPanel({ token, onOpenOrder }) {
             </select>
           </div>
         )}
+
+        <button
+          className="btn btn--segment"
+          onClick={refresh}
+          disabled={isRefreshing}
+          title="Refresh sales metrics"
+        >
+          <RefreshCw size={14} className={isRefreshing ? "spin" : undefined} /> Refresh
+        </button>
       </div>
 
       {metrics === undefined ? (

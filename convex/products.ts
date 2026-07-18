@@ -942,6 +942,7 @@ export const createProduct = mutation({
     maxMonth: v.optional(v.number()),
     isActive: v.boolean(),
     isStoreOnly: v.boolean(),
+    initialInventory: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
@@ -983,6 +984,7 @@ export const createProduct = mutation({
     }
 
     const brand = args.brand?.trim() || "no-brand";
+    const initialInventory = Math.max(0, args.initialInventory ?? 0);
     const productId = await ctx.db.insert("products", {
       name: args.name,
       brand,
@@ -1011,12 +1013,12 @@ export const createProduct = mutation({
       actual_data: true,
       tags: [],
       specifications,
-      inventory: 0,
+      inventory: initialInventory,
       unitsSold: 0,
       updatedAt: Date.now(),
     });
 
-    await applyStockCounterDelta(ctx, null, { inventory: 0, reorderPoint: args.reorderPoint });
+    await applyStockCounterDelta(ctx, null, { inventory: initialInventory, reorderPoint: args.reorderPoint });
 
     return { success: true, productId };
   },

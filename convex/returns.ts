@@ -306,9 +306,8 @@ export const submitExchange = trackedMutation("returns.submitExchange", {
       if (!product) {
         throw new Error(`Exchange product ${exItem.productId} not found`);
       }
-      const currentInventory = product.inventory ?? 0;
-      if (currentInventory < exItem.quantity) {
-        throw new Error(`Insufficient stock for ${product.name}: have ${currentInventory}, need ${exItem.quantity}`);
+      if (product.inventory !== undefined && product.inventory < exItem.quantity) {
+        throw new Error(`Insufficient stock for ${product.name}: have ${product.inventory}, need ${exItem.quantity}`);
       }
       const hasActiveDiscount = product.discountPrice != null && product.discountExpiry != null && product.discountExpiry > Date.now();
       const unitPrice = hasActiveDiscount ? product.discountPrice : product.price;

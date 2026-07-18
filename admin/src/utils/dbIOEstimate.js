@@ -69,7 +69,7 @@ const FUNCTION_AVG_BYTES = {
   "orders.getOrderDetailById": 700,
   "orders.reportDeliveryFailure": 500,
   "orders.adminCreateOrder": 600,
-  "orders.adminGetSalesMetrics": 700,
+  "orders.adminGetSalesAndProductAnalytics": 700,
 
   "leads.getLeads": 325,
 

@@ -27,24 +27,28 @@ export const getProducts = trackedQuery("data.getProducts", {
     stage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Use an index when a category is supplied, since `by_category_tier_stage`
-    // and `by_category` cover the common filtered-page case and avoid a full
-    // table scan. Tier still needs a JS pass since the schema's tier literal
-    // casing may not match the lowercased arg. When only stage is supplied
-    // (no category), use `by_stage` instead of falling through to a full
-    // scan. With neither filter, this is an intentional "browse everything"
-    // page and stays a full collect.
+    // Narrow by `actual_data` index-side in every branch, since only ~160 of
+    // ~5000 rows are real store-facing products - the rest are non-actual_data
+    // seed/import rows. Tier still needs a JS pass since the schema's tier
+    // literal casing may not match the lowercased arg.
     let results = args.category
       ? await ctx.db
           .query("products")
-          .withIndex("by_category", (q) => q.eq("category", args.category))
+          .withIndex("by_category_and_actual_data", (q) =>
+            q.eq("category", args.category).eq("actual_data", true)
+          )
           .collect()
       : args.stage
       ? await ctx.db
           .query("products")
-          .withIndex("by_stage", (q) => q.eq("stage", args.stage as any))
+          .withIndex("by_stage_and_actual_data", (q) =>
+            q.eq("stage", args.stage as any).eq("actual_data", true)
+          )
           .collect()
-      : await ctx.db.query("products").collect();
+      : await ctx.db
+          .query("products")
+          .withIndex("by_actual_data", (q) => q.eq("actual_data", true))
+          .collect();
 
     // Only return products matching the central filter
     results = results.filter((p) => shouldKeepProduct(p));

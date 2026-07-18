@@ -42,6 +42,14 @@ export default function OrderExchangePage() {
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const errorRef = React.useRef(null);
+
+  const showError = (message) => {
+    setError(message);
+    requestAnimationFrame(() => {
+      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
 
   const order = useTrackedQuery(
     api.orders.getOrderDetailById,
@@ -157,21 +165,21 @@ export default function OrderExchangePage() {
       .filter(item => item.quantity > 0);
 
     if (returnedItems.length === 0) {
-      setError("Please select at least one item and quantity to return.");
+      showError("Please select at least one item and quantity to return.");
       return;
     }
 
     if (exchangeCart.length === 0) {
-      setError("Please select at least one replacement product for the exchange.");
+      showError("Please select at least one replacement product for the exchange.");
       return;
     }
 
     if (topUpRequired > 0 && (topUpMethod === "momo" ? !topUpMomoPhone.trim() : false)) {
-      setError("MoMo phone number is required for a top-up payment.");
+      showError("MoMo phone number is required for a top-up payment.");
       return;
     }
     if (topUpRequired > 0 && (topUpMethod === "momo" || topUpMethod === "card") && !topUpCardOrderId.trim()) {
-      setError("Transaction ID is required for this top-up payment method.");
+      showError("Transaction ID is required for this top-up payment method.");
       return;
     }
 
@@ -194,7 +202,7 @@ export default function OrderExchangePage() {
       });
       navigate("/", { state: { toast: { message: "Exchange processed successfully.", type: "success" } } });
     } catch (err) {
-      setError("Failed to process exchange: " + err.message);
+      showError("Failed to process exchange: " + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -254,7 +262,7 @@ export default function OrderExchangePage() {
 
       <form onSubmit={handleSubmit} className="modal-form">
         {error && (
-          <div className="form-error is-visible">
+          <div className="form-error is-visible" ref={errorRef}>
             <AlertTriangle size={18} />
             <span>{error}</span>
           </div>

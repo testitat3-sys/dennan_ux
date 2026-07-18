@@ -650,7 +650,7 @@ export const getOrdersForStaff = query({
  * "today" when no dates are given), so the panel resets to a blank slate
  * every morning. Reuses parseDateStrToMs/toDateStr (defined further below in
  * this file; function declarations are hoisted so this is safe to reference
- * here) and the same by_createdAt index range pattern as adminGetSalesMetrics.
+ * here) and the same by_createdAt index range pattern as adminGetSalesAndProductAnalytics.
  */
 // NOTE: consumed via usePaginatedQuery - see getOrdersForStaff above for why
 // this must stay a plain query rather than trackedQuery.
@@ -1616,7 +1616,7 @@ export const createPhysicalOrder = mutation({
 });
 
 // NOTE: startDate/endDate are optional and default to a rolling 30-day
-// window (see adminGetSalesMetrics for the same convention) rather than
+// window (see adminGetSalesAndProductAnalytics for the same convention) rather than
 // all-time, so this no longer requires an unbounded orders.collect(). Any
 // existing caller passing only { token } now gets the last-30-days view
 // instead of an all-time one.
@@ -1983,7 +1983,10 @@ function toDateStr(ms: number): string {
   return `${y}-${m}-${d}`;
 }
 
-export const adminGetSalesMetrics = trackedQuery("orders.adminGetSalesMetrics", {
+const STAGE_LABELS: Record<string, string> = { mother: "Mother", newborn: "Newborn", kid: "Kid" };
+const TIER_LABELS: Record<string, string> = { essentials: "Essentials", musthaves: "Must-Haves", luxuries: "Luxuries" };
+
+export const adminGetSalesAndProductAnalytics = trackedQuery("orders.adminGetSalesAndProductAnalytics", {
   args: {
     token: v.string(),
     startDate: v.optional(v.string()), // "YYYY-MM-DD", inclusive, server-local
@@ -2011,53 +2014,57 @@ export const adminGetSalesMetrics = trackedQuery("orders.adminGetSalesMetrics", 
     const allOrders = await getOrdersInDateRange(ctx, rangeStartMs, rangeEndMs);
     const paymentsByOrderId = await getPaymentsByOrderId(ctx, allOrders);
 
-    // 3. Filter to completed orders within range, then by channel (order-level filter,
-    // unlike payment method which is a tender-level filter applied inside
-    // computeAggregate below)
-    let ordersInRange = allOrders.filter(
+    // 3. Filter to completed orders within range. This unfiltered-by-channel/
+    // brand list (`ordersInRange`) is the shared base for both halves below -
+    // the product-analytics half (which has no channel arg and must always
+    // cover every brand for byBrand) reads from it directly, while the
+    // sales-metrics half narrows it further into `salesOrders`.
+    const ordersInRange = allOrders.filter(
       (o: any) =>
         o.createdAt >= rangeStartMs && o.createdAt < rangeEndMs && completedStatuses.includes(o.status)
     );
-    if (args.channel) {
-      ordersInRange = ordersInRange.filter((o: any) => resolveOrderChannel(o) === args.channel);
-    }
 
-    // 3b. When a brand filter is active, orders don't have a single brand
-    // (they can mix line items from several brands), so compute what
-    // fraction of each order's item revenue belongs to the selected brand
-    // and use that as a proration ratio for tenders below. Orders with none
-    // of the selected brand are dropped entirely.
+    // 3a. orderItems + products are needed unconditionally for the product
+    // analytics half below, so fetch them once (over the full unfiltered
+    // range) and share the same maps for the brand-ratio proration used by
+    // the sales-metrics half.
+    const itemsByOrderId = await getOrderItemsByOrderId(ctx, ordersInRange);
+    const productsById = await batchGetById(
+      ctx,
+      ordersInRange.flatMap((o: any) => (itemsByOrderId.get(o._id.toString()) ?? []).map((i: any) => i.productId))
+    );
+
+    // 3b. Sales-metrics-only filtering: by channel (order-level filter,
+    // unlike payment method which is a tender-level filter applied inside
+    // computeAggregate below), then by brand. Orders don't have a single
+    // brand (they can mix line items from several brands), so when a brand
+    // filter is active, compute what fraction of each order's item revenue
+    // belongs to the selected brand and use that as a proration ratio for
+    // tenders below. Orders with none of the selected brand are dropped
+    // entirely from salesOrders (productAnalytics is unaffected - it filters
+    // per-product, not per-order, further down).
+    let salesOrders = args.channel
+      ? ordersInRange.filter((o: any) => resolveOrderChannel(o) === args.channel)
+      : ordersInRange;
+
     let brandRatioByOrderId: Map<string, number> | null = null;
     if (args.brand) {
-      const productBrandCache = new Map<string, string | undefined>();
-      const getProductBrand = async (productId: any) => {
-        const key = productId.toString();
-        if (!productBrandCache.has(key)) {
-          const product = await ctx.db.get(productId);
-          productBrandCache.set(key, product?.brand);
-        }
-        return productBrandCache.get(key);
-      };
-
       brandRatioByOrderId = new Map();
-      for (const order of ordersInRange) {
-        const items = await ctx.db
-          .query("orderItems")
-          .withIndex("by_order", (q) => q.eq("orderId", order._id))
-          .collect();
+      for (const order of salesOrders) {
+        const items = itemsByOrderId.get(order._id.toString()) ?? [];
         let itemsRevenue = 0;
         let brandRevenue = 0;
         for (const item of items) {
           const revenue = item.unitPrice * item.quantity;
           itemsRevenue += revenue;
-          const brand = await getProductBrand(item.productId);
+          const brand = productsById.get(item.productId.toString())?.brand;
           if (brand === args.brand) brandRevenue += revenue;
         }
         if (brandRevenue > 0 && itemsRevenue > 0) {
           brandRatioByOrderId.set(order._id.toString(), brandRevenue / itemsRevenue);
         }
       }
-      ordersInRange = ordersInRange.filter((o: any) => brandRatioByOrderId!.has(o._id.toString()));
+      salesOrders = salesOrders.filter((o: any) => brandRatioByOrderId!.has(o._id.toString()));
     }
 
     // 4. Attribute tenders per order, applying the payment-method filter (if
@@ -2107,7 +2114,7 @@ export const adminGetSalesMetrics = trackedQuery("orders.adminGetSalesMetrics", 
       return { totalSales, orderCount: distinctOrderIds.size, byMethodMap, byChannelMap };
     };
 
-    const overall = computeAggregate(ordersInRange);
+    const overall = computeAggregate(salesOrders);
 
     // 4b. Merge exchange top-up revenue (recorded on `returns`, not
     // `orderPayments` — see returns.submitExchange) into totals so it counts
@@ -2156,7 +2163,7 @@ export const adminGetSalesMetrics = trackedQuery("orders.adminGetSalesMetrics", 
     const series: { date: string; bucketStartMs: number; total: number; byMethod: Record<string, number> }[] = [];
     for (let bucketStart = rangeStartMs; bucketStart < rangeEndMs; bucketStart += bucketMs) {
       const bucketEnd = Math.min(bucketStart + bucketMs, rangeEndMs);
-      const bucketOrders = ordersInRange.filter(
+      const bucketOrders = salesOrders.filter(
         (o: any) => o.createdAt >= bucketStart && o.createdAt < bucketEnd
       );
       const bucketAgg = computeAggregate(bucketOrders);
@@ -2175,7 +2182,7 @@ export const adminGetSalesMetrics = trackedQuery("orders.adminGetSalesMetrics", 
       series.push({ date: toDateStr(bucketStart), bucketStartMs: bucketStart, total: bucketTotal, byMethod });
     }
 
-    return {
+    const salesMetrics = {
       totalSales: overall.totalSales,
       orderCount: overall.orderCount,
       aov,
@@ -2195,44 +2202,12 @@ export const adminGetSalesMetrics = trackedQuery("orders.adminGetSalesMetrics", 
         createdAt: t.createdAt,
       })),
     };
-  },
-});
 
-const STAGE_LABELS: Record<string, string> = { mother: "Mother", newborn: "Newborn", kid: "Kid" };
-const TIER_LABELS: Record<string, string> = { essentials: "Essentials", musthaves: "Must-Haves", luxuries: "Luxuries" };
-
-export const adminGetProductAnalytics = query({
-  args: {
-    token: v.string(),
-    startDate: v.optional(v.string()),
-    endDate: v.optional(v.string()),
-    // Narrows topProducts/byCategory/byStage/byTier/margin stats to a single
-    // brand. byBrand itself is always computed across every brand regardless
-    // of this filter, so the comparison chart and this filter's own option
-    // list stay stable no matter which brand (if any) is selected.
-    brand: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
-
-    const completedStatuses = ["delivered", "returned", "partially_returned"];
-    const dayMs = 24 * 60 * 60 * 1000;
-
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const todayMs = startOfToday.getTime();
-
-    const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
-    const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
-
-    const ordersInWindow = await ctx.db
-      .query("orders")
-      .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
-      .collect();
-    const ordersInRange = ordersInWindow.filter((o: any) => completedStatuses.includes(o.status));
-
-    // Aggregate units/revenue per product across all matching orders' line items
-    const itemsByOrderId = await getOrderItemsByOrderId(ctx, ordersInRange);
+    // 6. Product analytics half - shares ordersInRange/itemsByOrderId/
+    // productsById fetched above instead of re-scanning orders/orderItems.
+    // Unlike salesOrders, this always covers every completed order in range
+    // regardless of channel/brand filters (byBrand must stay stable, and
+    // per-product/category/stage/tier filtering by brand happens below).
     const productAgg = new Map<string, { productId: any; unitsSold: number; revenue: number }>();
     for (const order of ordersInRange) {
       const items = itemsByOrderId.get(order._id.toString()) ?? [];
@@ -2263,7 +2238,6 @@ export const adminGetProductAnalytics = query({
       hasCostData: boolean;
     }[] = [];
 
-    const productsById = await batchGetById(ctx, Array.from(productAgg.keys()));
     for (const [key, agg] of productAgg.entries()) {
       const product = productsById.get(key);
 
@@ -2335,7 +2309,7 @@ export const adminGetProductAnalytics = query({
     const overallMarginPct =
       totalRevenueWithCost > 0 ? Math.round((totalMarginWithCost / totalRevenueWithCost) * 1000) / 10 : null;
 
-    return {
+    const productAnalytics = {
       topProducts: topProducts.slice(0, 10),
       byCategory: Array.from(byCategoryMap.values()).sort((a, b) => b.revenue - a.revenue),
       byStage: Array.from(byStageMap.values()).sort((a, b) => b.revenue - a.revenue),
@@ -2346,6 +2320,8 @@ export const adminGetProductAnalytics = query({
       rangeStart: toDateStr(rangeStartMs),
       rangeEnd: toDateStr(rangeEndMs - dayMs),
     };
+
+    return { salesMetrics, productAnalytics };
   },
 });
 

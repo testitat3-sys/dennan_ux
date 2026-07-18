@@ -11,6 +11,30 @@ import {
 } from "../lib/offlineDb";
 import { useOnlineStatus } from "./useOnlineStatus";
 
+// Skip a sync pass if the last one finished more recently than this - avoids
+// every mount/reconnect on a device pulling its own full delta back-to-back.
+const MIN_SYNC_INTERVAL_MS = 60 * 1000;
+
+// Cross-tab coordination so two tabs on the same device don't both run a
+// delta sync at once. Memory-only (no persisted lock): a tab that closes
+// mid-sync just lets the flag expire via SYNC_LOCK_TIMEOUT_MS below.
+const SYNC_CHANNEL_NAME = "dennan-pos-sync";
+const SYNC_LOCK_TIMEOUT_MS = 15 * 1000;
+let syncChannel = null;
+let otherTabSyncingUntil = 0;
+function getSyncChannel() {
+  if (typeof BroadcastChannel === "undefined") return null;
+  if (!syncChannel) {
+    syncChannel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+    syncChannel.onmessage = (event) => {
+      if (event.data?.type === "syncing") {
+        otherTabSyncingUntil = Date.now() + SYNC_LOCK_TIMEOUT_MS;
+      }
+    };
+  }
+  return syncChannel;
+}
+
 /**
  * Offline-first product catalog for the POS. The full ~4000-row catalog is
  * downloaded at most once per device, and only via an explicit
@@ -94,7 +118,7 @@ export function useOfflineProducts(token) {
     return needs;
   }, []);
 
-  const sync = useCallback(async () => {
+  const sync = useCallback(async (force = false) => {
     if (!token) return;
     try {
       const bootstrapped = await getMeta("bootstrapped");
@@ -103,8 +127,16 @@ export function useOfflineProducts(token) {
         return;
       }
 
-      setIsSyncing(true);
       const since = (await getMeta("lastSyncedAt")) || 0;
+      if (!force && since && Date.now() - since < MIN_SYNC_INTERVAL_MS) {
+        return;
+      }
+      if (!force && Date.now() < otherTabSyncingUntil) {
+        return;
+      }
+
+      setIsSyncing(true);
+      getSyncChannel()?.postMessage({ type: "syncing", at: Date.now() });
       // Captured before the loop starts (not read again per page) - the
       // cursor only advances to this point once every page of this pass
       // has been applied, so a mid-loop failure can't skip rows.

@@ -55,6 +55,7 @@ export default function AdminProductEdit() {
   );
   const generateCloudinarySignature = useMutation(api.products.generateCloudinarySignature);
   const updateProductMutation = useMutation(api.products.updateProduct);
+  const adjustStockMutation = useMutation(api.products.adjustStock);
   const { getDisplayName } = useProductDisplayName(token);
 
   // Form state
@@ -65,6 +66,7 @@ export default function AdminProductEdit() {
   const [originalPrice, setOriginalPrice] = useState("");
   const [costPrice, setCostPrice] = useState("");
   const [reorderPoint, setReorderPoint] = useState("");
+  const [inventory, setInventory] = useState("");
   const [category, setCategory] = useState("");
   const [subCategory, setSubCategory] = useState("");
   const [stage, setStage] = useState("");
@@ -100,6 +102,7 @@ export default function AdminProductEdit() {
       setOriginalPrice(String(product.originalPrice ?? ""));
       setCostPrice(product.costPrice !== undefined ? String(product.costPrice) : "");
       setReorderPoint(product.reorderPoint !== undefined ? String(product.reorderPoint) : "");
+      setInventory(String(product.inventory ?? 0));
       setCategory(product.category || "");
       setSubCategory(product.subCategory || "");
       setStage(product.stage || "");
@@ -129,6 +132,7 @@ export default function AdminProductEdit() {
       originalPrice !== String(product.originalPrice ?? "") ||
       costPrice !== (product.costPrice !== undefined ? String(product.costPrice) : "") ||
       reorderPoint !== (product.reorderPoint !== undefined ? String(product.reorderPoint) : "") ||
+      inventory !== String(product.inventory ?? 0) ||
       category !== (product.category || "") ||
       subCategory !== (product.subCategory || "") ||
       stage !== (product.stage || "") ||
@@ -145,7 +149,7 @@ export default function AdminProductEdit() {
       JSON.stringify(images) !== JSON.stringify(product.images || []);
     setIsDirty(dirty);
   }, [
-    name, brand, description, price, originalPrice, costPrice, reorderPoint,
+    name, brand, description, price, originalPrice, costPrice, reorderPoint, inventory,
     category, subCategory, stage, tier, size, color, material, pattern,
     targetGender, minMonth, maxMonth, isActive, image, images, product,
   ]);
@@ -253,9 +257,18 @@ export default function AdminProductEdit() {
       showToast("Min age cannot be greater than max age.", "error");
       return;
     }
+    const inventoryNum = inventory === "" ? 0 : Number(inventory);
+    if (inventoryNum < 0) {
+      showToast("Inventory cannot be negative.", "error");
+      return;
+    }
 
     setIsSaving(true);
     try {
+      const inventoryDelta = inventoryNum - (product.inventory ?? 0);
+      if (inventoryDelta !== 0) {
+        await adjustStockMutation({ token, productId, delta: inventoryDelta });
+      }
       await updateProductMutation({
         token,
         productId,
@@ -607,6 +620,18 @@ export default function AdminProductEdit() {
                   <div className="form-group flex-1">
                     <label className="form-label">Reorder Point</label>
                     <input type="number" className="form-input-box" value={reorderPoint} onChange={(e) => setReorderPoint(e.target.value)} />
+                  </div>
+                </div>
+                <div className="product-edit-fields-row">
+                  <div className="form-group flex-1">
+                    <label className="form-label">Inventory</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="form-input-box"
+                      value={inventory}
+                      onChange={(e) => setInventory(e.target.value)}
+                    />
                   </div>
                 </div>
               </div>
