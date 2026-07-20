@@ -49,7 +49,7 @@ const Footer = () => {
 
       <div className="footer__bottom">
         <span>© {new Date().getFullYear()} Dennan. Designed with love.</span>
-        <span>Designed with intention.</span>
+        <span>Running on Fiiindit SOS.</span>
       </div>
     </footer>
   );
