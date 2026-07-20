@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCardSkeleton from './ProductCardSkeleton';
 import { formatPrice } from '../../utils/priceUtils';
-import { stripBrandFromName } from '../../utils/productNameUtils';
+import { stripBrandFromName, normalizeBrandName } from '../../utils/productNameUtils';
 import { useConvexAuth } from 'convex/react';
 import { useWishlist } from '../../context/WishlistContext';
 import { useLeadCapture } from '../../context/LeadCaptureContext';
@@ -44,7 +44,8 @@ const ProductCard = ({
   const { image, name, price, wasPrice, tier, badge, tags, variant, inventory, unitsSold, brand } = product;
   const id = product.id || product._id;
 
-  const displayName = stripBrandFromName(name, brand);
+  const displayName = normalizeBrandName(stripBrandFromName(name, brand));
+  const displayBrand = normalizeBrandName(brand);
   const isSaved = isInWishlist(id);
   const isOutOfStock = inventory !== undefined && inventory <= 0;
   const isLowStock = inventory !== undefined && inventory > 0 && inventory <= 3;
@@ -124,7 +125,7 @@ const ProductCard = ({
             ) : (
               brand && (
                 <span className="tag tag-brand tag--support-green">
-                  {brand}
+                  {displayBrand}
                 </span>
               )
             )}

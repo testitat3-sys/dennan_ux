@@ -7,7 +7,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useLeadCapture } from '../context/LeadCaptureContext';
 import { formatPrice } from '../utils/priceUtils';
-import { stripBrandFromName } from '../utils/productNameUtils';
+import { stripBrandFromName, normalizeBrandName } from '../utils/productNameUtils';
 import Toast from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import PDPSkeleton from '../components/ui/PDPSkeleton';
@@ -53,6 +53,14 @@ const buildAnswerFirstSummary = (product, displayName) => {
 
   const category = product.category ? product.category.toLowerCase() : 'baby and kids';
   return `${displayName} is a ${category} product from ${product.brand || 'Dennan'}, ${facts.join(', ')}. Priced at UGX ${typeof product.price === 'number' ? product.price.toLocaleString() : product.price}, available for delivery in Kampala.`;
+};
+
+const hasAnswerFirstFacts = (product) => {
+  if (formatAgeRange(product)) return true;
+  if (product.material) return true;
+  if (formatDimensions(product.dimensions)) return true;
+  if (product.weightGrams) return true;
+  return false;
 };
 
 const buildFactBullets = (product) => {
@@ -160,12 +168,13 @@ const PDP = () => {
   }
 
   const id = product.id || product._id;
-  const displayName = stripBrandFromName(product.name, product.brand);
+  const displayName = normalizeBrandName(stripBrandFromName(product.name, product.brand));
   const isSaved = isInWishlist(id);
   const isOutOfStock = product.inventory !== undefined && product.inventory <= 0;
 
   const canonicalUrl = `https://dennan.ug/product/${product.slug || id}`;
   const answerFirstSummary = buildAnswerFirstSummary(product, displayName);
+  const showAnswerFirstSummary = hasAnswerFirstFacts(product);
   const factBullets = buildFactBullets(product);
   const productImages = (product.images || (product.image ? [product.image] : [])).filter(Boolean);
 
@@ -353,7 +362,7 @@ const PDP = () => {
           {/* Buy box */}
           <div className="pdp__buybox-col">
             <Card className="pdp__buybox" hasShadow>
-              <span className="pdp__brand">{product.brand}</span>
+              <span className="pdp__brand">{normalizeBrandName(product.brand)}</span>
               <h1 className="pdp__title">{displayName}</h1>
 
               <div className="pdp__urgency">
@@ -470,7 +479,7 @@ const PDP = () => {
         <div className="pdp__section">
           <h2>Description</h2>
           <div className="pdp__description">
-            <p className="pdp__answer-first">{answerFirstSummary}</p>
+            {showAnswerFirstSummary && <p className="pdp__answer-first">{answerFirstSummary}</p>}
             <p>{product.description}</p>
             {factBullets.length > 0 && (
               <ul className="pdp__feature-list">

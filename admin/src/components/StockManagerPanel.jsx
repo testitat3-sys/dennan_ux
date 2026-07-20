@@ -3,7 +3,7 @@ import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useProductDisplayName } from "../hooks/useProductDisplayName";
-import { Search, AlertCircle, Pencil, Plus, Minus, Check, Printer } from "lucide-react";
+import { Search, AlertCircle, Pencil, Plus, Minus, Check, Printer, Upload } from "lucide-react";
 import BarcodeLabelModal from "./BarcodeLabelModal";
 
 export default function StockManagerPanel({ token, navigate }) {
@@ -74,6 +74,13 @@ export default function StockManagerPanel({ token, navigate }) {
           style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
         >
           <Plus size={14} /> New Product
+        </button>
+        <button
+          className="btn btn--secondary btn--sm"
+          onClick={() => navigate("/admin/products/bulk-upload")}
+          style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+        >
+          <Upload size={14} /> Bulk Upload (.xlsx)
         </button>
       </div>
 

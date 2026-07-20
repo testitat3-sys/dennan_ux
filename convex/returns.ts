@@ -33,6 +33,7 @@ async function restockByBarcode(ctx: any, productId: Id<"products">, quantity: n
       const newInventory = pToUpdate.inventory + quantity;
       await ctx.db.patch(pToUpdate._id, {
         inventory: newInventory,
+        updatedAt: Date.now(),
       });
       await applyStockCounterDelta(
         ctx,

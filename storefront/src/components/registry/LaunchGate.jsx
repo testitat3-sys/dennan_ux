@@ -6,7 +6,14 @@ import Button from '../ui/Button';
 import Toast from '../ui/Toast';
 import OfferCountdownBanner from './OfferCountdownBanner';
 import { useLeadCapture } from '../../context/LeadCaptureContext';
-import { STAGE_OPTIONS, validateNotifySignup } from '../../utils/notifySignup';
+import {
+  STAGE_OPTIONS,
+  validateNotifySignup,
+  isValidName,
+  isValidEmail,
+  isValidPhone,
+  isValidStage,
+} from '../../utils/notifySignup';
 import './LaunchGate.css';
 
 const LaunchGate = () => {
@@ -22,6 +29,11 @@ const LaunchGate = () => {
   const [loading, setLoading] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+
+  const showEmail = isValidName(firstName) && isValidName(lastName);
+  const showPhone = showEmail && isValidEmail(email);
+  const showStage = showPhone && isValidPhone(phone);
+  const showSubmit = showStage && isValidStage(stage);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,7 +108,7 @@ const LaunchGate = () => {
               </div>
             </div>
 
-            <div className="launch-gate__field">
+            <div className={`launch-gate__field ${showEmail ? 'is-revealed' : 'is-hidden'}`} aria-hidden={!showEmail}>
               <label className="launch-gate__label" htmlFor="launch-em">Email</label>
               <input
                 id="launch-em"
@@ -106,11 +118,12 @@ const LaunchGate = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                tabIndex={showEmail ? 0 : -1}
               />
               {errors.email && <span className="launch-gate__error">{errors.email}</span>}
             </div>
 
-            <div className="launch-gate__field">
+            <div className={`launch-gate__field ${showPhone ? 'is-revealed' : 'is-hidden'}`} aria-hidden={!showPhone}>
               <label className="launch-gate__label" htmlFor="launch-ph">Phone Number</label>
               <input
                 id="launch-ph"
@@ -120,17 +133,19 @@ const LaunchGate = () => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 autoComplete="tel"
+                tabIndex={showPhone ? 0 : -1}
               />
               {errors.phone && <span className="launch-gate__error">{errors.phone}</span>}
             </div>
 
-            <div className="launch-gate__field">
+            <div className={`launch-gate__field ${showStage ? 'is-revealed' : 'is-hidden'}`} aria-hidden={!showStage}>
               <label className="launch-gate__label" htmlFor="launch-st">Stage</label>
               <select
                 id="launch-st"
                 className="launch-gate__input"
                 value={stage}
                 onChange={(e) => setStage(e.target.value)}
+                tabIndex={showStage ? 0 : -1}
               >
                 <option value="" disabled>Select your stage</option>
                 {STAGE_OPTIONS.map((opt) => (
@@ -140,15 +155,18 @@ const LaunchGate = () => {
               {errors.stage && <span className="launch-gate__error">{errors.stage}</span>}
             </div>
 
-            <Button
-              type="submit"
-              variant="white-active"
-              fullWidth
-              disabled={loading}
-              loading={loading}
-            >
-              Unlock offers
-            </Button>
+            <div className={showSubmit ? 'is-revealed' : 'is-hidden'} aria-hidden={!showSubmit}>
+              <Button
+                type="submit"
+                variant="white-active"
+                fullWidth
+                disabled={loading || !showSubmit}
+                loading={loading}
+                tabIndex={showSubmit ? 0 : -1}
+              >
+                Unlock offers
+              </Button>
+            </div>
           </form>
         </div>
       </Page.Section>

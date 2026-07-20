@@ -50,7 +50,7 @@ const LaunchPage = () => {
 
   if (!hasLeadInfo) {
     return (
-      <Page noPaddingTop={true} padding="inset" bottomSpacing="loose">
+      <Page noPaddingTop={true} padding="inset" bottomSpacing="none">
         <Helmet>
           <title>Launch Offers | Dennan</title>
           <meta name="description" content={HERO.subtext} />

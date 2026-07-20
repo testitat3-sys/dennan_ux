@@ -11,6 +11,7 @@ import AccountingDashboard from './pages/AccountingDashboard';
 import StockManagerDashboard from './pages/StockManagerDashboard';
 import AdminProductEdit from './pages/AdminProductEdit';
 import AdminProductCreate from './pages/AdminProductCreate';
+import AdminBulkProductUpload from './pages/AdminBulkProductUpload';
 import OrderExchangePage from './pages/OrderExchangePage';
 import sosLogo from './assets/SOS.png';
 
@@ -122,6 +123,17 @@ function MainRouter() {
           <Navigate to="/login" replace />
         ) : user.accountRole === "admin" || user.accountRole === "stockManager" ? (
           <AdminProductCreate />
+        ) : (
+          <Navigate to="/" replace />
+        )
+      } />
+
+      {/* Protected Admin Bulk Product Upload */}
+      <Route path="/admin/products/bulk-upload" element={
+        !user ? (
+          <Navigate to="/login" replace />
+        ) : user.accountRole === "admin" || user.accountRole === "stockManager" ? (
+          <AdminBulkProductUpload />
         ) : (
           <Navigate to="/" replace />
         )

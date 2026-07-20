@@ -1,6 +1,7 @@
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { applyStockCounterDelta } from "./stockCounters";
+import { slugify } from "./products";
 
 export const upsertProductsBatch = internalMutation({
   args: {
@@ -65,6 +66,7 @@ export const upsertProductsBatch = internalMutation({
         // Insert new product
         await ctx.db.insert("products", {
           ...p,
+          brandSlug: slugify(p.brand),
           actual_data: true,
           isActive: true,
           updatedAt: Date.now(),

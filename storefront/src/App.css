@@ -222,6 +222,9 @@
   height: var(--space-10);
   width: auto;
   display: block;
+  /* The source asset has baked-in transparent padding before the "D" glyph starts;
+     pull it left so the visible mark lines up with the other footer columns. */
+  margin-left: -1.25rem;
 }
 .footer__brand-copy {
   font-size: var(--body-sm);

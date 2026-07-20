@@ -1,5 +1,6 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { slugify } from "./products";
 
 // 84 new products from convex_products.json with actual_data = true
 export const NEW_PRODUCTS = [
@@ -3164,6 +3165,7 @@ export const runSeed = mutation({
       const productFields = {
         name: item.name,
         brand: item.brand || "Generic",
+        brandSlug: slugify(item.brand || "Generic"),
         size: item.size,
         color: item.color || "Default",
         slug: item.slug,

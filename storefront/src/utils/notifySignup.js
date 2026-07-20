@@ -24,6 +24,11 @@ export const mapUserStage = (userStage) => {
   return '';
 };
 
+export const isValidName = (v) => !!v.trim();
+export const isValidEmail = (v) => EMAIL_RE.test(v.trim());
+export const isValidPhone = (v) => !!v.trim();
+export const isValidStage = (v) => !!v;
+
 export const validateNotifySignup = ({ firstName, lastName, email, phone, stage }) => {
   const next = {};
   if (!firstName.trim()) next.firstName = 'First name is required.';

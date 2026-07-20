@@ -1,6 +1,7 @@
 import { mutation } from "./_generated/server";
 import { NEW_PRODUCTS } from "./seedProducts";
 import { CLOSE_MATCHES_PRODUCTS } from "./seedCloseMatches";
+import { slugify } from "./products";
 import emlData from "../eml.json";
 
 export const runProductionSeed = mutation({
@@ -58,6 +59,7 @@ export const runProductionSeed = mutation({
         const productFields: any = {
           name: item.name,
           brand: item.brand || "Generic",
+          brandSlug: slugify(item.brand || "Generic"),
           size: item.size,
           color: item.color || "Default",
           slug: item.slug,

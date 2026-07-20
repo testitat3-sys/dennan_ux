@@ -74,6 +74,7 @@
   background: var(--color-brand-purple-launch);
   color: var(--color-on-primary);
   padding-top: 0;
+  padding-bottom: 0;
 }
 
 .launch-gate__band--form .offer-countdown-banner {
@@ -153,4 +154,16 @@
   .launch-gate__field-row {
     flex-direction: column;
   }
+}
+
+/* ─── Progressive field reveal ──────────────────────────────────────── */
+
+.launch-gate__form .is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.launch-gate__form .is-revealed {
+  opacity: 1;
+  transition: opacity 0.3s ease 0.1s;
 }
