@@ -49,10 +49,15 @@ const Footer = () => {
 
       <div className="footer__bottom">
         <span>© {new Date().getFullYear()} Dennan. Designed with love.</span>
-        <span className="footer__built-with">
+        <a
+          href="https://fiiindit.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="footer__built-with"
+        >
           Built with
           <img src="/assets/sos-footer-logo.png" alt="Fiiindit SOS" className="footer__sos-logo" />
-        </span>
+        </a>
       </div>
     </footer>
   );

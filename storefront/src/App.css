@@ -267,6 +267,11 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-1);
+  color: inherit;
+  text-decoration: none;
+}
+.footer__built-with:hover {
+  color: var(--text-secondary);
 }
 .footer__sos-logo {
   width: 120px;

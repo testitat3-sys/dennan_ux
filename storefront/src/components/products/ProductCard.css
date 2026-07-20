@@ -183,11 +183,13 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.product-card__price-link {
+  margin-top: auto;
+}
 .card-price-row {
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
-  margin-top: auto;
   padding-top: var(--space-3);
 }
 .card-price {

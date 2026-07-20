@@ -181,15 +181,19 @@ const ProductCard = ({
         </div>
       </Link>
       <div className="card-info">
-        <span className="card-tier">{tier}</span>
+        <Link to={`/product/${id}`} className="product-card__tier-link">
+          <span className="card-tier">{tier}</span>
+        </Link>
         <Link to={`/product/${id}`} className="product-card__name-link">
           <h3 className="card-name">{displayName}</h3>
         </Link>
-        <div className="card-price-row">
-          <span className="card-price">{formatPrice(price)}</span>
-          {wasPrice && <span className="card-price-was">{formatPrice(wasPrice)}</span>}
-        </div>
-        
+        <Link to={`/product/${id}`} className="product-card__price-link">
+          <div className="card-price-row">
+            <span className="card-price">{formatPrice(price)}</span>
+            {wasPrice && <span className="card-price-was">{formatPrice(wasPrice)}</span>}
+          </div>
+        </Link>
+
         {wishlistMode && (
           isOutOfStock ? (
             <div className="wishlist-notify-alert">
