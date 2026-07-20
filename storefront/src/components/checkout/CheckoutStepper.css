@@ -1,6 +1,6 @@
 .checkout-stepper-container {
   width: 100%;
-  padding: var(--space-8) 0 var(--space-4);
+  padding: var(--space-6) 0 var(--space-6);
   display: flex;
   justify-content: center;
   align-items: center !important;

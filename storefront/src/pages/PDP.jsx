@@ -368,7 +368,7 @@ const PDP = () => {
               <div className="pdp__urgency">
                 {product.unitsSold > 0 && (
                   <span className="pdp__urgency-pill">
-                    <Flame size={13} strokeWidth={2.5} fill="currentColor" /> Hot: {product.unitsSold.toLocaleString()} people have just bought this
+                    <Flame size={13} strokeWidth={2.5} fill="currentColor" /> Hot: {product.unitsSold === 1 ? '1 person has' : `${product.unitsSold.toLocaleString()} people have`} just bought this
                   </span>
                 )}
                 {isOutOfStock && <span className="pdp__urgency-pill pdp__urgency-pill--red">Out of Stock</span>}

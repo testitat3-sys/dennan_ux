@@ -150,7 +150,10 @@
   gap: var(--space-4);
   flex-shrink: 0;
 }
-.nav__cart-badge { position: relative; }
+.nav__cart-badge { 
+  position: relative; 
+  overflow: visible;
+}
 .cart-count-dot {
   position: absolute;
   top: -2px; right: -2px;
@@ -165,6 +168,8 @@
   line-height: 1;
   border: 2px solid var(--surface);
   box-sizing: border-box;
+  z-index: 2;
+  pointer-events: none;
 }
 
 
@@ -206,7 +211,7 @@
 /* ─── FOOTER ─────────────────────────────────────────────────────── */
 .footer {
   background: var(--surface-container-low);
-  padding: var(--space-16) var(--space-8) var(--space-8);
+  padding: var(--space-16) var(--layout-inset) var(--space-12);
 }
 .footer__grid {
   display: grid;

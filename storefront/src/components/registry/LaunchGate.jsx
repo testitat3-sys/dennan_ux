@@ -30,10 +30,10 @@ const LaunchGate = () => {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
 
-  const showEmail = isValidName(firstName) && isValidName(lastName);
+  const showName = isValidStage(stage);
+  const showEmail = showName && isValidName(firstName) && isValidName(lastName);
   const showPhone = showEmail && isValidEmail(email);
-  const showStage = showPhone && isValidPhone(phone);
-  const showSubmit = showStage && isValidStage(stage);
+  const showSubmit = showPhone && isValidPhone(phone);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,11 +43,12 @@ const LaunchGate = () => {
 
     setLoading(true);
     try {
+      const localPhone = phone.replace(/\s+/g, '').trim().replace(/^0/, '');
       await submitNotifySignup({
         email: email.trim(),
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phone: phone.trim(),
+        phone: `+256${localPhone}`,
         stage,
         source: 'launch',
       });
@@ -79,7 +80,24 @@ const LaunchGate = () => {
           </p>
 
           <form className="launch-gate__form" onSubmit={handleSubmit} noValidate>
-            <div className="launch-gate__field-row">
+            <div className="launch-gate__field">
+              <span className="launch-gate__label launch-gate__prompt">Choose where you are in your journey</span>
+              <div className="stage-options">
+                {STAGE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`stage-chip ${stage === opt.value ? 'active' : ''}`}
+                    onClick={() => setStage(opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {errors.stage && <span className="launch-gate__error">{errors.stage}</span>}
+            </div>
+
+            <div className={`launch-gate__field-row ${showName ? 'is-revealed' : 'is-hidden'}`} aria-hidden={!showName}>
               <div className="launch-gate__field">
                 <label className="launch-gate__label" htmlFor="launch-fn">First Name</label>
                 <input
@@ -90,6 +108,7 @@ const LaunchGate = () => {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   autoComplete="given-name"
+                  tabIndex={showName ? 0 : -1}
                 />
                 {errors.firstName && <span className="launch-gate__error">{errors.firstName}</span>}
               </div>
@@ -103,6 +122,7 @@ const LaunchGate = () => {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   autoComplete="family-name"
+                  tabIndex={showName ? 0 : -1}
                 />
                 {errors.lastName && <span className="launch-gate__error">{errors.lastName}</span>}
               </div>
@@ -124,35 +144,21 @@ const LaunchGate = () => {
             </div>
 
             <div className={`launch-gate__field ${showPhone ? 'is-revealed' : 'is-hidden'}`} aria-hidden={!showPhone}>
-              <label className="launch-gate__label" htmlFor="launch-ph">Phone Number</label>
-              <input
-                id="launch-ph"
-                className="launch-gate__input"
-                type="tel"
-                placeholder="e.g. 0772 123456"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                autoComplete="tel"
-                tabIndex={showPhone ? 0 : -1}
-              />
+              <label className="launch-gate__label" htmlFor="launch-ph">WhatsApp / Phone Number</label>
+              <div className={`launch-gate__phone-wrap ${errors.phone ? 'has-error' : ''}`}>
+                <span className="launch-gate__phone-prefix">+256</span>
+                <input
+                  id="launch-ph"
+                  className="launch-gate__input"
+                  type="tel"
+                  placeholder="772 123456"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  autoComplete="tel"
+                  tabIndex={showPhone ? 0 : -1}
+                />
+              </div>
               {errors.phone && <span className="launch-gate__error">{errors.phone}</span>}
-            </div>
-
-            <div className={`launch-gate__field ${showStage ? 'is-revealed' : 'is-hidden'}`} aria-hidden={!showStage}>
-              <label className="launch-gate__label" htmlFor="launch-st">Stage</label>
-              <select
-                id="launch-st"
-                className="launch-gate__input"
-                value={stage}
-                onChange={(e) => setStage(e.target.value)}
-                tabIndex={showStage ? 0 : -1}
-              >
-                <option value="" disabled>Select your stage</option>
-                {STAGE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              {errors.stage && <span className="launch-gate__error">{errors.stage}</span>}
             </div>
 
             <div className={showSubmit ? 'is-revealed' : 'is-hidden'} aria-hidden={!showSubmit}>

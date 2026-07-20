@@ -260,13 +260,19 @@ const PLP = () => {
 
 
   // Resolve page header and lifestyle banner details
+  const modifiedStages = stages?.map(stage =>
+    stage.type === 'mother'
+      ? { ...stage, heroImage: '/assets/stage_expectant.webp' }
+      : stage
+  );
+
   const isCollectionView = !!collectionId;
   const viewData = isCollectionView
     ? (COLLECTIONS_METADATA[collectionId] || COLLECTIONS_METADATA['curated-picks'])
-    : (stages?.find(s => s.type === stageId) || {
+    : (modifiedStages?.find(s => s.type === stageId) || {
       title: 'Curated Essentials',
       subtext: 'High-quality essentials hand-selected by our pediatric specialists.',
-      heroImage: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=1200'
+      heroImage: stageId === 'mother' ? '/assets/stage_expectant.webp' : 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=1200'
     });
 
   const toggleFilter = (filter) => {

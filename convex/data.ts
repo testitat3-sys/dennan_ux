@@ -128,11 +128,11 @@ export const getHomeFeaturedProducts = trackedQuery("data.getHomeFeaturedProduct
     const [mostLovedCandidates, curatedCandidates] = await Promise.all([
       ctx.db
         .query("products")
-        .withIndex("by_isMostLoved", (q) => q.eq("isMostLoved", true))
+        .withIndex("by_isMostLoved_and_actual_data", (q) => q.eq("isMostLoved", true).eq("actual_data", true))
         .take(20),
       ctx.db
         .query("products")
-        .withIndex("by_isCuratedForYou", (q) => q.eq("isCuratedForYou", true))
+        .withIndex("by_isCuratedForYou_and_actual_data", (q) => q.eq("isCuratedForYou", true).eq("actual_data", true))
         .take(12),
     ]);
 

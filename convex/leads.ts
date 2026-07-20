@@ -7,7 +7,7 @@ const STAGE_LABELS: Record<string, string> = {
   expectant: "Expectant",
   newborn: "Newborn",
   toddler: "Toddler",
-  not_a_mother: "Not a parent yet",
+  not_a_mother: "Not a Mom",
 };
 
 /**

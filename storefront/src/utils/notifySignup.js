@@ -1,10 +1,11 @@
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const UG_PHONE_RE = /^0?7\d{8}$/;
 
 export const STAGE_OPTIONS = [
   { value: 'expectant', label: 'Expectant Mother' },
   { value: 'newborn', label: 'Newborn Parent' },
   { value: 'toddler', label: 'Toddler Parent' },
-  { value: 'not_a_mother', label: 'Not a Parent Yet' },
+  { value: 'not_a_mother', label: 'Not a Mom' },
 ];
 
 export const splitName = (name) => {
@@ -26,7 +27,7 @@ export const mapUserStage = (userStage) => {
 
 export const isValidName = (v) => !!v.trim();
 export const isValidEmail = (v) => EMAIL_RE.test(v.trim());
-export const isValidPhone = (v) => !!v.trim();
+export const isValidPhone = (v) => UG_PHONE_RE.test(v.replace(/\s+/g, '').trim());
 export const isValidStage = (v) => !!v;
 
 export const validateNotifySignup = ({ firstName, lastName, email, phone, stage }) => {
@@ -35,7 +36,9 @@ export const validateNotifySignup = ({ firstName, lastName, email, phone, stage 
   if (!lastName.trim()) next.lastName = 'Last name is required.';
   if (!email.trim()) next.email = 'Email is required.';
   else if (!EMAIL_RE.test(email.trim())) next.email = 'Enter a valid email address.';
-  if (!phone.trim()) next.phone = 'Phone number is required.';
+  const cleanedPhone = phone.replace(/\s+/g, '').trim();
+  if (!cleanedPhone) next.phone = 'Phone number is required.';
+  else if (!UG_PHONE_RE.test(cleanedPhone)) next.phone = 'Enter a valid Ugandan phone number (e.g. 0772123456).';
   if (!stage) next.stage = 'Please select your stage.';
   return next;
 };

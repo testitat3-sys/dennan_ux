@@ -15,7 +15,7 @@ const STAGE_OPTIONS = [
   { value: 'mother', label: 'Pregnant' },
   { value: 'newborn', label: 'Newborn' },
   { value: 'kid', label: 'Toddler+' },
-  { value: 'not_a_mum', label: 'Not a Mum' },
+  { value: 'not_a_mum', label: 'Not a Mom' },
 ];
 
 const splitName = (name) => {
@@ -95,6 +95,11 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const showName = !!stage;
+  const showEmail = showName && !!firstName.trim() && !!lastName.trim();
+  const showPhone = showEmail && EMAIL_RE.test(email.trim());
+  const showRest = showPhone && UG_PHONE_RE.test(phone.replace(/\s+/g, '').trim());
 
   const validate = () => {
     const next = {};
@@ -186,7 +191,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                 </Text>
 
                 <div className="store-request-field">
-                  <span className="store-request-label store-request-prompt">Where are you in the journey?</span>
+                  <span className="store-request-label store-request-prompt">Choose where you are in your journey</span>
                   <div className="stage-options">
                     {STAGE_OPTIONS.map((opt) => (
                       <button
@@ -202,7 +207,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                   {errors.stage && <Text role="label-sm" color="support-red" className="form-error-hint">{errors.stage}</Text>}
                 </div>
 
-                <div className="store-request-row">
+                <div className={`store-request-row ${showName ? 'is-revealed' : 'is-hidden'}`} aria-hidden={!showName}>
                   <div className="store-request-field">
                     <label htmlFor="storeRequestFirstName" className="store-request-label">First Name</label>
                     <input
@@ -213,6 +218,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                       onChange={(e) => setFirstName(e.target.value)}
                       className="store-request-input"
                       autoComplete="given-name"
+                      tabIndex={showName ? 0 : -1}
                     />
                     {errors.firstName && <Text role="label-sm" color="support-red" className="form-error-hint">{errors.firstName}</Text>}
                   </div>
@@ -226,12 +232,13 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                       onChange={(e) => setLastName(e.target.value)}
                       className="store-request-input"
                       autoComplete="family-name"
+                      tabIndex={showName ? 0 : -1}
                     />
                     {errors.lastName && <Text role="label-sm" color="support-red" className="form-error-hint">{errors.lastName}</Text>}
                   </div>
                 </div>
 
-                <div className="store-request-field">
+                <div className={`store-request-field ${showEmail ? 'is-revealed' : 'is-hidden'}`} aria-hidden={!showEmail}>
                   <label htmlFor="storeRequestEmail" className="store-request-label">Email Address</label>
                   <input
                     id="storeRequestEmail"
@@ -241,11 +248,12 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                     onChange={(e) => setEmail(e.target.value)}
                     className="store-request-input"
                     autoComplete="email"
+                    tabIndex={showEmail ? 0 : -1}
                   />
                   {errors.email && <Text role="label-sm" color="support-red" className="form-error-hint">{errors.email}</Text>}
                 </div>
 
-                <div className="store-request-field">
+                <div className={`store-request-field ${showPhone ? 'is-revealed' : 'is-hidden'}`} aria-hidden={!showPhone}>
                   <label htmlFor="storeRequestPhone" className="store-request-label">WhatsApp / Phone Number</label>
                   <div className={`store-request-phone-wrap ${errors.phone ? 'has-error' : ''}`}>
                     <span className="store-request-phone-prefix">+256</span>
@@ -257,12 +265,13 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                       onChange={(e) => setPhone(e.target.value)}
                       className="store-request-input"
                       autoComplete="tel"
+                      tabIndex={showPhone ? 0 : -1}
                     />
                   </div>
                   {errors.phone && <Text role="label-sm" color="support-red" className="form-error-hint">{errors.phone}</Text>}
                 </div>
 
-                <div className="store-request-field">
+                <div className={`store-request-field ${showRest ? 'is-revealed' : 'is-hidden'}`} aria-hidden={!showRest}>
                   <label htmlFor="storeRequestItem" className="store-request-label">Item You're Looking For (Optional)</label>
                   <textarea
                     id="storeRequestItem"
@@ -271,16 +280,20 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                     onChange={(e) => setItemDescription(e.target.value)}
                     className="store-request-textarea"
                     rows={3}
+                    tabIndex={showRest ? 0 : -1}
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  className="store-request-submit-btn"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Sending...' : 'Send  Request'}
-                </button>
+                <div className={showRest ? 'is-revealed' : 'is-hidden'} aria-hidden={!showRest}>
+                  <button
+                    type="submit"
+                    className="store-request-submit-btn"
+                    disabled={isSubmitting || !showRest}
+                    tabIndex={showRest ? 0 : -1}
+                  >
+                    {isSubmitting ? 'Sending...' : 'Send  Request'}
+                  </button>
+                </div>
               </form>
             )}
           </div>

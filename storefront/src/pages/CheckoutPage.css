@@ -4,7 +4,8 @@
 }
 
 .checkout-header-section {
-  padding-top: var(--space-8);
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-10);
 }
 
 .checkout-container {

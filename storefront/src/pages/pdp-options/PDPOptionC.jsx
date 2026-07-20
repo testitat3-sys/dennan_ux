@@ -49,7 +49,7 @@ const PDPOptionC = ({ product, reviews }) => {
             <div className="pdpC__urgency">
               {product.unitsSold > 0 && (
                 <span className="pdpC__urgency-pill">
-                  <Flame size={13} strokeWidth={2.5} fill="currentColor" /> Hot: {product.unitsSold.toLocaleString()} people have just bought this
+                  <Flame size={13} strokeWidth={2.5} fill="currentColor" /> Hot: {product.unitsSold === 1 ? '1 person has' : `${product.unitsSold.toLocaleString()} people have`} just bought this
                 </span>
               )}
               {isOutOfStock && <span className="pdpC__urgency-pill pdpC__urgency-pill--red">Out of Stock</span>}

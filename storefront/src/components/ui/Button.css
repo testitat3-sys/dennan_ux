@@ -251,6 +251,7 @@
   transition: background 0.2s;
   color: #000000;
   background: transparent;
+  overflow: visible;
 }
 
 .btn--nav-icon:hover {

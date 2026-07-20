@@ -74,7 +74,6 @@
   background: var(--color-brand-purple-launch);
   color: var(--color-on-primary);
   padding-top: 0;
-  padding-bottom: 0;
 }
 
 .launch-gate__band--form .offer-countdown-banner {
@@ -148,6 +147,71 @@
   font-family: var(--font-sans);
   font-size: var(--label-md);
   color: var(--color-support-red);
+}
+
+.launch-gate__prompt {
+  margin-bottom: var(--space-1);
+}
+
+/* ─── Stage pill chips (matches StoreRequestModal, adapted for dark band) ── */
+
+.stage-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.launch-gate .stage-chip {
+  padding: var(--space-1-5) 15px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-on-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.launch-gate .stage-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.launch-gate .stage-chip.active {
+  background: color-mix(in srgb, var(--color-brand-accent) 18%, transparent);
+  color: var(--color-brand-accent);
+  border-color: var(--color-brand-accent);
+}
+
+/* Phone field: prefix + underline input sharing one line */
+.launch-gate__phone-wrap {
+  display: flex;
+  align-items: center;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.4);
+  transition: border-color 0.15s ease;
+}
+
+.launch-gate__phone-wrap:focus-within {
+  border-bottom-color: var(--color-brand-accent);
+}
+
+.launch-gate__phone-wrap.has-error {
+  border-bottom-color: var(--color-support-red);
+}
+
+.launch-gate__phone-prefix {
+  font-family: var(--font-sans);
+  font-size: var(--body-md);
+  font-weight: 500;
+  color: var(--color-on-primary);
+  padding-right: var(--space-2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.launch-gate__phone-wrap .launch-gate__input {
+  border-bottom: none;
 }
 
 @media (max-width: 480px) {
