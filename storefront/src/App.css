@@ -262,6 +262,18 @@
   font-size: var(--label-md);
   color: var(--text-tertiary);
 }
+.footer__built-with {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+.footer__sos-logo {
+  width: 120px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
 
 /* ─── CATEGORY LAYOUTS ───────────────────────────────────────────── */
 .category-layout {

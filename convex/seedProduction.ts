@@ -139,3 +139,94 @@ export const runProductionSeed = mutation({
     };
   }
 });
+
+/**
+ * Production-safe additive seed.
+ *
+ * For every product in NEW_PRODUCTS + CLOSE_MATCHES_PRODUCTS:
+ *   - Found by barcode → only patch `actual_data: true`. Nothing else touched.
+ *   - Not found       → insert the full product record from the seed file.
+ *
+ * Never marks any existing product as actual_data = false.
+ * Safe to run against a live production deployment at any time.
+ */
+export const runProductionSeedAdditive = mutation({
+  args: {},
+  handler: async (ctx) => {
+    let activatedCount = 0; // existing products flipped to actual_data: true
+    let insertedCount = 0;  // brand-new products inserted
+    let skippedCount = 0;   // already actual_data: true, no write needed
+
+    const allProducts = [
+      ...(NEW_PRODUCTS as any[]),
+      ...(CLOSE_MATCHES_PRODUCTS as any[]),
+    ];
+
+    for (const item of allProducts) {
+      // Look up by barcode only (primary identity key for stock)
+      const existing = item.barcode
+        ? await ctx.db
+            .query("products")
+            .withIndex("by_barcode", (q) => q.eq("barcode", item.barcode))
+            .unique()
+        : null;
+
+      if (existing) {
+        // Product already in prod — only flip the flag if needed.
+        if (existing.actual_data !== true) {
+          await ctx.db.patch(existing._id, { actual_data: true });
+          activatedCount++;
+        } else {
+          skippedCount++;
+        }
+      } else {
+        // Genuinely new product — insert full record from seed file.
+        const fields: any = {
+          name: item.name,
+          brand: item.brand || "Generic",
+          brandSlug: slugify(item.brand || "Generic"),
+          slug: item.slug,
+          barcode: item.barcode,
+          price: item.price,
+          wasPrice: item.wasPrice,
+          originalPrice: item.originalPrice ?? item.price,
+          discountPrice: item.discountPrice,
+          discountExpiry: item.discountExpiry,
+          image: item.image,
+          images: item.images,
+          stage: item.stage,
+          tier: item.tier,
+          category: item.category,
+          subCategory: item.subCategory,
+          targetGender: item.targetGender,
+          material: item.material,
+          pattern: item.pattern,
+          isCurated: item.isCurated,
+          isMostLoved: item.isMostLoved,
+          minMonth: item.minMonth,
+          maxMonth: item.maxMonth,
+          minWeek: item.minWeek,
+          maxWeek: item.maxWeek,
+          description: item.description || "",
+          tags: item.tags || [],
+          specifications: item.specifications || [],
+          isActive: true,
+          actual_data: true,
+          inventory: item.inventory,
+          unitsSold: item.unitsSold,
+        };
+        // Strip undefined fields — Convex rejects them
+        for (const key of Object.keys(fields)) {
+          if (fields[key] === undefined) delete fields[key];
+        }
+        await ctx.db.insert("products", fields);
+        insertedCount++;
+      }
+    }
+
+    console.log(
+      `[runProductionSeedAdditive] activated=${activatedCount} inserted=${insertedCount} skipped=${skippedCount} total=${allProducts.length}`
+    );
+    return { activatedCount, insertedCount, skippedCount, total: allProducts.length };
+  },
+});

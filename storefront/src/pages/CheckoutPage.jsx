@@ -233,15 +233,27 @@ const CheckoutPage = () => {
     localStorage.setItem('dennan_guest_phone', guestPhone);
   }, [guestPhone]);
 
+  // Guest phone number lives under "Your Details" regardless of payment method, and
+  // doubles as the mobile money number. Prefill whichever field is empty from the
+  // other when the shopper switches payment methods, without clobbering an edit.
+  useEffect(() => {
+    if (isAuthenticated) return;
+    if (selectedPayment === 'momo') {
+      if (!momoPhone && guestPhone) setMomoPhone(guestPhone);
+    } else if (!guestPhone && momoPhone) {
+      setGuestPhone(momoPhone);
+    }
+  }, [selectedPayment, isAuthenticated]);
+
   const isValidUgPhone = (num) => /^(77|78|76|70|75|74)\d{7}$/.test((num || '').replace(/\s+/g, ''));
 
-  // Guest contact form validity: name + email always required, phone required
-  // when paying by card or COD (momoPhone doubles as contact for momo orders).
+  // Guest contact form validity: name, email, and phone are always required,
+  // regardless of payment method.
   const isGuestFormValid = () => {
     if (isAuthenticated) return true;
     const nameOk = guestName.trim().length > 0;
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim());
-    const phoneOk = selectedPayment === 'momo' ? isValidPhone : isValidUgPhone(guestPhone);
+    const phoneOk = isValidUgPhone(guestPhone) && (selectedPayment !== 'momo' || isValidPhone);
     return nameOk && emailOk && phoneOk;
   };
 
@@ -542,26 +554,22 @@ const CheckoutPage = () => {
         setGuestEmailError('');
       }
 
-      // 4. Guest Phone (required when paying by card or COD)
-      if (selectedPayment === 'card' || selectedPayment === 'cod') {
-        const cleanPhone = guestPhone.replace(/\s+/g, '');
-        if (!cleanPhone) {
-          setGuestPhoneError('Please enter your phone number.');
-          if (isValid) {
-            firstErrorRef = guestPhoneRef;
-            firstErrorMessage = 'Please enter your phone number.';
-          }
-          isValid = false;
-        } else if (!isValidUgPhone(guestPhone)) {
-          setGuestPhoneError('Must start with 77, 78, 76 (MTN) or 70, 75, 74 (Airtel), followed by 7 digits.');
-          if (isValid) {
-            firstErrorRef = guestPhoneRef;
-            firstErrorMessage = 'Please enter a valid Ugandan phone number.';
-          }
-          isValid = false;
-        } else {
-          setGuestPhoneError('');
+      // 4. Guest Phone (always required)
+      const cleanPhone = guestPhone.replace(/\s+/g, '');
+      if (!cleanPhone) {
+        setGuestPhoneError('Please enter your phone number.');
+        if (isValid) {
+          firstErrorRef = guestPhoneRef;
+          firstErrorMessage = 'Please enter your phone number.';
         }
+        isValid = false;
+      } else if (!isValidUgPhone(guestPhone)) {
+        setGuestPhoneError('Must start with 77, 78, 76 (MTN) or 70, 75, 74 (Airtel), followed by 7 digits.');
+        if (isValid) {
+          firstErrorRef = guestPhoneRef;
+          firstErrorMessage = 'Please enter a valid Ugandan phone number.';
+        }
+        isValid = false;
       } else {
         setGuestPhoneError('');
       }
@@ -876,23 +884,6 @@ const CheckoutPage = () => {
                     </Card.Body>
                   </Card>
                 </Card.Body>
-
-                <Button
-                  variant="action"
-                  fullWidth
-                  loading={isProcessing}
-                  onClick={handlePlaceOrder}
-                >
-                  {selectedPayment === 'cod' ? 'Place Order' : 'Complete Payment'}
-                </Button>
-
-                <Text role="label-sm" as="p" color="tertiary" className="secure-text">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  Secure encrypted payment
-                </Text>
               </Card>
             </Page.Section>
           </div>
@@ -994,33 +985,33 @@ const CheckoutPage = () => {
                         </Text>
                       )}
                     </div>
-                    {(selectedPayment === 'card' || selectedPayment === 'cod') && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                        <Text role="label-md" as="span" className="momo-label">Phone Number</Text>
-                        <div className={`momo-input-wrapper ${showErrors && guestPhoneError ? 'is-invalid' : ''}`}>
-                          <div className="momo-prefix">
-                            <Text role="label-sm" as="span" className="ug-flag">UG</Text>
-                            <Text role="body-lg" as="span">+256</Text>
-                          </div>
-                          <input
-                            ref={guestPhoneRef}
-                            type="tel"
-                            className={`momo-input ${guestPhone ? (isValidUgPhone(guestPhone) ? 'is-valid' : 'is-invalid') : ''}`}
-                            placeholder="772 123456"
-                            value={guestPhone}
-                            onChange={(e) => {
-                              setGuestPhone(e.target.value.replace(/[^0-9\s]/g, ''));
-                              if (guestPhoneError) setGuestPhoneError('');
-                            }}
-                          />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      <Text role="label-md" as="span" className="momo-label">Phone Number</Text>
+                      <div className={`momo-input-wrapper ${showErrors && guestPhoneError ? 'is-invalid' : ''}`}>
+                        <div className="momo-prefix">
+                          <Text role="label-sm" as="span" className="ug-flag">UG</Text>
+                          <Text role="body-lg" as="span">+256</Text>
                         </div>
-                        {showErrors && guestPhoneError && (
-                          <Text role="label-md" as="p" color="support-red" style={{ marginTop: 'var(--space-1)' }}>
-                            {guestPhoneError}
-                          </Text>
-                        )}
+                        <input
+                          ref={guestPhoneRef}
+                          type="tel"
+                          className={`momo-input ${guestPhone ? (isValidUgPhone(guestPhone) ? 'is-valid' : 'is-invalid') : ''}`}
+                          placeholder="772 123456"
+                          value={guestPhone}
+                          onChange={(e) => {
+                            const cleaned = e.target.value.replace(/[^0-9\s]/g, '');
+                            setGuestPhone(cleaned);
+                            if (selectedPayment === 'momo') setMomoPhone(cleaned);
+                            if (guestPhoneError) setGuestPhoneError('');
+                          }}
+                        />
                       </div>
-                    )}
+                      {showErrors && guestPhoneError && (
+                        <Text role="label-md" as="p" color="support-red" style={{ marginTop: 'var(--space-1)' }}>
+                          {guestPhoneError}
+                        </Text>
+                      )}
+                    </div>
                     <Text role="label-sm" as="p" color="tertiary" style={{ marginTop: 'var(--space-1)' }}>
                       We'll use these details to confirm your order and send delivery updates.
                     </Text>
@@ -1080,7 +1071,11 @@ const CheckoutPage = () => {
                             className={`momo-input ${momoPhone ? (isValidPhone ? 'is-valid' : 'is-invalid') : ''}`}
                             placeholder="772 123456"
                             value={momoPhone}
-                            onChange={(e) => setMomoPhone(e.target.value.replace(/[^0-9\s]/g, ''))}
+                            onChange={(e) => {
+                              const cleaned = e.target.value.replace(/[^0-9\s]/g, '');
+                              setMomoPhone(cleaned);
+                              if (!isAuthenticated) setGuestPhone(cleaned);
+                            }}
                           />
                         </div>
                         {(showErrors || momoPhone) && phoneError && <Text role="label-md" as="p" color="support-red" className="momo-error-text">{phoneError}</Text>}
@@ -1148,6 +1143,24 @@ const CheckoutPage = () => {
                   )}
                 </Card>
               </div>
+
+              <Button
+                variant="action"
+                fullWidth
+                loading={isProcessing}
+                onClick={handlePlaceOrder}
+                style={{ marginTop: 'var(--space-6)' }}
+              >
+                {selectedPayment === 'cod' ? 'Place Order' : 'Complete Payment'}
+              </Button>
+
+              <Text role="label-sm" as="p" color="tertiary" className="secure-text" style={{ marginTop: 'var(--space-3)' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Secure encrypted payment
+              </Text>
             </Page.Section>
           </div>
         </div>

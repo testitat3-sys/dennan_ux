@@ -78,7 +78,7 @@ const buildFactBullets = (product) => {
 
 const PDP = () => {
   const { productId } = useParams();
-  const { addToCart } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { isAuthenticated } = useConvexAuth();
   const { hasLeadInfo, openLeadModal } = useLeadCapture();
@@ -221,6 +221,7 @@ const PDP = () => {
     addToCart(product, quantity, selectedSize);
     setToastMessage(`${displayName} added to cart!`);
     setShowToast(true);
+    setIsCartOpen(true);
   };
 
   const handleToggleWishlist = () => {
@@ -239,7 +240,8 @@ const PDP = () => {
         source: 'launch_oos',
         title: 'Get notified when back in stock',
         subtext: `Leave your details and we'll let you know the moment ${displayName} is back.`,
-        specifications: [displayName],
+        showProductField: true,
+        productFieldDefault: displayName,
         onSuccess: () => toggleWishlist(product, true),
       });
       return;

@@ -130,7 +130,7 @@ const Home = () => {
       {featuredProducts && (
         <ProductSection
           title="Most Loved by Parents          "
-          eyebrow="Performance Picks"
+          eyebrow="Trending"
           products={mostLovedProducts}
           viewAllLink="/collection/most-loved"
           viewAllText="See more"

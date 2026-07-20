@@ -17,6 +17,9 @@ const NotifySignupModal = ({
   title = 'Get notified at launch',
   subtext = "Leave your details and we'll email you the moment the Registry is ready.",
   buttonLabel = 'Notify Me',
+  eyebrow = 'Registry',
+  showProductField = false,
+  productFieldDefault = '',
 }) => {
   const submitNotifySignup = useMutation(api.registry.submitNotifySignup);
 
@@ -25,6 +28,7 @@ const NotifySignupModal = ({
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [stage, setStage] = useState('');
+  const [productInterest, setProductInterest] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -42,14 +46,17 @@ const NotifySignupModal = ({
       document.body.style.overflow = 'hidden';
 
       // Pre-fill from known user details when available
-      if (convexUser && !hasPrefilled) {
-        const { firstName: fn, lastName: ln } = splitName(convexUser.name);
-        setEmail(prev => prev || convexUser.email || '');
-        setFirstName(prev => prev || fn);
-        setLastName(prev => prev || ln);
-        setPhone(prev => prev || convexUser.phone || convexUser.momoPhone || '');
-        setStage(prev => prev || mapUserStage(convexUser.stage));
-        setErrors({});
+      if (!hasPrefilled) {
+        if (convexUser) {
+          const { firstName: fn, lastName: ln } = splitName(convexUser.name);
+          setEmail(prev => prev || convexUser.email || '');
+          setFirstName(prev => prev || fn);
+          setLastName(prev => prev || ln);
+          setPhone(prev => prev || convexUser.phone || convexUser.momoPhone || '');
+          setStage(prev => prev || mapUserStage(convexUser.stage));
+          setErrors({});
+        }
+        setProductInterest(productFieldDefault || '');
         setHasPrefilled(true);
       }
 
@@ -63,7 +70,7 @@ const NotifySignupModal = ({
       setHasPrefilled(false); // reset on close
       return () => clearTimeout(t);
     }
-  }, [isOpen, convexUser, hasPrefilled]);
+  }, [isOpen, convexUser, hasPrefilled, productFieldDefault]);
 
   if (!isMounted) return null;
 
@@ -77,6 +84,7 @@ const NotifySignupModal = ({
     if (!validate()) return;
     setLoading(true);
     try {
+      const trimmedProductInterest = productInterest.trim();
       await submitNotifySignup({
         email: email.trim(),
         firstName: firstName.trim(),
@@ -84,7 +92,9 @@ const NotifySignupModal = ({
         phone: phone.trim(),
         stage,
         source,
-        specifications,
+        specifications: showProductField
+          ? (trimmedProductInterest ? [trimmedProductInterest] : undefined)
+          : specifications,
       });
       onSuccess && onSuccess();
       onClose();
@@ -111,7 +121,7 @@ const NotifySignupModal = ({
           {/* Header */}
           <div className="notify-signup-top">
             <div className="notify-signup-titles">
-              <span className="notify-signup-eyebrow">Registry</span>
+              {eyebrow && <span className="notify-signup-eyebrow">{eyebrow}</span>}
               <h2 className="notify-signup-headline">{title}</h2>
               <p className="notify-signup-subtext">
                 {subtext}
@@ -203,6 +213,19 @@ const NotifySignupModal = ({
               <span className="notify-signup-input-error">{errors.stage}</span>
             )}
           </div>
+
+          {showProductField && (
+            <div className="notify-signup-field">
+              <label className="notify-signup-label">Product you're interested in</label>
+              <input
+                className="notify-signup-input"
+                type="text"
+                placeholder="e.g. Pampers Swaddlers Size 2"
+                value={productInterest}
+                onChange={(e) => setProductInterest(e.target.value)}
+              />
+            </div>
+          )}
 
           {/* CTA */}
           <div className="notify-signup-actions">

@@ -521,7 +521,7 @@ const PLP = () => {
                         Can't find what you're looking for?
                       </Text>
                       <img
-                        src="/assets/coming%20soon.png"
+                        src="/assets/order-from-dennan.png"
                         alt="Can't find what you're looking for?"
                         className="plp__empty-image"
                         style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 'var(--radius-lg)' }}

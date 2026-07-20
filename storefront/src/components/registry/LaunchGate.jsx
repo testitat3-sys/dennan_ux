@@ -9,10 +9,6 @@ import { useLeadCapture } from '../../context/LeadCaptureContext';
 import {
   STAGE_OPTIONS,
   validateNotifySignup,
-  isValidName,
-  isValidEmail,
-  isValidPhone,
-  isValidStage,
 } from '../../utils/notifySignup';
 import './LaunchGate.css';
 
@@ -29,11 +25,12 @@ const LaunchGate = () => {
   const [loading, setLoading] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+  const [revealStep, setRevealStep] = useState(0);
 
-  const showName = isValidStage(stage);
-  const showEmail = showName && isValidName(firstName) && isValidName(lastName);
-  const showPhone = showEmail && isValidEmail(email);
-  const showSubmit = showPhone && isValidPhone(phone);
+  const showName = revealStep >= 1;
+  const showEmail = revealStep >= 2;
+  const showPhone = revealStep >= 3;
+  const showSubmit = revealStep >= 4;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,7 +85,10 @@ const LaunchGate = () => {
                     key={opt.value}
                     type="button"
                     className={`stage-chip ${stage === opt.value ? 'active' : ''}`}
-                    onClick={() => setStage(opt.value)}
+                    onClick={() => {
+                      setStage(opt.value);
+                      setRevealStep((s) => Math.max(s, 1));
+                    }}
                   >
                     {opt.label}
                   </button>
@@ -107,6 +107,7 @@ const LaunchGate = () => {
                   placeholder="e.g. Sarah"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
+                  onFocus={() => setRevealStep((s) => Math.max(s, 2))}
                   autoComplete="given-name"
                   tabIndex={showName ? 0 : -1}
                 />
@@ -121,6 +122,7 @@ const LaunchGate = () => {
                   placeholder="e.g. Nakato"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
+                  onFocus={() => setRevealStep((s) => Math.max(s, 2))}
                   autoComplete="family-name"
                   tabIndex={showName ? 0 : -1}
                 />
@@ -137,6 +139,7 @@ const LaunchGate = () => {
                 placeholder="e.g. sarah@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onFocus={() => setRevealStep((s) => Math.max(s, 3))}
                 autoComplete="email"
                 tabIndex={showEmail ? 0 : -1}
               />
@@ -154,6 +157,7 @@ const LaunchGate = () => {
                   placeholder="772 123456"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  onFocus={() => setRevealStep((s) => Math.max(s, 4))}
                   autoComplete="tel"
                   tabIndex={showPhone ? 0 : -1}
                 />
@@ -166,7 +170,7 @@ const LaunchGate = () => {
                 type="submit"
                 variant="white-active"
                 fullWidth
-                disabled={loading || !showSubmit}
+                disabled={loading}
                 loading={loading}
                 tabIndex={showSubmit ? 0 : -1}
               >

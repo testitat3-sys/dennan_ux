@@ -84,7 +84,8 @@ const ProductCard = ({
         source: 'launch_oos',
         title: 'Get notified when back in stock',
         subtext: `Leave your details and we'll let you know the moment ${displayName} is back.`,
-        specifications: [displayName],
+        showProductField: true,
+        productFieldDefault: displayName,
         onSuccess: () => toggleWishlist(product, true),
       });
       return;

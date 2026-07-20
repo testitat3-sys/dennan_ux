@@ -44,6 +44,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
   const [hasPrefilled, setHasPrefilled] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+  const [revealStep, setRevealStep] = useState(0);
 
   // Bottom slide-in animation transition states
   useEffect(() => {
@@ -69,6 +70,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
       setPhone(prev => prev || (user.phone || user.momoPhone || '').replace(/^\+?256\s*/, ''));
       setStage(prev => prev || user.stage || null);
       setHasPrefilled(true);
+      setRevealStep(4);
     }
   }, [isOpen, user, hasPrefilled]);
 
@@ -91,15 +93,16 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
       setErrors({});
       setShowSuccess(false);
       setHasPrefilled(false);
+      setRevealStep(0);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const showName = !!stage;
-  const showEmail = showName && !!firstName.trim() && !!lastName.trim();
-  const showPhone = showEmail && EMAIL_RE.test(email.trim());
-  const showRest = showPhone && UG_PHONE_RE.test(phone.replace(/\s+/g, '').trim());
+  const showName = revealStep >= 1;
+  const showEmail = revealStep >= 2;
+  const showPhone = revealStep >= 3;
+  const showRest = revealStep >= 4;
 
   const validate = () => {
     const next = {};
@@ -152,7 +155,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
               <Text role="headline-md" as="h3" className="store-request-modal__title">Request Sent</Text>
             ) : (
               <img
-                src="/assets/coming%20soon.png"
+                src="/assets/order-from-dennan.png"
                 alt="Can't find what you're looking for?"
                 className="store-request-banner"
               />
@@ -198,7 +201,10 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                         key={opt.value}
                         type="button"
                         className={`stage-chip ${stage === opt.value ? 'active' : ''}`}
-                        onClick={() => setStage(opt.value)}
+                        onClick={() => {
+                          setStage(opt.value);
+                          setRevealStep((s) => Math.max(s, 1));
+                        }}
                       >
                         {opt.label}
                       </button>
@@ -216,6 +222,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                       placeholder="e.g. Sarah"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
+                      onFocus={() => setRevealStep((s) => Math.max(s, 2))}
                       className="store-request-input"
                       autoComplete="given-name"
                       tabIndex={showName ? 0 : -1}
@@ -230,6 +237,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                       placeholder="e.g. Nakato"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
+                      onFocus={() => setRevealStep((s) => Math.max(s, 2))}
                       className="store-request-input"
                       autoComplete="family-name"
                       tabIndex={showName ? 0 : -1}
@@ -246,6 +254,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                     placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setRevealStep((s) => Math.max(s, 3))}
                     className="store-request-input"
                     autoComplete="email"
                     tabIndex={showEmail ? 0 : -1}
@@ -263,6 +272,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                       placeholder="772 123456"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
+                      onFocus={() => setRevealStep((s) => Math.max(s, 4))}
                       className="store-request-input"
                       autoComplete="tel"
                       tabIndex={showPhone ? 0 : -1}
@@ -288,7 +298,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
                   <button
                     type="submit"
                     className="store-request-submit-btn"
-                    disabled={isSubmitting || !showRest}
+                    disabled={isSubmitting}
                     tabIndex={showRest ? 0 : -1}
                   >
                     {isSubmitting ? 'Sending...' : 'Send  Request'}

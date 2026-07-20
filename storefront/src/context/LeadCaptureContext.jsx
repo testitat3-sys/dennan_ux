@@ -30,8 +30,8 @@ export const LeadCaptureProvider = ({ children }) => {
 
   const hasLeadInfo = isAuthenticated || leadCaptured;
 
-  const openLeadModal = useCallback(({ source, title, subtext, specifications, buttonLabel, onSuccess } = {}) => {
-    setModalConfig({ source, title, subtext, specifications, buttonLabel, onSuccess });
+  const openLeadModal = useCallback(({ source, title, subtext, specifications, buttonLabel, onSuccess, showProductField, productFieldDefault } = {}) => {
+    setModalConfig({ source, title, subtext, specifications, buttonLabel, onSuccess, showProductField, productFieldDefault });
   }, []);
 
   const closeLeadModal = useCallback(() => {
@@ -67,6 +67,9 @@ export const LeadCaptureProvider = ({ children }) => {
         title={modalConfig?.title}
         subtext={modalConfig?.subtext}
         buttonLabel={modalConfig?.buttonLabel}
+        eyebrow={null}
+        showProductField={modalConfig?.showProductField}
+        productFieldDefault={modalConfig?.productFieldDefault}
       />
     </LeadCaptureContext.Provider>
   );
