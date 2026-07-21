@@ -102,8 +102,9 @@ export default function ReceiptModal({ receipt, onClose }) {
         unit: "mm",
         format: [pdfWidth, pdfHeight],
       });
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`receipt-${receiptNo}.pdf`);
+      const namePrefix = receipt.customerName ? receipt.customerName.trim() : "";
+      const pdfFileName = namePrefix ? `${namePrefix} dennan receipt.pdf` : `dennan receipt ${receiptNo}.pdf`;
+      pdf.save(pdfFileName);
     } catch (err) {
       console.error("Failed to generate PDF receipt:", err);
     } finally {
