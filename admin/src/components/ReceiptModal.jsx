@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Printer, Copy, Check, X } from "lucide-react";
+import { Printer, Copy, Check, X, Download } from "lucide-react";
 import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 export default function ReceiptModal({ receipt, onClose }) {
   const receiptRef = useRef(null);
   const [copying, setCopying] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   // Scopes the receipt @media print rules (StaffPortal.css) to this modal only,
   // so they don't clobber other print flows (e.g. BarcodeLabelModal) that are
@@ -79,6 +81,33 @@ export default function ReceiptModal({ receipt, onClose }) {
     } catch (err) {
       console.error("Failed to capture receipt:", err);
       setCopying(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!receiptRef.current || downloadingPdf) return;
+    setDownloadingPdf(true);
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdfWidth = 80;
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: [pdfWidth, pdfHeight],
+      });
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`receipt-${receiptNo}.pdf`);
+    } catch (err) {
+      console.error("Failed to generate PDF receipt:", err);
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -228,6 +257,16 @@ export default function ReceiptModal({ receipt, onClose }) {
           >
             {copied ? <Check size={14} /> : <Copy size={14} />}
             {copying ? "Copying…" : copied ? "Copied!" : "Copy Image"}
+          </button>
+          <button
+            type="button"
+            className="btn btn--outline"
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
+            title="Download receipt as PDF"
+          >
+            {downloadingPdf ? <Check size={14} /> : <Download size={14} />}
+            {downloadingPdf ? "Generating…" : "Download PDF"}
           </button>
           <button type="button" className="btn btn--primary" onClick={() => window.print()}>
             <Printer size={14} />
