@@ -3,11 +3,44 @@ import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useProductDisplayName } from "../hooks/useProductDisplayName";
-import { Search, AlertCircle, Pencil, Plus, Minus, Check, Printer, Upload } from "lucide-react";
+import { useToast } from "../hooks/useToast";
+import { Search, AlertCircle, Pencil, Plus, Minus, Check, Printer, Upload, X, Send } from "lucide-react";
 import BarcodeLabelModal from "./BarcodeLabelModal";
+import Toast from "./Toast";
 
-export default function StockManagerPanel({ token, navigate }) {
+/** Derive a single overall status label for a submitted stock request group. */
+function getStockRequestOverallStatus(group) {
+  const items = group.items || [];
+  if (items.length === 0) return "pending";
+  const allResolved = items.every((i) => i.status !== "pending");
+  const allRejected = items.every((i) => i.status === "rejected");
+  if (allRejected) return "rejected";
+  if (allResolved) return "resolved";
+  return "pending";
+}
+
+function StockRequestStatusBadge({ status }) {
+  const map = {
+    pending: { cls: "status-badge--new", label: "Pending" },
+    resolved: { cls: "status-badge--done", label: "Resolved" },
+    rejected: { cls: "status-badge--failed", label: "Rejected" },
+  };
+  const { cls, label } = map[status] || map.pending;
+  return (
+    <span className={`status-badge ${cls}`}>
+      <span className="status-dot" />
+      {label}
+    </span>
+  );
+}
+
+export default function StockManagerPanel({ token, navigate, user, showToast: externalShowToast }) {
   const { getDisplayName } = useProductDisplayName(token);
+  // Reuse the parent's toast stack when it provides one (AdminDashboard already
+  // renders a #toast-container) — otherwise fall back to a local one, so this
+  // panel still works standalone inside StockManagerDashboard.
+  const { toasts, showToast: internalShowToast, dismissToast } = useToast();
+  const showToast = externalShowToast || internalShowToast;
   // Stock list — browse mode is paginated (never the full ~4000-row table),
   // search mode is a small bounded server-side search.
   const {
@@ -27,11 +60,35 @@ export default function StockManagerPanel({ token, navigate }) {
   const [setTargetInputs, setSetTargetInputs] = useState({}); // productId -> string ("set to" value in progress)
   const [labelProduct, setLabelProduct] = useState(null);
 
+  const isStockManager = user?.accountRole === "stockManager";
+  const stageStockDecreaseMutation = useMutation(api.stockRequests.stageStockDecrease);
+  const cancelStockDraftMutation = useMutation(api.stockRequests.cancelStockDraft);
+  const submitStockRequestsMutation = useMutation(api.stockRequests.submitStockRequests);
+  const myDrafts = useTrackedQuery(
+    api.stockRequests.getMyStockDrafts,
+    isStockManager ? { token } : "skip"
+  );
+  const myRequests = useTrackedQuery(
+    api.stockRequests.getMyStockRequests,
+    isStockManager ? { token } : "skip"
+  );
+  const draftByProductId = new Map((myDrafts || []).map((d) => [d.productId, d]));
+
   const quickAdjust = async (product, delta) => {
+    if (delta < 0 && isStockManager) {
+      const existingDraft = draftByProductId.get(product.id);
+      const cumulativeDelta = (existingDraft?.requestedDelta ?? 0) + delta;
+      try {
+        await stageStockDecreaseMutation({ token, productId: product.id, requestedDelta: cumulativeDelta });
+      } catch (err) {
+        showToast("Failed to stage stock decrease: " + err.message, "error");
+      }
+      return;
+    }
     try {
       await adjustStockMutation({ token, productId: product.id, delta });
     } catch (err) {
-      alert("Failed to adjust stock: " + err.message);
+      showToast("Failed to adjust stock: " + err.message, "error");
     }
   };
 
@@ -41,11 +98,47 @@ export default function StockManagerPanel({ token, navigate }) {
     if (raw === undefined || raw === "" || isNaN(parsed) || parsed < 0 || parsed === product.inventory) {
       return;
     }
+    const delta = parsed - product.inventory;
+    if (delta < 0 && isStockManager) {
+      try {
+        await stageStockDecreaseMutation({ token, productId: product.id, requestedDelta: delta });
+        setSetTargetInputs(prev => ({ ...prev, [product.id]: "" }));
+      } catch (err) {
+        showToast("Failed to stage stock decrease: " + err.message, "error");
+      }
+      return;
+    }
     try {
-      await adjustStockMutation({ token, productId: product.id, delta: parsed - product.inventory });
+      await adjustStockMutation({ token, productId: product.id, delta });
       setSetTargetInputs(prev => ({ ...prev, [product.id]: "" }));
     } catch (err) {
-      alert("Failed to adjust stock: " + err.message);
+      showToast("Failed to adjust stock: " + err.message, "error");
+    }
+  };
+
+  const handleCancelDraft = async (draftId) => {
+    try {
+      await cancelStockDraftMutation({ token, draftItemId: draftId });
+    } catch (err) {
+      showToast("Failed to remove staged reduction: " + err.message, "error");
+    }
+  };
+
+  const handleSubmitStockRequests = async () => {
+    try {
+      const result = await submitStockRequestsMutation({ token });
+      showToast(`Submitted ${result.itemCount} item${result.itemCount === 1 ? "" : "s"} for admin approval.`, "success");
+    } catch (err) {
+      showToast("Failed to submit for approval: " + err.message, "error");
+    }
+  };
+
+  const handleCancelAllDrafts = async () => {
+    try {
+      await Promise.all((myDrafts || []).map((d) => cancelStockDraftMutation({ token, draftItemId: d._id })));
+      showToast("Staged reductions cancelled.", "info");
+    } catch (err) {
+      showToast("Failed to cancel staged reductions: " + err.message, "error");
     }
   };
 
@@ -83,6 +176,47 @@ export default function StockManagerPanel({ token, navigate }) {
           <Upload size={14} /> Bulk Upload (.xlsx)
         </button>
       </div>
+
+      {isStockManager && myDrafts && myDrafts.length > 0 && (
+        <div
+          className="status-banner"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "12px",
+            padding: "10px 16px",
+            marginBottom: "var(--space-3)",
+            borderRadius: "8px",
+            background: "var(--color-support-amber-bg, #fef3c7)",
+            color: "var(--color-support-amber-text, #92400e)",
+          }}
+        >
+          <span style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 500 }}>
+            <AlertCircle size={16} />
+            These changes reduce stock — request permission from admin?
+          </span>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              type="button"
+              className="btn btn--primary btn--sm"
+              onClick={handleSubmitStockRequests}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <Send size={13} /> Request Permission
+            </button>
+            <button
+              type="button"
+              className="btn btn--secondary btn--sm"
+              onClick={handleCancelAllDrafts}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <X size={13} /> Cancel Changes
+            </button>
+          </div>
+        </div>
+      )}
 
       {stockList === undefined ? (
         <div className="empty-state">
@@ -124,6 +258,7 @@ export default function StockManagerPanel({ token, navigate }) {
                   const isOut = product.inventory <= 0;
                   const isLowStock = !isOut && product.inventory <= product.reorderPoint;
                   const isVeryLow = isLowStock && product.inventory <= product.reorderPoint / 2;
+                  const draftForProduct = draftByProductId.get(product.id);
                   const setTargetVal = setTargetInputs[product.id] || "";
                   const parsedSetTarget = parseInt(setTargetVal);
                   const isSetValid = setTargetVal !== "" && !isNaN(parsedSetTarget) &&
@@ -196,6 +331,20 @@ export default function StockManagerPanel({ token, navigate }) {
                               <Check size={14} />
                             </button>
                           </div>
+                          {draftForProduct && (
+                            <div className="stock-draft-hint" style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px", fontSize: "var(--label-md)", color: "var(--text-tertiary)" }}>
+                              <span>Staged: {draftForProduct.requestedDelta} (draft)</span>
+                              <button
+                                type="button"
+                                className="btn btn--ghost btn--sm"
+                                onClick={() => handleCancelDraft(draftForProduct._id)}
+                                title="Remove staged reduction"
+                                style={{ padding: "2px" }}
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td>
@@ -233,6 +382,102 @@ export default function StockManagerPanel({ token, navigate }) {
         </>
       )}
 
+      {isStockManager && myDrafts && myDrafts.length > 0 && (
+        <div style={{ marginTop: "var(--space-5)" }}>
+          <div className="section-header">
+            <h2 className="section-title">Staged Reductions ({myDrafts.length})</h2>
+          </div>
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Current Inventory</th>
+                  <th>Requested Change</th>
+                  <th>Resulting Inventory</th>
+                  <th style={{ width: "80px" }}>Remove</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myDrafts.map((draft) => (
+                  <tr key={draft._id}>
+                    <td>{draft.productName}</td>
+                    <td>{draft.currentInventoryAtStage}</td>
+                    <td>{draft.requestedDelta}</td>
+                    <td>{draft.requestedInventory}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn--secondary btn--sm"
+                        onClick={() => handleCancelDraft(draft._id)}
+                        title="Remove staged reduction"
+                      >
+                        <X size={12} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {isStockManager && (
+        <div style={{ marginTop: "var(--space-5)" }}>
+          <div className="section-header">
+            <h2 className="section-title">My Requests</h2>
+          </div>
+          {myRequests === undefined ? (
+            <div className="empty-state">
+              <div className="empty-title">Loading your requests...</div>
+            </div>
+          ) : myRequests.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-title">No reduction requests submitted yet.</div>
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th>Items</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myRequests.map((group) => {
+                    const overallStatus = getStockRequestOverallStatus(group);
+                    return (
+                      <tr key={group.requestId}>
+                        <td>{new Date(group.submittedAt).toLocaleString()}</td>
+                        <td><StockRequestStatusBadge status={overallStatus} /></td>
+                        <td>
+                          {group.items.map((item) => (
+                            <div key={item._id} style={{ marginBottom: "4px" }}>
+                              {item.productName}: {item.requestedDelta}
+                              {item.status === "rejected" && (
+                                <span style={{ color: "var(--color-support-red, #ef4444)" }}>
+                                  {" "}— Rejected{item.rejectedReason ? `: ${item.rejectedReason}` : ""}
+                                </span>
+                              )}
+                              {item.status === "approved" && (
+                                <span style={{ color: "var(--color-support-green, #4ade80)" }}> — Approved</span>
+                              )}
+                            </div>
+                          ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {labelProduct && (
         <BarcodeLabelModal
           product={labelProduct}
@@ -240,6 +485,8 @@ export default function StockManagerPanel({ token, navigate }) {
           onClose={() => setLabelProduct(null)}
         />
       )}
+
+      {!externalShowToast && <Toast toasts={toasts} onDismiss={dismissToast} />}
     </div>
   );
 }

@@ -48,6 +48,7 @@ import type * as seedProducts from "../seedProducts.js";
 import type * as settings from "../settings.js";
 import type * as staffAuth from "../staffAuth.js";
 import type * as stockCounters from "../stockCounters.js";
+import type * as stockRequests from "../stockRequests.js";
 import type * as storeOnlyProducts from "../storeOnlyProducts.js";
 import type * as storeRequests from "../storeRequests.js";
 import type * as users from "../users.js";
@@ -100,6 +101,7 @@ declare const fullApi: ApiFromModules<{
   settings: typeof settings;
   staffAuth: typeof staffAuth;
   stockCounters: typeof stockCounters;
+  stockRequests: typeof stockRequests;
   storeOnlyProducts: typeof storeOnlyProducts;
   storeRequests: typeof storeRequests;
   users: typeof users;

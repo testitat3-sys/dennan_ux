@@ -1,11 +1,13 @@
 import { query, mutation, internalMutation } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { verifyStaffSession } from "./staffAuth";
 import { applyStockCounterDelta } from "./stockCounters";
 import { allocateNextBarcode } from "./barcodeCounters";
 import { parseDateStrToMs } from "./orders";
-import { trackedQuery } from "./lib/ioTracking";
+import { trackedQuery, todayStr } from "./lib/ioTracking";
+import type { Id } from "./_generated/dataModel";
 
 // Reusable product field validators matching the products schema
 const productFieldsValidator = {
@@ -591,9 +593,15 @@ export const getProductSalesInRange = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
-    const { rangeStartMs, rangeEndMs } = dateRangeToMs(args.startDate, args.endDate);
+    // Stock Managers only ever see today's sales, regardless of what range
+    // the client requests — enforced here, not just hidden in the UI.
+    const today = todayStr();
+    const startDate = user.accountRole === "stockManager" ? today : args.startDate;
+    const endDate = user.accountRole === "stockManager" ? today : args.endDate;
+
+    const { rangeStartMs, rangeEndMs } = dateRangeToMs(startDate, endDate);
     const { sortedAgg } = await aggregateProductSalesInRange(ctx, rangeStartMs, rangeEndMs);
 
     const offset = args.paginationOpts.cursor ? parseInt(args.paginationOpts.cursor, 10) : 0;
@@ -635,9 +643,15 @@ export const getProductSalesRangeSummary = query({
     endDate: v.string(),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
-    const { rangeStartMs, rangeEndMs } = dateRangeToMs(args.startDate, args.endDate);
+    // Stock Managers only ever see today's sales, regardless of what range
+    // the client requests — enforced here, not just hidden in the UI.
+    const today = todayStr();
+    const startDate = user.accountRole === "stockManager" ? today : args.startDate;
+    const endDate = user.accountRole === "stockManager" ? today : args.endDate;
+
+    const { rangeStartMs, rangeEndMs } = dateRangeToMs(startDate, endDate);
     const { truncated, cap, sortedAgg } = await aggregateProductSalesInRange(ctx, rangeStartMs, rangeEndMs);
 
     return {
@@ -649,6 +663,57 @@ export const getProductSalesRangeSummary = query({
   },
 });
 
+/**
+ * Core inventory-mutation logic shared by `adjustStock` (direct admin/stock-
+ * manager increases, and admin decreases) and `stockRequests.approveStockRequestItem`
+ * (applying a stock manager's admin-approved decrease). Propagates the delta
+ * to every product sharing the same barcode and keeps stock counters in sync.
+ */
+export async function applyInventoryDelta(ctx: MutationCtx, productId: Id<"products">, delta: number) {
+  const product = await ctx.db.get(productId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  const currentInventory = product.inventory ?? 0;
+  const newInventory = currentInventory + delta;
+  if (newInventory < 0) {
+    throw new Error(`Inventory cannot be negative (current: ${currentInventory}, delta: ${delta})`);
+  }
+
+  const productsToUpdate = [product];
+  if (product.barcode) {
+    const matchingProducts = await ctx.db
+      .query("products")
+      .withIndex("by_barcode", (q: any) => q.eq("barcode", product.barcode))
+      .collect();
+    const seenIds = new Set([product._id]);
+    for (const p of matchingProducts) {
+      if (!seenIds.has(p._id)) {
+        seenIds.add(p._id);
+        productsToUpdate.push(p);
+      }
+    }
+  }
+
+  for (const pToUpdate of productsToUpdate) {
+    const currentInv = pToUpdate.inventory ?? 0;
+    const newInv = Math.max(0, currentInv + delta);
+    await ctx.db.patch(pToUpdate._id, {
+      inventory: newInv,
+      updatedAt: Date.now(),
+    });
+    await applyStockCounterDelta(
+      ctx,
+      { inventory: currentInv, reorderPoint: pToUpdate.reorderPoint },
+      { inventory: newInv, reorderPoint: pToUpdate.reorderPoint },
+      pToUpdate._id
+    );
+  }
+
+  return { success: true, newInventory: Math.max(0, newInventory) };
+}
+
 export const adjustStock = mutation({
   args: {
     token: v.string(),
@@ -656,50 +721,15 @@ export const adjustStock = mutation({
     delta: v.number(),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
-    const product = await ctx.db.get(args.productId);
-    if (!product) {
-      throw new Error("Product not found");
-    }
-
-    const currentInventory = product.inventory ?? 0;
-    const newInventory = currentInventory + args.delta;
-    if (newInventory < 0) {
-      throw new Error(`Inventory cannot be negative (current: ${currentInventory}, delta: ${args.delta})`);
-    }
-
-    const productsToUpdate = [product];
-    if (product.barcode) {
-      const matchingProducts = await ctx.db
-        .query("products")
-        .withIndex("by_barcode", (q: any) => q.eq("barcode", product.barcode))
-        .collect();
-      const seenIds = new Set([product._id]);
-      for (const p of matchingProducts) {
-        if (!seenIds.has(p._id)) {
-          seenIds.add(p._id);
-          productsToUpdate.push(p);
-        }
-      }
-    }
-
-    for (const pToUpdate of productsToUpdate) {
-      const currentInv = pToUpdate.inventory ?? 0;
-      const newInv = Math.max(0, currentInv + args.delta);
-      await ctx.db.patch(pToUpdate._id, {
-        inventory: newInv,
-        updatedAt: Date.now(),
-      });
-      await applyStockCounterDelta(
-        ctx,
-        { inventory: currentInv, reorderPoint: pToUpdate.reorderPoint },
-        { inventory: newInv, reorderPoint: pToUpdate.reorderPoint },
-        pToUpdate._id
+    if (args.delta < 0 && user.accountRole !== "admin") {
+      throw new Error(
+        "Inventory decreases by Stock Managers require admin approval. Use the staged-decrease flow instead."
       );
     }
 
-    return { success: true, newInventory: Math.max(0, newInventory) };
+    return applyInventoryDelta(ctx, args.productId, args.delta);
   },
 });
 
@@ -1053,6 +1083,7 @@ export const bulkCreateStoreOnlyProducts = mutation({
     const results: Array<{
       row: number;
       success: boolean;
+      outcome: "created" | "updated" | "rejected_would_reduce" | "error";
       productId?: string;
       barcode?: string;
       name?: string;
@@ -1072,6 +1103,64 @@ export const bulkCreateStoreOnlyProducts = mutation({
           throw new Error("Cost price must be less than price");
         }
 
+        // A row matching an existing product's barcode updates that product
+        // instead of creating a duplicate — but only as an increase-or-same;
+        // bulk import is for adding stock, not correcting it, so any row
+        // that would reduce an existing product's inventory is rejected
+        // outright rather than queued for approval.
+        const trimmedBarcode = row.barcode?.trim();
+        const existing = trimmedBarcode
+          ? await ctx.db
+              .query("products")
+              .withIndex("by_barcode", (q) => q.eq("barcode", trimmedBarcode))
+              .unique()
+          : null;
+
+        if (existing) {
+          const existingInventory = existing.inventory ?? 0;
+          if (row.quantity !== undefined && row.quantity < existingInventory) {
+            results.push({
+              row: i,
+              success: false,
+              outcome: "rejected_would_reduce",
+              barcode: trimmedBarcode,
+              name: row.name.trim(),
+              error: `Row quantity (${row.quantity}) is less than current inventory (${existingInventory}) for barcode ${trimmedBarcode} — decreases are not allowed via bulk import.`,
+            });
+            continue;
+          }
+
+          const newInventory = row.quantity !== undefined ? row.quantity : existingInventory;
+          const brand = row.brand?.trim() || existing.brand;
+          await ctx.db.patch(existing._id, {
+            price: row.price,
+            originalPrice: row.price,
+            costPrice: row.costPrice ?? existing.costPrice,
+            color: row.color?.trim() || existing.color,
+            brand,
+            brandSlug: slugify(brand),
+            inventory: newInventory,
+            updatedAt: Date.now(),
+          });
+          await applyStockCounterDelta(
+            ctx,
+            { inventory: existingInventory, reorderPoint: existing.reorderPoint },
+            { inventory: newInventory, reorderPoint: existing.reorderPoint },
+            existing._id
+          );
+
+          results.push({
+            row: i,
+            success: true,
+            outcome: "updated",
+            productId: existing._id,
+            barcode: trimmedBarcode,
+            name: row.name.trim(),
+            price: row.price,
+          });
+          continue;
+        }
+
         const baseSlug = slugify(row.name);
         let slug = baseSlug;
         let slugCounter = 1;
@@ -1085,14 +1174,8 @@ export const bulkCreateStoreOnlyProducts = mutation({
           slugCounter++;
         }
 
-        let barcode = row.barcode?.trim();
-        if (barcode) {
-          const clash = await ctx.db
-            .query("products")
-            .withIndex("by_barcode", (q) => q.eq("barcode", barcode!))
-            .unique();
-          if (clash) throw new Error(`Barcode ${barcode} already exists`);
-        } else {
+        let barcode = trimmedBarcode;
+        if (!barcode) {
           barcode = await allocateNextBarcode(ctx);
           while (
             await ctx.db
@@ -1127,9 +1210,9 @@ export const bulkCreateStoreOnlyProducts = mutation({
         });
 
         await applyStockCounterDelta(ctx, null, { inventory, reorderPoint: undefined });
-        results.push({ row: i, success: true, productId, barcode, name: row.name.trim(), price: row.price });
+        results.push({ row: i, success: true, outcome: "created", productId, barcode, name: row.name.trim(), price: row.price });
       } catch (err: any) {
-        results.push({ row: i, success: false, error: err.message });
+        results.push({ row: i, success: false, outcome: "error", error: err.message });
       }
     }
 

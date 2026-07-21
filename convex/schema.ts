@@ -1033,6 +1033,55 @@ export default defineSchema({
     .index("by_return", ["returnId"])
     .index("by_order", ["orderId"]),
 
+  /**
+   * Envelope for a batch of inventory-decrease line items a Stock Manager
+   * submits together for admin approval — see convex/stockRequests.ts.
+   * Only created at submit time (draft items don't reference one yet).
+   */
+  stockRequests: defineTable({
+    staffId: v.id("users"),
+    staffName: v.string(),
+    createdAt: v.number(),
+    submittedAt: v.optional(v.number()),
+  })
+    .index("by_staffId", ["staffId"])
+    .index("by_createdAt", ["createdAt"]),
+
+  /**
+   * One row per staged/submitted inventory decrease requested by a Stock
+   * Manager. `status: "draft"` rows are staged-but-unsubmitted and have no
+   * `requestId` yet — visible only to their author (`staffId`). Submitting
+   * flips a staff member's drafts to "pending" and assigns them a shared
+   * `requestId`. Admins resolve pending items to "approved" (applying the
+   * decrease) or "rejected" (no inventory change).
+   */
+  stockRequestItems: defineTable({
+    requestId: v.optional(v.id("stockRequests")),
+    staffId: v.id("users"),
+    staffName: v.string(),
+    productId: v.id("products"),
+    productName: v.string(),
+    barcode: v.optional(v.string()),
+    currentInventoryAtStage: v.number(),
+    requestedDelta: v.number(),
+    requestedInventory: v.number(),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected")
+    ),
+    approvedBy: v.optional(v.id("users")),
+    approvedAt: v.optional(v.number()),
+    rejectedReason: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_staffId_and_status", ["staffId", "status"])
+    .index("by_requestId", ["requestId"])
+    .index("by_status", ["status"])
+    .index("by_productId_and_staffId_and_status", ["productId", "staffId", "status"]),
+
   customerActivities: defineTable({
     customerId: v.id("users"),
     orderId: v.optional(v.id("orders")),

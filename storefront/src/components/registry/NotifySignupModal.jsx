@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import { X } from 'lucide-react';
@@ -122,7 +122,13 @@ const NotifySignupModal = ({
           <div className="notify-signup-top">
             <div className="notify-signup-titles">
               {eyebrow && <span className="notify-signup-eyebrow">{eyebrow}</span>}
-              <h2 className="notify-signup-headline">{title}</h2>
+              <h2 className="notify-signup-headline">
+                {typeof title === 'string' && title.toLowerCase() === 'get notified when back in stock' ? (
+                  <img src="/assets/remind-me.png" alt="Get notified when back in stock" className="notify-signup-title-img" />
+                ) : (
+                  title
+                )}
+              </h2>
               <p className="notify-signup-subtext">
                 {subtext}
               </p>

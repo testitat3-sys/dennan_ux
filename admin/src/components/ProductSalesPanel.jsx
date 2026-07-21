@@ -20,10 +20,13 @@ function getDateStrDaysAgo(days) {
   return toDateStr(d);
 }
 
-export default function ProductSalesPanel({ token }) {
+export default function ProductSalesPanel({ token, user }) {
+  const isStockManager = user?.accountRole === "stockManager";
   const todayStr = getTodayDateStr();
   const defaultStartStr = getDateStrDaysAgo(29);
-  const [startDate, setStartDate] = useState(defaultStartStr);
+  // Stock Managers only ever see today's sales — pinned, not just defaulted,
+  // since there's no picker for them to change it away from today.
+  const [startDate, setStartDate] = useState(isStockManager ? todayStr : defaultStartStr);
   const [endDate, setEndDate] = useState(todayStr);
 
   const { results: salesRows, status: salesStatus, loadMore: loadMoreSales } = usePaginatedQuery(
@@ -46,36 +49,42 @@ export default function ProductSalesPanel({ token }) {
         <h1 className="admin-page-title">Products Sold — Sales Report</h1>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-4)" }}>
-        <label style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
-          From
-          <input
-            type="date"
-            className="form-input"
-            style={{ marginLeft: "6px", width: "150px" }}
-            value={startDate}
-            max={endDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </label>
-        <label style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
-          To
-          <input
-            type="date"
-            className="form-input"
-            style={{ marginLeft: "6px", width: "150px" }}
-            value={endDate}
-            min={startDate}
-            max={todayStr}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </label>
-        {!isDefaultRange && (
-          <button className="btn btn--secondary btn--sm" onClick={handleResetRange}>
-            Last 30 Days
-          </button>
-        )}
-      </div>
+      {isStockManager ? (
+        <p style={{ fontSize: "12px", color: "var(--text-tertiary)", marginBottom: "var(--space-4)" }}>
+          Showing today's sales only ({todayStr}). Stock Managers don't have access to historical sales data.
+        </p>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-4)" }}>
+          <label style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
+            From
+            <input
+              type="date"
+              className="form-input"
+              style={{ marginLeft: "6px", width: "150px" }}
+              value={startDate}
+              max={endDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </label>
+          <label style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
+            To
+            <input
+              type="date"
+              className="form-input"
+              style={{ marginLeft: "6px", width: "150px" }}
+              value={endDate}
+              min={startDate}
+              max={todayStr}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </label>
+          {!isDefaultRange && (
+            <button className="btn btn--secondary btn--sm" onClick={handleResetRange}>
+              Last 30 Days
+            </button>
+          )}
+        </div>
+      )}
 
       {summary?.truncated && (
         <div className="form-error is-visible" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "var(--space-4)" }}>

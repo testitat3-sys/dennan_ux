@@ -19,6 +19,7 @@ import SalesMetricsPanel from "../components/SalesMetricsPanel";
 import ReturnsPanel from "../components/ReturnsPanel";
 import OrderHistoryPanel from "../components/OrderHistoryPanel";
 import StockManagerPanel from "../components/StockManagerPanel";
+import StockApprovalsPanel from "../components/StockApprovalsPanel";
 import DiscountsPanel from "../components/DiscountsPanel";
 import ProductSalesPanel from "../components/ProductSalesPanel";
 import OnlineOrdersPanel from "../components/OnlineOrdersPanel";
@@ -49,7 +50,8 @@ import {
   Settings,
   Inbox,
   Database,
-  Wallet
+  Wallet,
+  ClipboardCheck
 } from "lucide-react";
 
 const LAST_TAB_KEY = "dennan_admin_last_tab";
@@ -107,6 +109,20 @@ export default function AdminDashboard() {
 
   const unseenOrdersCount = pendingOrders ? pendingOrders.filter(o => o.createdAt > lastSeenOrders).length : 0;
   const unseenReturnsCount = pendingReturns ? pendingReturns.filter(r => r.createdAt > lastSeenReturns).length : 0;
+
+  // Stock decrease approvals (Stock Managers submit batches for admin review)
+  const pendingStockRequests = useTrackedQuery(api.stockRequests.getPendingStockRequests, { token });
+  const [lastSeenStockRequests, setLastSeenStockRequests] = useState(() => parseInt(localStorage.getItem("dennan_admin_last_seen_stock_requests") || "0"));
+  useEffect(() => {
+    if (activeTab === "stockApprovals" && pendingStockRequests && pendingStockRequests.length > 0) {
+      const maxTime = Math.max(...pendingStockRequests.map(r => r.submittedAt));
+      localStorage.setItem("dennan_admin_last_seen_stock_requests", maxTime.toString());
+      setLastSeenStockRequests(maxTime);
+    }
+  }, [activeTab, pendingStockRequests]);
+  const unseenStockRequestsCount = pendingStockRequests
+    ? pendingStockRequests.filter(r => r.submittedAt > lastSeenStockRequests).length
+    : 0;
 
   // CRM customer modal state
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -232,6 +248,7 @@ export default function AdminDashboard() {
       label: "Catalogue",
       items: [
         { key: "stock", label: "Stock Manager", icon: Boxes, isActive: activeTab === "stock", onClick: () => setActiveTab("stock") },
+        { key: "stockApprovals", label: "Stock Approvals", icon: ClipboardCheck, badge: unseenStockRequestsCount > 0 ? unseenStockRequestsCount : undefined, isActive: activeTab === "stockApprovals", onClick: () => setActiveTab("stockApprovals") },
         { key: "salesReport", label: "Sales Report", icon: ClipboardList, isActive: activeTab === "salesReport", onClick: () => setActiveTab("salesReport") },
         { key: "discounts", label: "Discounts & Promos", icon: Tag, isActive: activeTab === "discounts", onClick: () => setActiveTab("discounts") },
       ],
@@ -463,12 +480,17 @@ export default function AdminDashboard() {
 
           {/* TAB 2: STOCK MANAGER */}
           {activeTab === "stock" && (
-            <StockManagerPanel token={token} navigate={navigate} />
+            <StockManagerPanel token={token} navigate={navigate} user={user} showToast={showToast} />
+          )}
+
+          {/* TAB: STOCK APPROVALS (admin review of stock manager reduction requests) */}
+          {activeTab === "stockApprovals" && (
+            <StockApprovalsPanel token={token} showToast={showToast} />
           )}
 
           {/* TAB: SALES REPORT (products sold in a date range) */}
           {activeTab === "salesReport" && (
-            <ProductSalesPanel token={token} />
+            <ProductSalesPanel token={token} user={user} />
           )}
 
           {/* TAB 3: DISCOUNTS & PROMOS */}

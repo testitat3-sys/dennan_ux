@@ -21,6 +21,13 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
   const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
 
   useEffect(() => {
+    if (product) {
+      setSize(product.stage === 'newborn' ? 'Newborn' : 'S');
+      setQuantity(1);
+    }
+  }, [product]);
+
+  useEffect(() => {
     if (isOpen) {
       setIsMounted(true);
       setIsSuccess(false);
@@ -44,7 +51,16 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
 
   if (!isMounted) return null;
 
-  const sizes = ['S', 'M', 'L', 'XL'];
+  const isApparelProduct = product && (
+    product.category === 'Apparel' || 
+    product.category === 'Newborn Essentials & Kids Apparel/Footwear' ||
+    product.subCategory?.toLowerCase() === 'apparel' ||
+    product.subCategory?.toLowerCase() === 'clothing'
+  );
+
+  const sizes = product?.stage === 'newborn'
+    ? ['Newborn', '0-3m', '3-6m', '6-9m']
+    : ['S', 'M', 'L', 'XL'];
   const displayName = stripBrandFromName(product.name, product.brand);
   const isSaved = isInWishlist(product.id || product._id);
   const isOutOfStock = product.inventory !== undefined && product.inventory <= 0;
@@ -121,23 +137,25 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
                 </div>
 
                 <div className="quick-view-options">
-                  <div className="option-group">
-                    <span className="option-label">Size</span>
-                    <div className="size-selector">
-                      {sizes.map((s) => (
-                        <Button
-                          key={s}
-                          variant={size === s ? 'primary' : 'ghost'}
-                          size="sm"
-                          className={`size-btn ${size === s ? 'is-active' : ''}`}
-                          onClick={() => setSize(s)}
-                          disabled={isOutOfStock}
-                        >
-                          {s}
-                        </Button>
-                      ))}
+                  {isApparelProduct && (
+                    <div className="option-group">
+                      <span className="option-label">Size</span>
+                      <div className="size-selector">
+                        {sizes.map((s) => (
+                          <Button
+                            key={s}
+                            variant={size === s ? 'primary' : 'ghost'}
+                            size="sm"
+                            className={`size-btn ${size === s ? 'is-active' : ''}`}
+                            onClick={() => setSize(s)}
+                            disabled={isOutOfStock}
+                          >
+                            {s}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="option-group">
                     <span className="option-label">Quantity</span>

@@ -102,6 +102,7 @@ const PDP = () => {
       if (fetchedProduct) {
         setProduct(fetchedProduct);
         setActiveImageIndex(0); // Reset to first image on product switch
+        setSelectedSize(fetchedProduct.stage === 'newborn' ? 'Newborn' : 'S');
       }
       setLoading(false);
     }
@@ -249,7 +250,16 @@ const PDP = () => {
     toggleWishlist(product, true);
   };
 
-  const sizes = ['Newborn', '0-3m', '3-6m', '6-9m'];
+  const isApparelProduct = 
+    product.category === 'Apparel' || 
+    product.category === 'Newborn Essentials & Kids Apparel/Footwear' ||
+    product.subCategory?.toLowerCase() === 'apparel' ||
+    product.subCategory?.toLowerCase() === 'clothing';
+
+  const sizes = product.stage === 'newborn'
+    ? ['Newborn', '0-3m', '3-6m', '6-9m']
+    : ['S', 'M', 'L', 'XL'];
+
   const rawImages = product.images || (product.image ? [product.image] : []);
   const imagesList = rawImages.filter(Boolean);
   const hasNoImages = imagesList.length === 0;
@@ -404,7 +414,7 @@ const PDP = () => {
                 </div>
               </div>
 
-              {product.category === 'Apparel' && (
+              {isApparelProduct && (
                 <div className="pdp__sizes">
                   <span className="control-label">Select Size</span>
                   <div className="size-grid">

@@ -991,7 +991,6 @@ const CheckoutPage = () => {
                       )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                      <Text role="label-md" as="span" className="momo-label">Phone Number</Text>
                       <div className={`momo-input-wrapper ${showErrors && guestPhoneError ? 'is-invalid' : ''}`}>
                         <div className="momo-prefix">
                           <Text role="label-sm" as="span" className="ug-flag">UG</Text>
@@ -1046,7 +1045,6 @@ const CheckoutPage = () => {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--card-gap-xs)', flex: 1 }}>
                       <Text role="title-sm" as="span" className="option-name">Mobile Money</Text>
-                      <Text role="body-sm" as="span" className="option-desc">Pay instantly using MTN MoMo or Airtel Money.</Text>
                     </div>
                     <div className="option-brand-icons">
                       <Text role="label-sm" as="span" style={{ color: '#000000' }} className="brand-badge brand-badge--mtn">MTN</Text>
@@ -1064,7 +1062,6 @@ const CheckoutPage = () => {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Card.Body>
-                        <Text role="label-md" as="span" className="momo-label">Phone Number</Text>
                         <div className={`momo-input-wrapper ${showErrors && phoneError ? 'is-invalid' : ''}`}>
                           <div className="momo-prefix">
                             <Text role="label-sm" as="span" className="ug-flag">UG</Text>
@@ -1102,7 +1099,6 @@ const CheckoutPage = () => {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--card-gap-xs)', flex: 1 }}>
                       <Text role="title-sm" as="span" className="option-name">Credit / Debit Card</Text>
-                      <Text role="body-sm" as="span" className="option-desc">Visa, Mastercard.</Text>
                     </div>
                   </Card.Body>
                 </Card>

@@ -178,7 +178,7 @@ export default function AdminBulkProductUpload() {
 
   const validRows = rows.filter((r) => r.errors.length === 0);
   const invalidCount = rows.length - validRows.length;
-  const createdProducts = (results || []).filter((o) => o?.success);
+  const createdProducts = (results || []).filter((o) => o?.success && o.outcome !== "updated");
 
   const handleImport = async () => {
     if (isImporting || validRows.length === 0) return;
@@ -217,6 +217,7 @@ export default function AdminBulkProductUpload() {
           const originalIndex = validIndexes[start + i];
           outcomes[originalIndex] = {
             success: res.success,
+            outcome: res.outcome,
             error: res.error,
             barcode: res.barcode,
             name: res.name,
@@ -226,12 +227,14 @@ export default function AdminBulkProductUpload() {
         setProgress({ done: Math.min(start + BATCH_SIZE, validRows.length), total: validRows.length });
       }
 
-      const successCount = outcomes.filter((o) => o?.success).length;
-      const failureCount = outcomes.length - successCount;
+      const createdCount = outcomes.filter((o) => o?.outcome === "created").length;
+      const updatedCount = outcomes.filter((o) => o?.outcome === "updated").length;
+      const rejectedCount = outcomes.filter((o) => o?.outcome === "rejected_would_reduce").length;
+      const errorCount = outcomes.filter((o) => o && !o.success && o.outcome !== "rejected_would_reduce").length;
       setResults(outcomes);
       showToast(
-        `Import finished: ${successCount} created, ${failureCount} failed.`,
-        failureCount > 0 ? "error" : "success"
+        `Import finished: ${createdCount} created, ${updatedCount} updated, ${rejectedCount} rejected (would reduce stock), ${errorCount} failed.`,
+        rejectedCount > 0 || errorCount > 0 ? "error" : "success"
       );
     } catch (err) {
       showToast(err.message || "Bulk import failed.", "error");
@@ -324,7 +327,7 @@ export default function AdminBulkProductUpload() {
                   <td>Barcode (Code)</td>
                   <td>Optional</td>
                   <td>Text</td>
-                  <td>Auto-assigned if blank. Must be unique if supplied.</td>
+                  <td>Auto-assigned if blank. If it matches an existing product, that product's price/quantity are updated instead of creating a duplicate — quantity must be greater than or equal to its current stock, or the row is rejected.</td>
                 </tr>
               </tbody>
             </table>
@@ -396,7 +399,11 @@ export default function AdminBulkProductUpload() {
                             {outcome ? (
                               outcome.success ? (
                                 <span className="status-badge status-badge--completed">
-                                  <CheckCircle size={12} /> Created
+                                  <CheckCircle size={12} /> {outcome.outcome === "updated" ? "Updated" : "Created"}
+                                </span>
+                              ) : outcome.outcome === "rejected_would_reduce" ? (
+                                <span className="status-badge status-badge--failed" title={outcome.error}>
+                                  <AlertCircle size={12} /> Rejected: would reduce stock
                                 </span>
                               ) : (
                                 <span className="status-badge status-badge--failed" title={outcome.error}>

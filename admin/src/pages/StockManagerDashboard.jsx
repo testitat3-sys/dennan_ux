@@ -70,11 +70,11 @@ export default function StockManagerDashboard() {
 
         <main className="admin-main">
           {activeTab === "stock" && (
-            <StockManagerPanel token={token} navigate={navigate} />
+            <StockManagerPanel token={token} navigate={navigate} user={user} />
           )}
 
           {activeTab === "salesReport" && (
-            <ProductSalesPanel token={token} />
+            <ProductSalesPanel token={token} user={user} />
           )}
 
           {activeTab === "discounts" && (

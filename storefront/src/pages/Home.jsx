@@ -92,8 +92,8 @@ const Home = () => {
     return isMobile ? <MobileHomeSkeleton /> : <HomeSkeleton />;
   }
 
-  const mostLovedProducts = featuredProducts?.mostLoved || [];
-  const curatedProducts = featuredProducts?.curated || [];
+  const mostLovedProducts = (featuredProducts?.mostLoved || []).filter(p => p.inventory === undefined || p.inventory > 0);
+  const curatedProducts = (featuredProducts?.curated || []).filter(p => p.inventory === undefined || p.inventory > 0);
 
   const modifiedStages = liveStages?.map(stage =>
     stage.type === 'mother'
