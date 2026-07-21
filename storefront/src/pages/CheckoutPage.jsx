@@ -1125,23 +1125,6 @@ const CheckoutPage = () => {
                       <Text role="label-sm" as="span" style={{ color: 'var(--color-brand-primary-dark)', background: 'var(--color-brand-primary-light, #fdf2f8)', border: '1px solid var(--color-brand-primary)', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 700 }}>CASH</Text>
                     </div>
                   </Card.Body>
-
-                  {selectedPayment === 'cod' && (
-                    <Card
-                      hasBorder={false}
-                      hasShadow={false}
-                      hasBackground={false}
-                      removePaddingHorizontal={true}
-                      className="momo-input-container"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Card.Body>
-                        <Text role="label-sm" as="p" color="tertiary" className="momo-helper-text" style={{ marginTop: 0 }}>
-                          🛵 Our rider will collect payment on arrival. Please have the exact amount ready.
-                        </Text>
-                      </Card.Body>
-                    </Card>
-                  )}
                 </Card>
               </div>
 
