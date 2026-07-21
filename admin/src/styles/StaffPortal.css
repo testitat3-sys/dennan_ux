@@ -4642,3 +4642,124 @@
 .text-link-btn:hover {
   color: var(--color-brand-secondary) !important;
 }
+
+/* ─── Referral Acquisition Graphic (Leads Page) ─────────────────────── */
+.referral-graphic-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--surface-container-highest, #e2e8f0);
+  border-radius: var(--radius-xl, 16px);
+  padding: var(--space-6, 24px);
+  margin-bottom: var(--space-6, 24px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.referral-graphic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-5, 20px);
+  flex-wrap: wrap;
+  gap: var(--space-3, 12px);
+}
+
+.referral-graphic-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  margin: 0;
+}
+
+.referral-graphic-sub {
+  font-size: 0.85rem;
+  color: var(--text-tertiary, #64748b);
+  margin-top: 2px;
+}
+
+.referral-total-badge {
+  background: var(--surface-container-high, #f1f5f9);
+  color: var(--color-brand-primary-dark, #d35097);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.referral-stacked-bar {
+  display: flex;
+  height: 14px;
+  width: 100%;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--surface-container, #f8fafc);
+  margin-bottom: var(--space-6, 24px);
+}
+
+.referral-stacked-segment {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.referral-channels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-4, 16px);
+}
+
+.referral-channel-item {
+  background: var(--surface-container-low, #f8fafc);
+  border: 1px solid var(--surface-container-high, #f1f5f9);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-4, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.referral-channel-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.referral-channel-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+}
+
+.referral-channel-icon {
+  font-size: 1.1rem;
+}
+
+.referral-channel-stats {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.referral-channel-pct {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.referral-channel-count {
+  font-size: 0.78rem;
+  color: var(--text-tertiary, #64748b);
+}
+
+.referral-channel-track {
+  height: 6px;
+  width: 100%;
+  border-radius: 3px;
+  background: var(--surface-container-highest, #e2e8f0);
+  overflow: hidden;
+}
+
+.referral-channel-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}

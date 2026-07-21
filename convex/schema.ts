@@ -703,6 +703,19 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_user", ["userId"]).index("by_order", ["orderId"]),
 
+  referralSourceStats: defineTable({
+    total: v.number(),
+    counts: v.object({
+      tiktok: v.number(),
+      instagram: v.number(),
+      friend: v.number(),
+      google: v.number(),
+      chatgpt: v.number(),
+      other: v.number(),
+    }),
+    updatedAt: v.optional(v.number()),
+  }),
+
   registryItems: defineTable({
     registryId: v.id("registries"),
     productId: v.id("products"),

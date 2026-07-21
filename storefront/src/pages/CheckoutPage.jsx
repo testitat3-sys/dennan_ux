@@ -12,13 +12,13 @@ import OnboardingModal from '../components/ui/OnboardingModal';
 import Toast from '../components/ui/Toast';
 import { useCart } from '../context/CartContext';
 import { getCheckoutData } from '../services/api';
-import { formatPrice } from '../utils/priceUtils';
+import { formatPrice, formatPriceString } from '../utils/priceUtils';
 import Button from '../components/ui/Button';
 import Page from '../components/ui/Page';
 import Card from '../components/ui/Card';
 import Text from '../components/ui/Text';
 import DefaultProductImage from '../components/products/DefaultProductImage';
-import { Check, Settings, Sparkles as SparklesIcon, RotateCcw, ShoppingCart, Clock, Users, MoreHorizontal } from 'lucide-react';
+import { Check, Settings, Sparkles as SparklesIcon, RotateCcw, ShoppingCart, Clock, Users, MoreHorizontal, Banknote } from 'lucide-react';
 import './CheckoutPage.css';
 
 const CheckoutPage = () => {
@@ -75,6 +75,7 @@ const CheckoutPage = () => {
   const guestEmailRef = useRef(null);
   const guestPhoneRef = useRef(null);
   const momoPhoneRef = useRef(null);
+  const referralPromptRef = useRef(null);
 
   const queueToast = (message, variant = 'success') => {
     setToastQueue(prev => [...prev, { message, variant }]);
@@ -169,10 +170,14 @@ const CheckoutPage = () => {
     }
   }, [user, checkoutData, isAuthenticated, selectedAddress]);
 
-  // Prompt for "how did you know about us?" once per confirmed order (guest or authenticated).
+  // Prompt for "how did you know about us?" once per confirmed order (guest or authenticated) and scroll to it.
   useEffect(() => {
     if (isOrderConfirmed) {
       setShowReferralPrompt(true);
+      const timer = setTimeout(() => {
+        referralPromptRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [isOrderConfirmed]);
 
@@ -1191,8 +1196,9 @@ const CheckoutPage = () => {
                           Our rider is dispatched. Arriving in approximately {remainingTime} minutes.
                         </Text>
                         {placedOrderDetails?.paymentMethod === 'cod' && (
-                          <Text role="label-sm" as="p" color="support-red" style={{ marginTop: 'var(--space-3)', fontWeight: 600 }}>
-                            💵 Please have <strong>{formatPrice(placedOrderDetails?.grandTotal || grandTotal)}</strong> in cash ready for the rider.
+                          <Text role="label-sm" as="p" style={{ color: '#000000', marginTop: 'var(--space-3)', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                            <Banknote size={18} style={{ flexShrink: 0 }} />
+                            <span>Amount Payable: {formatPriceString(placedOrderDetails?.grandTotal || grandTotal)}</span>
                           </Text>
                         )}
                       </Card.Body>
@@ -1301,7 +1307,8 @@ const CheckoutPage = () => {
                   )}
 
                   {showReferralPrompt && (
-                    <Card className="referral-prompt-card animate-fadeIn" style={{ backgroundColor: 'var(--surface-container-low)', border: '1px solid rgba(211, 80, 151, 0.15)', borderRadius: 'var(--radius-xl)' }}>
+                    <div ref={referralPromptRef}>
+                      <Card className="referral-prompt-card animate-fadeIn" style={{ backgroundColor: 'var(--surface-container-low)', border: '1px solid rgba(211, 80, 151, 0.15)', borderRadius: 'var(--radius-xl)' }}>
                       <Card.Header>
                         <Text role="title-sm" as="h4" color="primary" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, margin: 0 }}>
                           How Did You Know About Us?
@@ -1366,7 +1373,8 @@ const CheckoutPage = () => {
                         )}
                       </Card.Body>
                     </Card>
-                  )}
+                  </div>
+                )}
 
                   <div className="secondary-promos">
                     {checkoutData?.confirmation?.promos?.map(promo => {

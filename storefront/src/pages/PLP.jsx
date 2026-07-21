@@ -524,7 +524,7 @@ const PLP = () => {
                         src="/assets/order-from-dennan.png"
                         alt="Can't find what you're looking for?"
                         className="plp__empty-image"
-                        style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 'var(--radius-lg)' }}
+                        style={{ width: '100%', height: 'auto', display: 'block' }}
                       />
                       <Button variant="primary" size="sm" onClick={() => setShowStoreRequestModal(true)}>
                         Check our physical store

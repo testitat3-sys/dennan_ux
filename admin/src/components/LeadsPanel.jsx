@@ -12,8 +12,18 @@ const STATUS_TABS = [
   { key: "all", label: "All" },
 ];
 
+const CHANNEL_CONFIG = [
+  { key: "tiktok", label: "TikTok", color: "#00f2fe", icon: "🎵" },
+  { key: "instagram", label: "Instagram", color: "#e1306c", icon: "📸" },
+  { key: "friend", label: "A Friend", color: "#3b82f6", icon: "👥" },
+  { key: "google", label: "Google", color: "#10b981", icon: "🔍" },
+  { key: "chatgpt", label: "ChatGPT / AI", color: "#8b5cf6", icon: "✨" },
+  { key: "other", label: "Other", color: "#6b7280", icon: "💬" },
+];
+
 export default function LeadsPanel({ token }) {
   const leads = useTrackedQuery(api.leads.getLeads, { token });
+  const referralStats = useTrackedQuery(api.referralSources.getReferralSourceStats, { token });
   const resolveLeadMutation = useMutation(api.leads.resolveLead);
 
   const [statusTab, setStatusTab] = useState("unresolved");
@@ -61,6 +71,8 @@ export default function LeadsPanel({ token }) {
       l.detail?.toLowerCase().includes(search.toLowerCase())
     );
 
+  const showReferralGraphic = referralStats && referralStats.total >= 10;
+
   return (
     <div className="admin-tab-panel is-active">
       <div className="page-header">
@@ -106,6 +118,64 @@ export default function LeadsPanel({ token }) {
               <span className="stat-label">Resolved</span>
             </div>
           </div>
+
+          {showReferralGraphic && (
+            <div className="referral-graphic-card">
+              <div className="referral-graphic-header">
+                <div>
+                  <h3 className="referral-graphic-title">Acquisition Channels ("How Did You Know About Us?")</h3>
+                  <p className="referral-graphic-sub">Customer discovery proportions based on {referralStats.total} responses</p>
+                </div>
+                <div className="referral-total-badge">
+                  <span>{referralStats.total} Responses</span>
+                </div>
+              </div>
+
+              {/* Stacked Proportional Bar */}
+              <div className="referral-stacked-bar">
+                {CHANNEL_CONFIG.map((ch) => {
+                  const pct = referralStats.proportions?.[ch.key] || 0;
+                  if (pct === 0) return null;
+                  return (
+                    <div
+                      key={ch.key}
+                      className="referral-stacked-segment"
+                      style={{ width: `${pct}%`, backgroundColor: ch.color }}
+                      title={`${ch.label}: ${pct}% (${referralStats.counts?.[ch.key] || 0})`}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Breakdown Grid */}
+              <div className="referral-channels-grid">
+                {CHANNEL_CONFIG.map((ch) => {
+                  const count = referralStats.counts?.[ch.key] || 0;
+                  const pct = referralStats.proportions?.[ch.key] || 0;
+                  return (
+                    <div key={ch.key} className="referral-channel-item">
+                      <div className="referral-channel-top">
+                        <div className="referral-channel-label">
+                          <span className="referral-channel-icon">{ch.icon}</span>
+                          <span>{ch.label}</span>
+                        </div>
+                        <div className="referral-channel-stats">
+                          <span className="referral-channel-pct" style={{ color: ch.color }}>{pct}%</span>
+                          <span className="referral-channel-count">({count})</span>
+                        </div>
+                      </div>
+                      <div className="referral-channel-track">
+                        <div
+                          className="referral-channel-fill"
+                          style={{ width: `${pct}%`, backgroundColor: ch.color }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="tab-strip">
             {STATUS_TABS.map((t) => (
