@@ -40,6 +40,7 @@ export default defineConfig({
         // cached/stale response.
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB
       },
     }),
   ],
