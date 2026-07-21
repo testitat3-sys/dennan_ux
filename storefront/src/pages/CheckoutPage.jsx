@@ -1040,7 +1040,7 @@ const CheckoutPage = () => {
                       <div className="radio-inner"></div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--card-gap-xs)', flex: 1 }}>
-                      <Text role="title-sm" as="span" className="option-name">Ugandan Mobile Money</Text>
+                      <Text role="title-sm" as="span" className="option-name">Mobile Money</Text>
                       <Text role="body-sm" as="span" className="option-desc">Pay instantly using MTN MoMo or Airtel Money.</Text>
                     </div>
                     <div className="option-brand-icons">
@@ -1079,9 +1079,6 @@ const CheckoutPage = () => {
                           />
                         </div>
                         {(showErrors || momoPhone) && phoneError && <Text role="label-md" as="p" color="support-red" className="momo-error-text">{phoneError}</Text>}
-                        <Text role="label-sm" as="p" color="tertiary" className="momo-helper-text">
-                          We will push a secure PIN prompt to this number to approve the transaction.
-                        </Text>
                       </Card.Body>
                     </Card>
                   )}
@@ -1117,8 +1114,7 @@ const CheckoutPage = () => {
                       <div className="radio-inner"></div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--card-gap-xs)', flex: 1 }}>
-                      <Text role="title-sm" as="span" className="option-name">Pay on Delivery (Cash)</Text>
-                      <Text role="body-sm" as="span" className="option-desc">Pay cash when your order arrives at your door.</Text>
+                      <Text role="title-sm" as="span" className="option-name">Pay Cash on Delivery</Text>
                     </div>
                     <div className="option-brand-icons">
                       <Text role="label-sm" as="span" style={{ color: 'var(--color-brand-primary-dark)', background: 'var(--color-brand-primary-light, #fdf2f8)', border: '1px solid var(--color-brand-primary)', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 700 }}>CASH</Text>

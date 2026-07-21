@@ -1038,9 +1038,11 @@ export const bulkCreateStoreOnlyProducts = mutation({
     rows: v.array(
       v.object({
         name: v.string(),
+        brand: v.optional(v.string()),
         color: v.optional(v.string()),
         quantity: v.optional(v.number()),
         price: v.number(),
+        costPrice: v.optional(v.number()),
         barcode: v.optional(v.string()),
       })
     ),
@@ -1052,6 +1054,9 @@ export const bulkCreateStoreOnlyProducts = mutation({
       row: number;
       success: boolean;
       productId?: string;
+      barcode?: string;
+      name?: string;
+      price?: number;
       error?: string;
     }> = [];
 
@@ -1062,6 +1067,9 @@ export const bulkCreateStoreOnlyProducts = mutation({
         if (!(row.price > 0)) throw new Error("Price must be greater than 0");
         if (row.quantity !== undefined && row.quantity < 0) {
           throw new Error("Quantity cannot be negative");
+        }
+        if (row.costPrice !== undefined && row.costPrice >= row.price) {
+          throw new Error("Cost price must be less than price");
         }
 
         const baseSlug = slugify(row.name);
@@ -1097,7 +1105,7 @@ export const bulkCreateStoreOnlyProducts = mutation({
         }
 
         const inventory = Math.max(0, row.quantity ?? 0);
-        const brand = "no-brand";
+        const brand = row.brand?.trim() || "no-brand";
         const productId = await ctx.db.insert("products", {
           name: row.name.trim(),
           brand,
@@ -1107,6 +1115,7 @@ export const bulkCreateStoreOnlyProducts = mutation({
           description: "no-description",
           originalPrice: row.price,
           price: row.price,
+          costPrice: row.costPrice,
           color: row.color?.trim() || undefined,
           isActive: true,
           actual_data: true,
@@ -1118,7 +1127,7 @@ export const bulkCreateStoreOnlyProducts = mutation({
         });
 
         await applyStockCounterDelta(ctx, null, { inventory, reorderPoint: undefined });
-        results.push({ row: i, success: true, productId });
+        results.push({ row: i, success: true, productId, barcode, name: row.name.trim(), price: row.price });
       } catch (err: any) {
         results.push({ row: i, success: false, error: err.message });
       }

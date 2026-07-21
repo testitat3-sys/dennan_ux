@@ -13,14 +13,18 @@ import {
   Upload,
   Download,
   FileSpreadsheet,
+  Printer,
 } from "lucide-react";
+import BulkBarcodePrintModal from "../components/BulkBarcodePrintModal";
 
 const BATCH_SIZE = 25;
 
 const NAME_HEADERS = ["name", "product name"];
+const BRAND_HEADERS = ["brand"];
 const COLOR_HEADERS = ["color"];
 const QUANTITY_HEADERS = ["quantity", "inventory"];
 const PRICE_HEADERS = ["price"];
+const COST_PRICE_HEADERS = ["costprice", "cost price", "cost"];
 const BARCODE_HEADERS = ["barcode", "code"];
 
 function normalizeHeader(h) {
@@ -45,13 +49,16 @@ function parseRows(sheetRows) {
   const parsed = [];
   for (const rawRow of sheetRows) {
     const name = findValue(rawRow, NAME_HEADERS);
+    const brandRaw = findValue(rawRow, BRAND_HEADERS);
     const color = findValue(rawRow, COLOR_HEADERS);
     const quantityRaw = findValue(rawRow, QUANTITY_HEADERS);
     const priceRaw = findValue(rawRow, PRICE_HEADERS);
+    const costPriceRaw = findValue(rawRow, COST_PRICE_HEADERS);
     const barcodeRaw = findValue(rawRow, BARCODE_HEADERS);
 
     const isEntirelyEmpty =
-      !name && !color && quantityRaw === undefined && priceRaw === undefined && !barcodeRaw;
+      !name && !brandRaw && !color && quantityRaw === undefined && priceRaw === undefined &&
+      costPriceRaw === undefined && !barcodeRaw;
     if (isEntirelyEmpty) continue;
 
     const errors = [];
@@ -80,13 +87,25 @@ function parseRows(sheetRows) {
       }
     }
 
+    let costPrice;
+    if (costPriceRaw !== undefined && costPriceRaw !== "") {
+      costPrice = typeof costPriceRaw === "number" ? costPriceRaw : parseFloat(costPriceRaw);
+      if (isNaN(costPrice) || costPrice < 0) {
+        errors.push("Cost price must be a positive number");
+      } else if (price !== undefined && !isNaN(price) && costPrice >= price) {
+        errors.push("Cost price must be less than price");
+      }
+    }
+
     const barcode = barcodeRaw ? String(barcodeRaw).trim() : undefined;
 
     parsed.push({
       name: name ? String(name).trim() : "",
+      brand: brandRaw ? String(brandRaw).trim() : undefined,
       color: color ? String(color).trim() : undefined,
       quantity: quantity !== undefined && !isNaN(quantity) ? quantity : undefined,
       price,
+      costPrice: costPrice !== undefined && !isNaN(costPrice) ? costPrice : undefined,
       barcode,
       errors,
     });
@@ -112,7 +131,7 @@ function parseRows(sheetRows) {
 
 function downloadTemplate() {
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([["Name", "Color", "Quantity", "Price", "Barcode"]]);
+  const ws = XLSX.utils.aoa_to_sheet([["Name", "Brand", "Color", "Quantity", "Price", "CostPrice", "Barcode"]]);
   XLSX.utils.book_append_sheet(wb, ws, "Products");
   XLSX.writeFile(wb, "bulk-product-upload-template.xlsx");
 }
@@ -129,6 +148,7 @@ export default function AdminBulkProductUpload() {
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [results, setResults] = useState(null); // per-row outcome after import
   const [toasts, setToasts] = useState([]);
+  const [showBulkPrint, setShowBulkPrint] = useState(false);
 
   const showToast = (message, type = "info") => {
     const id = Date.now() + Math.random().toString();
@@ -158,6 +178,7 @@ export default function AdminBulkProductUpload() {
 
   const validRows = rows.filter((r) => r.errors.length === 0);
   const invalidCount = rows.length - validRows.length;
+  const createdProducts = (results || []).filter((o) => o?.success);
 
   const handleImport = async () => {
     if (isImporting || validRows.length === 0) return;
@@ -184,15 +205,23 @@ export default function AdminBulkProductUpload() {
           token,
           rows: batch.map((r) => ({
             name: r.name,
+            brand: r.brand,
             color: r.color,
             quantity: r.quantity,
             price: r.price,
+            costPrice: r.costPrice,
             barcode: r.barcode,
           })),
         });
         batchResult.forEach((res, i) => {
           const originalIndex = validIndexes[start + i];
-          outcomes[originalIndex] = { success: res.success, error: res.error };
+          outcomes[originalIndex] = {
+            success: res.success,
+            error: res.error,
+            barcode: res.barcode,
+            name: res.name,
+            price: res.price,
+          };
         });
         setProgress({ done: Math.min(start + BATCH_SIZE, validRows.length), total: validRows.length });
       }
@@ -268,6 +297,12 @@ export default function AdminBulkProductUpload() {
                   <td>Must be greater than 0.</td>
                 </tr>
                 <tr>
+                  <td>Brand</td>
+                  <td>Optional</td>
+                  <td>Text</td>
+                  <td>Defaults to "no-brand" if left blank.</td>
+                </tr>
+                <tr>
                   <td>Color</td>
                   <td>Optional</td>
                   <td>Text</td>
@@ -278,6 +313,12 @@ export default function AdminBulkProductUpload() {
                   <td>Optional</td>
                   <td>Whole number</td>
                   <td>Defaults to 0. Cannot be negative.</td>
+                </tr>
+                <tr>
+                  <td>CostPrice (Cost Price, Cost)</td>
+                  <td>Optional</td>
+                  <td>Number</td>
+                  <td>Must be less than the Price for that row if supplied.</td>
                 </tr>
                 <tr>
                   <td>Barcode (Code)</td>
@@ -329,9 +370,11 @@ export default function AdminBulkProductUpload() {
                     <tr>
                       <th>#</th>
                       <th>Name</th>
+                      <th>Brand</th>
                       <th>Color</th>
                       <th>Quantity</th>
                       <th>Price</th>
+                      <th>Cost Price</th>
                       <th>Barcode</th>
                       <th>Status</th>
                     </tr>
@@ -343,9 +386,11 @@ export default function AdminBulkProductUpload() {
                         <tr key={idx} className={row.errors.length > 0 ? "stock-row-oos" : ""}>
                           <td>{idx + 1}</td>
                           <td>{row.name || "—"}</td>
+                          <td>{row.brand || "no-brand"}</td>
                           <td>{row.color || "—"}</td>
                           <td>{row.quantity ?? 0}</td>
                           <td>{row.price ?? "—"}</td>
+                          <td>{row.costPrice ?? "—"}</td>
                           <td>{row.barcode || "auto"}</td>
                           <td>
                             {outcome ? (
@@ -373,22 +418,42 @@ export default function AdminBulkProductUpload() {
                 </table>
               </div>
 
-              <button
-                type="button"
-                className="btn-primary-filled"
-                onClick={handleImport}
-                disabled={isImporting || validRows.length === 0}
-                style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
-              >
-                <Upload size={16} />
-                {isImporting
-                  ? `Importing… (${progress.done}/${progress.total})`
-                  : `Import ${validRows.length} Product${validRows.length === 1 ? "" : "s"}`}
-              </button>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn-primary-filled"
+                  onClick={handleImport}
+                  disabled={isImporting || validRows.length === 0}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+                >
+                  <Upload size={16} />
+                  {isImporting
+                    ? `Importing… (${progress.done}/${progress.total})`
+                    : `Import ${validRows.length} Product${validRows.length === 1 ? "" : "s"}`}
+                </button>
+                {createdProducts.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={() => setShowBulkPrint(true)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+                  >
+                    <Printer size={16} />
+                    Print All Barcodes ({createdProducts.length})
+                  </button>
+                )}
+              </div>
             </>
           )}
         </div>
       </div>
+
+      {showBulkPrint && (
+        <BulkBarcodePrintModal
+          products={createdProducts}
+          onClose={() => setShowBulkPrint(false)}
+        />
+      )}
 
       <div id="toast-container" aria-live="assertive" aria-atomic="true">
         {toasts.map((t) => (

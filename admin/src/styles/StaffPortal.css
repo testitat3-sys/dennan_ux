@@ -4145,6 +4145,17 @@
   margin-top: 4px;
 }
 
+/* Bulk variant — same card/wrapper classes, stacked and scrollable on
+   screen; each wrapper becomes its own printed page (see @media print below). */
+.barcode-label-card--bulk {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.barcode-label-print-wrapper--bulk {
+  margin-bottom: 12px;
+}
+
 /* ── Print rules ── */
 /* BarcodeLabelModal is portaled onto document.body (outside #root), so
    printing can remove the whole app from layout via display:none (unlike
@@ -4190,6 +4201,18 @@
   }
   .barcode-label-price {
     margin-top: 2px !important;
+  }
+  body.printing-barcode-label .barcode-label-card--bulk {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  /* Each label in a bulk print run gets its own page off the same roll. */
+  .barcode-label-print-wrapper--bulk {
+    margin-bottom: 0 !important;
+    page-break-after: always;
+  }
+  .barcode-label-print-wrapper--bulk:last-child {
+    page-break-after: auto;
   }
   /* Named page (see receipt-page above for why) — 40mm x 30mm matches common
      thermal label stock (e.g. Zebra/TSC/Dymo small labels) — adjust to match
