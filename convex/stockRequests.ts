@@ -33,12 +33,13 @@ export const stageStockDecrease = mutation({
       throw new Error(`Inventory cannot be negative (current: ${currentInventory}, delta: ${args.requestedDelta})`);
     }
 
-    const existingDraft = await ctx.db
+    const draftsForProduct = await ctx.db
       .query("stockRequestItems")
       .withIndex("by_productId_and_staffId_and_status", (q) =>
         q.eq("productId", args.productId).eq("staffId", user._id).eq("status", "draft")
       )
-      .unique();
+      .collect();
+    const existingDraft = draftsForProduct.find((d) => d.kind !== "name_change");
 
     const now = Date.now();
     if (existingDraft) {
@@ -60,11 +61,79 @@ export const stageStockDecrease = mutation({
       currentInventoryAtStage: currentInventory,
       requestedDelta: args.requestedDelta,
       requestedInventory,
+      kind: "inventory_decrease",
       status: "draft",
       createdAt: now,
     });
 
     return { success: true, draftId };
+  },
+});
+
+/**
+ * Submits a product-name change request directly for admin approval — unlike
+ * inventory decreases, renames aren't incremental, so there's no draft/stage
+ * step: one submission produces one pending request the admin must approve
+ * before the product's name actually changes.
+ */
+export const requestNameChange = trackedMutation("stockRequests.requestNameChange", {
+  args: {
+    token: v.string(),
+    productId: v.id("products"),
+    requestedName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await verifyStaffSession(ctx, args.token, ["stockManager"]);
+
+    const requestedName = args.requestedName.trim();
+    if (!requestedName) {
+      throw new Error("Product name cannot be empty");
+    }
+
+    const product = await ctx.db.get(args.productId);
+    if (!product) throw new Error("Product not found");
+
+    if (requestedName === product.name) {
+      throw new Error("Requested name matches the current name");
+    }
+
+    const existingItems = await ctx.db
+      .query("stockRequestItems")
+      .withIndex("by_productId_and_staffId_and_status", (q) => q.eq("productId", args.productId))
+      .collect();
+    const alreadyPending = existingItems.some(
+      (item) => item.kind === "name_change" && item.status === "pending"
+    );
+    if (alreadyPending) {
+      throw new Error("A name change request for this product is already pending admin approval.");
+    }
+
+    const now = Date.now();
+    const requestId = await ctx.db.insert("stockRequests", {
+      staffId: user._id,
+      staffName: user.name ?? "Stock Manager",
+      createdAt: now,
+      submittedAt: now,
+    });
+
+    const itemId = await ctx.db.insert("stockRequestItems", {
+      requestId,
+      staffId: user._id,
+      staffName: user.name ?? "Stock Manager",
+      productId: args.productId,
+      productName: product.name,
+      barcode: product.barcode,
+      currentInventoryAtStage: product.inventory ?? 0,
+      requestedDelta: 0,
+      requestedInventory: product.inventory ?? 0,
+      kind: "name_change",
+      currentName: product.name,
+      requestedName,
+      status: "pending",
+      createdAt: now,
+    });
+
+    return { success: true, requestId, itemId };
   },
 });
 
@@ -251,7 +320,12 @@ export const approveStockRequestItem = trackedMutation("stockRequests.approveSto
     if (!item) throw new Error("Stock request item not found");
     if (item.status !== "pending") throw new Error(`Item is already ${item.status}`);
 
-    await applyInventoryDelta(ctx, item.productId, item.requestedDelta);
+    if (item.kind === "name_change") {
+      if (!item.requestedName) throw new Error("Name change request is missing the requested name");
+      await ctx.db.patch(item.productId, { name: item.requestedName, updatedAt: Date.now() });
+    } else {
+      await applyInventoryDelta(ctx, item.productId, item.requestedDelta);
+    }
 
     await ctx.db.patch(args.itemId, {
       status: "approved",
@@ -308,7 +382,12 @@ export const approveStockRequestBatch = trackedMutation("stockRequests.approveSt
 
     for (const item of pendingItems) {
       try {
-        await applyInventoryDelta(ctx, item.productId, item.requestedDelta);
+        if (item.kind === "name_change") {
+          if (!item.requestedName) throw new Error("Name change request is missing the requested name");
+          await ctx.db.patch(item.productId, { name: item.requestedName, updatedAt: now });
+        } else {
+          await applyInventoryDelta(ctx, item.productId, item.requestedDelta);
+        }
         await ctx.db.patch(item._id, {
           status: "approved",
           approvedBy: approver._id,

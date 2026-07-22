@@ -890,12 +890,18 @@ export const updateProduct = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
     const { token, productId, ...fields } = args;
     const product = await ctx.db.get(productId);
     if (!product) {
       throw new Error("Product not found");
+    }
+
+    if (user.accountRole === "stockManager" && fields.name !== undefined && fields.name !== product.name) {
+      throw new Error(
+        "Stock managers cannot rename an existing product directly. Submit a name change request for admin approval instead."
+      );
     }
 
     const patch: Record<string, unknown> = {};

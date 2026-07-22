@@ -456,7 +456,9 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
                         <td>
                           {group.items.map((item) => (
                             <div key={item._id} style={{ marginBottom: "4px" }}>
-                              {item.productName}: {item.requestedDelta}
+                              {item.kind === "name_change"
+                                ? `${item.productName}: rename to "${item.requestedName}"`
+                                : `${item.productName}: ${item.requestedDelta}`}
                               {item.status === "rejected" && (
                                 <span style={{ color: "var(--color-support-red, #ef4444)" }}>
                                   {" "}— Rejected{item.rejectedReason ? `: ${item.rejectedReason}` : ""}

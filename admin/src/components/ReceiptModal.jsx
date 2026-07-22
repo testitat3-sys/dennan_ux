@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Printer, Copy, Check, X, Download } from "lucide-react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -88,22 +89,25 @@ export default function ReceiptModal({ receipt, onClose }) {
     if (!receiptRef.current || downloadingPdf) return;
     setDownloadingPdf(true);
     try {
-      const canvas = await html2canvas(receiptRef.current, {
+      const element = receiptRef.current;
+      const canvas = await html2canvas(element, {
         backgroundColor: "#ffffff",
         scale: 2,
         useCORS: true,
         logging: false,
       });
-      const imgData = canvas.toDataURL("image/png");
       const namePrefix = (receipt.customerName && receipt.customerName.trim()) || "client";
       const pdfFileName = `${namePrefix} dennan receipt.pdf`;
 
+      const width = element.offsetWidth;
+      const height = element.offsetHeight;
+
       const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? "landscape" : "portrait",
+        orientation: width > height ? "landscape" : "portrait",
         unit: "pt",
-        format: [canvas.width, canvas.height],
+        format: [width, height],
       });
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+      pdf.addImage(canvas, "PNG", 0, 0, width, height);
       pdf.save(pdfFileName);
     } catch (err) {
       console.error("Failed to generate PDF receipt:", err);
@@ -112,7 +116,7 @@ export default function ReceiptModal({ receipt, onClose }) {
     }
   };
 
-  return (
+  return createPortal(
     <div className="printable-receipt-modal" onClick={onClose}>
       <div className="printable-receipt-card" onClick={(e) => e.stopPropagation()}>
 
@@ -276,6 +280,7 @@ export default function ReceiptModal({ receipt, onClose }) {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

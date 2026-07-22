@@ -1065,6 +1065,11 @@ export default defineSchema({
     currentInventoryAtStage: v.number(),
     requestedDelta: v.number(),
     requestedInventory: v.number(),
+    // Absent/undefined means "inventory_decrease" — the original request kind
+    // before name-change requests were added.
+    kind: v.optional(v.union(v.literal("inventory_decrease"), v.literal("name_change"))),
+    currentName: v.optional(v.string()),
+    requestedName: v.optional(v.string()),
     status: v.union(
       v.literal("draft"),
       v.literal("pending"),

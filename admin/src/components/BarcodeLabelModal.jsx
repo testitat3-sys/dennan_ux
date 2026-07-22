@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Printer, X } from "lucide-react";
 import JsBarcode from "jsbarcode";
@@ -9,6 +9,7 @@ const BRANCH_CODE = "NB";
 
 export default function BarcodeLabelModal({ product, displayName, onClose }) {
   const svgRef = useRef(null);
+  const [orientation, setOrientation] = useState("portrait");
 
   useEffect(() => {
     if (!product?.barcode || !svgRef.current) return;
@@ -36,13 +37,30 @@ export default function BarcodeLabelModal({ product, displayName, onClose }) {
     <div className="printable-receipt-modal" onClick={onClose}>
       <div className="barcode-label-card" onClick={(e) => e.stopPropagation()}>
 
-        <div className="barcode-label-print-wrapper">
+        <div className={`barcode-label-print-wrapper barcode-label-print-wrapper--${orientation}`}>
           <div className="barcode-label-code-text">{product.barcode}</div>
           <div className="barcode-label-name">{displayName ?? product.name}</div>
           <svg ref={svgRef} className="barcode-label-svg" />
           <div className="barcode-label-price">
             {BRANCH_CODE} UGX {(product.price ?? 0).toLocaleString()}
           </div>
+        </div>
+
+        <div className="barcode-orientation-toggle">
+          <button
+            type="button"
+            className={`btn btn--sm ${orientation === "portrait" ? "btn--primary" : "btn--secondary"}`}
+            onClick={() => setOrientation("portrait")}
+          >
+            Portrait
+          </button>
+          <button
+            type="button"
+            className={`btn btn--sm ${orientation === "landscape" ? "btn--primary" : "btn--secondary"}`}
+            onClick={() => setOrientation("landscape")}
+          >
+            Landscape
+          </button>
         </div>
 
         <div className="receipt-actions">

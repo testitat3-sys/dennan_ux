@@ -150,12 +150,22 @@ export default function StockApprovalsPanel({ token, showToast }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {group.items.map((item) => (
+                    {group.items.map((item) => {
+                      const isNameChange = item.kind === "name_change";
+                      return (
                       <tr key={item._id}>
                         <td>{item.productName}</td>
-                        <td>{item.currentInventoryAtStage}</td>
-                        <td>{item.requestedDelta}</td>
-                        <td>{item.requestedInventory}</td>
+                        {isNameChange ? (
+                          <td colSpan={3}>
+                            Rename: <strong>{item.currentName}</strong> → <strong>{item.requestedName}</strong>
+                          </td>
+                        ) : (
+                          <>
+                            <td>{item.currentInventoryAtStage}</td>
+                            <td>{item.requestedDelta}</td>
+                            <td>{item.requestedInventory}</td>
+                          </>
+                        )}
                         <td>
                           {rejectingItemId === item._id ? (
                             <RejectReasonRow
@@ -180,7 +190,8 @@ export default function StockApprovalsPanel({ token, showToast }) {
                           )}
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

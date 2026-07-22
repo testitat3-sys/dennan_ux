@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Printer, X } from "lucide-react";
 import JsBarcode from "jsbarcode";
@@ -9,6 +9,7 @@ const BRANCH_CODE = "NB";
 
 export default function BulkBarcodePrintModal({ products, onClose }) {
   const svgRefs = useRef([]);
+  const [orientation, setOrientation] = useState("portrait");
 
   useEffect(() => {
     (products || []).forEach((p, i) => {
@@ -38,7 +39,10 @@ export default function BulkBarcodePrintModal({ products, onClose }) {
     <div className="printable-receipt-modal" onClick={onClose}>
       <div className="barcode-label-card barcode-label-card--bulk" onClick={(e) => e.stopPropagation()}>
         {products.map((p, i) => (
-          <div className="barcode-label-print-wrapper barcode-label-print-wrapper--bulk" key={p.barcode || i}>
+          <div
+            className={`barcode-label-print-wrapper barcode-label-print-wrapper--bulk barcode-label-print-wrapper--${orientation}`}
+            key={p.barcode || i}
+          >
             <div className="barcode-label-code-text">{p.barcode}</div>
             <div className="barcode-label-name">{p.name}</div>
             <svg ref={(el) => (svgRefs.current[i] = el)} className="barcode-label-svg" />
@@ -47,6 +51,23 @@ export default function BulkBarcodePrintModal({ products, onClose }) {
             </div>
           </div>
         ))}
+
+        <div className="barcode-orientation-toggle">
+          <button
+            type="button"
+            className={`btn btn--sm ${orientation === "portrait" ? "btn--primary" : "btn--secondary"}`}
+            onClick={() => setOrientation("portrait")}
+          >
+            Portrait
+          </button>
+          <button
+            type="button"
+            className={`btn btn--sm ${orientation === "landscape" ? "btn--primary" : "btn--secondary"}`}
+            onClick={() => setOrientation("landscape")}
+          >
+            Landscape
+          </button>
+        </div>
 
         <div className="receipt-actions">
           <button type="button" className="btn btn--secondary" onClick={onClose}>

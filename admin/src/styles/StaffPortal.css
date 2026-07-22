@@ -4078,18 +4078,33 @@
    rules don't clobber other print flows sharing the same page, e.g.
    BarcodeLabelModal — see the printing-barcode-label rules below. */
 @media print {
-  body.printing-receipt * {
-    visibility: hidden !important;
+  body.printing-receipt {
+    background: #fff !important;
+    background-color: #fff !important;
   }
-  body.printing-receipt .receipt-print-wrapper,
-  body.printing-receipt .receipt-print-wrapper * {
-    visibility: visible !important;
+  body.printing-receipt #root {
+    display: none !important;
+  }
+  body.printing-receipt .printable-receipt-modal {
+    position: static !important;
+    background: #fff !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+  }
+  body.printing-receipt .printable-receipt-card {
+    background: #fff !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+  }
+  body.printing-receipt .receipt-actions {
+    display: none !important;
   }
   body.printing-receipt .receipt-print-wrapper {
     page: receipt-page;
-    position: fixed !important;
-    left: 0 !important;
-    top: 0 !important;
+    position: relative !important;
     width: 100% !important;
     max-width: 80mm !important;
     padding: 8px !important;
@@ -4171,6 +4186,12 @@
   margin-bottom: 12px;
 }
 
+.barcode-orientation-toggle {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
 /* ── Print rules ── */
 /* BarcodeLabelModal is portaled onto document.body (outside #root), so
    printing can remove the whole app from layout via display:none (unlike
@@ -4193,17 +4214,31 @@
     max-width: none !important;
     width: auto !important;
   }
-  body.printing-barcode-label .receipt-actions {
+  body.printing-barcode-label .receipt-actions,
+  body.printing-barcode-label .barcode-orientation-toggle {
     display: none !important;
   }
   .barcode-label-print-wrapper {
-    page: barcode-label-page;
     box-shadow: none !important;
     width: 40mm !important;
     height: 30mm !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
     padding: 4px 6px !important;
+  }
+  /* Landscape = physical label stock unrotated (40mm wide x 30mm tall), the
+     original default before orientation was made choosable. */
+  .barcode-label-print-wrapper--landscape {
+    page: barcode-label-page-landscape;
+  }
+  /* Portrait = the same 40mm x 30mm label content, rotated 90deg to print
+     upright on 30mm x 40mm stock. The rotate+translateY(-100%) pair pivots
+     around the top-left corner so the rotated box's bounding area lines up
+     with the page origin instead of swinging off it. */
+  .barcode-label-print-wrapper--portrait {
+    page: barcode-label-page-portrait;
+    transform-origin: top left;
+    transform: rotate(90deg) translateY(-100%);
   }
   .barcode-label-code-text {
     margin-bottom: 1px !important;
@@ -4229,11 +4264,16 @@
   .barcode-label-print-wrapper--bulk:last-child {
     page-break-after: auto;
   }
-  /* Named page (see receipt-page above for why) — 40mm x 30mm matches common
+  /* Named pages (see receipt-page above for why) — 40mm x 30mm matches common
      thermal label stock (e.g. Zebra/TSC/Dymo small labels) — adjust to match
-     whatever physical label stock is actually used. */
-  @page barcode-label-page {
+     whatever physical label stock is actually used. Portrait's page size is
+     the same stock turned 90deg to match the rotated content above. */
+  @page barcode-label-page-landscape {
     size: 40mm 30mm;
+    margin: 0;
+  }
+  @page barcode-label-page-portrait {
+    size: 30mm 40mm;
     margin: 0;
   }
 }

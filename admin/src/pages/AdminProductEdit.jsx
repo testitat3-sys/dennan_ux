@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import { useProductDisplayName } from "../hooks/useProductDisplayName";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import BrandCombobox from "../components/BrandCombobox";
 import {
   ArrowLeft,
@@ -14,6 +15,7 @@ import {
   Upload,
   Image as ImageIcon,
   Save,
+  Send,
   Trash,
 } from "lucide-react";
 
@@ -46,8 +48,9 @@ const AGE_MONTH_GROUPS = [
 export default function AdminProductEdit() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { token } = useStaffAuth();
+  const { token, user } = useStaffAuth();
   const fileInputRef = useRef(null);
+  const isStockManager = user?.accountRole === "stockManager";
 
   const product = useQuery(
     api.products.getProductDetail,
@@ -56,7 +59,20 @@ export default function AdminProductEdit() {
   const generateCloudinarySignature = useMutation(api.products.generateCloudinarySignature);
   const updateProductMutation = useMutation(api.products.updateProduct);
   const adjustStockMutation = useMutation(api.products.adjustStock);
+  const requestNameChangeMutation = useMutation(api.stockRequests.requestNameChange);
   const { getDisplayName } = useProductDisplayName(token);
+
+  const myStockRequests = useTrackedQuery(
+    api.stockRequests.getMyStockRequests,
+    isStockManager ? { token } : "skip"
+  );
+  const pendingNameChange = (myStockRequests || [])
+    .flatMap((group) => group.items)
+    .find((item) => item.kind === "name_change" && item.productId === productId && item.status === "pending");
+
+  const [isRequestingRename, setIsRequestingRename] = useState(false);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [isSubmittingRename, setIsSubmittingRename] = useState(false);
 
   // Form state
   const [name, setName] = useState("");
@@ -238,6 +254,22 @@ export default function AdminProductEdit() {
       }
     }
     navigate(path);
+  };
+
+  const handleRequestRename = async () => {
+    const requestedName = renameDraft.trim();
+    if (!requestedName || requestedName === product.name) return;
+    setIsSubmittingRename(true);
+    try {
+      await requestNameChangeMutation({ token, productId, requestedName });
+      showToast("Name change submitted for admin approval.", "success");
+      setIsRequestingRename(false);
+      setRenameDraft("");
+    } catch (err) {
+      showToast(err.message || "Failed to submit name change request.", "error");
+    } finally {
+      setIsSubmittingRename(false);
+    }
   };
 
   const handleSave = async (e) => {
@@ -546,7 +578,60 @@ export default function AdminProductEdit() {
                 <div className="product-edit-fields-row">
                   <div className="form-group flex-1">
                     <label className="form-label">Product Name</label>
-                    <input type="text" className="form-input-box" value={name} onChange={(e) => setName(e.target.value)} required />
+                    <input
+                      type="text"
+                      className="form-input-box"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      readOnly={isStockManager}
+                      disabled={isStockManager}
+                      required
+                    />
+                    {isStockManager && (
+                      <div style={{ marginTop: "8px" }}>
+                        {pendingNameChange ? (
+                          <div style={{ fontSize: "13px", color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: "6px" }}>
+                            <AlertCircle size={14} />
+                            Rename to "{pendingNameChange.requestedName}" is pending admin approval.
+                          </div>
+                        ) : isRequestingRename ? (
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                            <input
+                              type="text"
+                              className="form-input-box"
+                              placeholder="New product name"
+                              value={renameDraft}
+                              onChange={(e) => setRenameDraft(e.target.value)}
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              className="btn btn--primary btn--sm"
+                              onClick={handleRequestRename}
+                              disabled={isSubmittingRename || !renameDraft.trim() || renameDraft.trim() === product.name}
+                              style={{ display: "inline-flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}
+                            >
+                              <Send size={12} /> Submit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn--secondary btn--sm"
+                              onClick={() => { setIsRequestingRename(false); setRenameDraft(""); }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn--secondary btn--sm"
+                            onClick={() => { setRenameDraft(product.name || ""); setIsRequestingRename(true); }}
+                          >
+                            Request Name Change
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="form-group flex-1">
                     <label className="form-label">Brand</label>
