@@ -4,6 +4,7 @@ import { api } from "@convex/_generated/api";
 import { X } from "lucide-react";
 
 function formatDisplayDate(dateStr) {
+  if (typeof dateStr !== "string") return dateStr;
   const parts = dateStr.split("-");
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;

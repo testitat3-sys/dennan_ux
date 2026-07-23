@@ -4818,3 +4818,47 @@
   border-radius: 3px;
   transition: width 0.4s ease;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DARK THEME COMPONENT SAFEGUARDS & UTILITIES
+ ───────────────────────────────────────────────────────────────────────────── */
+:root[data-theme="dark"] input:-webkit-autofill,
+:root[data-theme="dark"] input:-webkit-autofill:hover,
+:root[data-theme="dark"] input:-webkit-autofill:focus,
+:root[data-theme="dark"] textarea:-webkit-autofill,
+:root[data-theme="dark"] select:-webkit-autofill {
+  -webkit-text-fill-color: var(--text-primary) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface-container-high) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--surface-container-low);
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--surface-container-highest);
+  border-radius: var(--radius-full);
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+:root[data-theme="dark"] select option {
+  background-color: var(--surface-container-high);
+  color: var(--text-primary);
+}
+
+/* Ensure barcode labels and thermal receipts always preserve high contrast light mode */
+.printable-receipt-card,
+.barcode-label-card,
+.receipt-print-wrapper,
+.barcode-label-print-wrapper {
+  color-scheme: light;
+}

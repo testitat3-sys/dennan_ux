@@ -46,7 +46,7 @@ export default function ProductSalesPanel({ token, user }) {
   return (
     <div className="admin-tab-panel is-active">
       <div className="page-header">
-        <h1 className="admin-page-title">Products Sold — Sales Report</h1>
+        <h1 className="admin-page-title">Products Sold — Stock Report</h1>
       </div>
 
       {isStockManager ? (
@@ -108,7 +108,7 @@ export default function ProductSalesPanel({ token, user }) {
 
       {salesRows === undefined ? (
         <div className="empty-state">
-          <div className="empty-title">Fetching sales report...</div>
+          <div className="empty-title">Fetching stock report...</div>
         </div>
       ) : salesRows.length === 0 ? (
         <div className="empty-state">

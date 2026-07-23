@@ -122,7 +122,39 @@
   --body-md: 19px;
   --body-sm: 16px;
   --body-xs: 14px;
-  --label-md: 13px;
-  --label-sm: 13.5px;
-  --label-xs: 10.5px;
+  /* Color Scheme default */
+  color-scheme: light;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DARK THEME TOKENS
+ ───────────────────────────────────────────────────────────────────────────── */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surface colors */
+  --surface: #1e1e24;
+  --surface-container-low: #121216;
+  --surface-container: #26262e;
+  --surface-container-high: #32323d;
+  --surface-container-highest: #424250;
+
+  /* Brand colors adjusted for dark surfaces */
+  --color-brand-primary-bg: color-mix(in srgb, #d35097 22%, var(--surface));
+
+  /* Accent / Anchor */
+  --color-anchor: #ffffff;
+  --color-on-primary: #ffffff;
+
+  /* Text colors */
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1b0;
+  --text-tertiary: #717182;
+
+  /* Shadows */
+  --shadow-ambient: 0 2px 18px rgba(0, 0, 0, 0.5);
+  --shadow-deep: 0 10px 44px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.4), 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+

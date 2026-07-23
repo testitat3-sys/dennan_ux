@@ -97,6 +97,7 @@ function addDays(dateStr, days) {
 }
 
 function formatDisplayDate(dateStr) {
+  if (typeof dateStr !== "string") return dateStr;
   const parts = dateStr.split("-");
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -337,7 +338,7 @@ export default function SalesMetricsPanel({ token, onOpenOrder, user }) {
               <h3 className="product-edit-card-title">
                 Sales Over Time ({metrics.bucketGranularity === "hour" ? "Hourly" : metrics.bucketGranularity === "day" ? "Daily" : "Weekly"})
               </h3>
-              <ResponsiveContainer width="100%" height={320}>
+              <ResponsiveContainer key={metrics.bucketGranularity} width="100%" height={320}>
                 <LineChart data={metrics.series}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-container-high)" />
                   <XAxis
@@ -371,7 +372,17 @@ export default function SalesMetricsPanel({ token, onOpenOrder, user }) {
                       <Cell key={entry.method} fill={METHOD_COLORS[entry.method] || "#999"} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `UGX ${Number(value).toLocaleString()}`} />
+                  <Tooltip
+                    formatter={(value) => `UGX ${Number(value).toLocaleString()}`}
+                    contentStyle={{
+                      backgroundColor: "var(--surface)",
+                      borderColor: "var(--surface-container-highest)",
+                      color: "var(--text-primary)",
+                      borderRadius: "var(--radius-md)",
+                      boxShadow: "var(--shadow-card)",
+                    }}
+                    itemStyle={{ color: "var(--text-primary)" }}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -393,7 +404,17 @@ export default function SalesMetricsPanel({ token, onOpenOrder, user }) {
                       <Cell key={entry.channel} fill={CHANNEL_COLORS[entry.channel] || "#999"} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `UGX ${Number(value).toLocaleString()}`} />
+                  <Tooltip
+                    formatter={(value) => `UGX ${Number(value).toLocaleString()}`}
+                    contentStyle={{
+                      backgroundColor: "var(--surface)",
+                      borderColor: "var(--surface-container-highest)",
+                      color: "var(--text-primary)",
+                      borderRadius: "var(--radius-md)",
+                      boxShadow: "var(--shadow-card)",
+                    }}
+                    itemStyle={{ color: "var(--text-primary)" }}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>

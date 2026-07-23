@@ -25,6 +25,7 @@ import ProductSalesPanel from "../components/ProductSalesPanel";
 import OnlineOrdersPanel from "../components/OnlineOrdersPanel";
 import ErrorLogSettingsPanel from "../components/ErrorLogSettingsPanel";
 import ProductDisplaySettingsPanel from "../components/ProductDisplaySettingsPanel";
+import ThemeSettingsPanel from "../components/ThemeSettingsPanel";
 import DbIOPanel from "../components/DbIOPanel";
 import LeadsPanel from "../components/LeadsPanel";
 import CashUpPanel from "../components/CashUpPanel";
@@ -251,7 +252,7 @@ export default function AdminDashboard() {
       items: [
         { key: "stock", label: "Stock Manager", icon: Boxes, isActive: activeTab === "stock", onClick: () => setActiveTab("stock") },
         { key: "stockApprovals", label: "Stock Approvals", icon: ClipboardCheck, badge: unseenStockRequestsCount > 0 ? unseenStockRequestsCount : undefined, isActive: activeTab === "stockApprovals", onClick: () => setActiveTab("stockApprovals") },
-        { key: "salesReport", label: "Sales Report", icon: ClipboardList, isActive: activeTab === "salesReport", onClick: () => setActiveTab("salesReport") },
+        { key: "salesReport", label: "Stock Report", icon: ClipboardList, isActive: activeTab === "salesReport", onClick: () => setActiveTab("salesReport") },
         { key: "discounts", label: "Discounts & Promos", icon: Tag, isActive: activeTab === "discounts", onClick: () => setActiveTab("discounts") },
       ],
     },
@@ -491,7 +492,7 @@ export default function AdminDashboard() {
             <StockApprovalsPanel token={token} showToast={showToast} />
           )}
 
-          {/* TAB: SALES REPORT (products sold in a date range) */}
+          {/* TAB: STOCK REPORT (products sold in a date range) */}
           {activeTab === "salesReport" && (
             <ProductSalesPanel token={token} user={user} />
           )}
@@ -638,10 +639,11 @@ export default function AdminDashboard() {
 
           {/* TAB 9: SETTINGS */}
           {activeTab === "settings" && (
-            <>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+              <ThemeSettingsPanel />
               <ProductDisplaySettingsPanel token={token} />
               <ErrorLogSettingsPanel token={token} />
-            </>
+            </div>
           )}
 
           {/* TAB 10: DB I/O BASELINE */}

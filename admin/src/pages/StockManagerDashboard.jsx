@@ -39,7 +39,7 @@ export default function StockManagerDashboard() {
                 onClick={() => setActiveTab("salesReport")}
               >
                 <ClipboardList size={18} />
-                <span>Sales Report</span>
+                <span>Stock Report</span>
               </button>
               <button
                 className={`sidebar-nav-item ${activeTab === "discounts" ? "is-active" : ""}`}

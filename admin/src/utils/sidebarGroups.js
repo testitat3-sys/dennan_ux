@@ -48,7 +48,7 @@ export function getReturnPageSidebarGroups(role, navigate) {
         label: "Catalogue",
         items: [
           { key: "stock", label: "Stock Manager", icon: Boxes, onClick: go("stock") },
-          { key: "salesReport", label: "Sales Report", icon: ClipboardList, onClick: go("salesReport") },
+          { key: "salesReport", label: "Stock Report", icon: ClipboardList, onClick: go("salesReport") },
           { key: "discounts", label: "Discounts & Promos", icon: Tag, onClick: go("discounts") },
         ],
       },

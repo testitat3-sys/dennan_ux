@@ -13,10 +13,12 @@ import AdminProductEdit from './pages/AdminProductEdit';
 import AdminProductCreate from './pages/AdminProductCreate';
 import AdminBulkProductUpload from './pages/AdminBulkProductUpload';
 import OrderExchangePage from './pages/OrderExchangePage';
+import { useTheme } from './hooks/useTheme';
 import sosLogo from './assets/SOS.png';
 
 function MainRouter() {
   const { user, isLoading } = useStaffAuth();
+  useTheme(); // Active theme listener & DOM attribute updater
 
   if (isLoading) {
     return (
@@ -27,7 +29,7 @@ function MainRouter() {
         alignItems: 'center',
         height: '100vh',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        background: '#FAF9F8',
+        background: 'var(--surface-container-low)',
       }}>
         <div style={{
           display: 'flex',
