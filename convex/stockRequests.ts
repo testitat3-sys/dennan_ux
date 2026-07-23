@@ -2,8 +2,137 @@ import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { verifyStaffSession } from "./staffAuth";
-import { applyInventoryDelta } from "./products";
+import { applyInventoryDelta, executeCreateProduct, executeBulkCreateStoreOnlyProducts } from "./products";
 import { trackedQuery, trackedMutation } from "./lib/ioTracking";
+
+/**
+ * Submits a new product creation request directly for admin approval.
+ */
+export const requestCreateProduct = trackedMutation("stockRequests.requestCreateProduct", {
+  args: {
+    token: v.string(),
+    name: v.string(),
+    brand: v.optional(v.string()),
+    description: v.optional(v.string()),
+    originalPrice: v.number(),
+    price: v.optional(v.number()),
+    category: v.union(
+      v.literal("Expectant and New Mom Essentials"),
+      v.literal("Newborn Essentials & Kids Apparel/Footwear"),
+      v.literal("Nursery and Furnishing"),
+      v.literal("Feeding/Nursing Essentials"),
+      v.literal("Bathing and Changing"),
+      v.literal("Baby Play and Safety Gear"),
+      v.literal("Travel Must-Haves")
+    ),
+    stage: v.union(v.literal("mother"), v.literal("newborn"), v.literal("kid")),
+    tier: v.union(v.literal("essentials"), v.literal("musthaves"), v.literal("luxuries")),
+    targetGender: v.optional(v.union(v.literal("boy"), v.literal("girl"), v.literal("unisex"))),
+    subCategory: v.optional(v.string()),
+    size: v.optional(v.string()),
+    color: v.optional(v.string()),
+    material: v.optional(v.string()),
+    pattern: v.optional(v.string()),
+    costPrice: v.optional(v.number()),
+    reorderPoint: v.optional(v.number()),
+    image: v.optional(v.string()),
+    images: v.optional(v.array(v.string())),
+    minMonth: v.optional(v.number()),
+    maxMonth: v.optional(v.number()),
+    isActive: v.boolean(),
+    isStoreOnly: v.boolean(),
+    initialInventory: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await verifyStaffSession(ctx, args.token, ["stockManager"]);
+
+    const requestedName = args.name.trim();
+    if (!requestedName) {
+      throw new Error("Product name cannot be empty");
+    }
+
+    const now = Date.now();
+    const requestId = await ctx.db.insert("stockRequests", {
+      staffId: user._id,
+      staffName: user.name ?? "Stock Manager",
+      createdAt: now,
+      submittedAt: now,
+    });
+
+    const initialInventory = Math.max(0, args.initialInventory ?? 0);
+    const itemId = await ctx.db.insert("stockRequestItems", {
+      requestId,
+      staffId: user._id,
+      staffName: user.name ?? "Stock Manager",
+      productName: requestedName,
+      currentInventoryAtStage: 0,
+      requestedDelta: initialInventory,
+      requestedInventory: initialInventory,
+      kind: "create_product",
+      productData: args,
+      status: "pending",
+      createdAt: now,
+    });
+
+    return { success: true, requestId, itemId };
+  },
+});
+
+/**
+ * Submits a bulk upload (.xlsx) request directly for admin approval.
+ */
+export const requestBulkUpload = trackedMutation("stockRequests.requestBulkUpload", {
+  args: {
+    token: v.string(),
+    rows: v.array(
+      v.object({
+        name: v.string(),
+        brand: v.optional(v.string()),
+        color: v.optional(v.string()),
+        quantity: v.optional(v.number()),
+        price: v.number(),
+        costPrice: v.optional(v.number()),
+        barcode: v.optional(v.string()),
+        category: v.optional(v.string()),
+        stage: v.optional(v.string()),
+        tier: v.optional(v.string()),
+        description: v.optional(v.string()),
+        image: v.optional(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await verifyStaffSession(ctx, args.token, ["stockManager"]);
+
+    if (args.rows.length === 0) {
+      throw new Error("Bulk upload payload cannot be empty");
+    }
+
+    const now = Date.now();
+    const requestId = await ctx.db.insert("stockRequests", {
+      staffId: user._id,
+      staffName: user.name ?? "Stock Manager",
+      createdAt: now,
+      submittedAt: now,
+    });
+
+    const itemId = await ctx.db.insert("stockRequestItems", {
+      requestId,
+      staffId: user._id,
+      staffName: user.name ?? "Stock Manager",
+      productName: `Bulk Upload (${args.rows.length} product${args.rows.length === 1 ? "" : "s"})`,
+      currentInventoryAtStage: 0,
+      requestedDelta: 0,
+      requestedInventory: 0,
+      kind: "bulk_upload",
+      productData: { rows: args.rows },
+      status: "pending",
+      createdAt: now,
+    });
+
+    return { success: true, requestId, itemId };
+  },
+});
 
 /**
  * Stages (or updates) a draft inventory-decrease request for one product.
@@ -320,18 +449,43 @@ export const approveStockRequestItem = trackedMutation("stockRequests.approveSto
     if (!item) throw new Error("Stock request item not found");
     if (item.status !== "pending") throw new Error(`Item is already ${item.status}`);
 
+    const now = Date.now();
     if (item.kind === "name_change") {
+      if (!item.productId) throw new Error("Product ID is required for name change");
       if (!item.requestedName) throw new Error("Name change request is missing the requested name");
-      await ctx.db.patch(item.productId, { name: item.requestedName, updatedAt: Date.now() });
+      await ctx.db.patch(item.productId, { name: item.requestedName, updatedAt: now });
+      await ctx.db.patch(args.itemId, {
+        status: "approved",
+        approvedBy: approver._id,
+        approvedAt: now,
+      });
+    } else if (item.kind === "create_product") {
+      if (!item.productData) throw new Error("Product creation payload is missing");
+      const created = await executeCreateProduct(ctx, item.productData);
+      await ctx.db.patch(args.itemId, {
+        productId: created.productId,
+        barcode: created.barcode,
+        status: "approved",
+        approvedBy: approver._id,
+        approvedAt: now,
+      });
+    } else if (item.kind === "bulk_upload") {
+      if (!item.productData?.rows) throw new Error("Bulk upload payload is missing");
+      await executeBulkCreateStoreOnlyProducts(ctx, item.productData.rows);
+      await ctx.db.patch(args.itemId, {
+        status: "approved",
+        approvedBy: approver._id,
+        approvedAt: now,
+      });
     } else {
+      if (!item.productId) throw new Error("Product ID is required for inventory decrease");
       await applyInventoryDelta(ctx, item.productId, item.requestedDelta);
+      await ctx.db.patch(args.itemId, {
+        status: "approved",
+        approvedBy: approver._id,
+        approvedAt: now,
+      });
     }
-
-    await ctx.db.patch(args.itemId, {
-      status: "approved",
-      approvedBy: approver._id,
-      approvedAt: Date.now(),
-    });
 
     return { success: true };
   },
@@ -383,16 +537,41 @@ export const approveStockRequestBatch = trackedMutation("stockRequests.approveSt
     for (const item of pendingItems) {
       try {
         if (item.kind === "name_change") {
+          if (!item.productId) throw new Error("Product ID is required for name change");
           if (!item.requestedName) throw new Error("Name change request is missing the requested name");
           await ctx.db.patch(item.productId, { name: item.requestedName, updatedAt: now });
+          await ctx.db.patch(item._id, {
+            status: "approved",
+            approvedBy: approver._id,
+            approvedAt: now,
+          });
+        } else if (item.kind === "create_product") {
+          if (!item.productData) throw new Error("Product creation payload is missing");
+          const created = await executeCreateProduct(ctx, item.productData);
+          await ctx.db.patch(item._id, {
+            productId: created.productId,
+            barcode: created.barcode,
+            status: "approved",
+            approvedBy: approver._id,
+            approvedAt: now,
+          });
+        } else if (item.kind === "bulk_upload") {
+          if (!item.productData?.rows) throw new Error("Bulk upload payload is missing");
+          await executeBulkCreateStoreOnlyProducts(ctx, item.productData.rows);
+          await ctx.db.patch(item._id, {
+            status: "approved",
+            approvedBy: approver._id,
+            approvedAt: now,
+          });
         } else {
+          if (!item.productId) throw new Error("Product ID is required for inventory decrease");
           await applyInventoryDelta(ctx, item.productId, item.requestedDelta);
+          await ctx.db.patch(item._id, {
+            status: "approved",
+            approvedBy: approver._id,
+            approvedAt: now,
+          });
         }
-        await ctx.db.patch(item._id, {
-          status: "approved",
-          approvedBy: approver._id,
-          approvedAt: now,
-        });
         approvedCount++;
       } catch (err: any) {
         failedItems.push({ itemId: item._id, error: err.message });

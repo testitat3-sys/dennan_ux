@@ -662,15 +662,16 @@ export const adminGetOrdersByDateRange = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
 
     const dayMs = 24 * 60 * 60 * 1000;
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const todayMs = startOfToday.getTime();
 
-    const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs;
-    const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
+    const isAccounting = user.accountRole === "accounting";
+    const rangeStartMs = isAccounting ? todayMs : args.startDate ? parseDateStrToMs(args.startDate) : todayMs;
+    const rangeEndMs = isAccounting ? todayMs + dayMs : args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
 
     const result = await ctx.db
       .query("orders")
@@ -700,12 +701,17 @@ export const adminExportOrdersByDateRange = trackedQuery("orders.adminExportOrde
     endDate: v.string(), // "YYYY-MM-DD"
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
 
     const dayMs = 24 * 60 * 60 * 1000;
     const HARD_CAP = 2000;
-    const rangeStartMs = parseDateStrToMs(args.startDate);
-    const rangeEndMs = parseDateStrToMs(args.endDate) + dayMs;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayMs = startOfToday.getTime();
+
+    const isAccounting = user.accountRole === "accounting";
+    const rangeStartMs = isAccounting ? todayMs : parseDateStrToMs(args.startDate);
+    const rangeEndMs = isAccounting ? todayMs + dayMs : parseDateStrToMs(args.endDate) + dayMs;
 
     const orders = await ctx.db
       .query("orders")
@@ -1996,18 +2002,27 @@ export const adminGetSalesAndProductAnalytics = trackedQuery("orders.adminGetSal
     brand: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
 
     const completedStatuses = ["delivered", "returned", "partially_returned"];
     const dayMs = 24 * 60 * 60 * 1000;
 
-    // 1. Resolve the date range (default: last 30 days including today)
+    // 1. Resolve the date range (default: Today)
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const todayMs = startOfToday.getTime();
 
-    const rangeEndMs = args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
-    const rangeStartMs = args.startDate ? parseDateStrToMs(args.startDate) : todayMs - 29 * dayMs;
+    const isAccounting = user.accountRole === "accounting";
+    const rangeEndMs = isAccounting
+      ? todayMs + dayMs
+      : args.endDate
+      ? parseDateStrToMs(args.endDate) + dayMs
+      : todayMs + dayMs;
+    const rangeStartMs = isAccounting
+      ? todayMs
+      : args.startDate
+      ? parseDateStrToMs(args.startDate)
+      : todayMs;
 
     // 2. Fetch only orders in range via the createdAt index, then only the
     // payments belonging to those orders (orderPayments has no date field).

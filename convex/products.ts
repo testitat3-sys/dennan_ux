@@ -888,11 +888,12 @@ export const updateProduct = mutation({
     minMonth: v.optional(v.number()),
     maxMonth: v.optional(v.number()),
     isActive: v.optional(v.boolean()),
+    isStoreOnly: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
 
-    const { token, productId, ...fields } = args;
+    const { token, productId, isStoreOnly, ...fields } = args;
     const product = await ctx.db.get(productId);
     if (!product) {
       throw new Error("Product not found");
@@ -914,15 +915,30 @@ export const updateProduct = mutation({
       patch.brandSlug = slugify(patch.brand as string);
     }
 
-    const resultingIsActive = "isActive" in patch ? (patch.isActive as boolean) : product.isActive;
-    if (resultingIsActive) {
-      const isStoreOnly = product.specifications?.some(
-        (spec) => spec.label === "for-store-only" && spec.value === "true"
-      );
-      const resultingImage = "image" in patch ? (patch.image as string | undefined) : product.image;
-      if (!isStoreOnly && !resultingImage) {
-        throw new Error("Customer-facing products require a primary image before they can be made active.");
+    let currentSpecs = product.specifications || [];
+    if (isStoreOnly !== undefined) {
+      if (isStoreOnly) {
+        if (!currentSpecs.some((s) => s.label === "for-store-only" && s.value === "true")) {
+          currentSpecs = [...currentSpecs, { label: "for-store-only", value: "true" }];
+        }
+      } else {
+        currentSpecs = currentSpecs.filter((s) => !(s.label === "for-store-only" && s.value === "true"));
       }
+      patch.specifications = currentSpecs;
+    }
+
+    const resultingIsStoreOnly = isStoreOnly !== undefined
+      ? isStoreOnly
+      : currentSpecs.some((s) => s.label === "for-store-only" && s.value === "true");
+
+    const resultingImage = "image" in patch ? (patch.image as string | undefined) : product.image;
+    if (!resultingIsStoreOnly && !resultingImage) {
+      throw new Error("Customer-facing products require a primary image before they can be made customer-facing.");
+    }
+
+    const resultingIsActive = "isActive" in patch ? (patch.isActive as boolean) : product.isActive;
+    if (resultingIsActive && !resultingIsStoreOnly && !resultingImage) {
+      throw new Error("Customer-facing products require a primary image before they can be made active.");
     }
 
     await ctx.db.patch(productId, { ...patch, updatedAt: Date.now() });
@@ -944,6 +960,283 @@ export const updateProduct = mutation({
  * Unlike updateProduct, barcode is required here and checked for uniqueness -
  * this is the primary manual-entry path, so duplicate barcodes are rejected
  * outright rather than tolerated the way ERP ingestion tolerates them.
+ */
+export async function executeCreateProduct(ctx: any, args: {
+  name: string;
+  brand?: string;
+  description?: string;
+  originalPrice: number;
+  price?: number;
+  category?: "Expectant and New Mom Essentials" | "Newborn Essentials & Kids Apparel/Footwear" | "Nursery and Furnishing" | "Feeding/Nursing Essentials" | "Bathing and Changing" | "Baby Play and Safety Gear" | "Travel Must-Haves";
+  stage?: "mother" | "newborn" | "kid";
+  tier?: "essentials" | "musthaves" | "luxuries";
+  targetGender?: "boy" | "girl" | "unisex";
+  subCategory?: string;
+  size?: string;
+  color?: string;
+  material?: string;
+  pattern?: string;
+  costPrice?: number;
+  reorderPoint?: number;
+  image?: string;
+  images?: string[];
+  minMonth?: number;
+  maxMonth?: number;
+  isActive: boolean;
+  isStoreOnly: boolean;
+  initialInventory?: number;
+}) {
+  if (args.isActive && !args.isStoreOnly && !args.image) {
+    throw new Error("Customer-facing products require a primary image before they can be made active.");
+  }
+  if (args.isActive && !args.isStoreOnly && !args.description?.trim()) {
+    throw new Error("Customer-facing products require a description before they can be made active.");
+  }
+
+  const baseSlug = slugify(args.name);
+  let slug = baseSlug;
+  let counter = 1;
+  while (
+    await ctx.db
+      .query("products")
+      .withIndex("by_slug", (q: any) => q.eq("slug", slug))
+      .unique()
+  ) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  const specifications = args.isStoreOnly
+    ? [{ label: "for-store-only", value: "true" }]
+    : [];
+
+  let barcode = await allocateNextBarcode(ctx);
+  while (
+    await ctx.db
+      .query("products")
+      .withIndex("by_barcode", (q: any) => q.eq("barcode", barcode))
+      .unique()
+  ) {
+    barcode = await allocateNextBarcode(ctx);
+  }
+
+  const brand = args.brand?.trim() || "no-brand";
+  const initialInventory = Math.max(0, args.initialInventory ?? 0);
+  const productId = await ctx.db.insert("products", {
+    name: args.name,
+    brand,
+    brandSlug: slugify(brand),
+    barcode,
+    slug,
+    description: args.description?.trim() || "no-description",
+    originalPrice: args.originalPrice,
+    price: args.price ?? args.originalPrice,
+    category: args.category,
+    stage: args.stage,
+    tier: args.tier,
+    targetGender: args.targetGender,
+    subCategory: args.subCategory,
+    size: args.size,
+    color: args.color,
+    material: args.material,
+    pattern: args.pattern,
+    costPrice: args.costPrice,
+    reorderPoint: args.reorderPoint,
+    image: args.image,
+    images: args.images ?? [],
+    minMonth: args.minMonth,
+    maxMonth: args.maxMonth,
+    isActive: args.isActive,
+    actual_data: true,
+    tags: [],
+    specifications,
+    inventory: initialInventory,
+    unitsSold: 0,
+    updatedAt: Date.now(),
+  });
+
+  await applyStockCounterDelta(ctx, null, { inventory: initialInventory, reorderPoint: args.reorderPoint });
+
+  return { success: true, productId, barcode };
+}
+
+export async function executeBulkCreateStoreOnlyProducts(
+  ctx: any,
+  rows: Array<{
+    name: string;
+    brand?: string;
+    color?: string;
+    quantity?: number;
+    price: number;
+    costPrice?: number;
+    barcode?: string;
+    category?: string;
+    stage?: string;
+    tier?: string;
+    description?: string;
+    image?: string;
+  }>
+) {
+  const results: Array<{
+    row: number;
+    success: boolean;
+    outcome: "created" | "updated" | "rejected_would_reduce" | "error";
+    productId?: string;
+    barcode?: string;
+    name?: string;
+    price?: number;
+    error?: string;
+  }> = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    try {
+      if (!row.name?.trim()) throw new Error("Name is required");
+      if (!(row.price > 0)) throw new Error("Price must be greater than 0");
+      if (row.quantity !== undefined && row.quantity < 0) {
+        throw new Error("Quantity cannot be negative");
+      }
+      if (row.costPrice !== undefined && row.costPrice >= row.price) {
+        throw new Error("Cost price must be less than price");
+      }
+
+      const trimmedBarcode = row.barcode?.trim();
+      const existing = trimmedBarcode
+        ? await ctx.db
+            .query("products")
+            .withIndex("by_barcode", (q: any) => q.eq("barcode", trimmedBarcode))
+            .unique()
+        : null;
+
+      if (existing) {
+        const existingInventory = existing.inventory ?? 0;
+        if (row.quantity !== undefined && row.quantity < existingInventory) {
+          results.push({
+            row: i,
+            success: false,
+            outcome: "rejected_would_reduce",
+            barcode: trimmedBarcode,
+            name: row.name.trim(),
+            error: `Row quantity (${row.quantity}) is less than current inventory (${existingInventory}) for barcode ${trimmedBarcode} — decreases are not allowed via bulk import.`,
+          });
+          continue;
+        }
+
+        const newInventory = row.quantity !== undefined ? row.quantity : existingInventory;
+        const brand = row.brand?.trim() || existing.brand;
+        await ctx.db.patch(existing._id, {
+          price: row.price,
+          originalPrice: row.price,
+          costPrice: row.costPrice ?? existing.costPrice,
+          color: row.color?.trim() || existing.color,
+          brand,
+          brandSlug: slugify(brand),
+          inventory: newInventory,
+          category: row.category?.trim() || existing.category,
+          stage: row.stage?.trim() || existing.stage,
+          tier: row.tier?.trim() || existing.tier,
+          description: row.description?.trim() || existing.description,
+          image: row.image?.trim() || existing.image,
+          updatedAt: Date.now(),
+        });
+        await applyStockCounterDelta(
+          ctx,
+          { inventory: existingInventory, reorderPoint: existing.reorderPoint },
+          { inventory: newInventory, reorderPoint: existing.reorderPoint },
+          existing._id
+        );
+
+        results.push({
+          row: i,
+          success: true,
+          outcome: "updated",
+          productId: existing._id,
+          barcode: trimmedBarcode,
+          name: row.name.trim(),
+          price: row.price,
+        });
+        continue;
+      }
+
+      const baseSlug = slugify(row.name);
+      let slug = baseSlug;
+      let slugCounter = 1;
+      while (
+        await ctx.db
+          .query("products")
+          .withIndex("by_slug", (q: any) => q.eq("slug", slug))
+          .unique()
+      ) {
+        slug = `${baseSlug}-${slugCounter}`;
+        slugCounter++;
+      }
+
+      let barcode = trimmedBarcode;
+      if (!barcode) {
+        barcode = await allocateNextBarcode(ctx);
+        while (
+          await ctx.db
+            .query("products")
+            .withIndex("by_barcode", (q: any) => q.eq("barcode", barcode!))
+            .unique()
+        ) {
+          barcode = await allocateNextBarcode(ctx);
+        }
+      }
+
+      const hasAllRequiredCreationFields = Boolean(
+        row.name?.trim() &&
+        row.price > 0 &&
+        row.category?.trim() &&
+        row.stage?.trim() &&
+        row.tier?.trim() &&
+        row.description?.trim() &&
+        row.image?.trim()
+      );
+
+      const specifications = hasAllRequiredCreationFields
+        ? []
+        : [{ label: "for-store-only", value: "true" }];
+
+      const inventory = Math.max(0, row.quantity ?? 0);
+      const brand = row.brand?.trim() || "no-brand";
+      const productId = await ctx.db.insert("products", {
+        name: row.name.trim(),
+        brand,
+        brandSlug: slugify(brand),
+        barcode,
+        slug,
+        description: row.description?.trim() || "no-description",
+        originalPrice: row.price,
+        price: row.price,
+        costPrice: row.costPrice,
+        color: row.color?.trim() || undefined,
+        category: row.category?.trim() || undefined,
+        stage: row.stage?.trim() as any || undefined,
+        tier: row.tier?.trim() as any || undefined,
+        image: row.image?.trim() || undefined,
+        isActive: true,
+        actual_data: true,
+        tags: [],
+        specifications,
+        inventory,
+        unitsSold: 0,
+        updatedAt: Date.now(),
+      });
+
+      await applyStockCounterDelta(ctx, null, { inventory, reorderPoint: undefined });
+      results.push({ row: i, success: true, outcome: "created", productId, barcode, name: row.name.trim(), price: row.price });
+    } catch (err: any) {
+      results.push({ row: i, success: false, outcome: "error", error: err.message });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Creates a product in the catalog. Directly accessible only by admins;
+ * stock managers submit create_product requests via stockRequests.
  */
 export const createProduct = mutation({
   args: {
@@ -981,92 +1274,14 @@ export const createProduct = mutation({
     initialInventory: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
-
-    if (args.isActive && !args.isStoreOnly && !args.image) {
-      throw new Error("Customer-facing products require a primary image before they can be made active.");
-    }
-    if (args.isActive && !args.isStoreOnly && !args.description?.trim()) {
-      throw new Error("Customer-facing products require a description before they can be made active.");
-    }
-
-    const baseSlug = slugify(args.name);
-    let slug = baseSlug;
-    let counter = 1;
-    while (
-      await ctx.db
-        .query("products")
-        .withIndex("by_slug", (q) => q.eq("slug", slug))
-        .unique()
-    ) {
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-
-    const specifications = args.isStoreOnly
-      ? [{ label: "for-store-only", value: "true" }]
-      : [];
-
-    let barcode = await allocateNextBarcode(ctx);
-    // Defensive guard: should never collide since allocateNextBarcode is a
-    // monotonic per-year counter, but re-roll rather than fail outright.
-    while (
-      await ctx.db
-        .query("products")
-        .withIndex("by_barcode", (q) => q.eq("barcode", barcode))
-        .unique()
-    ) {
-      barcode = await allocateNextBarcode(ctx);
-    }
-
-    const brand = args.brand?.trim() || "no-brand";
-    const initialInventory = Math.max(0, args.initialInventory ?? 0);
-    const productId = await ctx.db.insert("products", {
-      name: args.name,
-      brand,
-      brandSlug: slugify(brand),
-      barcode,
-      slug,
-      description: args.description?.trim() || "no-description",
-      originalPrice: args.originalPrice,
-      price: args.price ?? args.originalPrice,
-      category: args.category,
-      stage: args.stage,
-      tier: args.tier,
-      targetGender: args.targetGender,
-      subCategory: args.subCategory,
-      size: args.size,
-      color: args.color,
-      material: args.material,
-      pattern: args.pattern,
-      costPrice: args.costPrice,
-      reorderPoint: args.reorderPoint,
-      image: args.image,
-      images: args.images ?? [],
-      minMonth: args.minMonth,
-      maxMonth: args.maxMonth,
-      isActive: args.isActive,
-      actual_data: true,
-      tags: [],
-      specifications,
-      inventory: initialInventory,
-      unitsSold: 0,
-      updatedAt: Date.now(),
-    });
-
-    await applyStockCounterDelta(ctx, null, { inventory: initialInventory, reorderPoint: args.reorderPoint });
-
-    return { success: true, productId };
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+    return await executeCreateProduct(ctx, args);
   },
 });
 
 /**
- * Bulk-creates "back store" products from an admin xlsx upload. Every row
- * becomes a store-only product (see the `for-store-only` spec tag read by
- * shouldKeepProduct) so it skips the image/description/category rigor that
- * customer-facing products require - matching the isStoreOnly bypass already
- * built into createProduct above. Each row is validated and inserted
- * independently so one bad row doesn't fail the rest of the batch.
+ * Bulk-creates "back store" products from an xlsx upload. Directly accessible
+ * only by admins; stock managers submit bulk_upload requests via stockRequests.
  */
 export const bulkCreateStoreOnlyProducts = mutation({
   args: {
@@ -1080,148 +1295,16 @@ export const bulkCreateStoreOnlyProducts = mutation({
         price: v.number(),
         costPrice: v.optional(v.number()),
         barcode: v.optional(v.string()),
+        category: v.optional(v.string()),
+        stage: v.optional(v.string()),
+        tier: v.optional(v.string()),
+        description: v.optional(v.string()),
+        image: v.optional(v.string()),
       })
     ),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
-
-    const results: Array<{
-      row: number;
-      success: boolean;
-      outcome: "created" | "updated" | "rejected_would_reduce" | "error";
-      productId?: string;
-      barcode?: string;
-      name?: string;
-      price?: number;
-      error?: string;
-    }> = [];
-
-    for (let i = 0; i < args.rows.length; i++) {
-      const row = args.rows[i];
-      try {
-        if (!row.name?.trim()) throw new Error("Name is required");
-        if (!(row.price > 0)) throw new Error("Price must be greater than 0");
-        if (row.quantity !== undefined && row.quantity < 0) {
-          throw new Error("Quantity cannot be negative");
-        }
-        if (row.costPrice !== undefined && row.costPrice >= row.price) {
-          throw new Error("Cost price must be less than price");
-        }
-
-        // A row matching an existing product's barcode updates that product
-        // instead of creating a duplicate — but only as an increase-or-same;
-        // bulk import is for adding stock, not correcting it, so any row
-        // that would reduce an existing product's inventory is rejected
-        // outright rather than queued for approval.
-        const trimmedBarcode = row.barcode?.trim();
-        const existing = trimmedBarcode
-          ? await ctx.db
-              .query("products")
-              .withIndex("by_barcode", (q) => q.eq("barcode", trimmedBarcode))
-              .unique()
-          : null;
-
-        if (existing) {
-          const existingInventory = existing.inventory ?? 0;
-          if (row.quantity !== undefined && row.quantity < existingInventory) {
-            results.push({
-              row: i,
-              success: false,
-              outcome: "rejected_would_reduce",
-              barcode: trimmedBarcode,
-              name: row.name.trim(),
-              error: `Row quantity (${row.quantity}) is less than current inventory (${existingInventory}) for barcode ${trimmedBarcode} — decreases are not allowed via bulk import.`,
-            });
-            continue;
-          }
-
-          const newInventory = row.quantity !== undefined ? row.quantity : existingInventory;
-          const brand = row.brand?.trim() || existing.brand;
-          await ctx.db.patch(existing._id, {
-            price: row.price,
-            originalPrice: row.price,
-            costPrice: row.costPrice ?? existing.costPrice,
-            color: row.color?.trim() || existing.color,
-            brand,
-            brandSlug: slugify(brand),
-            inventory: newInventory,
-            updatedAt: Date.now(),
-          });
-          await applyStockCounterDelta(
-            ctx,
-            { inventory: existingInventory, reorderPoint: existing.reorderPoint },
-            { inventory: newInventory, reorderPoint: existing.reorderPoint },
-            existing._id
-          );
-
-          results.push({
-            row: i,
-            success: true,
-            outcome: "updated",
-            productId: existing._id,
-            barcode: trimmedBarcode,
-            name: row.name.trim(),
-            price: row.price,
-          });
-          continue;
-        }
-
-        const baseSlug = slugify(row.name);
-        let slug = baseSlug;
-        let slugCounter = 1;
-        while (
-          await ctx.db
-            .query("products")
-            .withIndex("by_slug", (q) => q.eq("slug", slug))
-            .unique()
-        ) {
-          slug = `${baseSlug}-${slugCounter}`;
-          slugCounter++;
-        }
-
-        let barcode = trimmedBarcode;
-        if (!barcode) {
-          barcode = await allocateNextBarcode(ctx);
-          while (
-            await ctx.db
-              .query("products")
-              .withIndex("by_barcode", (q) => q.eq("barcode", barcode!))
-              .unique()
-          ) {
-            barcode = await allocateNextBarcode(ctx);
-          }
-        }
-
-        const inventory = Math.max(0, row.quantity ?? 0);
-        const brand = row.brand?.trim() || "no-brand";
-        const productId = await ctx.db.insert("products", {
-          name: row.name.trim(),
-          brand,
-          brandSlug: slugify(brand),
-          barcode,
-          slug,
-          description: "no-description",
-          originalPrice: row.price,
-          price: row.price,
-          costPrice: row.costPrice,
-          color: row.color?.trim() || undefined,
-          isActive: true,
-          actual_data: true,
-          tags: [],
-          specifications: [{ label: "for-store-only", value: "true" }],
-          inventory,
-          unitsSold: 0,
-          updatedAt: Date.now(),
-        });
-
-        await applyStockCounterDelta(ctx, null, { inventory, reorderPoint: undefined });
-        results.push({ row: i, success: true, outcome: "created", productId, barcode, name: row.name.trim(), price: row.price });
-      } catch (err: any) {
-        results.push({ row: i, success: false, outcome: "error", error: err.message });
-      }
-    }
-
-    return results;
+    await verifyStaffSession(ctx, args.token, ["admin"]);
+    return await executeBulkCreateStoreOnlyProducts(ctx, args.rows);
   },
 });

@@ -26,6 +26,11 @@ const QUANTITY_HEADERS = ["quantity", "inventory"];
 const PRICE_HEADERS = ["price"];
 const COST_PRICE_HEADERS = ["costprice", "cost price", "cost"];
 const BARCODE_HEADERS = ["barcode", "code"];
+const CATEGORY_HEADERS = ["category"];
+const STAGE_HEADERS = ["stage"];
+const TIER_HEADERS = ["tier"];
+const DESCRIPTION_HEADERS = ["description"];
+const IMAGE_HEADERS = ["image", "primary image", "image url", "picture"];
 
 function normalizeHeader(h) {
   return String(h || "").trim().toLowerCase();
@@ -41,8 +46,8 @@ function findValue(rowObj, headerAliases) {
   return undefined;
 }
 
-// Parses the raw sheet rows into { name, color, quantity, price, barcode }
-// plus a `_errors` array populated by client-side (Pass 1) validation.
+// Parses the raw sheet rows into { name, color, quantity, price, barcode, category, stage, tier, description, image }
+// plus an `errors` array populated by client-side (Pass 1) validation.
 // A row with no recognized-column values at all is dropped entirely (not
 // treated as an error) rather than reported as blank.
 function parseRows(sheetRows) {
@@ -55,10 +60,16 @@ function parseRows(sheetRows) {
     const priceRaw = findValue(rawRow, PRICE_HEADERS);
     const costPriceRaw = findValue(rawRow, COST_PRICE_HEADERS);
     const barcodeRaw = findValue(rawRow, BARCODE_HEADERS);
+    const categoryRaw = findValue(rawRow, CATEGORY_HEADERS);
+    const stageRaw = findValue(rawRow, STAGE_HEADERS);
+    const tierRaw = findValue(rawRow, TIER_HEADERS);
+    const descriptionRaw = findValue(rawRow, DESCRIPTION_HEADERS);
+    const imageRaw = findValue(rawRow, IMAGE_HEADERS);
 
     const isEntirelyEmpty =
       !name && !brandRaw && !color && quantityRaw === undefined && priceRaw === undefined &&
-      costPriceRaw === undefined && !barcodeRaw;
+      costPriceRaw === undefined && !barcodeRaw && !categoryRaw && !stageRaw && !tierRaw &&
+      !descriptionRaw && !imageRaw;
     if (isEntirelyEmpty) continue;
 
     const errors = [];
@@ -107,6 +118,11 @@ function parseRows(sheetRows) {
       price,
       costPrice: costPrice !== undefined && !isNaN(costPrice) ? costPrice : undefined,
       barcode,
+      category: categoryRaw ? String(categoryRaw).trim() : undefined,
+      stage: stageRaw ? String(stageRaw).trim() : undefined,
+      tier: tierRaw ? String(tierRaw).trim() : undefined,
+      description: descriptionRaw ? String(descriptionRaw).trim() : undefined,
+      image: imageRaw ? String(imageRaw).trim() : undefined,
       errors,
     });
   }
@@ -131,16 +147,18 @@ function parseRows(sheetRows) {
 
 function downloadTemplate() {
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([["Name", "Brand", "Color", "Quantity", "Price", "CostPrice", "Barcode"]]);
+  const ws = XLSX.utils.aoa_to_sheet([["Name", "Brand", "Color", "Quantity", "Price", "CostPrice", "Barcode", "Category", "Stage", "Tier", "Description", "Image"]]);
   XLSX.utils.book_append_sheet(wb, ws, "Products");
   XLSX.writeFile(wb, "bulk-product-upload-template.xlsx");
 }
 
 export default function AdminBulkProductUpload() {
   const navigate = useNavigate();
-  const { token } = useStaffAuth();
+  const { token, user } = useStaffAuth();
+  const isStockManager = user?.accountRole === "stockManager";
   const fileInputRef = useRef(null);
   const bulkCreateMutation = useMutation(api.products.bulkCreateStoreOnlyProducts);
+  const requestBulkUploadMutation = useMutation(api.stockRequests.requestBulkUpload);
 
   const [rows, setRows] = useState([]); // parsed rows with `errors`
   const [fileName, setFileName] = useState("");
@@ -186,6 +204,32 @@ export default function AdminBulkProductUpload() {
     setResults(null);
     setProgress({ done: 0, total: validRows.length });
 
+    if (isStockManager) {
+      try {
+        const rowsToSubmit = validRows.map((r) => ({
+          name: r.name,
+          brand: r.brand,
+          color: r.color,
+          quantity: r.quantity,
+          price: r.price,
+          costPrice: r.costPrice,
+          barcode: r.barcode,
+          category: r.category,
+          stage: r.stage,
+          tier: r.tier,
+          description: r.description,
+          image: r.image,
+        }));
+        await requestBulkUploadMutation({ token, rows: rowsToSubmit });
+        showToast(`Bulk upload request for ${validRows.length} product(s) submitted for admin approval.`, "success");
+      } catch (err) {
+        showToast(err.message || "Failed to submit bulk upload request.", "error");
+      } finally {
+        setIsImporting(false);
+      }
+      return;
+    }
+
     const outcomes = new Array(rows.length).fill(null);
     rows.forEach((row, idx) => {
       if (row.errors.length > 0) {
@@ -211,6 +255,11 @@ export default function AdminBulkProductUpload() {
             price: r.price,
             costPrice: r.costPrice,
             barcode: r.barcode,
+            category: r.category,
+            stage: r.stage,
+            tier: r.tier,
+            description: r.description,
+            image: r.image,
           })),
         });
         batchResult.forEach((res, i) => {
@@ -269,11 +318,10 @@ export default function AdminBulkProductUpload() {
         </header>
 
         <div className="product-edit-card">
-          <h2 className="product-edit-card-title">Store-Only Products from XLSX</h2>
+          <h2 className="product-edit-card-title">Bulk Import via XLSX</h2>
           <p style={{ color: "var(--text-tertiary)", marginBottom: "16px" }}>
-            Every row becomes a store-only product (hidden from the storefront, visible in Stock
-            Manager) — no image, description, or category is required. Fill these in later per-product
-            if a back-store item needs to go on sale online.
+            Every row defaults to a <strong>Store-Only</strong> product (hidden from the storefront, visible in POS and Stock Manager).
+            Products become <strong>Customer-Facing</strong> automatically only if <em>all</em> non-optional product creation fields (Name, Price, Category, Stage, Tier, Description, and Primary Image) are supplied in the XLSX.
           </p>
 
           <div className="table-wrap" style={{ marginBottom: "16px" }}>
@@ -298,6 +346,36 @@ export default function AdminBulkProductUpload() {
                   <td>Required</td>
                   <td>Number</td>
                   <td>Must be greater than 0.</td>
+                </tr>
+                <tr>
+                  <td>Category</td>
+                  <td>Optional</td>
+                  <td>Text</td>
+                  <td>Required for Customer-Facing. Must match standard category names.</td>
+                </tr>
+                <tr>
+                  <td>Stage</td>
+                  <td>Optional</td>
+                  <td>Text</td>
+                  <td>Required for Customer-Facing. Allowed values: mother, newborn, kid.</td>
+                </tr>
+                <tr>
+                  <td>Tier</td>
+                  <td>Optional</td>
+                  <td>Text</td>
+                  <td>Required for Customer-Facing. Allowed values: essentials, musthaves, luxuries.</td>
+                </tr>
+                <tr>
+                  <td>Description</td>
+                  <td>Optional</td>
+                  <td>Text</td>
+                  <td>Required for Customer-Facing. Product detail text.</td>
+                </tr>
+                <tr>
+                  <td>Image (Primary Image, Picture)</td>
+                  <td>Optional</td>
+                  <td>URL</td>
+                  <td>Required for Customer-Facing. Direct image URL.</td>
                 </tr>
                 <tr>
                   <td>Brand</td>
@@ -327,7 +405,7 @@ export default function AdminBulkProductUpload() {
                   <td>Barcode (Code)</td>
                   <td>Optional</td>
                   <td>Text</td>
-                  <td>Auto-assigned if blank. If it matches an existing product, that product's price/quantity are updated instead of creating a duplicate — quantity must be greater than or equal to its current stock, or the row is rejected.</td>
+                  <td>Auto-assigned if blank. If matching an existing product, updates price/stock instead.</td>
                 </tr>
               </tbody>
             </table>
@@ -435,7 +513,11 @@ export default function AdminBulkProductUpload() {
                 >
                   <Upload size={16} />
                   {isImporting
-                    ? `Importing… (${progress.done}/${progress.total})`
+                    ? isStockManager
+                      ? "Submitting..."
+                      : `Importing… (${progress.done}/${progress.total})`
+                    : isStockManager
+                    ? `Submit Bulk Upload for Approval (${validRows.length})`
                     : `Import ${validRows.length} Product${validRows.length === 1 ? "" : "s"}`}
                 </button>
                 {createdProducts.length > 0 && (

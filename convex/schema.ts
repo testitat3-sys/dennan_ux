@@ -1059,15 +1059,23 @@ export default defineSchema({
     requestId: v.optional(v.id("stockRequests")),
     staffId: v.id("users"),
     staffName: v.string(),
-    productId: v.id("products"),
+    productId: v.optional(v.id("products")),
     productName: v.string(),
     barcode: v.optional(v.string()),
     currentInventoryAtStage: v.number(),
     requestedDelta: v.number(),
     requestedInventory: v.number(),
     // Absent/undefined means "inventory_decrease" — the original request kind
-    // before name-change requests were added.
-    kind: v.optional(v.union(v.literal("inventory_decrease"), v.literal("name_change"))),
+    // before name-change, create-product, and bulk-upload requests were added.
+    kind: v.optional(
+      v.union(
+        v.literal("inventory_decrease"),
+        v.literal("name_change"),
+        v.literal("create_product"),
+        v.literal("bulk_upload")
+      )
+    ),
+    productData: v.optional(v.any()),
     currentName: v.optional(v.string()),
     requestedName: v.optional(v.string()),
     status: v.union(
@@ -1253,6 +1261,34 @@ export default defineSchema({
     staffName: v.string(),
     createdAt: v.number(),
   }).index("by_date", ["date"]),
+
+  // ─── Business expenses ────────────────────────────────────────────────────
+
+  /**
+   * expenseNames — reusable set of business-expense names for the admin
+   * "create or choose existing" combobox, same idiom as productBrandNames.
+   */
+  expenseNames: defineTable({
+    name: v.string(),
+    slug: v.string(),
+  }).index("by_name", ["name"]).index("by_slug", ["slug"]),
+
+  /**
+   * businessExpenses — general (non-cash-up-day-scoped) expense ledger.
+   * voucherNumber is the admin's paper/receipt voucher reference and is
+   * required for every entry; note is freeform and optional.
+   */
+  businessExpenses: defineTable({
+    voucherNumber: v.string(),
+    name: v.string(),
+    amount: v.number(),
+    note: v.optional(v.string()),
+    staffId: v.id("users"),
+    staffName: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_createdAt", ["createdAt"])
+    .index("by_voucherNumber", ["voucherNumber"]),
 });
 
 

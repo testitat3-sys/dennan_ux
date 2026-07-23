@@ -458,6 +458,10 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
                             <div key={item._id} style={{ marginBottom: "4px" }}>
                               {item.kind === "name_change"
                                 ? `${item.productName}: rename to "${item.requestedName}"`
+                                : item.kind === "create_product"
+                                ? `Create product "${item.productName}"`
+                                : item.kind === "bulk_upload"
+                                ? `${item.productName}`
                                 : `${item.productName}: ${item.requestedDelta}`}
                               {item.status === "rejected" && (
                                 <span style={{ color: "var(--color-support-red, #ef4444)" }}>

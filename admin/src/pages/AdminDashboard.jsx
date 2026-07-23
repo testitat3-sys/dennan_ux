@@ -28,6 +28,7 @@ import ProductDisplaySettingsPanel from "../components/ProductDisplaySettingsPan
 import DbIOPanel from "../components/DbIOPanel";
 import LeadsPanel from "../components/LeadsPanel";
 import CashUpPanel from "../components/CashUpPanel";
+import BusinessExpensesPanel from "../components/BusinessExpensesPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import {
   LayoutDashboard,
@@ -51,7 +52,8 @@ import {
   Inbox,
   Database,
   Wallet,
-  ClipboardCheck
+  ClipboardCheck,
+  Receipt
 } from "lucide-react";
 
 const LAST_TAB_KEY = "dennan_admin_last_tab";
@@ -262,6 +264,7 @@ export default function AdminDashboard() {
         { key: "calendar", label: "Calendar", icon: CalendarIcon, badge: dueActivities?.length || 0, isActive: activeTab === "calendar", onClick: () => setActiveTab("calendar") },
         { key: "staff", label: "Staff Roster", icon: UserCheck, isActive: activeTab === "staff", onClick: () => setActiveTab("staff") },
         { key: "cashup", label: "Balance Books", icon: Wallet, isActive: activeTab === "cashup", onClick: () => setActiveTab("cashup") },
+        { key: "expenses", label: "Business Expenses", icon: Receipt, isActive: activeTab === "expenses", onClick: () => setActiveTab("expenses") },
       ],
     },
     {
@@ -625,7 +628,7 @@ export default function AdminDashboard() {
 
           {/* TAB 7: SALES METRICS */}
           {activeTab === "metrics" && (
-            <SalesMetricsPanel token={token} onOpenOrder={setPendingOrderId} />
+            <SalesMetricsPanel token={token} onOpenOrder={setPendingOrderId} user={user} />
           )}
 
           {/* TAB 8: RETURNS APPROVAL */}
@@ -649,6 +652,11 @@ export default function AdminDashboard() {
           {/* TAB 11: BALANCE BOOKS (end-of-day cash-up) */}
           {activeTab === "cashup" && (
             <CashUpPanel token={token} />
+          )}
+
+          {/* TAB 12: BUSINESS EXPENSES */}
+          {activeTab === "expenses" && (
+            <BusinessExpensesPanel token={token} />
           )}
         </main>
       </div>

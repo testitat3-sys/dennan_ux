@@ -44,12 +44,14 @@ const AGE_MONTH_GROUPS = [
 
 export default function AdminProductCreate() {
   const navigate = useNavigate();
-  const { token } = useStaffAuth();
+  const { token, user } = useStaffAuth();
+  const isStockManager = user?.accountRole === "stockManager";
   const fileInputRef = useRef(null);
   const galleryInputRef = useRef(null);
 
   const generateCloudinarySignature = useMutation(api.products.generateCloudinarySignature);
   const createProductMutation = useMutation(api.products.createProduct);
+  const requestCreateProductMutation = useMutation(api.stockRequests.requestCreateProduct);
   const nextBarcodePreview = useQuery(api.barcodeCounters.getNextBarcodePreview, { token });
 
   // Form state
@@ -227,7 +229,7 @@ export default function AdminProductCreate() {
 
     setIsSaving(true);
     try {
-      const result = await createProductMutation({
+      const payload = {
         token,
         name: name.trim(),
         brand: brand.trim() || "no-brand",
@@ -251,10 +253,19 @@ export default function AdminProductCreate() {
         isStoreOnly,
         image: image || undefined,
         images,
-      });
-      showToast("Product created successfully!", "success");
-      setIsDirty(false);
-      navigate(`/admin/products/${result.productId}`);
+      };
+
+      if (isStockManager) {
+        await requestCreateProductMutation(payload);
+        showToast("Product creation request submitted for admin approval.", "success");
+        setIsDirty(false);
+        navigate("/?tab=stock");
+      } else {
+        const result = await createProductMutation(payload);
+        showToast("Product created successfully!", "success");
+        setIsDirty(false);
+        navigate(`/admin/products/${result.productId}`);
+      }
     } catch (err) {
       showToast(err.message || "Failed to create product.", "error");
     } finally {
@@ -308,7 +319,11 @@ export default function AdminProductCreate() {
               style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
             >
               <Save size={16} />
-              {isSaving ? "Creating..." : "Create Product"}
+              {isSaving
+                ? "Submitting..."
+                : isStockManager
+                ? "Submit for Approval"
+                : "Create Product"}
             </button>
           </div>
         </header>
@@ -320,12 +335,19 @@ export default function AdminProductCreate() {
               <div className="product-edit-card">
                 <h2 className="product-edit-card-title">Product Visibility</h2>
                 <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: image ? "pointer" : "not-allowed", opacity: image ? 1 : 0.7 }}>
                     <input
                       type="radio"
                       name="visibility"
                       checked={!isStoreOnly}
-                      onChange={() => setIsStoreOnly(false)}
+                      onChange={() => {
+                        if (!image) {
+                          showToast("Customer-facing products require a primary image before they can be made customer facing.", "error");
+                          setIsStoreOnly(true);
+                        } else {
+                          setIsStoreOnly(false);
+                        }
+                      }}
                     />
                     <span>Customer-Facing (visible in storefront, requires an image)</span>
                   </label>

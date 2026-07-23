@@ -95,6 +95,7 @@ export default function AdminProductEdit() {
   const [minMonth, setMinMonth] = useState("");
   const [maxMonth, setMaxMonth] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [isStoreOnly, setIsStoreOnly] = useState(true);
 
   // Image state
   const [image, setImage] = useState("");
@@ -131,6 +132,10 @@ export default function AdminProductEdit() {
       setMinMonth(product.minMonth !== undefined ? String(product.minMonth) : "");
       setMaxMonth(product.maxMonth !== undefined ? String(product.maxMonth) : "");
       setIsActive(product.isActive ?? true);
+      const initialIsStoreOnly = product.specifications?.some(
+        (spec) => spec.label === "for-store-only" && spec.value === "true"
+      ) ?? false;
+      setIsStoreOnly(initialIsStoreOnly);
       setImage(product.image || "");
       setImages(product.images || []);
       setImageError("");
@@ -140,6 +145,10 @@ export default function AdminProductEdit() {
 
   useEffect(() => {
     if (!product) return;
+    const initialIsStoreOnly = product.specifications?.some(
+      (spec) => spec.label === "for-store-only" && spec.value === "true"
+    ) ?? false;
+
     const dirty =
       name !== (product.name || "") ||
       brand !== (product.brand || "") ||
@@ -161,13 +170,14 @@ export default function AdminProductEdit() {
       minMonth !== (product.minMonth !== undefined ? String(product.minMonth) : "") ||
       maxMonth !== (product.maxMonth !== undefined ? String(product.maxMonth) : "") ||
       isActive !== (product.isActive ?? true) ||
+      isStoreOnly !== initialIsStoreOnly ||
       image !== (product.image || "") ||
       JSON.stringify(images) !== JSON.stringify(product.images || []);
     setIsDirty(dirty);
   }, [
     name, brand, description, price, originalPrice, costPrice, reorderPoint, inventory,
     category, subCategory, stage, tier, size, color, material, pattern,
-    targetGender, minMonth, maxMonth, isActive, image, images, product,
+    targetGender, minMonth, maxMonth, isActive, isStoreOnly, image, images, product,
   ]);
 
   useEffect(() => {
@@ -295,6 +305,15 @@ export default function AdminProductEdit() {
       return;
     }
 
+    if (!isStoreOnly && !image) {
+      showToast("Customer-facing products require a primary image before they can be made customer facing.", "error");
+      return;
+    }
+    if (isActive && !isStoreOnly && !description.trim()) {
+      showToast("Customer-facing products require a description before they can be made active.", "error");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const inventoryDelta = inventoryNum - (product.inventory ?? 0);
@@ -323,6 +342,7 @@ export default function AdminProductEdit() {
         minMonth: minMonth === "" ? undefined : Number(minMonth),
         maxMonth: maxMonth === "" ? undefined : Number(maxMonth),
         isActive,
+        isStoreOnly,
         image: image || undefined,
         images,
       });
@@ -401,7 +421,40 @@ export default function AdminProductEdit() {
             {/* Left Column: Images & Merchandising */}
             <div>
               <div className="product-edit-card">
-                <h2 className="product-edit-card-title">Primary Image</h2>
+                <h2 className="product-edit-card-title">Product Visibility</h2>
+                <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: image ? "pointer" : "not-allowed", opacity: image ? 1 : 0.7 }}>
+                    <input
+                      type="radio"
+                      name="visibility"
+                      checked={!isStoreOnly}
+                      onChange={() => {
+                        if (!image) {
+                          showToast("Customer-facing products require a primary image before they can be made customer facing.", "error");
+                          setIsStoreOnly(true);
+                        } else {
+                          setIsStoreOnly(false);
+                        }
+                      }}
+                    />
+                    <span>Customer-Facing (visible in storefront, requires an image)</span>
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                    <input
+                      type="radio"
+                      name="visibility"
+                      checked={isStoreOnly}
+                      onChange={() => setIsStoreOnly(true)}
+                    />
+                    <span>Store-Only (staff/POS use only)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="product-edit-card">
+                <h2 className="product-edit-card-title">
+                  Primary Image {isActive && !isStoreOnly && <span style={{ color: "var(--color-danger, #ef4444)" }}>*</span>}
+                </h2>
                 <div
                   className={`product-edit-image-zone ${imageError ? "has-error" : ""}`}
                   onClick={() => fileInputRef.current?.click()}

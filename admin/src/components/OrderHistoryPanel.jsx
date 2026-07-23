@@ -42,16 +42,20 @@ function toCsv(rows) {
   return lines.join("\n");
 }
 
-export default function OrderHistoryPanel({ token, onOpenOrder }) {
+export default function OrderHistoryPanel({ token, onOpenOrder, user }) {
   const todayStr = getTodayDateStr();
+  const isAccounting = user?.accountRole === "accounting";
   const [startDate, setStartDate] = useState(todayStr);
   const [endDate, setEndDate] = useState(todayStr);
   const [downloadStatus, setDownloadStatus] = useState("");
   const convex = useConvex();
 
+  const queryStartDate = isAccounting ? todayStr : startDate;
+  const queryEndDate = isAccounting ? todayStr : endDate;
+
   const { results: orderHistory, status: orderHistoryStatus, loadMore: loadMoreOrderHistory } = usePaginatedQuery(
     api.orders.adminGetOrdersByDateRange,
-    { token, startDate, endDate },
+    { token, startDate: queryStartDate, endDate: queryEndDate },
     { initialNumItems: 25 }
   );
 
@@ -70,8 +74,8 @@ export default function OrderHistoryPanel({ token, onOpenOrder }) {
       // hook), so we just unwrap .data here rather than reporting _io.
       const { data: result } = await convex.query(api.orders.adminExportOrdersByDateRange, {
         token,
-        startDate,
-        endDate,
+        startDate: queryStartDate,
+        endDate: queryEndDate,
       });
       if (result.truncated) {
         setDownloadStatus(`Too many orders in this range (over ${result.cap}). Narrow your date range and try again.`);
@@ -86,7 +90,7 @@ export default function OrderHistoryPanel({ token, onOpenOrder }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `order-history-${startDate}-to-${endDate}.csv`;
+      a.download = `order-history-${queryStartDate}-to-${queryEndDate}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -107,37 +111,47 @@ export default function OrderHistoryPanel({ token, onOpenOrder }) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-4)" }}>
-        <label style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
-          From
-          <input
-            type="date"
-            className="form-input"
-            style={{ marginLeft: "6px", width: "150px" }}
-            value={startDate}
-            max={endDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </label>
-        <label style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
-          To
-          <input
-            type="date"
-            className="form-input"
-            style={{ marginLeft: "6px", width: "150px" }}
-            value={endDate}
-            min={startDate}
-            max={todayStr}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </label>
-        {!isToday && (
-          <button className="btn btn--secondary btn--sm" onClick={handleResetToday}>
-            Today
+        {isAccounting ? (
+          <span className="status-badge status-badge--new" style={{ fontSize: "13px", padding: "6px 12px" }}>
+            Order History — Today ({todayStr})
+          </span>
+        ) : (
+          <>
+            <label style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
+              From
+              <input
+                type="date"
+                className="form-input"
+                style={{ marginLeft: "6px", width: "150px" }}
+                value={startDate}
+                max={endDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </label>
+            <label style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
+              To
+              <input
+                type="date"
+                className="form-input"
+                style={{ marginLeft: "6px", width: "150px" }}
+                value={endDate}
+                min={startDate}
+                max={todayStr}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </label>
+            {!isToday && (
+              <button className="btn btn--secondary btn--sm" onClick={handleResetToday}>
+                Today
+              </button>
+            )}
+          </>
+        )}
+        {!isAccounting && (
+          <button className="btn btn--secondary btn--sm" onClick={handleDownload} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            <Download size={13} /> Download CSV
           </button>
         )}
-        <button className="btn btn--secondary btn--sm" onClick={handleDownload} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-          <Download size={13} /> Download CSV
-        </button>
         {downloadStatus && (
           <span style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>{downloadStatus}</span>
         )}

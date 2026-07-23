@@ -152,12 +152,22 @@ export default function StockApprovalsPanel({ token, showToast }) {
                   <tbody>
                     {group.items.map((item) => {
                       const isNameChange = item.kind === "name_change";
+                      const isCreateProduct = item.kind === "create_product";
+                      const isBulkUpload = item.kind === "bulk_upload";
                       return (
                       <tr key={item._id}>
                         <td>{item.productName}</td>
                         {isNameChange ? (
                           <td colSpan={3}>
                             Rename: <strong>{item.currentName}</strong> → <strong>{item.requestedName}</strong>
+                          </td>
+                        ) : isCreateProduct ? (
+                          <td colSpan={3}>
+                            Create New Product — Brand: <strong>{item.productData?.brand || "no-brand"}</strong> | Price: <strong>UGX {item.productData?.price?.toLocaleString() ?? 0}</strong> | Initial Inv: <strong>{item.requestedInventory}</strong>
+                          </td>
+                        ) : isBulkUpload ? (
+                          <td colSpan={3}>
+                            Bulk Upload Catalog — <strong>{item.productData?.rows?.length ?? 0} product(s)</strong> in file
                           </td>
                         ) : (
                           <>

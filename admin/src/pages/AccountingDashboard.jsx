@@ -76,11 +76,11 @@ export default function AccountingDashboard() {
 
         <main className="admin-main">
           {activeTab === "metrics" && (
-            <SalesMetricsPanel token={token} onOpenOrder={setPendingOrderId} />
+            <SalesMetricsPanel token={token} onOpenOrder={setPendingOrderId} user={user} />
           )}
 
           {activeTab === "history" && (
-            <OrderHistoryPanel token={token} onOpenOrder={setViewingOrder} />
+            <OrderHistoryPanel token={token} onOpenOrder={setViewingOrder} user={user} />
           )}
         </main>
       </div>
