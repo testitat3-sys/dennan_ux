@@ -664,6 +664,99 @@ export const getProductSalesRangeSummary = query({
 });
 
 /**
+ * Drill-down query for the Stock Report modal: given a specific productId and
+ * the same date range used by the report, returns the individual completed
+ * orders that contain that product, together with customer name, channel,
+ * grand total and quantity of that product purchased.
+ *
+ * Gated with "skip" on the client so it only fires when a row is clicked —
+ * zero cost unless the user actively drills into a product.
+ */
+export const getProductOrdersInRange = query({
+  args: {
+    token: v.string(),
+    productId: v.id("products"),
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+
+    // Enforce the same date-range restrictions as the parent report.
+    const today = todayStr();
+    const startDate = user.accountRole === "stockManager" ? today : args.startDate;
+    const endDate   = user.accountRole === "stockManager" ? today : args.endDate;
+
+    const { rangeStartMs, rangeEndMs } = dateRangeToMs(startDate, endDate);
+
+    // Walk orders in date range using the existing by_createdAt index.
+    // Cap matches SALES_RANGE_ORDER_CAP so results are consistent with the report.
+    const orders = await ctx.db
+      .query("orders")
+      .withIndex("by_createdAt", (q: any) =>
+        q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs)
+      )
+      .order("desc")
+      .take(SALES_RANGE_ORDER_CAP);
+
+    const completedOrders = orders.filter((o: any) =>
+      SALES_COMPLETED_STATUSES.includes(o.status)
+    );
+
+    const distinctUserIds = Array.from(
+      new Set(completedOrders.map((o: any) => o.userId).filter(Boolean))
+    );
+    const users = await Promise.all(distinctUserIds.map((id: any) => ctx.db.get(id)));
+    const nameByUserId = new Map<string, string>();
+    distinctUserIds.forEach((id: any, idx: number) => {
+      const u = users[idx] as any;
+      if (u?.name) nameByUserId.set(id.toString(), u.name);
+    });
+
+    const rows: Array<{
+      orderId: string;
+      customerName: string;
+      channel: string;
+      status: string;
+      grandTotal: number;
+      createdAt: number;
+      quantityOfProduct: number;
+    }> = [];
+
+    for (const order of completedOrders) {
+      const items = await ctx.db
+        .query("orderItems")
+        .withIndex("by_order", (q: any) => q.eq("orderId", order._id))
+        .collect();
+
+      const matchingItems = items.filter(
+        (i: any) => i.productId.toString() === args.productId.toString()
+      );
+      if (matchingItems.length === 0) continue;
+
+      const customerName =
+        order.deliveryAddress?.name ||
+        (order.userId ? nameByUserId.get(order.userId.toString()) : null) ||
+        "Walk-in Customer";
+
+      const qty = matchingItems.reduce((s: number, i: any) => s + i.quantity, 0);
+      rows.push({
+        orderId: order._id.toString(),
+        customerName,
+        channel: order.channel ?? "walk_in",
+        status: order.status,
+        grandTotal: order.grandTotal,
+        createdAt: order.createdAt,
+        quantityOfProduct: qty,
+      });
+    }
+
+    // Already desc-sorted by createdAt from the DB query above.
+    return rows;
+  },
+});
+
+/**
  * Core inventory-mutation logic shared by `adjustStock` (direct admin/stock-
  * manager increases, and admin decreases) and `stockRequests.approveStockRequestItem`
  * (applying a stock manager's admin-approved decrease). Propagates the delta

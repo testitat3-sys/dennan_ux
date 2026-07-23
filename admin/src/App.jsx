@@ -15,6 +15,7 @@ import AdminBulkProductUpload from './pages/AdminBulkProductUpload';
 import OrderExchangePage from './pages/OrderExchangePage';
 import { useTheme } from './hooks/useTheme';
 import sosLogo from './assets/SOS.png';
+import sosLogoDark from './assets/SOS-dark.png';
 
 function MainRouter() {
   const { user, isLoading } = useStaffAuth();
@@ -37,14 +38,23 @@ function MainRouter() {
           alignItems: 'center',
           gap: '24px'
         }}>
-          <img 
-            src={sosLogo} 
-            alt="SOS Logo" 
-            style={{ 
-              width: '140px', 
-              height: 'auto',
-              display: 'block'
-            }} 
+          <img
+            src={sosLogo}
+            alt="SOS Logo"
+            className="logo-light"
+            style={{
+              width: '140px',
+              height: 'auto'
+            }}
+          />
+          <img
+            src={sosLogoDark}
+            alt="SOS Logo"
+            className="logo-dark"
+            style={{
+              width: '140px',
+              height: 'auto'
+            }}
           />
           <div style={{
             width: '140px',

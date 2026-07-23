@@ -6,6 +6,7 @@ import OrderDetailModal from "../components/OrderDetailModal";
 import SalesMetricsPanel from "../components/SalesMetricsPanel";
 import OrderHistoryPanel from "../components/OrderHistoryPanel";
 import sosLogo from "../assets/SOS.png";
+import sosLogoDark from "../assets/SOS-dark.png";
 import profileImg from "../assets/about-dennan.png";
 import { BarChart3, History, LogOut } from "lucide-react";
 
@@ -33,7 +34,8 @@ export default function AccountingDashboard() {
       <div className="admin-layout">
         <aside className="sidebar">
           <div className="sidebar-brand">
-            <img src={sosLogo} alt="Dennan" className="sidebar-logo" />
+            <img src={sosLogo} alt="Dennan" className="sidebar-logo logo-light" />
+            <img src={sosLogoDark} alt="Dennan" className="sidebar-logo logo-dark" />
             <span className="sidebar-brand-sub">Accounting Hub</span>
           </div>
 

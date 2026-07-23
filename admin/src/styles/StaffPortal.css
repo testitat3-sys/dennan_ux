@@ -4862,3 +4862,16 @@
 .barcode-label-print-wrapper {
   color-scheme: light;
 }
+
+/* ─── LOGO LIGHT/DARK SWAP ───────────────────────────────────────────────── */
+img.logo-dark {
+  display: none;
+}
+
+[data-theme="dark"] img.logo-light {
+  display: none;
+}
+
+[data-theme="dark"] img.logo-dark {
+  display: block;
+}

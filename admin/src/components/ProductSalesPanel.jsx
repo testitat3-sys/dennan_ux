@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { AlertCircle } from "lucide-react";
+import StockReportDetailModal from "./StockReportDetailModal";
 
 function toDateStr(d) {
   const y = d.getFullYear();
@@ -29,6 +30,9 @@ export default function ProductSalesPanel({ token, user }) {
   const [startDate, setStartDate] = useState(isStockManager ? todayStr : defaultStartStr);
   const [endDate, setEndDate] = useState(todayStr);
 
+  // Detail modal: set when a row is clicked, cleared on close.
+  const [selectedProduct, setSelectedProduct] = useState(null);
+
   const { results: salesRows, status: salesStatus, loadMore: loadMoreSales } = usePaginatedQuery(
     api.products.getProductSalesInRange,
     { token, startDate, endDate },
@@ -44,6 +48,7 @@ export default function ProductSalesPanel({ token, user }) {
   };
 
   return (
+    <>
     <div className="admin-tab-panel is-active">
       <div className="page-header">
         <h1 className="admin-page-title">Products Sold — Stock Report</h1>
@@ -129,7 +134,12 @@ export default function ProductSalesPanel({ token, user }) {
               </thead>
               <tbody>
                 {salesRows.map((row) => (
-                  <tr key={row.productId}>
+                  <tr
+                    key={row.productId}
+                    onClick={() => setSelectedProduct(row)}
+                    style={{ cursor: "pointer" }}
+                    title="Click to see orders for this product"
+                  >
                     <td><strong>{row.name}</strong></td>
                     <td>{row.sku || "—"}</td>
                     <td>{row.barcode || "—"}</td>
@@ -151,5 +161,15 @@ export default function ProductSalesPanel({ token, user }) {
         </>
       )}
     </div>
+
+      {/* Drill-down modal — only mounts when a row is clicked */}
+      <StockReportDetailModal
+        product={selectedProduct}
+        token={token}
+        startDate={startDate}
+        endDate={endDate}
+        onClose={() => setSelectedProduct(null)}
+      />
+    </>
   );
 }

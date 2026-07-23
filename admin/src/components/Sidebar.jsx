@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronRight, LogOut } from "lucide-react";
 import sosLogo from "../assets/SOS.png";
+import sosLogoDark from "../assets/SOS-dark.png";
 import profileImg from "../assets/about-dennan.png";
 
 /**
@@ -34,7 +35,8 @@ export default function Sidebar({ groups, user, onLogout, storageKey = "dennan_s
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <img src={sosLogo} alt="Dennan" className="sidebar-logo" />
+        <img src={sosLogo} alt="Dennan" className="sidebar-logo logo-light" />
+        <img src={sosLogoDark} alt="Dennan" className="sidebar-logo logo-dark" />
       </div>
 
       <nav className="sidebar-nav">

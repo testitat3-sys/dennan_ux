@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import sosLogo from "../assets/SOS.png";
+import sosLogoDark from "../assets/SOS-dark.png";
 
 export default function StaffLogin() {
   const { login } = useStaffAuth();
@@ -31,7 +32,8 @@ export default function StaffLogin() {
     <div className="staff-portal-body">
       <main className="login-page" role="main">
         <div className="login-brand">
-          <img src={sosLogo} alt="Dennan" className="login-brand-logo" />
+          <img src={sosLogo} alt="Dennan" className="login-brand-logo logo-light" />
+          <img src={sosLogoDark} alt="Dennan" className="login-brand-logo logo-dark" />
           <span className="login-brand-sub">Staff Portal</span>
         </div>
 

@@ -183,6 +183,7 @@ export const placeOrder = mutation({
       createdAt: Date.now(),
       channel: "online",
       isOnline: true,
+      isWalkIn: false,
     });
 
     // 6. Save line items snapshots (locks price and details at checkout)
@@ -419,6 +420,7 @@ export const placeGuestOrder = mutation({
       createdAt: Date.now(),
       channel: "online",
       isOnline: true,
+      isWalkIn: false,
     });
 
     // 6. Line item snapshots
@@ -1159,6 +1161,7 @@ export const adminCreateOrder = trackedMutation("orders.adminCreateOrder", {
       createdAt: Date.now(),
       channel: "online",
       isOnline: true,
+      isWalkIn: false,
     });
 
     for (const item of itemsToOrder) {
@@ -1845,7 +1848,7 @@ async function enrichOrders(ctx: QueryCtx, orders: any[], options: EnrichOrdersO
 
     return {
       ...order,
-      customerName: customer?.name || "Unnamed Customer",
+      customerName: order.deliveryAddress?.name || customer?.name || "Walk-in Customer",
       ...(includeCustomerEmail ? { customerEmail: customer?.email } : {}),
       customerPhone: customer?.phone,
       items: itemsByOrderId.get(order._id.toString()) ?? [],
@@ -2469,7 +2472,7 @@ export const adminGetChannelTransactions = query({
       return {
         orderId: order._id,
         createdAt: order.createdAt,
-        customerName: nameByUserId.get(order.userId.toString()) || "Unnamed Customer",
+        customerName: order.deliveryAddress?.name || (order.userId ? nameByUserId.get(order.userId.toString()) : null) || "Walk-in Customer",
         amount,
       };
     });
