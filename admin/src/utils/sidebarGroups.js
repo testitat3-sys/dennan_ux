@@ -14,6 +14,8 @@ import {
   Inbox,
   Database,
   ShoppingCart,
+  Wallet,
+  Receipt,
 } from "lucide-react";
 
 /**
@@ -60,6 +62,8 @@ export function getReturnPageSidebarGroups(role, navigate) {
           { key: "leads", label: "Leads", icon: Inbox, onClick: go("leads") },
           { key: "calendar", label: "Calendar", icon: CalendarIcon, onClick: go("calendar") },
           { key: "staff", label: "Staff Roster", icon: UserCheck, onClick: go("staff") },
+          { key: "cashup", label: "Balance Books", icon: Wallet, onClick: go("cashup") },
+          { key: "expenses", label: "Business Expenses", icon: Receipt, onClick: go("expenses") },
         ],
       },
       {
@@ -68,6 +72,27 @@ export function getReturnPageSidebarGroups(role, navigate) {
         items: [
           { key: "settings", label: "Settings", icon: Settings, onClick: go("settings") },
           { key: "dbio", label: "DB I/O", icon: Database, onClick: go("dbio") },
+        ],
+      },
+    ];
+  }
+
+  if (role === "accounting") {
+    return [
+      {
+        id: "salesOrders",
+        label: "Sales & Orders",
+        items: [
+          { key: "metrics", label: "Sales Metrics", icon: BarChart3, onClick: go("metrics") },
+          { key: "history", label: "Order History", icon: History, onClick: go("history") },
+        ],
+      },
+      {
+        id: "accounting",
+        label: "Accounting & Books",
+        items: [
+          { key: "cashup", label: "Balance Books", icon: Wallet, onClick: go("cashup") },
+          { key: "expenses", label: "Business Expenses", icon: Receipt, onClick: go("expenses") },
         ],
       },
     ];

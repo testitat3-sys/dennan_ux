@@ -12,6 +12,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   process.env.STAFF_PASSWORDS_JSON = JSON.stringify({
     matovu: "matovupassword",
     brian: "brianpassword",
+    accounts: "accountspassword",
   });
 
   const t = convexTest(schema, modules);
@@ -781,5 +782,68 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   });
   expect(adjStock1).toBe(18);
   expect(adjStock2).toBe(18);
+
+  // ─── 9. Accounting Role Permissions Tests (Balance Books & Business Expenses) ───
+  const { accountsToken } = await t.run(async (ctx) => {
+    const userId = await ctx.db.insert("users", {
+      name: "Accounts Test",
+      email: "accounts-test@dennan.ug",
+      accountRole: "accounting",
+      isOnboarded: true,
+    });
+    const token = "accounts-test-token-12345";
+    await ctx.db.insert("staffSessions", {
+      token,
+      userId,
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    });
+    return { accountsUserId: userId, accountsToken: token };
+  });
+
+  // Accounts user saves cashup balance entry
+  const todayStr = "2026-07-24";
+  const cashUpId = await t.mutation(api.cashUp.saveCashUpEntry, {
+    token: accountsToken,
+    date: todayStr,
+    physicalCounts: { physical: 500000, momo: 200000, card: 0, voucher: 0 },
+    notes: "Accounts audit verified physical cash box",
+  });
+  expect(cashUpId).toBeDefined();
+
+  // Accounts user adds cashup expense
+  const cashUpExpenseId = await t.mutation(api.cashUp.addCashUpExpense, {
+    token: accountsToken,
+    date: todayStr,
+    description: "Audit stationery",
+    amount: 15000,
+  });
+  expect(cashUpExpenseId).toBeDefined();
+
+  // Accounts user reads cashup data
+  const cashUpDataResult = await t.query(api.cashUp.getCashUpForDate, {
+    token: accountsToken,
+    date: todayStr,
+  });
+  const cashUpData = cashUpDataResult.data;
+  expect(cashUpData.entry?.notes).toBe("Accounts audit verified physical cash box");
+  expect(cashUpData.expenses.length).toBe(1);
+  expect(cashUpData.expenses[0].description).toBe("Audit stationery");
+
+  // Accounts user creates business expense
+  const bizExpenseId = await t.mutation(api.businessExpenses.createBusinessExpense, {
+    token: accountsToken,
+    voucherNumber: "VCH-2026-001",
+    name: "Office Supplies",
+    amount: 45000,
+    note: "Printer paper and ink",
+  });
+  expect(bizExpenseId).toBeDefined();
+
+  // Accounts user lists business expenses
+  const bizExpensesListResult = await t.query(api.businessExpenses.listBusinessExpenses, {
+    token: accountsToken,
+  });
+  const bizExpensesList = bizExpensesListResult.data;
+  expect(bizExpensesList.some((e: any) => e._id === bizExpenseId)).toBe(true);
 });
 

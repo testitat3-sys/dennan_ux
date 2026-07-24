@@ -5,10 +5,12 @@ import { useStaffAuth } from "../hooks/useStaffAuth";
 import OrderDetailModal from "../components/OrderDetailModal";
 import SalesMetricsPanel from "../components/SalesMetricsPanel";
 import OrderHistoryPanel from "../components/OrderHistoryPanel";
+import CashUpPanel from "../components/CashUpPanel";
+import BusinessExpensesPanel from "../components/BusinessExpensesPanel";
 import sosLogo from "../assets/SOS.png";
 import sosLogoDark from "../assets/SOS-dark.png";
 import profileImg from "../assets/about-dennan.png";
-import { BarChart3, History, LogOut } from "lucide-react";
+import { BarChart3, History, Wallet, Receipt, LogOut } from "lucide-react";
 
 export default function AccountingDashboard() {
   const { user, token, logout } = useStaffAuth();
@@ -57,6 +59,24 @@ export default function AccountingDashboard() {
                 <span>Order History</span>
               </button>
             </div>
+
+            <div className="sidebar-nav-group">
+              <span className="sidebar-nav-group-label">Accounting & Books</span>
+              <button
+                className={`sidebar-nav-item ${activeTab === "cashup" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("cashup")}
+              >
+                <Wallet size={18} />
+                <span>Balance Books</span>
+              </button>
+              <button
+                className={`sidebar-nav-item ${activeTab === "expenses" ? "is-active" : ""}`}
+                onClick={() => setActiveTab("expenses")}
+              >
+                <Receipt size={18} />
+                <span>Business Expenses</span>
+              </button>
+            </div>
           </nav>
 
           <div className="sidebar-footer">
@@ -83,6 +103,14 @@ export default function AccountingDashboard() {
 
           {activeTab === "history" && (
             <OrderHistoryPanel token={token} onOpenOrder={setViewingOrder} user={user} />
+          )}
+
+          {activeTab === "cashup" && (
+            <CashUpPanel token={token} />
+          )}
+
+          {activeTab === "expenses" && (
+            <BusinessExpensesPanel token={token} />
           )}
         </main>
       </div>
