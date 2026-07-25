@@ -30,6 +30,9 @@ import ScrollToTop from './utils/ScrollToTop';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import OnboardingModal from './components/ui/OnboardingModal';
+import { initClarity } from './utils/clarity';
+import { initGoogleAnalytics } from './utils/googleAnalytics';
+import { identifyUser } from './utils/analytics';
 
 // A lightweight route wrapper that brings up the OnboardingModal automatically
 function OnboardingRoute() {
@@ -47,6 +50,26 @@ function OnboardingRoute() {
 }
 
 function App() {
+  React.useEffect(() => {
+    // Initialize Clarity & GA4 tracking
+    initClarity();
+    initGoogleAnalytics();
+
+    // User identification check from localStorage if available
+    try {
+      const savedUser = localStorage.getItem('dennan_user');
+      if (savedUser) {
+        const user = JSON.parse(savedUser);
+        const id = user.phone || user.id || user._id;
+        if (id) {
+          identifyUser(id, user.name || user.friendlyName || '');
+        }
+      }
+    } catch (e) {
+      // ignore parse error
+    }
+  }, []);
+
   return (
     <HelmetProvider>
     <Router>
