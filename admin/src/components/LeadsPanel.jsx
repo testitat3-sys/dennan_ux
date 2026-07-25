@@ -25,18 +25,47 @@ export default function LeadsPanel({ token }) {
   const leads = useTrackedQuery(api.leads.getLeads, { token });
   const referralStats = useTrackedQuery(api.referralSources.getReferralSourceStats, { token });
   const resolveLeadMutation = useMutation(api.leads.resolveLead);
+  const ensureLeadUserMutation = useMutation(api.leads.ensureLeadUser);
 
   const [statusTab, setStatusTab] = useState("unresolved");
   const [search, setSearch] = useState("");
   const [activityCustomer, setActivityCustomer] = useState(null);
   const [viewingLead, setViewingLead] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [loadingLeadId, setLoadingLeadId] = useState(null);
 
   const handleCopyPhone = (lead) => {
     if (!lead.phone) return;
     navigator.clipboard.writeText(lead.phone);
     setCopiedId(lead.id);
     setTimeout(() => setCopiedId(null), 1500);
+  };
+
+  const handleOpenNotes = async (lead) => {
+    setLoadingLeadId(lead.id);
+    try {
+      let userId = lead.userId;
+      if (!userId) {
+        const res = await ensureLeadUserMutation({
+          token,
+          leadKind: lead.kind,
+          leadId: lead.id,
+        });
+        userId = res.userId;
+      }
+      setActivityCustomer({
+        id: userId,
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        ordersCount: 0,
+        createdAt: lead.createdAt,
+      });
+    } catch (err) {
+      alert("Could not load or create customer record for this lead: " + err.message);
+    } finally {
+      setLoadingLeadId(null);
+    }
   };
 
   const handleToggleResolved = async (lead) => {
@@ -261,20 +290,11 @@ export default function LeadsPanel({ token }) {
                         <div style={{ display: "flex", gap: "5px" }}>
                           <button
                             className="btn btn--secondary btn--sm"
-                            onClick={() =>
-                              setActivityCustomer({
-                                id: lead.userId,
-                                name: lead.name,
-                                email: lead.email,
-                                phone: lead.phone,
-                                ordersCount: 0,
-                                createdAt: lead.createdAt,
-                              })
-                            }
-                            disabled={!lead.userId}
-                            title={lead.userId ? "Add note / schedule reminder" : "No linked customer record"}
+                            onClick={() => handleOpenNotes(lead)}
+                            disabled={loadingLeadId === lead.id}
+                            title="Add note / schedule reminder"
                           >
-                            Notes & Reminder
+                            {loadingLeadId === lead.id ? "Loading..." : "Notes & Reminder"}
                           </button>
                           <button
                             className="btn btn--ghost btn--sm"
