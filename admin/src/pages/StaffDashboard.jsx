@@ -12,6 +12,7 @@ import DeliveryFailureModal from "../components/DeliveryFailureModal";
 import CustomerActivityModal from "../components/CustomerActivityModal";
 import RemindersWidget from "../components/RemindersWidget";
 import CalendarPanel from "../components/CalendarPanel";
+import OrderHistoryPanel from "../components/OrderHistoryPanel";
 import ReceiptModal from "../components/ReceiptModal";
 import Toast from "../components/Toast";
 import LiveTimer from "../components/LiveTimer";
@@ -122,15 +123,6 @@ export default function StaffDashboard() {
     api.orders.getOrdersForStaff,
     { token },
     { initialNumItems: 50 }
-  );
-
-  // --- TAB: ORDER HISTORY (all orders) ---
-  // Only subscribe when the history tab is open — avoids an unnecessary live
-  // subscription while staff are on the queue, POS, or other tabs.
-  const { results: allOrderHistory, status: allOrderHistoryStatus, loadMore: loadMoreAllOrderHistory } = usePaginatedQuery(
-    api.orders.adminGetOrdersByDateRange,
-    activeTab === "history" ? { token } : "skip",
-    { initialNumItems: 30 }
   );
 
   const claimOrderMutation = useMutation(api.orders.claimOrder);
@@ -713,7 +705,7 @@ export default function StaffDashboard() {
       items: [
         { key: "orders", label: "Online Orders", icon: ClipboardList, badge: unseenOrdersCount > 0 ? unseenOrdersCount : undefined, isActive: activeTab === "orders", onClick: () => setActiveTab("orders") },
         { key: "pos", label: "Physical Orders", icon: ShoppingCart, badge: pendingCount + failedOfflineOrders.length, isActive: activeTab === "pos", onClick: () => setActiveTab("pos") },
-        { key: "history", label: "My Order History", icon: History, isActive: activeTab === "history", onClick: () => setActiveTab("history") },
+        { key: "history", label: "Order History", icon: History, isActive: activeTab === "history", onClick: () => setActiveTab("history") },
         { key: "returns", label: "Returns", icon: RotateCcw, badge: unseenReturnsCount > 0 ? unseenReturnsCount : undefined, isActive: activeTab === "returns", onClick: () => setActiveTab("returns") },
       ],
     },
@@ -1315,123 +1307,9 @@ export default function StaffDashboard() {
             </div>
           )}
 
-          {/* TAB: ORDER HISTORY (all orders) */}
+          {/* TAB: ORDER HISTORY (all orders across all date ranges) */}
           {activeTab === "history" && (
-            <div className="admin-tab-panel is-active">
-              <div className="page-header">
-                <h1 className="admin-page-title">Order History</h1>
-                <span style={{ fontSize: "12px", color: "var(--text-tertiary)", alignSelf: "center" }}>
-                  Today &middot; Sorted: Newest First
-                </span>
-              </div>
-
-              {allOrderHistory === undefined ? (
-                <div className="empty-state">
-                  <div className="empty-title">Loading history...</div>
-                </div>
-              ) : allOrderHistory.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-title">No orders yet.</div>
-                  <div className="empty-sub">All store orders will appear here.</div>
-                </div>
-              ) : (
-                <>
-                  <div className="table-wrap">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Date &amp; Time</th>
-                          <th>Customer</th>
-                          <th>Type</th>
-                          <th>Items</th>
-                          <th>Total</th>
-                          <th>Status</th>
-                          <th style={{ width: "150px" }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allOrderHistory.map((order) => (
-                          <tr
-                            key={order._id}
-                            style={{ cursor: "pointer" }}
-                            onClick={() => setViewingOrder(order)}
-                          >
-                            <td style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
-                              {new Date(order.createdAt).toLocaleString("en-GB", {
-                                day: "2-digit", month: "short", year: "numeric",
-                                hour: "2-digit", minute: "2-digit"
-                              })}
-                            </td>
-                            <td className="td-customer">{order.customerName}</td>
-                            <td>
-                              <span
-                                className={`status-badge ${order.isWalkIn ? "status-badge--done" : "status-badge--packing"}`}
-                                style={{ fontSize: "10px" }}
-                              >
-                                {order.isWalkIn ? "Walk-in" : "Online"}
-                              </span>
-                            </td>
-                            <td style={{ textAlign: "center" }}>{order.items?.length || 0}</td>
-                            <td style={{ whiteSpace: "nowrap" }}>UGX {order.grandTotal.toLocaleString()}</td>
-                            <td>
-                              <span className={`status-badge status-badge--${getStatusModifier(order.status)}`}>
-                                <span className="status-dot" />
-                                {order.status.toUpperCase()}
-                              </span>
-                            </td>
-                            <td
-                              className="td-action"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div style={{ display: "flex", gap: "5px" }}>
-                                <button
-                                  className="btn btn--secondary btn--sm"
-                                  onClick={() => setViewingOrder(order)}
-                                  title="View full details"
-                                >
-                                  <Eye size={13} />
-                                </button>
-                                <button
-                                  className="btn btn--outline btn--sm"
-                                  onClick={() => {
-                                    setLastReceipt(buildReceiptFromOrder(order));
-                                    setShowReceipt(true);
-                                  }}
-                                  title="Print receipt"
-                                >
-                                  <Printer size={13} />
-                                </button>
-                                <button
-                                  className="btn btn--outline btn--sm"
-                                  onClick={() => {
-                                    setLastReceipt(buildReceiptFromOrder(order));
-                                    setShowReceipt(true);
-                                  }}
-                                  title="Copy receipt as image"
-                                >
-                                  <Copy size={13} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {allOrderHistoryStatus === "CanLoadMore" && (
-                    <div style={{ textAlign: "center", marginTop: "var(--space-4)" }}>
-                      <button
-                        className="btn btn--secondary"
-                        onClick={() => loadMoreAllOrderHistory(20)}
-                      >
-                        Load More Orders
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            <OrderHistoryPanel token={token} onOpenOrder={setViewingOrder} user={user} />
           )}
 
           {/* TAB 3: CUSTOMERS CRM */}

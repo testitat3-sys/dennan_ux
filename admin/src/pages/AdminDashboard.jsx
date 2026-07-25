@@ -619,7 +619,7 @@ export default function AdminDashboard() {
 
           {/* TAB: ORDER HISTORY (all orders, admin-wide) */}
           {activeTab === "history" && (
-            <OrderHistoryPanel token={token} onOpenOrder={setViewingOrder} />
+            <OrderHistoryPanel token={token} onOpenOrder={setViewingOrder} user={user} />
           )}
 
           {/* TAB 6: CALENDAR / REMINDERS */}
