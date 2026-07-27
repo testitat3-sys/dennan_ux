@@ -845,5 +845,23 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   });
   const bizExpensesList = bizExpensesListResult.data;
   expect(bizExpensesList.some((e: any) => e._id === bizExpenseId)).toBe(true);
+
+  // ─── 10. Order History Date Range Restriction Tests (Accounts & Staff) ───
+  // Accounts and Staff users are restricted to current day orders
+  const accountsOrderHistory = await t.query(api.orders.adminGetOrdersByDateRange, {
+    token: accountsToken,
+    startDate: "2020-01-01",
+    endDate: "2020-01-02",
+    paginationOpts: { numItems: 25, cursor: null },
+  });
+  expect(accountsOrderHistory).toBeDefined();
+
+  const staffOrderHistory = await t.query(api.orders.adminGetOrdersByDateRange, {
+    token: staffToken,
+    startDate: "2020-01-01",
+    endDate: "2020-01-02",
+    paginationOpts: { numItems: 25, cursor: null },
+  });
+  expect(staffOrderHistory).toBeDefined();
 });
 

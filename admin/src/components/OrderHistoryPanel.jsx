@@ -44,14 +44,14 @@ function toCsv(rows) {
 
 export default function OrderHistoryPanel({ token, onOpenOrder, user }) {
   const todayStr = getTodayDateStr();
-  const isAccounting = user?.accountRole === "accounting";
+  const isRestrictedToToday = user?.accountRole === "accounting" || user?.accountRole === "staff";
   const [startDate, setStartDate] = useState(todayStr);
   const [endDate, setEndDate] = useState(todayStr);
   const [downloadStatus, setDownloadStatus] = useState("");
   const convex = useConvex();
 
-  const queryStartDate = isAccounting ? todayStr : startDate;
-  const queryEndDate = isAccounting ? todayStr : endDate;
+  const queryStartDate = isRestrictedToToday ? todayStr : startDate;
+  const queryEndDate = isRestrictedToToday ? todayStr : endDate;
 
   const { results: orderHistory, status: orderHistoryStatus, loadMore: loadMoreOrderHistory } = usePaginatedQuery(
     api.orders.adminGetOrdersByDateRange,
@@ -111,7 +111,7 @@ export default function OrderHistoryPanel({ token, onOpenOrder, user }) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-4)" }}>
-        {isAccounting ? (
+        {isRestrictedToToday ? (
           <span className="status-badge status-badge--new" style={{ fontSize: "13px", padding: "6px 12px" }}>
             Order History — Today ({todayStr})
           </span>
@@ -147,7 +147,7 @@ export default function OrderHistoryPanel({ token, onOpenOrder, user }) {
             )}
           </>
         )}
-        {!isAccounting && (
+        {!isRestrictedToToday && (
           <button className="btn btn--secondary btn--sm" onClick={handleDownload} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
             <Download size={13} /> Download CSV
           </button>

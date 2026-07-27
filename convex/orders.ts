@@ -671,9 +671,9 @@ export const adminGetOrdersByDateRange = query({
     startOfToday.setHours(0, 0, 0, 0);
     const todayMs = startOfToday.getTime();
 
-    const isAccounting = user.accountRole === "accounting";
-    const rangeStartMs = isAccounting ? todayMs : args.startDate ? parseDateStrToMs(args.startDate) : todayMs;
-    const rangeEndMs = isAccounting ? todayMs + dayMs : args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
+    const isRestrictedToToday = user.accountRole === "accounting" || user.accountRole === "staff";
+    const rangeStartMs = isRestrictedToToday ? todayMs : args.startDate ? parseDateStrToMs(args.startDate) : todayMs;
+    const rangeEndMs = isRestrictedToToday ? todayMs + dayMs : args.endDate ? parseDateStrToMs(args.endDate) + dayMs : todayMs + dayMs;
 
     const result = await ctx.db
       .query("orders")
@@ -711,9 +711,9 @@ export const adminExportOrdersByDateRange = trackedQuery("orders.adminExportOrde
     startOfToday.setHours(0, 0, 0, 0);
     const todayMs = startOfToday.getTime();
 
-    const isAccounting = user.accountRole === "accounting";
-    const rangeStartMs = isAccounting ? todayMs : parseDateStrToMs(args.startDate);
-    const rangeEndMs = isAccounting ? todayMs + dayMs : parseDateStrToMs(args.endDate) + dayMs;
+    const isRestrictedToToday = user.accountRole === "accounting" || user.accountRole === "staff";
+    const rangeStartMs = isRestrictedToToday ? todayMs : parseDateStrToMs(args.startDate);
+    const rangeEndMs = isRestrictedToToday ? todayMs + dayMs : parseDateStrToMs(args.endDate) + dayMs;
 
     const orders = await ctx.db
       .query("orders")
