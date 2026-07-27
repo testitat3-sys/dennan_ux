@@ -2015,15 +2015,10 @@ export const adminGetSalesAndProductAnalytics = trackedQuery("orders.adminGetSal
     startOfToday.setHours(0, 0, 0, 0);
     const todayMs = startOfToday.getTime();
 
-    const isAccounting = user.accountRole === "accounting";
-    const rangeEndMs = isAccounting
-      ? todayMs + dayMs
-      : args.endDate
+    const rangeEndMs = args.endDate
       ? parseDateStrToMs(args.endDate) + dayMs
       : todayMs + dayMs;
-    const rangeStartMs = isAccounting
-      ? todayMs
-      : args.startDate
+    const rangeStartMs = args.startDate
       ? parseDateStrToMs(args.startDate)
       : todayMs;
 

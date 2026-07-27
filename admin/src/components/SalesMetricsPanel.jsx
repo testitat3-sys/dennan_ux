@@ -110,7 +110,6 @@ function formatDisplayTime(bucketStartMs) {
 
 export default function SalesMetricsPanel({ token, onOpenOrder, user }) {
   const todayStr = getTodayStr();
-  const isAccounting = user?.accountRole === "accounting";
   const [datePreset, setDatePreset] = useState("today");
   const [customStart, setCustomStart] = useState(addDays(todayStr, -29));
   const [customEnd, setCustomEnd] = useState(todayStr);
@@ -120,10 +119,8 @@ export default function SalesMetricsPanel({ token, onOpenOrder, user }) {
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [selectedChannel, setSelectedChannel] = useState(null);
 
-  const effectiveDatePreset = isAccounting ? "today" : datePreset;
-
   const { startDate, endDate } = useMemo(() => {
-    switch (effectiveDatePreset) {
+    switch (datePreset) {
       case "today":
         return { startDate: todayStr, endDate: todayStr };
       case "7d":
@@ -140,7 +137,7 @@ export default function SalesMetricsPanel({ token, onOpenOrder, user }) {
       default:
         return { startDate: todayStr, endDate: todayStr };
     }
-  }, [effectiveDatePreset, customStart, customEnd, todayStr]);
+  }, [datePreset, customStart, customEnd, todayStr]);
 
   const convex = useConvex();
   const recordIO = useMutation(api.dbIOStats.recordIO);
@@ -197,51 +194,41 @@ export default function SalesMetricsPanel({ token, onOpenOrder, user }) {
       <h1 className="admin-page-title">Sales Metrics</h1>
 
       <div className="sales-metrics-filterbar">
-        {isAccounting ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span className="status-badge status-badge--new" style={{ fontSize: "13px", padding: "6px 12px" }}>
-              Sales Metrics — Today ({todayStr})
-            </span>
-          </div>
-        ) : (
-          <>
-            <div className="sales-metrics-segment-group">
-              {DATE_PRESETS.map((p) => (
-                <button
-                  key={p.value}
-                  className={`btn btn--segment ${effectiveDatePreset === p.value ? "btn--segment-active" : ""}`}
-                  onClick={() => setDatePreset(p.value)}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
+        <div className="sales-metrics-segment-group">
+          {DATE_PRESETS.map((p) => (
+            <button
+              key={p.value}
+              className={`btn btn--segment ${datePreset === p.value ? "btn--segment-active" : ""}`}
+              onClick={() => setDatePreset(p.value)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
 
-            {effectiveDatePreset === "custom" && (
-              <div className="sales-metrics-date-range">
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontSize: "11px" }}>From</label>
-                  <input
-                    type="date"
-                    className="form-input"
-                    value={customStart}
-                    max={customEnd}
-                    onChange={(e) => setCustomStart(e.target.value)}
-                  />
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontSize: "11px" }}>To</label>
-                  <input
-                    type="date"
-                    className="form-input"
-                    value={customEnd}
-                    min={customStart}
-                    onChange={(e) => setCustomEnd(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-          </>
+        {datePreset === "custom" && (
+          <div className="sales-metrics-date-range">
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label" style={{ fontSize: "11px" }}>From</label>
+              <input
+                type="date"
+                className="form-input"
+                value={customStart}
+                max={customEnd}
+                onChange={(e) => setCustomStart(e.target.value)}
+              />
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label" style={{ fontSize: "11px" }}>To</label>
+              <input
+                type="date"
+                className="form-input"
+                value={customEnd}
+                min={customStart}
+                onChange={(e) => setCustomEnd(e.target.value)}
+              />
+            </div>
+          </div>
         )}
 
         <div className="sales-metrics-segment-group">
