@@ -13,6 +13,7 @@ import type * as auth from "../auth.js";
 import type * as barcodeCounters from "../barcodeCounters.js";
 import type * as brands from "../brands.js";
 import type * as businessExpenses from "../businessExpenses.js";
+import type * as businessHealth from "../businessHealth.js";
 import type * as cart from "../cart.js";
 import type * as cashUp from "../cashUp.js";
 import type * as coupons from "../coupons.js";
@@ -67,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   barcodeCounters: typeof barcodeCounters;
   brands: typeof brands;
   businessExpenses: typeof businessExpenses;
+  businessHealth: typeof businessHealth;
   cart: typeof cart;
   cashUp: typeof cashUp;
   coupons: typeof coupons;

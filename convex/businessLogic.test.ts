@@ -863,5 +863,46 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
     paginationOpts: { numItems: 25, cursor: null },
   });
   expect(staffOrderHistory).toBeDefined();
+
+  // ─── 11. Receipt Search by Index & Business Health Metrics Tests ───
+  // Test receipt number point-lookup via by_receiptNumber index
+  const receiptTestOrderRes = await t.mutation(api.orders.createPhysicalOrder, {
+    token: staffToken,
+    customerName: "Jane Doe Receipt Test",
+    payments: [{ method: "physical", amount: 50000 }],
+    items: [{ productId: productId1, quantity: 1 }],
+    voucherItems: [],
+  });
+  expect(receiptTestOrderRes.success).toBe(true);
+  expect(receiptTestOrderRes.receiptNumber).toBeDefined();
+
+  const orderFoundByReceiptResult = await t.query(api.orders.getOrderByReceiptNumber, {
+    token: staffToken,
+    receiptNumber: receiptTestOrderRes.receiptNumber,
+  });
+  const orderFoundByReceipt = orderFoundByReceiptResult.data;
+  expect(orderFoundByReceipt).toBeDefined();
+  expect(orderFoundByReceipt?._id).toBe(receiptTestOrderRes.orderId);
+  expect(orderFoundByReceipt?.customerName).toBe("Jane Doe Receipt Test");
+
+  // Invalid receipt search returns null
+  const invalidReceiptResult = await t.query(api.orders.getOrderByReceiptNumber, {
+    token: staffToken,
+    receiptNumber: "RCP-INVALID-9999",
+  });
+  expect(invalidReceiptResult.data).toBeNull();
+
+  // Test Admin Business Health Metrics calculation
+  const bizHealthMetricsResult = await t.query(api.businessHealth.getBusinessHealthMetrics, {
+    token: adminToken,
+  });
+  const bizHealthMetrics = bizHealthMetricsResult.data;
+  expect(bizHealthMetrics).toBeDefined();
+  expect(bizHealthMetrics.grossRevenue).toBeGreaterThanOrEqual(50000);
+  expect(bizHealthMetrics.totalDailyExpenses).toBeGreaterThanOrEqual(15000);
+  expect(bizHealthMetrics.totalMajorExpenses).toBeGreaterThanOrEqual(45000);
+  expect(bizHealthMetrics.netRevenue).toBe(bizHealthMetrics.grossRevenue - bizHealthMetrics.totalExpenses);
 });
+
+
 

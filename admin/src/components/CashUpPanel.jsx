@@ -28,12 +28,29 @@ export default function CashUpPanel({ token }) {
   const addExpenseMutation = useMutation(api.cashUp.addCashUpExpense);
   const deleteExpenseMutation = useMutation(api.cashUp.deleteCashUpExpense);
 
-  // Reseed the form whenever the selected date's saved entry changes (or
-  // there's none yet, in which case fall back to a blank count sheet).
+  // Reseed the form whenever the selected date's saved entry or expected totals change.
+  // Automatically pre-fill Mobile Money and Card with system expected totals if no custom saved count exists,
+  // while keeping all fields fully editable.
   useEffect(() => {
     if (cashUp === undefined) return;
-    setCounts(cashUp.entry ? cashUp.entry.physicalCounts : EMPTY_COUNTS);
-    setNotes(cashUp.entry ? cashUp.entry.notes || "" : "");
+    const exp = cashUp.expected || EMPTY_COUNTS;
+    if (cashUp.entry) {
+      setCounts({
+        physical: cashUp.entry.physicalCounts.physical ?? 0,
+        momo: cashUp.entry.physicalCounts.momo ?? exp.momo ?? 0,
+        card: cashUp.entry.physicalCounts.card ?? exp.card ?? 0,
+        voucher: cashUp.entry.physicalCounts.voucher ?? exp.voucher ?? 0,
+      });
+      setNotes(cashUp.entry.notes || "");
+    } else {
+      setCounts({
+        physical: 0,
+        momo: exp.momo || 0,
+        card: exp.card || 0,
+        voucher: exp.voucher || 0,
+      });
+      setNotes("");
+    }
   }, [cashUp]);
 
   const handleCountChange = (methodKey, value) => {
@@ -72,9 +89,12 @@ export default function CashUpPanel({ token }) {
     }
   };
 
-  const expected = cashUp?.expected;
+  const expected = cashUp?.expected || EMPTY_COUNTS;
   const expenses = cashUp?.expenses || [];
   const totalExpenses = expenses.reduce((sum, ex) => sum + ex.amount, 0);
+
+  // Daily expenses deduction from cash at end of day
+  const netExpectedCash = Math.max(0, expected.physical - totalExpenses);
 
   return (
     <div className="admin-tab-panel is-active">
@@ -105,6 +125,23 @@ export default function CashUpPanel({ token }) {
           <div className="section-header">
             <h2 className="section-title">Payment Reconciliation — {date}</h2>
           </div>
+
+          {/* Daily Expense Cash Deduction Callout Notice */}
+          {totalExpenses > 0 && (
+            <div
+              style={{
+                padding: "var(--space-3) var(--space-4)",
+                marginBottom: "var(--space-3)",
+                background: "var(--bg-secondary, #f8fafc)",
+                borderLeft: "4px solid var(--color-support-amber, #f59e0b)",
+                borderRadius: "var(--radius-sm, 4px)",
+                fontSize: "var(--body-sm, 14px)",
+              }}
+            >
+              <strong>Daily Expenses Deducted from Cash:</strong> UGX {totalExpenses.toLocaleString()} (Gross Cash Sales: UGX {expected.physical.toLocaleString()} → Expected Cash in Drawer: <strong>UGX {netExpectedCash.toLocaleString()}</strong>).
+            </div>
+          )}
+
           <div className="table-wrap">
             <table className="data-table">
               <thead>
@@ -117,13 +154,37 @@ export default function CashUpPanel({ token }) {
               </thead>
               <tbody>
                 {METHODS.map((m) => {
-                  const expectedAmount = expected ? expected[m.key] : 0;
+                  // For Cash (physical), deduct daily expenses from expected cash at end of day
+                  const expectedAmount = m.key === "physical" ? netExpectedCash : (expected[m.key] || 0);
                   const countedAmount = counts[m.key] ?? 0;
                   const discrepancy = countedAmount - expectedAmount;
                   return (
                     <tr key={m.key}>
-                      <td><strong>{m.label}</strong></td>
-                      <td>{expectedAmount.toLocaleString()}</td>
+                      <td>
+                        <strong>{m.label}</strong>
+                        {m.key === "physical" && totalExpenses > 0 && (
+                          <div style={{ fontSize: "var(--label-md, 12px)", color: "var(--text-tertiary)", fontWeight: 400 }}>
+                            (Net of UGX {totalExpenses.toLocaleString()} daily expenses)
+                          </div>
+                        )}
+                        {(m.key === "momo" || m.key === "card") && (
+                          <div style={{ fontSize: "var(--label-md, 12px)", color: "var(--color-support-green, #10b981)", fontWeight: 400 }}>
+                            Auto-filled from system
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        {m.key === "physical" && totalExpenses > 0 ? (
+                          <div>
+                            <div><strong>UGX {netExpectedCash.toLocaleString()}</strong></div>
+                            <div style={{ fontSize: "var(--label-md, 11px)", color: "var(--text-tertiary)" }}>
+                              Gross UGX {expected.physical.toLocaleString()} − UGX {totalExpenses.toLocaleString()}
+                            </div>
+                          </div>
+                        ) : (
+                          `UGX ${expectedAmount.toLocaleString()}`
+                        )}
+                      </td>
                       <td>
                         <input
                           type="number"

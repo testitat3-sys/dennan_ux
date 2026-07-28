@@ -614,6 +614,7 @@ export default defineSchema({
     .index("by_claimedBy", ["claimedBy"])
     .index("by_createdAt", ["createdAt"])
     .index("by_offlineOrderId", ["offlineOrderId"])
+    .index("by_receiptNumber", ["receiptNumber"])
     .index("by_status_and_createdAt", ["status", "createdAt"])
     .index("by_isWalkIn_and_createdAt", ["isWalkIn", "createdAt"]),
 

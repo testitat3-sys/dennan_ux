@@ -2482,3 +2482,39 @@ export const adminGetChannelTransactions = query({
   },
 });
 
+/**
+ * Fast $O(\log N)$ point-lookup for a single order by its human-readable receipt number.
+ * Used on the Returns tab to let staff quickly load past orders for returns/exchanges.
+ */
+export const getOrderByReceiptNumber = trackedQuery("orders.getOrderByReceiptNumber", {
+  args: { token: v.string(), receiptNumber: v.string() },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
+
+    const cleanReceiptNo = args.receiptNumber.trim();
+    if (!cleanReceiptNo) return null;
+
+    const order = await ctx.db
+      .query("orders")
+      .withIndex("by_receiptNumber", (q) => q.eq("receiptNumber", cleanReceiptNo))
+      .first();
+
+    if (!order) return null;
+
+    const items = await ctx.db
+      .query("orderItems")
+      .withIndex("by_order", (q) => q.eq("orderId", order._id))
+      .collect();
+
+    const orderUser = order.userId ? await ctx.db.get(order.userId) : null;
+    const customerName = order.deliveryAddress?.name || orderUser?.name || "Walk-in Customer";
+
+    return {
+      ...order,
+      customerName,
+      items,
+    };
+  },
+});
+
+

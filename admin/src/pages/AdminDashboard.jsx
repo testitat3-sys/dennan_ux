@@ -28,6 +28,7 @@ import ProductDisplaySettingsPanel from "../components/ProductDisplaySettingsPan
 import ThemeSettingsPanel from "../components/ThemeSettingsPanel";
 import DbIOPanel from "../components/DbIOPanel";
 import LeadsPanel from "../components/LeadsPanel";
+import BusinessHealthPanel from "../components/BusinessHealthPanel";
 import CashUpPanel from "../components/CashUpPanel";
 import BusinessExpensesPanel from "../components/BusinessExpensesPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
@@ -37,15 +38,15 @@ import {
   Tag,
   Users,
   UserCheck,
-  TrendingUp,
-  CheckCircle,
-  XCircle,
-  ChevronRight,
-  DollarSign,
   BarChart3,
   Calendar as CalendarIcon,
   RotateCcw,
   History,
+  TrendingUp,
+  DollarSign,
+  CheckCircle,
+  XCircle,
+  ChevronRight,
   ClipboardList,
   Search,
   Package,
@@ -54,7 +55,8 @@ import {
   Database,
   Wallet,
   ClipboardCheck,
-  Receipt
+  Receipt,
+  Activity
 } from "lucide-react";
 
 const LAST_TAB_KEY = "dennan_admin_last_tab";
@@ -234,6 +236,7 @@ export default function AdminDashboard() {
       label: "Overview",
       items: [
         { key: "overview", label: "Dashboard", icon: LayoutDashboard, isActive: activeTab === "overview", onClick: () => setActiveTab("overview") },
+        { key: "businessHealth", label: "Business Health", icon: Activity, isActive: activeTab === "businessHealth", onClick: () => setActiveTab("businessHealth") },
       ],
     },
     {
@@ -659,6 +662,11 @@ export default function AdminDashboard() {
           {/* TAB 12: BUSINESS EXPENSES */}
           {activeTab === "expenses" && (
             <BusinessExpensesPanel token={token} />
+          )}
+
+          {/* TAB 13: BUSINESS HEALTH & PROFITABILITY (Admin Only) */}
+          {activeTab === "businessHealth" && (
+            <BusinessHealthPanel token={token} user={user} />
           )}
         </main>
       </div>

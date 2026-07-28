@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import { usePaginatedQuery } from "convex/react";
+import { useNavigate } from "react-router-dom";
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import {
   CheckCircle,
   X,
   ChevronRight,
+  Search,
+  Receipt,
+  RotateCcw,
 } from "lucide-react";
 
 function getTodayDateStr() {
@@ -182,10 +187,20 @@ function ReturnDetailModal({ ret, onClose }) {
 
 /* ─── RETURNS PANEL ───────────────────────────────────────────── */
 export default function ReturnsPanel({ token }) {
+  const navigate = useNavigate();
   const todayStr = getTodayDateStr();
   const [startDate, setStartDate] = useState(todayStr);
   const [endDate, setEndDate] = useState(todayStr);
   const [selectedReturn, setSelectedReturn] = useState(null);
+
+  // Receipt Search State
+  const [receiptInput, setReceiptInput] = useState("");
+  const [searchedReceipt, setSearchedReceipt] = useState("");
+
+  const searchedOrder = useTrackedQuery(
+    api.orders.getOrderByReceiptNumber,
+    token && searchedReceipt ? { token, receiptNumber: searchedReceipt } : "skip"
+  );
 
   const { results: returns, status: returnsStatus, loadMore } = usePaginatedQuery(
     api.returns.getReturnsByDateRange,
@@ -200,9 +215,119 @@ export default function ReturnsPanel({ token }) {
     setEndDate(todayStr);
   };
 
+  const handleReceiptSearch = (e) => {
+    e.preventDefault();
+    const clean = receiptInput.trim();
+    if (clean) {
+      setSearchedReceipt(clean);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setReceiptInput("");
+    setSearchedReceipt("");
+  };
+
   return (
     <div className="admin-tab-panel is-active" style={{ fontFamily: "var(--font-sans)" }}>
       <h1 className="admin-page-title" style={{ fontFamily: "var(--font-editorial)" }}>Returns</h1>
+
+      {/* ── Order Receipt Search Section ── */}
+      <div
+        className="table-wrap"
+        style={{
+          padding: "var(--space-4)",
+          marginBottom: "var(--space-4)",
+          background: "var(--surface)",
+          borderRadius: "var(--radius-lg, 8px)",
+          border: "1px solid var(--surface-container-high)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-2)" }}>
+          <Receipt size={18} style={{ color: "var(--text-secondary)" }} />
+          <h2 style={{ fontSize: "var(--body-md, 15px)", fontWeight: 600, margin: 0, fontFamily: "var(--font-sans)", color: "var(--text-primary)" }}>
+            Lookup Past Order by Receipt Number
+          </h2>
+        </div>
+        <p style={{ fontSize: "var(--label-md, 13px)", color: "var(--text-tertiary)", margin: "0 0 var(--space-3) 0", fontFamily: "var(--font-sans)" }}>
+          Enter a receipt number (e.g. RCP-20260728-A1B2) to quickly locate an older order for processing a return or exchange.
+        </p>
+
+        <form onSubmit={handleReceiptSearch} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", alignItems: "center" }}>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="e.g. RCP-20260728-A1B2"
+            value={receiptInput}
+            onChange={(e) => setReceiptInput(e.target.value)}
+            style={{ flex: 1, minWidth: "240px", fontFamily: "var(--font-sans)" }}
+          />
+          <button type="submit" className="btn btn--primary btn--md" style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-sans)" }}>
+            <Search size={16} /> Find Order
+          </button>
+          {searchedReceipt && (
+            <button type="button" className="btn btn--secondary btn--md" onClick={handleClearSearch} style={{ fontFamily: "var(--font-sans)" }}>
+              Clear
+            </button>
+          )}
+        </form>
+
+        {/* ── Search Result Card ── */}
+        {searchedReceipt && (
+          <div style={{ marginTop: "var(--space-3)" }}>
+            {searchedOrder === undefined ? (
+              <div style={{ fontSize: "var(--body-sm)", color: "var(--text-tertiary)", padding: "var(--space-2)" }}>
+                Searching indexed database for receipt {searchedReceipt}...
+              </div>
+            ) : searchedOrder === null ? (
+              <div style={{ padding: "var(--space-3)", background: "var(--color-support-red-light, #fef2f2)", color: "var(--color-support-red, #ef4444)", borderRadius: "var(--radius-md, 6px)", fontSize: "var(--body-sm)" }}>
+                No order found matching receipt number <strong>{searchedReceipt}</strong>. Please verify the receipt code.
+              </div>
+            ) : (
+              <div
+                style={{
+                  padding: "var(--space-4)",
+                  background: "var(--surface-container-low, var(--surface))",
+                  borderRadius: "var(--radius-md, 6px)",
+                  border: "1px solid var(--surface-container-high)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "var(--space-3)",
+                }}
+              >
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+                    <strong style={{ fontSize: "var(--body-md)", fontFamily: "var(--font-body-heavy)", color: "var(--text-primary)" }}>{searchedOrder.customerName}</strong>
+                    <span className="status-badge status-badge--done" style={{ fontFamily: "var(--font-sans)" }}>
+                      {searchedOrder.receiptNumber || searchedReceipt}
+                    </span>
+                    <span className="status-badge status-badge--new" style={{ fontFamily: "var(--font-sans)" }}>
+                      {searchedOrder.status}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "var(--body-sm)", color: "var(--text-secondary)", marginTop: "4px" }}>
+                    Placed on {new Date(searchedOrder.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    {" · "}Total: <strong>UGX {(searchedOrder.grandTotal || 0).toLocaleString()}</strong>
+                  </div>
+                  <div style={{ fontSize: "var(--label-md)", color: "var(--text-tertiary)", marginTop: "2px" }}>
+                    Items: {searchedOrder.items?.map((i) => `${i.productName} (x${i.quantity})`).join(", ") || "N/A"}
+                  </div>
+                </div>
+
+                <button
+                  className="btn btn--primary btn--md"
+                  onClick={() => navigate(`/admin/orders/${searchedOrder._id}/exchange`)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-sans)" }}
+                >
+                  <RotateCcw size={16} /> Process Return / Exchange
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* ── Date filter bar ── */}
       <div

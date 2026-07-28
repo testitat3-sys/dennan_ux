@@ -16,6 +16,7 @@ import {
   ShoppingCart,
   Wallet,
   Receipt,
+  Activity,
 } from "lucide-react";
 
 /**
@@ -33,7 +34,10 @@ export function getReturnPageSidebarGroups(role, navigate) {
       {
         id: "overview",
         label: "Overview",
-        items: [{ key: "overview", label: "Dashboard", icon: LayoutDashboard, onClick: go("overview") }],
+        items: [
+          { key: "overview", label: "Dashboard", icon: LayoutDashboard, onClick: go("overview") },
+          { key: "businessHealth", label: "Business Health", icon: Activity, onClick: go("businessHealth") },
+        ],
       },
       {
         id: "salesOrders",
