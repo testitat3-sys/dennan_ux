@@ -3,6 +3,7 @@ import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import OrderDetailModal from "../components/OrderDetailModal";
+import ReceiptModal from "../components/ReceiptModal";
 import SalesMetricsPanel from "../components/SalesMetricsPanel";
 import OrderHistoryPanel from "../components/OrderHistoryPanel";
 import CashUpPanel from "../components/CashUpPanel";
@@ -20,6 +21,29 @@ export default function AccountingDashboard() {
 
   const [viewingOrder, setViewingOrder] = useState(null);
   const [pendingOrderId, setPendingOrderId] = useState(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [lastReceipt, setLastReceipt] = useState(null);
+
+  const buildReceiptFromOrder = (order) => ({
+    orderId: order._id,
+    receiptNumber: order.receiptNumber,
+    date: new Date(order.createdAt),
+    cashier: order.claimantName || user?.name || "Accounting",
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    items: order.items?.map(i => ({
+      name: i.productName,
+      quantity: i.quantity,
+      price: i.unitPrice,
+    })) || [],
+    payments: order.payments || [],
+    subtotal: order.subtotal,
+    discountAmount: order.discountAmount || 0,
+    deliveryFee: order.deliveryFee || 0,
+    couponApplied: order.couponApplied,
+    total: order.grandTotal,
+  });
+
   const pendingOrderDetail = useTrackedQuery(
     api.orders.getOrderDetailById,
     pendingOrderId ? { token, orderId: pendingOrderId } : "skip"
@@ -119,7 +143,16 @@ export default function AccountingDashboard() {
         <OrderDetailModal
           order={viewingOrder}
           onClose={() => setViewingOrder(null)}
+          onPrintReceipt={(order) => { setLastReceipt(buildReceiptFromOrder(order)); setShowReceipt(true); }}
           token={token}
+        />
+      )}
+
+      {/* Receipt Modal */}
+      {showReceipt && lastReceipt && (
+        <ReceiptModal
+          receipt={lastReceipt}
+          onClose={() => setShowReceipt(false)}
         />
       )}
     </div>

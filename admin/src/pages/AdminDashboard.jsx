@@ -11,6 +11,7 @@ import OfflineBanner from "../components/OfflineBanner";
 import Sidebar from "../components/Sidebar";
 import CustomerActivityModal from "../components/CustomerActivityModal";
 import OrderDetailModal from "../components/OrderDetailModal";
+import ReceiptModal from "../components/ReceiptModal";
 import HandoverModal from "../components/HandoverModal";
 import DeliveryFailureModal from "../components/DeliveryFailureModal";
 import RemindersWidget from "../components/RemindersWidget";
@@ -153,6 +154,28 @@ export default function AdminDashboard() {
   // Fulfillment actions on the order detail modal (Order History / Calendar entry points)
   const [handoverOrder, setHandoverOrder] = useState(null);
   const [failureOrder, setFailureOrder] = useState(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [lastReceipt, setLastReceipt] = useState(null);
+
+  const buildReceiptFromOrder = (order) => ({
+    orderId: order._id,
+    receiptNumber: order.receiptNumber,
+    date: new Date(order.createdAt),
+    cashier: order.claimantName || user?.name || "Admin",
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    items: order.items?.map(i => ({
+      name: i.productName,
+      quantity: i.quantity,
+      price: i.unitPrice,
+    })) || [],
+    payments: order.payments || [],
+    subtotal: order.subtotal,
+    discountAmount: order.discountAmount || 0,
+    deliveryFee: order.deliveryFee || 0,
+    couponApplied: order.couponApplied,
+    total: order.grandTotal,
+  });
   const claimOrderMutation = useMutation(api.orders.claimOrder);
   const handoverMutation = useMutation(api.orders.handoverToDelivery);
   const completeOrderMutation = useMutation(api.orders.completeOrder);
@@ -690,6 +713,7 @@ export default function AdminDashboard() {
           onClose={() => setViewingOrder(null)}
           onOpenReturn={(order) => navigate(`/admin/orders/${order._id}/exchange`)}
           onClaim={(id) => { handleClaimOrder(id); setViewingOrder(null); }}
+          onPrintReceipt={(order) => { setLastReceipt(buildReceiptFromOrder(order)); setShowReceipt(true); }}
           onDispatch={() => { setHandoverOrder(viewingOrder); setViewingOrder(null); }}
           onComplete={(id) => { handleCompleteOrder(id); setViewingOrder(null); }}
           onMarkFailed={(order) => { setFailureOrder(order); setViewingOrder(null); }}
@@ -715,6 +739,14 @@ export default function AdminDashboard() {
           order={failureOrder}
           onClose={() => setFailureOrder(null)}
           onSubmit={handleReportDeliveryFailure}
+        />
+      )}
+
+      {/* Receipt Modal */}
+      {showReceipt && lastReceipt && (
+        <ReceiptModal
+          receipt={lastReceipt}
+          onClose={() => setShowReceipt(false)}
         />
       )}
 

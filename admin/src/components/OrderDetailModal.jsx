@@ -224,6 +224,15 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, onClaim
             {/* Quick Actions */}
             <div className="customer-info-box">
               <h4>Fulfillment Actions</h4>
+              {onPrintReceipt && (
+                <button
+                  className="btn btn--outline btn--md btn--full-width"
+                  onClick={() => onPrintReceipt(order)}
+                >
+                  <span className="btn-icon btn-icon--left"><Printer size={16} /></span>
+                  Print Receipt
+                </button>
+              )}
               {order.status === "preparing" && onClaim && (
                 <button
                   className="btn btn--primary btn--md btn--full-width"
@@ -233,27 +242,14 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, onClaim
                   Claim Order
                 </button>
               )}
-              {order.status === "packing" && (
-                <>
-                  {onPrintReceipt && (
-                    <button
-                      className="btn btn--outline btn--md btn--full-width"
-                      onClick={() => onPrintReceipt(order)}
-                    >
-                      <span className="btn-icon btn-icon--left"><Printer size={16} /></span>
-                      Print Receipt
-                    </button>
-                  )}
-                  {onDispatch && (
-                    <button
-                      className="btn btn--primary btn--md btn--full-width"
-                      onClick={() => onDispatch(order._id)}
-                    >
-                      <span className="btn-icon btn-icon--left"><Truck size={16} /></span>
-                      Dispatch
-                    </button>
-                  )}
-                </>
+              {order.status === "packing" && onDispatch && (
+                <button
+                  className="btn btn--primary btn--md btn--full-width"
+                  onClick={() => onDispatch(order._id)}
+                >
+                  <span className="btn-icon btn-icon--left"><Truck size={16} /></span>
+                  Dispatch
+                </button>
               )}
               {order.status === "dispatched" && (
                 <>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { usePaginatedQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import OrderDetailModal from "./OrderDetailModal";
+import ReceiptModal from "./ReceiptModal";
 import HandoverModal from "./HandoverModal";
 import DeliveryFailureModal from "./DeliveryFailureModal";
 import LiveTimer from "./LiveTimer";
@@ -42,6 +43,28 @@ export default function OnlineOrdersPanel({ token }) {
   const [viewingOrder, setViewingOrder] = useState(null);
   const [handoverOrderId, setHandoverOrderId] = useState(null);
   const [failureOrder, setFailureOrder] = useState(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [lastReceipt, setLastReceipt] = useState(null);
+
+  const buildReceiptFromOrder = (order) => ({
+    orderId: order._id,
+    receiptNumber: order.receiptNumber,
+    date: new Date(order.createdAt),
+    cashier: order.claimantName || "Staff",
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    items: order.items?.map(i => ({
+      name: i.productName,
+      quantity: i.quantity,
+      price: i.unitPrice,
+    })) || [],
+    payments: order.payments || [],
+    subtotal: order.subtotal,
+    discountAmount: order.discountAmount || 0,
+    deliveryFee: order.deliveryFee || 0,
+    couponApplied: order.couponApplied,
+    total: order.grandTotal,
+  });
 
   const { results: ordersList, status: ordersStatus, loadMore: loadMoreOrders } = usePaginatedQuery(
     api.orders.getOrdersForStaff,
@@ -210,6 +233,7 @@ export default function OnlineOrdersPanel({ token }) {
           onClose={() => setViewingOrder(null)}
           onOpenReturn={(order) => navigate(`/admin/orders/${order._id}/exchange`)}
           onClaim={(id) => { handleClaimOrder(id); setViewingOrder(null); }}
+          onPrintReceipt={(order) => { setLastReceipt(buildReceiptFromOrder(order)); setShowReceipt(true); }}
           onDispatch={(id) => { setViewingOrder(null); setHandoverOrderId(id); }}
           onComplete={(id) => { handleCompleteOrder(id); setViewingOrder(null); }}
           onMarkFailed={(order) => { setViewingOrder(null); setFailureOrder(order); }}
@@ -235,6 +259,14 @@ export default function OnlineOrdersPanel({ token }) {
           order={failureOrder}
           onClose={() => setFailureOrder(null)}
           onSubmit={handleReportDeliveryFailure}
+        />
+      )}
+
+      {/* Receipt Modal */}
+      {showReceipt && lastReceipt && (
+        <ReceiptModal
+          receipt={lastReceipt}
+          onClose={() => setShowReceipt(false)}
         />
       )}
     </div>
