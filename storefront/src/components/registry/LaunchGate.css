@@ -66,6 +66,13 @@
   max-height: 100%;
   object-fit: contain;
   margin: 0 auto;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.launch-gate__hero-image:hover {
+  transform: scale(1.015);
+  opacity: 0.96;
 }
 
 /* ─── Form band ──────────────────────────────────────────────────────── */

@@ -6,6 +6,7 @@ import Button from '../ui/Button';
 import Toast from '../ui/Toast';
 import OfferCountdownBanner from './OfferCountdownBanner';
 import { useLeadCapture } from '../../context/LeadCaptureContext';
+import { identifyUser, trackEvent } from '../../utils/analytics';
 import {
   STAGE_OPTIONS,
   validateNotifySignup,
@@ -42,6 +43,13 @@ const LaunchGate = () => {
   const showPhone = revealStep >= 3 || Boolean(email || phone);
   const showSubmit = revealStep >= 4 || Boolean(email || phone);
 
+  const scrollToForm = () => {
+    const formElement = document.getElementById('launch-gate-form');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const next = validateNotifySignup({ firstName, lastName, email, phone, stage });
@@ -51,14 +59,17 @@ const LaunchGate = () => {
     setLoading(true);
     try {
       const localPhone = phone.replace(/\s+/g, '').trim().replace(/^0/, '');
+      const fullPhone = `+256${localPhone}`;
       await submitNotifySignup({
         email: email.trim(),
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phone: `+256${localPhone}`,
+        phone: fullPhone,
         stage,
         source: 'launch',
       });
+      identifyUser(fullPhone, `${firstName.trim()} ${lastName.trim()}`);
+      trackEvent('launch_lead_captured', { stage });
       markLeadCaptured();
     } catch (err) {
       console.error('[LaunchGate] submitNotifySignup error:', err);
@@ -75,6 +86,15 @@ const LaunchGate = () => {
           className="launch-gate__hero-image"
           src="/assets/launch_offers_2.png"
           alt="Launch Offers"
+          onClick={scrollToForm}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              scrollToForm();
+            }
+          }}
         />
       </Page.Section>
 
