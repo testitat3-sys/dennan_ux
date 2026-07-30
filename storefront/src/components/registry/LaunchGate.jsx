@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from "@convex/_generated/api";
 import Page from '../ui/Page';
@@ -27,10 +27,20 @@ const LaunchGate = () => {
   const [toastMsg, setToastMsg] = useState('');
   const [revealStep, setRevealStep] = useState(0);
 
-  const showName = revealStep >= 1;
-  const showEmail = revealStep >= 2;
-  const showPhone = revealStep >= 3;
-  const showSubmit = revealStep >= 4;
+  useEffect(() => {
+    if (phone.trim().length > 0) {
+      setRevealStep((s) => Math.max(s, 4));
+    } else if (email.trim().length > 0) {
+      setRevealStep((s) => Math.max(s, 4));
+    } else if (firstName.trim().length > 0 || lastName.trim().length > 0) {
+      setRevealStep((s) => Math.max(s, 2));
+    }
+  }, [firstName, lastName, email, phone]);
+
+  const showName = revealStep >= 1 || Boolean(firstName || lastName);
+  const showEmail = revealStep >= 2 || Boolean(firstName || lastName || email);
+  const showPhone = revealStep >= 3 || Boolean(email || phone);
+  const showSubmit = revealStep >= 4 || Boolean(email || phone);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

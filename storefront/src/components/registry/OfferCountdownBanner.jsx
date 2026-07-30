@@ -46,7 +46,7 @@ const OfferCountdownBanner = () => {
 
   return (
     <div className="offer-countdown-banner">
-      Offer ends in: <span className="offer-countdown-banner__timer">{formatRemaining(remainingMs)}</span>
+      Some offers end in: <span className="offer-countdown-banner__timer">{formatRemaining(remainingMs)}</span>
     </div>
   );
 };

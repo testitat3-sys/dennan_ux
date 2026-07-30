@@ -97,12 +97,22 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (phone.trim().length > 0) {
+      setRevealStep((s) => Math.max(s, 4));
+    } else if (email.trim().length > 0) {
+      setRevealStep((s) => Math.max(s, 4));
+    } else if (firstName.trim().length > 0 || lastName.trim().length > 0) {
+      setRevealStep((s) => Math.max(s, 2));
+    }
+  }, [firstName, lastName, email, phone]);
+
   if (!isOpen) return null;
 
-  const showName = revealStep >= 1;
-  const showEmail = revealStep >= 2;
-  const showPhone = revealStep >= 3;
-  const showRest = revealStep >= 4;
+  const showName = revealStep >= 1 || Boolean(firstName || lastName);
+  const showEmail = revealStep >= 2 || Boolean(firstName || lastName || email);
+  const showPhone = revealStep >= 3 || Boolean(email || phone);
+  const showRest = revealStep >= 4 || Boolean(email || phone);
 
   const validate = () => {
     const next = {};
