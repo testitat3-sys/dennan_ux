@@ -29,14 +29,13 @@ const LaunchGate = () => {
   const [revealStep, setRevealStep] = useState(0);
 
   useEffect(() => {
-    if (phone.trim().length > 0) {
-      setRevealStep((s) => Math.max(s, 4));
-    } else if (email.trim().length > 0) {
-      setRevealStep((s) => Math.max(s, 4));
-    } else if (firstName.trim().length > 0 || lastName.trim().length > 0) {
-      setRevealStep((s) => Math.max(s, 2));
+    if (markLeadCaptured) {
+      markLeadCaptured();
     }
-  }, [firstName, lastName, email, phone]);
+  }, [markLeadCaptured]);
+
+  // Hide LaunchGate altogether while preserving component implementation
+  return null;
 
   const showName = revealStep >= 1 || Boolean(firstName || lastName);
   const showEmail = revealStep >= 2 || Boolean(firstName || lastName || email);

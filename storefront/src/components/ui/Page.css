@@ -7,7 +7,7 @@
 .page {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   box-sizing: border-box;
 
   /* Hard enforcement: Outer container cannot have margin */

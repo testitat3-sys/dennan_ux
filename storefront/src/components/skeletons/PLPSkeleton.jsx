@@ -6,7 +6,7 @@ import './PLPSkeleton.css';
 
 const PLPSkeleton = () => {
   return (
-    <Page noPaddingTop={true} padding="inset" bottomSpacing="loose" aria-hidden="true">
+    <Page data-skeleton="true" noPaddingTop={true} padding="inset" bottomSpacing="loose" aria-hidden="true">
       {/* Hero Section Skeleton */}
       <Page.Section as="header" fullBleed className="plp-skel__hero">
         <div className="plp-skel__hero-bg skeleton-shimmer" />

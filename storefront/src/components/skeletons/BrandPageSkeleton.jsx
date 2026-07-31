@@ -7,7 +7,7 @@ import './BrandPageSkeleton.css';
 
 const BrandPageSkeleton = () => {
   return (
-    <Page noPaddingTop={true} padding="inset" bottomSpacing="loose" aria-hidden="true" className="brand-page-skel">
+    <Page data-skeleton="true" noPaddingTop={true} padding="inset" bottomSpacing="loose" aria-hidden="true" className="brand-page-skel">
       {/* Brand Hero Skeleton — flat background, breadcrumb + title bars only, no photo shimmer */}
       <Page.Section as="header" fullBleed className="brand-hero-skel">
         <div className="brand-hero-skel__breadcrumb skeleton-shimmer" />

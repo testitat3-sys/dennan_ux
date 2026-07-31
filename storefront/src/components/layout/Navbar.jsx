@@ -127,6 +127,7 @@ const Navbar = () => {
   const [desktopSuggestions, setDesktopSuggestions] = useState([]);
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState(-1);
   const desktopSearchRef = useRef(null);
+  const navRef = useRef(null);
   let timeoutId = null;
 
   useEffect(() => {
@@ -149,6 +150,22 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
+
+  useEffect(() => {
+    const updateNavOffset = () => {
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        document.documentElement.style.setProperty('--nav-offset', navHidden ? '0px' : '56px');
+      } else {
+        const height = navRef.current ? navRef.current.offsetHeight : 68;
+        document.documentElement.style.setProperty('--nav-offset', `${height}px`);
+      }
+    };
+
+    updateNavOffset();
+    window.addEventListener('resize', updateNavOffset);
+    return () => window.removeEventListener('resize', updateNavOffset);
+  }, [navHidden]);
 
   const handleAccountClick = () => {
     if (user) {
@@ -294,7 +311,7 @@ const Navbar = () => {
 
   return (
     <>
-    <nav className={`nav ${navHidden ? 'nav--hidden' : ''}`}>
+    <nav ref={navRef} className={`nav ${navHidden ? 'nav--hidden' : ''}`}>
       <button 
         className="btn btn--ghost nav__mobile-menu-trigger" 
         onClick={toggleMenu}

@@ -23,6 +23,7 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, onClaim
 
   const getStatusModifier = (status) => {
     switch (status) {
+      case "pending_cod":
       case "preparing": return "new";
       case "packing": return "packing";
       case "dispatched": return "dispatched";
@@ -233,7 +234,7 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, onClaim
                   Print Receipt
                 </button>
               )}
-              {order.status === "preparing" && onClaim && (
+              {(order.status === "preparing" || order.status === "pending_cod") && onClaim && (
                 <button
                   className="btn btn--primary btn--md btn--full-width"
                   onClick={() => onClaim(order._id)}
@@ -273,7 +274,7 @@ export default function OrderDetailModal({ order, onClose, onOpenReturn, onClaim
                   )}
                 </>
               )}
-              {!["preparing", "packing", "dispatched"].includes(order.status) && onOpenReturn && (
+              {!["preparing", "pending_cod", "packing", "dispatched"].includes(order.status) && onOpenReturn && (
                 <button
                   className="btn btn--secondary btn--md btn--full-width"
                   onClick={() => onOpenReturn(order)}

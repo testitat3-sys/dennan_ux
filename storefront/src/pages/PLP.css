@@ -502,3 +502,21 @@
   border-top: 1px solid var(--surface-container-high);
   background: var(--surface-container-low);
 }
+
+/* ─── LAUNCH PAGE STICKY BANNER ───────────────────────────────────── */
+.launch-page__sticky-banner {
+  position: sticky;
+  top: var(--nav-offset, 68px);
+  z-index: 990;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  margin-bottom: var(--space-2);
+  transition: top 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 768px) {
+  .launch-page__sticky-banner {
+    top: var(--nav-offset, 56px);
+  }
+}

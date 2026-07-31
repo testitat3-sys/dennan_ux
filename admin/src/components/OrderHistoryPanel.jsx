@@ -5,6 +5,7 @@ import { Eye, Download } from "lucide-react";
 
 function getStatusModifier(status) {
   switch (status) {
+    case "pending_cod":
     case "preparing": return "new";
     case "packing": return "packing";
     case "dispatched": return "dispatched";

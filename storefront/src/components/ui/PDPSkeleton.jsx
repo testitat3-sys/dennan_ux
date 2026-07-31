@@ -3,7 +3,7 @@ import './PDPSkeleton.css';
 
 const PDPSkeleton = () => {
   return (
-    <div className="pdp-skeleton">
+    <div className="pdp-skeleton" data-skeleton="true">
       <div className="pdp-skeleton__container">
         {/* Breadcrumb Skeleton */}
         <div className="pdp-skeleton__breadcrumbs skeleton-shimmer" />

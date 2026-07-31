@@ -18,6 +18,7 @@ import {
 
 function getStatusModifier(status) {
   switch (status) {
+    case "pending_cod":
     case "preparing": return "new";
     case "packing": return "packing";
     case "dispatched": return "dispatched";
@@ -126,7 +127,7 @@ export default function OnlineOrdersPanel({ token }) {
     }
   };
 
-  const pendingOrders = ordersList?.filter(o => o.status === "preparing") || [];
+  const pendingOrders = ordersList?.filter(o => o.status === "preparing" || o.status === "pending_cod") || [];
   const packingOrders = ordersList?.filter(o => o.status === "packing") || [];
   const dispatchedOrders = ordersList?.filter(o => o.status === "dispatched") || [];
   const deliveredOrders = ordersList?.filter(o => o.status === "delivered") || [];
@@ -203,7 +204,7 @@ export default function OnlineOrdersPanel({ token }) {
                 )}
 
                 <div className="order-row-timer">
-                  {order.status === "preparing" && (
+                  {(order.status === "preparing" || order.status === "pending_cod") && (
                     <LiveTimer sinceTimestamp={order.createdAt} label="Waiting" warningThresholdSeconds={300} />
                   )}
                   {order.status === "packing" && (

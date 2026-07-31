@@ -5,7 +5,7 @@ import './MobileHomeSkeleton.css';
 
 const MobileHomeSkeleton = () => {
   return (
-    <div className="mobile-home-skeleton" aria-hidden="true">
+    <div className="mobile-home-skeleton" data-skeleton="true" aria-hidden="true">
       {/* 1. Hero Section Skeleton - Content only, no image for mobile */}
       <section className="skel-m-hero">
         <div className="skel-m-hero__title">

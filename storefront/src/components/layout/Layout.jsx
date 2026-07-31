@@ -7,8 +7,8 @@ import { useLeadCapture } from '../../context/LeadCaptureContext';
 
 const Layout = ({ children }) => {
   const location = useLocation();
-  const { hasLeadInfo } = useLeadCapture();
-  const hideNavbar = location.pathname === '/launch' && !hasLeadInfo;
+  const { leadCaptured } = useLeadCapture();
+  const hideNavbar = false;
   const isHome = location.pathname === '/';
 
   return (

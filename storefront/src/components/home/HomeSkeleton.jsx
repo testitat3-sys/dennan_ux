@@ -5,7 +5,7 @@ import './HomeSkeleton.css';
 
 const HomeSkeleton = () => {
   return (
-    <div className="home-skeleton" aria-hidden="true">
+    <div className="home-skeleton" data-skeleton="true" aria-hidden="true">
       {/* 1. Hero Section Skeleton */}
       <section className="skeleton-hero">
         <div className="skeleton-hero__content">

@@ -782,7 +782,7 @@ export const getMyHandledOrders = query({
   },
 });
 
-const PENDING_STATUSES = ["preparing", "packing", "dispatched"] as const;
+const PENDING_STATUSES = ["preparing", "pending_cod", "packing", "dispatched"] as const;
 const DEFAULT_PENDING_ORDERS_LIMIT = 200;
 
 export const getPendingOrders = query({
@@ -834,7 +834,7 @@ export const claimOrder = mutation({
       throw new Error("Order not found");
     }
 
-    if (order.status !== "preparing") {
+    if (order.status !== "preparing" && order.status !== "pending_cod") {
       throw new Error(`Cannot claim order in status: ${order.status}`);
     }
 

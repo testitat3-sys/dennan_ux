@@ -1,8 +1,5 @@
 .offer-countdown-banner {
-  position: relative;
-  left: 50%;
-  width: 100vw;
-  margin-left: -50vw;
+  width: 100%;
   padding: var(--space-2) var(--space-4);
   background: var(--color-brand-accent);
   color: #000000;
@@ -10,6 +7,7 @@
   font-family: var(--font-sans);
   font-size: var(--body-sm);
   box-sizing: border-box;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .offer-countdown-banner__timer {

@@ -84,6 +84,8 @@
 }
 
 .launch-gate__band--form .offer-countdown-banner {
+  --offer-banner-top: 0px;
+  --offer-banner-top-mobile: 0px;
   margin-bottom: clamp(var(--space-8), 6vw, var(--space-12));
 }
 

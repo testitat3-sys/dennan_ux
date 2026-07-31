@@ -50,6 +50,7 @@ export const LeadCaptureProvider = ({ children }) => {
 
   const value = {
     hasLeadInfo,
+    leadCaptured,
     openLeadModal,
     markLeadCaptured: handleSuccess,
   };

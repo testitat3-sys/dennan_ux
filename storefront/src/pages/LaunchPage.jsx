@@ -34,7 +34,7 @@ const DISCOUNT_BUCKETS = [
 ];
 
 const LaunchPage = () => {
-  const { hasLeadInfo } = useLeadCapture();
+  const { leadCaptured } = useLeadCapture();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
 
@@ -48,17 +48,7 @@ const LaunchPage = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  if (!hasLeadInfo) {
-    return (
-      <Page noPaddingTop={true} padding="inset" bottomSpacing="none">
-        <Helmet>
-          <title>Launch Offers | Dennan</title>
-          <meta name="description" content={HERO.subtext} />
-        </Helmet>
-        <LaunchGate />
-      </Page>
-    );
-  }
+
 
   if (loading) {
     return <PLPSkeleton />;
@@ -140,9 +130,9 @@ const LaunchPage = () => {
         <meta name="description" content={HERO.subtext} />
       </Helmet>
 
-      <Page.Section fullBleed noPadding>
+      <div className="launch-page__sticky-banner">
         <OfferCountdownBanner />
-      </Page.Section>
+      </div>
 
       <Page.Section className="plp__search-wrap plp__search-wrap--no-hero">
         <SearchStrip initialQuery={query} products={discountedProducts} onSubmit={handleSearchSubmit} />

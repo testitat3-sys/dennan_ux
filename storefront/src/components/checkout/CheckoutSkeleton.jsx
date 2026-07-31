@@ -4,7 +4,7 @@ import './CheckoutSkeleton.css';
 
 const CheckoutSkeleton = () => {
   return (
-    <div className="checkout-page checkout-skeleton-page" aria-hidden="true">
+    <div className="checkout-page checkout-skeleton-page" data-skeleton="true" aria-hidden="true">
       <header className="checkout-header">
         <CheckoutStepper currentStep={2} />
       </header>
