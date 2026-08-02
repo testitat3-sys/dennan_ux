@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { verifyStaffSession } from "./staffAuth";
 import { applyStockCounterDelta } from "./stockCounters";
+import { recordStockHistory } from "./stockHistory";
 import { allocateNextBarcode } from "./barcodeCounters";
 import { parseDateStrToMs } from "./orders";
 import { trackedQuery, todayStr } from "./lib/ioTracking";
@@ -762,7 +763,12 @@ export const getProductOrdersInRange = query({
  * (applying a stock manager's admin-approved decrease). Propagates the delta
  * to every product sharing the same barcode and keeps stock counters in sync.
  */
-export async function applyInventoryDelta(ctx: MutationCtx, productId: Id<"products">, delta: number) {
+export async function applyInventoryDelta(
+  ctx: MutationCtx,
+  productId: Id<"products">,
+  delta: number,
+  actor?: { actorId?: Id<"users">; actorName: string; source: "manual_adjust" | "stock_request_approval"; note?: string }
+) {
   const product = await ctx.db.get(productId);
   if (!product) {
     throw new Error("Product not found");
@@ -802,6 +808,19 @@ export async function applyInventoryDelta(ctx: MutationCtx, productId: Id<"produ
       { inventory: newInv, reorderPoint: pToUpdate.reorderPoint },
       pToUpdate._id
     );
+    if (actor) {
+      await recordStockHistory(ctx, {
+        productId: pToUpdate._id,
+        productName: pToUpdate.name,
+        barcode: pToUpdate.barcode,
+        before: currentInv,
+        after: newInv,
+        source: actor.source,
+        actorId: actor.actorId,
+        actorName: actor.actorName,
+        note: actor.note,
+      });
+    }
   }
 
   return { success: true, newInventory: Math.max(0, newInventory) };
@@ -822,7 +841,11 @@ export const adjustStock = mutation({
       );
     }
 
-    return applyInventoryDelta(ctx, args.productId, args.delta);
+    return applyInventoryDelta(ctx, args.productId, args.delta, {
+      actorId: user._id,
+      actorName: user.name,
+      source: "manual_adjust",
+    });
   },
 });
 
@@ -1168,7 +1191,8 @@ export async function executeBulkCreateStoreOnlyProducts(
     tier?: string;
     description?: string;
     image?: string;
-  }>
+  }>,
+  actor?: { actorId?: Id<"users">; actorName: string }
 ) {
   const results: Array<{
     row: number;
@@ -1238,6 +1262,18 @@ export async function executeBulkCreateStoreOnlyProducts(
           { inventory: newInventory, reorderPoint: existing.reorderPoint },
           existing._id
         );
+        if (actor) {
+          await recordStockHistory(ctx, {
+            productId: existing._id,
+            productName: row.name.trim(),
+            barcode: trimmedBarcode,
+            before: existingInventory,
+            after: newInventory,
+            source: "bulk_upload",
+            actorId: actor.actorId,
+            actorName: actor.actorName,
+          });
+        }
 
         results.push({
           row: i,
@@ -1318,6 +1354,19 @@ export async function executeBulkCreateStoreOnlyProducts(
       });
 
       await applyStockCounterDelta(ctx, null, { inventory, reorderPoint: undefined });
+      if (actor && inventory > 0) {
+        await recordStockHistory(ctx, {
+          productId,
+          productName: row.name.trim(),
+          barcode,
+          before: 0,
+          after: inventory,
+          source: "bulk_upload",
+          actorId: actor.actorId,
+          actorName: actor.actorName,
+          note: "New product created via bulk upload",
+        });
+      }
       results.push({ row: i, success: true, outcome: "created", productId, barcode, name: row.name.trim(), price: row.price });
     } catch (err: any) {
       results.push({ row: i, success: false, outcome: "error", error: err.message });
@@ -1397,7 +1446,7 @@ export const bulkCreateStoreOnlyProducts = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
-    return await executeBulkCreateStoreOnlyProducts(ctx, args.rows);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin"]);
+    return await executeBulkCreateStoreOnlyProducts(ctx, args.rows, { actorId: user._id, actorName: user.name });
   },
 });

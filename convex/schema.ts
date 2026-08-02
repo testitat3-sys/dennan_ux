@@ -1096,6 +1096,34 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_productId_and_staffId_and_status", ["productId", "staffId", "status"]),
 
+  /**
+   * Append-only audit trail of stock-quantity changes, scoped to a single
+   * product per query — see convex/stockHistory.ts. Capped at 30 rows per
+   * product (self-pruned on insert) to keep this bounded regardless of
+   * catalogue size. Only covers manual adjustments, approved stock-decrease
+   * requests, and bulk uploads — sales/returns/ERP syncs are intentionally
+   * excluded (already visible via Order History / Returns).
+   */
+  stockHistory: defineTable({
+    productId: v.id("products"),
+    productName: v.string(),
+    barcode: v.optional(v.string()),
+    delta: v.number(),
+    beforeInventory: v.number(),
+    afterInventory: v.number(),
+    source: v.union(
+      v.literal("manual_adjust"),
+      v.literal("stock_request_approval"),
+      v.literal("bulk_upload")
+    ),
+    actorId: v.optional(v.id("users")),
+    actorName: v.string(),
+    note: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_productId_and_createdAt", ["productId", "createdAt"])
+    .index("by_createdAt", ["createdAt"])
+    .index("by_source_and_createdAt", ["source", "createdAt"]),
+
   customerActivities: defineTable({
     customerId: v.id("users"),
     orderId: v.optional(v.id("orders")),

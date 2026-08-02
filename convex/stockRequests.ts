@@ -471,7 +471,7 @@ export const approveStockRequestItem = trackedMutation("stockRequests.approveSto
       });
     } else if (item.kind === "bulk_upload") {
       if (!item.productData?.rows) throw new Error("Bulk upload payload is missing");
-      await executeBulkCreateStoreOnlyProducts(ctx, item.productData.rows);
+      await executeBulkCreateStoreOnlyProducts(ctx, item.productData.rows, { actorId: approver._id, actorName: approver.name });
       await ctx.db.patch(args.itemId, {
         status: "approved",
         approvedBy: approver._id,
@@ -479,7 +479,12 @@ export const approveStockRequestItem = trackedMutation("stockRequests.approveSto
       });
     } else {
       if (!item.productId) throw new Error("Product ID is required for inventory decrease");
-      await applyInventoryDelta(ctx, item.productId, item.requestedDelta);
+      await applyInventoryDelta(ctx, item.productId, item.requestedDelta, {
+        actorId: approver._id,
+        actorName: approver.name,
+        source: "stock_request_approval",
+        note: `Approved stock decrease requested by ${item.staffName}`,
+      });
       await ctx.db.patch(args.itemId, {
         status: "approved",
         approvedBy: approver._id,
@@ -557,7 +562,7 @@ export const approveStockRequestBatch = trackedMutation("stockRequests.approveSt
           });
         } else if (item.kind === "bulk_upload") {
           if (!item.productData?.rows) throw new Error("Bulk upload payload is missing");
-          await executeBulkCreateStoreOnlyProducts(ctx, item.productData.rows);
+          await executeBulkCreateStoreOnlyProducts(ctx, item.productData.rows, { actorId: approver._id, actorName: approver.name });
           await ctx.db.patch(item._id, {
             status: "approved",
             approvedBy: approver._id,
@@ -565,7 +570,12 @@ export const approveStockRequestBatch = trackedMutation("stockRequests.approveSt
           });
         } else {
           if (!item.productId) throw new Error("Product ID is required for inventory decrease");
-          await applyInventoryDelta(ctx, item.productId, item.requestedDelta);
+          await applyInventoryDelta(ctx, item.productId, item.requestedDelta, {
+            actorId: approver._id,
+            actorName: approver.name,
+            source: "stock_request_approval",
+            note: `Approved stock decrease requested by ${item.staffName}`,
+          });
           await ctx.db.patch(item._id, {
             status: "approved",
             approvedBy: approver._id,

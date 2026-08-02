@@ -4,8 +4,9 @@ import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useProductDisplayName } from "../hooks/useProductDisplayName";
 import { useToast } from "../hooks/useToast";
-import { Search, AlertCircle, Pencil, Plus, Minus, Check, Printer, Upload, X, Send } from "lucide-react";
+import { Search, AlertCircle, Pencil, Plus, Minus, Check, Printer, Upload, X, Send, History } from "lucide-react";
 import BarcodeLabelModal from "./BarcodeLabelModal";
+import StockHistoryModal from "./StockHistoryModal";
 import Toast from "./Toast";
 
 /** Derive a single overall status label for a submitted stock request group. */
@@ -59,8 +60,10 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
   const adjustStockMutation = useMutation(api.products.adjustStock);
   const [setTargetInputs, setSetTargetInputs] = useState({}); // productId -> string ("set to" value in progress)
   const [labelProduct, setLabelProduct] = useState(null);
+  const [historyProduct, setHistoryProduct] = useState(null);
 
   const isStockManager = user?.accountRole === "stockManager";
+  const isAdmin = user?.accountRole === "admin";
   const stageStockDecreaseMutation = useMutation(api.stockRequests.stageStockDecrease);
   const cancelStockDraftMutation = useMutation(api.stockRequests.cancelStockDraft);
   const submitStockRequestsMutation = useMutation(api.stockRequests.submitStockRequests);
@@ -363,6 +366,15 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
                           >
                             <Printer size={12} />
                           </button>
+                          {isAdmin && (
+                            <button
+                              className="btn btn--secondary btn--sm"
+                              onClick={() => setHistoryProduct(product)}
+                              title="View stock history"
+                            >
+                              <History size={12} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -489,6 +501,15 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
           product={labelProduct}
           displayName={getDisplayName(labelProduct)}
           onClose={() => setLabelProduct(null)}
+        />
+      )}
+
+      {historyProduct && (
+        <StockHistoryModal
+          product={historyProduct}
+          displayName={getDisplayName(historyProduct)}
+          token={token}
+          onClose={() => setHistoryProduct(null)}
         />
       )}
 

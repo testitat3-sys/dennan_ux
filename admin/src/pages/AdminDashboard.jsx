@@ -21,6 +21,7 @@ import ReturnsPanel from "../components/ReturnsPanel";
 import OrderHistoryPanel from "../components/OrderHistoryPanel";
 import StockManagerPanel from "../components/StockManagerPanel";
 import StockApprovalsPanel from "../components/StockApprovalsPanel";
+import StockHistoryPanel from "../components/StockHistoryPanel";
 import DiscountsPanel from "../components/DiscountsPanel";
 import ProductSalesPanel from "../components/ProductSalesPanel";
 import OnlineOrdersPanel from "../components/OnlineOrdersPanel";
@@ -278,6 +279,7 @@ export default function AdminDashboard() {
       items: [
         { key: "stock", label: "Stock Manager", icon: Boxes, isActive: activeTab === "stock", onClick: () => setActiveTab("stock") },
         { key: "stockApprovals", label: "Stock Approvals", icon: ClipboardCheck, badge: unseenStockRequestsCount > 0 ? unseenStockRequestsCount : undefined, isActive: activeTab === "stockApprovals", onClick: () => setActiveTab("stockApprovals") },
+        { key: "stockHistory", label: "Stock History", icon: History, isActive: activeTab === "stockHistory", onClick: () => setActiveTab("stockHistory") },
         { key: "salesReport", label: "Stock Report", icon: ClipboardList, isActive: activeTab === "salesReport", onClick: () => setActiveTab("salesReport") },
         { key: "discounts", label: "Discounts & Promos", icon: Tag, isActive: activeTab === "discounts", onClick: () => setActiveTab("discounts") },
       ],
@@ -516,6 +518,11 @@ export default function AdminDashboard() {
           {/* TAB: STOCK APPROVALS (admin review of stock manager reduction requests) */}
           {activeTab === "stockApprovals" && (
             <StockApprovalsPanel token={token} showToast={showToast} />
+          )}
+
+          {/* TAB: STOCK HISTORY (master log of all product stock changes) */}
+          {activeTab === "stockHistory" && (
+            <StockHistoryPanel token={token} />
           )}
 
           {/* TAB: STOCK REPORT (products sold in a date range) */}
