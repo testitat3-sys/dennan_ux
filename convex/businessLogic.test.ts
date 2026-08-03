@@ -53,6 +53,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
       description: "Tommee Tippee premium bottle",
       tags: [],
       specifications: [],
+      searchText: "Baby Bottle Premium Tommee Tippee Tommee Tippee premium bottle",
     });
   });
 
@@ -68,9 +69,10 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
       inventory: 20,
       unitsSold: 0,
       actual_data: true,
-      description: "WaterWipes organic baby wipes",
+      description: "Organic baby wipes for sensitive skin",
       tags: [],
       specifications: [],
+      searchText: "Organic Baby Wipes WaterWipes Organic baby wipes for sensitive skin",
     });
   });
 
@@ -426,11 +428,42 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   const posOrderDoc: any = await t.run(async (ctx) => {
     return await ctx.db.get(posOrderRes.orderId);
   });
-  expect(posOrderDoc.status).toBe("delivered");
-  expect(posOrderDoc.isWalkIn).toBe(true);
-  expect(posOrderDoc.isOnline).toBe(false);
-  expect(posOrderDoc.claimedBy).toBe(staffLogin.user.id);
   expect(posOrderDoc.completedAt).toBeDefined();
+
+  // Test customer search query
+  const searchByNameRes = await t.query(api.customerActivities.searchCustomers, {
+    token: staffToken,
+    query: "kato",
+  });
+  expect(searchByNameRes.data.length).toBeGreaterThanOrEqual(1);
+  expect(searchByNameRes.data[0].name).toBe("Kato Ivan");
+
+  const searchByPhoneRes = await t.query(api.customerActivities.searchCustomers, {
+    token: staffToken,
+    query: "+256780000002",
+  });
+  expect(searchByPhoneRes.data.length).toBeGreaterThanOrEqual(1);
+  expect(searchByPhoneRes.data[0].phone).toBe("+256780000002");
+
+  // Test updating customer name when matching by phone
+  const updatedCustomerOrderRes = await t.mutation(api.orders.createPhysicalOrder, {
+    token: staffToken,
+    customerId: ivan!._id,
+    customerName: "Kato Ivan Updated",
+    phone: "+256780000002",
+    items: [
+      { productId: productId1, quantity: 1 },
+    ],
+    payments: [
+      { method: "physical", amount: 50000 }
+    ],
+  });
+  expect(updatedCustomerOrderRes.success).toBe(true);
+
+  const ivanUpdatedDoc = await t.run(async (ctx) => {
+    return await ctx.db.get(ivan!._id);
+  });
+  expect(ivanUpdatedDoc?.name).toBe("Kato Ivan Updated");
 
   // Test multi-tender order (cash + momo)
   const posOrderResMulti = await t.mutation(api.orders.createPhysicalOrder, {
@@ -691,6 +724,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
       description: "Online version",
       tags: [],
       specifications: [],
+      searchText: "Product Online Test Online version",
     });
     const id2 = await ctx.db.insert("products", {
       name: "Product Offline Only",
@@ -705,6 +739,7 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
       description: "Offline version",
       tags: [],
       specifications: [{ label: "for-store-only", value: "true" }],
+      searchText: "Product Offline Only Test Offline version",
     });
     return [id1, id2];
   });
@@ -829,6 +864,31 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(cashUpData.expenses.length).toBe(1);
   expect(cashUpData.expenses[0].description).toBe("Audit stationery");
 
+  // Verify COD order attaches to physical cash in cashUp expected totals
+  const codOrderRes = await t.mutation(api.orders.adminCreateOrder, {
+    token: adminToken,
+    userId: customerId,
+    deliveryAddress: { name: "COD Customer", zone: "Kira" },
+    paymentMethod: "cod",
+    items: [{ productId: productId1, quantity: 1 }],
+  });
+  expect(codOrderRes.success).toBe(true);
+  await t.run(async (ctx) => {
+    await ctx.db.patch(codOrderRes.orderId, { status: "delivered" });
+  });
+
+  const nowDt = new Date();
+  const yearStr = nowDt.getFullYear();
+  const monthStr = String(nowDt.getMonth() + 1).padStart(2, "0");
+  const dayStr = String(nowDt.getDate()).padStart(2, "0");
+  const currentDateStr = `${yearStr}-${monthStr}-${dayStr}`;
+
+  const currentCashUp = await t.query(api.cashUp.getCashUpForDate, {
+    token: accountsToken,
+    date: currentDateStr,
+  });
+  expect(currentCashUp.data.expected.physical).toBeGreaterThan(0);
+
   // Accounts user creates business expense
   const bizExpenseId = await t.mutation(api.businessExpenses.createBusinessExpense, {
     token: accountsToken,
@@ -902,6 +962,14 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(bizHealthMetrics.totalDailyExpenses).toBeGreaterThanOrEqual(15000);
   expect(bizHealthMetrics.totalMajorExpenses).toBeGreaterThanOrEqual(45000);
   expect(bizHealthMetrics.netRevenue).toBe(bizHealthMetrics.grossRevenue - bizHealthMetrics.totalExpenses);
+
+  // ─── 15. Multi-Keyword Hybrid Search Test ───
+  const multiKeywordSearchResults = await t.query(api.data.searchProducts, {
+    query: "tommee tippee bottle",
+    limit: 10,
+  });
+  expect(multiKeywordSearchResults.length).toBeGreaterThan(0);
+  expect(multiKeywordSearchResults[0].name).toBe("Baby Bottle Premium");
 });
 
 

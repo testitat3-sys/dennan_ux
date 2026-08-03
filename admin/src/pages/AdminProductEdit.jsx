@@ -49,8 +49,9 @@ export default function AdminProductEdit() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { token, user } = useStaffAuth();
-  const fileInputRef = useRef(null);
   const isStockManager = user?.accountRole === "stockManager";
+  const isProductEditor = user?.accountRole === "productEditor";
+  const fileInputRef = useRef(null);
 
   const product = useQuery(
     api.products.getProductDetail,
@@ -316,9 +317,11 @@ export default function AdminProductEdit() {
 
     setIsSaving(true);
     try {
-      const inventoryDelta = inventoryNum - (product.inventory ?? 0);
-      if (inventoryDelta !== 0) {
-        await adjustStockMutation({ token, productId, delta: inventoryDelta });
+      if (!isProductEditor) {
+        const inventoryDelta = inventoryNum - (product.inventory ?? 0);
+        if (inventoryDelta !== 0) {
+          await adjustStockMutation({ token, productId, delta: inventoryDelta });
+        }
       }
       await updateProductMutation({
         token,
@@ -329,7 +332,7 @@ export default function AdminProductEdit() {
         price: price ? parseFloat(price) : originalPriceNum,
         originalPrice: originalPriceNum,
         costPrice: costPrice ? parseFloat(costPrice) : undefined,
-        reorderPoint: reorderPoint ? parseInt(reorderPoint) : undefined,
+        reorderPoint: !isProductEditor && reorderPoint ? parseInt(reorderPoint) : undefined,
         category: category || undefined,
         subCategory: subCategory.trim() || undefined,
         stage: stage || undefined,
@@ -755,23 +758,27 @@ export default function AdminProductEdit() {
                     <label className="form-label">Cost Price (UGX)</label>
                     <input type="number" className="form-input-box" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
                   </div>
-                  <div className="form-group flex-1">
-                    <label className="form-label">Reorder Point</label>
-                    <input type="number" className="form-input-box" value={reorderPoint} onChange={(e) => setReorderPoint(e.target.value)} />
-                  </div>
+                  {!isProductEditor && (
+                    <div className="form-group flex-1">
+                      <label className="form-label">Reorder Point</label>
+                      <input type="number" className="form-input-box" value={reorderPoint} onChange={(e) => setReorderPoint(e.target.value)} />
+                    </div>
+                  )}
                 </div>
-                <div className="product-edit-fields-row">
-                  <div className="form-group flex-1">
-                    <label className="form-label">Inventory</label>
-                    <input
-                      type="number"
-                      min="0"
-                      className="form-input-box"
-                      value={inventory}
-                      onChange={(e) => setInventory(e.target.value)}
-                    />
+                {!isProductEditor && (
+                  <div className="product-edit-fields-row">
+                    <div className="form-group flex-1">
+                      <label className="form-label">Inventory</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="form-input-box"
+                        value={inventory}
+                        onChange={(e) => setInventory(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="product-edit-card">

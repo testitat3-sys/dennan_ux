@@ -124,7 +124,16 @@ const LaunchPage = () => {
   };
 
   return (
-    <Page padding="inset" bottomSpacing="loose" noPaddingTop={true}>
+    <>
+      <div className="launch-page__hero-banner">
+        <img
+          src="/assets/launch_offers_home.png"
+          alt="Launch offers — up to UGX 190,000 off"
+          className="launch-page__hero-banner-image"
+        />
+      </div>
+
+      <Page padding="inset" bottomSpacing="loose" noPaddingTop={true}>
       <Helmet>
         <title>Launch Offers | Dennan</title>
         <meta name="description" content={HERO.subtext} />
@@ -274,7 +283,8 @@ const LaunchPage = () => {
         message={toastMessage}
         onClose={() => setShowToast(false)}
       />
-    </Page>
+      </Page>
+    </>
   );
 };
 

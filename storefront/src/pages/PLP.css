@@ -503,6 +503,29 @@
   background: var(--surface-container-low);
 }
 
+/* ─── LAUNCH PAGE HERO BANNER ────────────────────────────────────── */
+/* Rendered as a sibling of <Page> (see LaunchPage.jsx), directly under
+   the nav inside <main> — matches HomeOfferStrip's approach, so it's
+   naturally full-width with no page-inset padding to fight against. */
+.launch-page__hero-banner {
+  width: 100%;
+  background: #931963;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: clamp(120px, 20vw, 260px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.launch-page__hero-banner-image {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
 /* ─── LAUNCH PAGE STICKY BANNER ───────────────────────────────────── */
 .launch-page__sticky-banner {
   position: sticky;

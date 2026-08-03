@@ -1,7 +1,7 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
-import { slugify } from "./products";
+import { slugify, computeSearchText } from "./products";
 
 // Category mapping helper to convert legacy category strings to their strict union equivalents
 const CATEGORY_MAP: Record<string, string> = {
@@ -369,6 +369,49 @@ export const backfillProductBrandSlug = mutation({
 
     if (!result.isDone) {
       await ctx.scheduler.runAfter(0, api.migrations.backfillProductBrandSlug, {
+        cursor: result.continueCursor,
+      });
+    }
+
+    return { batchScanned: result.page.length, batchUpdated: updatedCount, isDone: result.isDone };
+  }
+});
+
+/**
+ * Migration Mutation: Backfills the `searchText` composite full-text field
+ * for existing product documents so they are immediately available in the
+ * `search_text` search index.
+ */
+export const backfillProductSearchText = mutation({
+  args: { cursor: v.optional(v.union(v.string(), v.null())) },
+  handler: async (ctx, args) => {
+    const BATCH_SIZE = 200;
+    const result = await ctx.db
+      .query("products")
+      .paginate({ numItems: BATCH_SIZE, cursor: args.cursor ?? null });
+
+    let updatedCount = 0;
+    for (const product of result.page) {
+      if (product.searchText === undefined) {
+        const text = computeSearchText({
+          name: product.name,
+          brand: product.brand,
+          category: product.category,
+          subCategory: product.subCategory,
+          description: product.description,
+          tags: product.tags,
+        });
+        await ctx.db.patch(product._id, { searchText: text });
+        updatedCount++;
+      }
+    }
+
+    console.log(
+      `[migrations.ts] backfillProductSearchText: updated ${updatedCount} of ${result.page.length} scanned this batch${result.isDone ? " (final batch)" : ""}.`
+    );
+
+    if (!result.isDone) {
+      await ctx.scheduler.runAfter(0, api.migrations.backfillProductSearchText, {
         cursor: result.continueCursor,
       });
     }

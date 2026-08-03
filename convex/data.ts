@@ -108,15 +108,104 @@ export const getProductsByStage = query({
 export const searchProducts = query({
   args: {
     query: v.string(),
-    limit: v.number(),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const results = await ctx.db
-      .query("products")
-      .withSearchIndex("search_name", (q) => q.search("name", args.query))
-      .take(args.limit);
+    const rawQuery = args.query.trim();
+    if (!rawQuery) return [];
+    const limit = args.limit || 50;
 
-    return results.filter((p) => shouldKeepProduct(p)).map(normalizeProductPrice);
+    // 1. Primary Pass: Storage-pushed Search via `search_text` search index
+    let candidates = await ctx.db
+      .query("products")
+      .withSearchIndex("search_text", (q) =>
+        q.search("searchText", rawQuery).eq("actual_data", true)
+      )
+      .take(limit);
+
+    // Fallback pass via `search_name` if `search_text` index returns 0 results
+    if (candidates.length === 0) {
+      candidates = await ctx.db
+        .query("products")
+        .withSearchIndex("search_name", (q) => q.search("name", rawQuery))
+        .take(limit);
+    }
+
+    // 2. Soft Keyword Fallback Pass:
+    // If strict full-query search returns 0 results, extract primary tokens and query search_text
+    const tokens = rawQuery.toLowerCase().split(/\s+/).filter((t) => t.length > 1);
+    if (candidates.length === 0 && tokens.length > 1) {
+      const primaryToken = tokens.reduce((a, b) => (a.length >= b.length ? a : b));
+      candidates = await ctx.db
+        .query("products")
+        .withSearchIndex("search_text", (q) =>
+          q.search("searchText", primaryToken).eq("actual_data", true)
+        )
+        .take(limit);
+    }
+
+    // 3. Central filter for store-active products & deduplication
+    const validProducts = candidates.filter((p) => shouldKeepProduct(p));
+    const uniqueMap = new Map<string, any>();
+    for (const p of validProducts) {
+      uniqueMap.set(p._id.toString(), p);
+    }
+    const uniqueCandidates = Array.from(uniqueMap.values());
+
+    // 4. Weighted Relevance Scoring & Re-ranking
+    const scored = uniqueCandidates.map((p) => {
+      let score = 0;
+      const name = (p.name || "").toLowerCase();
+      const brand = (p.brand || "").toLowerCase();
+      const category = (p.category || "").toLowerCase();
+      const subCategory = (p.subCategory || "").toLowerCase();
+      const description = (p.description || "").toLowerCase();
+      const tags = (p.tags || []).map((t: any) => t.text.toLowerCase()).join(" ");
+      const lowQuery = rawQuery.toLowerCase();
+
+      // Huge bonus for exact full phrase match in Title or Brand
+      if (name === lowQuery) score += 150;
+      else if (name.includes(lowQuery)) score += 100;
+      if (brand.includes(lowQuery)) score += 80;
+
+      // Token match scoring across distinct fields
+      let matchedTokenCount = 0;
+      for (const token of tokens) {
+        let matched = false;
+        if (name.includes(token)) {
+          score += 35;
+          matched = true;
+        }
+        if (brand.includes(token)) {
+          score += 25;
+          matched = true;
+        }
+        if (category.includes(token) || subCategory.includes(token)) {
+          score += 15;
+          matched = true;
+        }
+        if (tags.includes(token)) {
+          score += 10;
+          matched = true;
+        }
+        if (description.includes(token)) {
+          score += 5;
+          matched = true;
+        }
+        if (matched) matchedTokenCount++;
+      }
+
+      // Bonus ratio for matching more of the user's keywords
+      const matchRatio = tokens.length > 0 ? matchedTokenCount / tokens.length : 0;
+      score += matchRatio * 50;
+
+      return { product: p, score };
+    });
+
+    // Sort descending by relevance score
+    scored.sort((a, b) => b.score - a.score);
+
+    return scored.map((item) => normalizeProductPrice(item.product));
   },
 });
 

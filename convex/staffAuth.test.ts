@@ -13,6 +13,7 @@ test("staff auth session lifecycle", async () => {
   process.env.STAFF_PASSWORDS_JSON = JSON.stringify({
     matovu: "matovupassword",
     brian: "brianpassword",
+    jeremy: "Tiger$Raven84",
   });
 
   const t = convexTest(schema, modules);
@@ -88,4 +89,13 @@ test("staff auth session lifecycle", async () => {
   // 12. Verify logged out token is invalid
   const verifyLogoutResult = await t.query(api.staffAuth.verifyToken, { token: newToken });
   expect(verifyLogoutResult).toBeNull();
+
+  // 13. Test Jeremy login and productEditor account role
+  const jeremyLogin = await t.mutation(api.staffAuth.login, {
+    email: "jeremy@dennan.ug",
+    password: "Tiger$Raven84",
+  });
+  expect(jeremyLogin.token).toBeDefined();
+  expect(jeremyLogin.user.name).toBe("Jeremy");
+  expect(jeremyLogin.user.accountRole).toBe("productEditor");
 });

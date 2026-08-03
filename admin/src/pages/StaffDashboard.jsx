@@ -273,6 +273,29 @@ export default function StaffDashboard() {
     email: "",
     note: ""
   });
+  const [posSelectedCustomer, setPosSelectedCustomer] = useState(null);
+  const [debouncedCustomerQuery, setDebouncedCustomerQuery] = useState("");
+
+  // Debounce customer name/phone search query
+  useEffect(() => {
+    if (posSelectedCustomer) {
+      setDebouncedCustomerQuery("");
+      return;
+    }
+    const query = (posCustomer.name.trim().length >= 2 ? posCustomer.name.trim() : "") ||
+                  (posCustomer.phone.trim().length >= 3 ? posCustomer.phone.trim() : "");
+    const timer = setTimeout(() => {
+      setDebouncedCustomerQuery(query);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [posCustomer.name, posCustomer.phone, posSelectedCustomer]);
+
+  const customerSearchResults = useTrackedQuery(
+    api.customerActivities.searchCustomers,
+    debouncedCustomerQuery && debouncedCustomerQuery.length >= 2 && !posSelectedCustomer
+      ? { token, query: debouncedCustomerQuery }
+      : "skip"
+  );
   const [workedByStaffId, setWorkedByStaffId] = useState("");
   const [saleChannel, setSaleChannel] = useState("walk_in");
   const [deliveryLocation, setDeliveryLocation] = useState("");
@@ -365,6 +388,8 @@ export default function StaffDashboard() {
     setTenders([{ tempId: "default", method: "physical", amount: 0, momoPhone: "", cardOrderId: "", voucherCode: "" }]);
     setVoucherValidation({});
     setPosCustomer({ name: "", phone: "", email: "", note: "" });
+    setPosSelectedCustomer(null);
+    setDebouncedCustomerQuery("");
     setWorkedByStaffId("");
     setSaleChannel("walk_in");
     setDeliveryLocation("");
@@ -529,6 +554,7 @@ export default function StaffDashboard() {
       const offlineOrderId = crypto.randomUUID();
 
       const orderPayload = {
+        customerId: posSelectedCustomer?._id || undefined,
         customerName: posCustomer.name.trim(),
         phone: posCustomer.phone.trim() || undefined,
         email: posCustomer.email.trim() || undefined,
@@ -1047,6 +1073,34 @@ export default function StaffDashboard() {
                         </select>
                       </div>
 
+                      {posSelectedCustomer && (
+                        <div style={{
+                          padding: "10px 14px",
+                          borderRadius: "8px",
+                          background: "#e6f4ea",
+                          border: "1px solid #a8dab5",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "12px",
+                          fontSize: "13px",
+                          color: "#137333"
+                        }}>
+                          <div>
+                            <strong>✓ Linked Customer:</strong> {posSelectedCustomer.name}
+                            {posSelectedCustomer.phone ? ` (${posSelectedCustomer.phone})` : ""}
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn--secondary btn--sm"
+                            style={{ height: "24px", padding: "0 8px", fontSize: "11px" }}
+                            onClick={() => setPosSelectedCustomer(null)}
+                          >
+                            Unlink
+                          </button>
+                        </div>
+                      )}
+
                       <div className="form-group">
                         <label className="form-label">Customer Name</label>
                         <input
@@ -1054,7 +1108,10 @@ export default function StaffDashboard() {
                           className="form-input"
                           placeholder="e.g. Walk-in Customer"
                           value={posCustomer.name}
-                          onChange={(e) => setPosCustomer(prev => ({ ...prev, name: e.target.value }))}
+                          onChange={(e) => {
+                            setPosSelectedCustomer(null);
+                            setPosCustomer(prev => ({ ...prev, name: e.target.value }));
+                          }}
                           required
                           disabled={isCheckoutSubmitting}
                         />
@@ -1066,10 +1123,72 @@ export default function StaffDashboard() {
                           className="form-input"
                           placeholder="e.g. +256701..."
                           value={posCustomer.phone}
-                          onChange={(e) => setPosCustomer(prev => ({ ...prev, phone: e.target.value }))}
+                          onChange={(e) => {
+                            setPosSelectedCustomer(null);
+                            setPosCustomer(prev => ({ ...prev, phone: e.target.value }));
+                          }}
                           disabled={isCheckoutSubmitting}
                         />
                       </div>
+
+                      {/* Customer Search Matches Dropdown */}
+                      {!posSelectedCustomer && customerSearchResults && customerSearchResults.length > 0 && (
+                        <div style={{
+                          marginTop: "-8px",
+                          marginBottom: "16px",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          background: "#ffffff",
+                          border: "1px solid #e0e0e0",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                          position: "relative",
+                          zIndex: 10
+                        }}>
+                          <div style={{ fontSize: "11px", fontWeight: 600, color: "#666", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                            Matching Existing Customers ({customerSearchResults.length})
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "180px", overflowY: "auto" }}>
+                            {customerSearchResults.map(cust => (
+                              <div
+                                key={cust._id}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  padding: "8px",
+                                  borderRadius: "6px",
+                                  background: "#f8f9fa",
+                                  fontSize: "12px"
+                                }}
+                              >
+                                <div>
+                                  <div style={{ fontWeight: 600, color: "#111" }}>{cust.name}</div>
+                                  <div style={{ color: "#666", fontSize: "11px" }}>
+                                    {cust.phone || "No phone registered"} {cust.email ? `· ${cust.email}` : ""}
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="btn btn--primary btn--sm"
+                                  style={{ padding: "4px 8px", fontSize: "11px" }}
+                                  onClick={() => {
+                                    setPosSelectedCustomer(cust);
+                                    setPosCustomer(prev => ({
+                                      ...prev,
+                                      name: cust.name,
+                                      phone: cust.phone || prev.phone,
+                                      email: cust.email || prev.email
+                                    }));
+                                  }}
+                                >
+                                  {!cust.phone && posCustomer.phone ? "Add Phone & Select" : (cust.name !== posCustomer.name && posCustomer.name ? "Update Name & Select" : "Use Customer")}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="form-group">
                         <label className="form-label">Customer Email (Optional)</label>
                         <input
@@ -1381,6 +1500,11 @@ export default function StaffDashboard() {
           {/* TAB 5: RETURNS / EXCHANGES */}
           {activeTab === "returns" && (
             <ReturnsPanel token={token} showToast={showToast} />
+          )}
+
+          {/* TAB 6: BALANCE BOOKS */}
+          {activeTab === "cashup" && (
+            <CashUpPanel token={token} />
           )}
         </main>
       </div>

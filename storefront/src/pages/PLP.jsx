@@ -128,9 +128,16 @@ const PLP = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
 
-  // Live fetch products and stage list from Convex
+  // Live fetch products, stage list, and hybrid search results from Convex
   const allProducts = useTrackedQuery(api.data.getProducts, {}, 20);
   const stages = useQuery(api.data.getStages);
+
+  // Dedicated hybrid server search query when `query` param exists
+  const trimmedQuery = query.trim();
+  const searchResults = useQuery(
+    api.data.searchProducts,
+    trimmedQuery ? { query: trimmedQuery, limit: 50 } : 'skip'
+  );
 
   const [activeFilters, setActiveFilters] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -141,7 +148,7 @@ const PLP = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [showStoreRequestModal, setShowStoreRequestModal] = useState(false);
 
-  const loading = allProducts === undefined || stages === undefined;
+  const loading = allProducts === undefined || stages === undefined || (!!trimmedQuery && searchResults === undefined);
 
   // Clear sidebar filters whenever the user navigates to a different stage or collection
   useEffect(() => {
@@ -166,9 +173,10 @@ const PLP = () => {
 
   // Main client-side filtering effect
   useEffect(() => {
-    if (loading || !allProducts) return;
+    if (loading) return;
 
-    let results = [...allProducts];
+    // Use backend hybrid search results when available for a search query, otherwise all products
+    let results = (query && searchResults && Array.isArray(searchResults)) ? [...searchResults] : [...(allProducts || [])];
 
     // Filter developer product: show ONLY on developer queries, hide otherwise
     const isDevQuery = query && ['500', 'developer', 'dev', 'dev-product', 'developer-product', 'developer product'].includes(query.toLowerCase().trim());
@@ -177,7 +185,6 @@ const PLP = () => {
     } else {
       results = results.filter(p => p.slug !== 'developer-product');
     }
-
 
     // 1. Filter by collection or stage
     if (collectionId) {
@@ -196,21 +203,27 @@ const PLP = () => {
       results = results.filter(p => p.stage === stageId);
     }
 
-    // 2. Apply search query
-    if (query) {
+    // 2. If search query present and not using searchResults, apply multi-token relevance filter as fallback
+    if (query && (!searchResults || searchResults.length === 0)) {
       const lowQuery = query.toLowerCase().trim();
       const mappedCategory = SUBCATEGORY_MAP[lowQuery];
 
-      // If search matches a mapped subcategory category, we do not double-filter by the query text,
-      // as that might return empty results due to randomized seed name generations.
       if (!mappedCategory) {
-        results = results.filter(p =>
-          p.name.toLowerCase().includes(lowQuery) ||
-          p.category.toLowerCase().includes(lowQuery) ||
-          p.description?.toLowerCase().includes(lowQuery) ||
-          (p.tier && p.tier.toLowerCase().includes(lowQuery)) ||
-          p.tags?.some(t => t.text.toLowerCase().includes(lowQuery))
-        );
+        const tokens = lowQuery.split(/\s+/).filter(Boolean);
+        results = results.filter(p => {
+          const name = (p.name || '').toLowerCase();
+          const brand = (p.brand || '').toLowerCase();
+          const category = (p.category || '').toLowerCase();
+          const subCategory = (p.subCategory || '').toLowerCase();
+          const description = (p.description || '').toLowerCase();
+          const tags = (p.tags || []).map(t => (t.text || '').toLowerCase()).join(' ');
+
+          // Match if at least one token matches any field
+          return tokens.some(t =>
+            name.includes(t) || brand.includes(t) || category.includes(t) ||
+            subCategory.includes(t) || description.includes(t) || tags.includes(t)
+          );
+        });
       }
     }
 
@@ -235,7 +248,7 @@ const PLP = () => {
 
     setFilteredProducts(results);
     window.scrollTo(0, 0);
-  }, [stageId, collectionId, activeFilters, query, allProducts, loading]);
+  }, [stageId, collectionId, activeFilters, query, allProducts, searchResults, loading]);
 
   // Auto-open the "request from physical store" modal shortly after a real,
   // user-driven search/filter yields zero results — once per browser session

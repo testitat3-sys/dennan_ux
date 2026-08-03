@@ -39,7 +39,7 @@ export async function allocateNextBarcode(ctx: MutationCtx): Promise<string> {
 export const getNextBarcodePreview = query({
   args: { token: v.string() },
   handler: async (ctx: QueryCtx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
     const year = new Date().getFullYear();
     const counter = await ctx.db
       .query("barcodeCounters")

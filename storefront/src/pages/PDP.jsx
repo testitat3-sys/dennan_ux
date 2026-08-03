@@ -13,7 +13,7 @@ import Button from '../components/ui/Button';
 import PDPSkeleton from '../components/ui/PDPSkeleton';
 import Page from '../components/ui/Page';
 import Card from '../components/ui/Card';
-import { Flame, Heart } from 'lucide-react';
+import { Flame, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import ReviewModal from '../components/checkout/ReviewModal';
 import DefaultProductImage from '../components/products/DefaultProductImage';
 import './PDP.css';
@@ -345,7 +345,7 @@ const PDP = () => {
             ))}
           </div>
 
-          {/* Main image */}
+          {/* Main image / carousel */}
           <div className="pdp__main-image">
             {!loadedImages[activeImageIndex] && displayImages[activeImageIndex] !== 'placeholder' && (
               <div className="skeleton-shimmer" style={{
@@ -368,6 +368,37 @@ const PDP = () => {
                 onLoad={() => setLoadedImages(prev => ({ ...prev, [activeImageIndex]: true }))}
                 onError={() => setLoadedImages(prev => ({ ...prev, [activeImageIndex]: true }))}
               />
+            )}
+            {displayImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="pdp__carousel-nav pdp__carousel-nav--prev"
+                  aria-label="Previous image"
+                  onClick={() => setActiveImageIndex((idx) => (idx - 1 + displayImages.length) % displayImages.length)}
+                >
+                  <ChevronLeft size={22} />
+                </button>
+                <button
+                  type="button"
+                  className="pdp__carousel-nav pdp__carousel-nav--next"
+                  aria-label="Next image"
+                  onClick={() => setActiveImageIndex((idx) => (idx + 1) % displayImages.length)}
+                >
+                  <ChevronRight size={22} />
+                </button>
+                <div className="pdp__carousel-dots">
+                  {displayImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`pdp__carousel-dot ${activeImageIndex === idx ? 'is-active' : ''}`}
+                      aria-label={`Go to image ${idx + 1}`}
+                      onClick={() => setActiveImageIndex(idx)}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </div>
 

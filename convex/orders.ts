@@ -1229,6 +1229,7 @@ export const createPhysicalOrder = mutation({
     // (e.g. a retried sync after the client crashed before removing the queue entry),
     // return the existing order instead of inserting a duplicate + double stock decrement.
     offlineOrderId: v.optional(v.string()),
+    customerId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
     // Gated: Staff or Admin
@@ -1300,7 +1301,11 @@ export const createPhysicalOrder = mutation({
     // 1. Resolve or create user
     let customerUser = null;
 
-    if (args.phone) {
+    if (args.customerId) {
+      customerUser = await ctx.db.get(args.customerId);
+    }
+
+    if (!customerUser && args.phone) {
       customerUser = await ctx.db
         .query("users")
         .withIndex("by_phone", (q) => q.eq("phone", args.phone))
@@ -1314,7 +1319,33 @@ export const createPhysicalOrder = mutation({
         .first();
     }
 
-    if (!customerUser) {
+    if (!customerUser && args.customerName) {
+      const nameMatch = await ctx.db
+        .query("users")
+        .withSearchIndex("search_name", (q) => q.search("name", args.customerName))
+        .first();
+      if (nameMatch && !nameMatch.accountRole) {
+        customerUser = nameMatch;
+      }
+    }
+
+    if (customerUser) {
+      // Patch existing user if name, phone, or email are provided and updated
+      const userPatches: Record<string, any> = {};
+      if (args.customerName && args.customerName.trim() !== "" && args.customerName.trim() !== customerUser.name) {
+        userPatches.name = args.customerName.trim();
+      }
+      if (args.phone && args.phone.trim() !== "" && args.phone.trim() !== customerUser.phone) {
+        userPatches.phone = args.phone.trim();
+      }
+      if (args.email && args.email.trim() !== "" && args.email.trim() !== customerUser.email) {
+        userPatches.email = args.email.trim();
+      }
+      if (Object.keys(userPatches).length > 0) {
+        await ctx.db.patch(customerUser._id, userPatches);
+        customerUser = { ...customerUser, ...userPatches };
+      }
+    } else {
       // Create bare walk-in customer user document
       const newUserId = await ctx.db.insert("users", {
         name: args.customerName,
@@ -1906,12 +1937,13 @@ export const adminGetDailySalesDashboard = query({
     for (const order of todayStats.completedInRange) {
       const tenders = attributeOrderPayments(order, paymentsByOrderId);
       for (const t of tenders) {
-        const existing = breakdownMap.get(t.method);
+        const methodKey = t.method === "cod" ? "physical" : t.method;
+        const existing = breakdownMap.get(methodKey);
         if (existing) {
           existing.amount += t.amount;
           existing.count += 1;
         } else {
-          breakdownMap.set(t.method, { method: t.method, amount: t.amount, count: 1 });
+          breakdownMap.set(methodKey, { method: methodKey, amount: t.amount, count: 1 });
         }
       }
     }
@@ -2097,7 +2129,7 @@ export const adminGetSalesAndProductAnalytics = trackedQuery("orders.adminGetSal
       for (const order of orders) {
         let tenders = attributeOrderPayments(order, paymentsByOrderId);
         if (args.paymentMethod) {
-          tenders = tenders.filter((t) => t.method === args.paymentMethod);
+          tenders = tenders.filter((t) => (t.method === "cod" ? "physical" : t.method) === args.paymentMethod);
         }
         if (tenders.length === 0) continue;
 
@@ -2110,12 +2142,13 @@ export const adminGetSalesAndProductAnalytics = trackedQuery("orders.adminGetSal
           const amount = t.amount * ratio;
           totalSales += amount;
           orderAmount += amount;
-          const existing = byMethodMap.get(t.method);
+          const methodKey = t.method === "cod" ? "physical" : t.method;
+          const existing = byMethodMap.get(methodKey);
           if (existing) {
             existing.amount += amount;
             existing.count += 1;
           } else {
-            byMethodMap.set(t.method, { method: t.method, amount, count: 1 });
+            byMethodMap.set(methodKey, { method: methodKey, amount, count: 1 });
           }
         }
 
@@ -2389,7 +2422,7 @@ export const adminGetPaymentMethodTransactions = query({
     const rows: Row[] = [];
     for (const order of ordersInRange) {
       const tenders = attributeOrderPayments(order, paymentsByOrderId).filter(
-        (t) => t.method === args.paymentMethod
+        (t) => (t.method === "cod" ? "physical" : t.method) === args.paymentMethod
       );
       for (const t of tenders) {
         rows.push({

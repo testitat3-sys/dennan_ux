@@ -38,8 +38,9 @@ async function computeExpectedTotalsForDate(ctx: QueryCtx, date: string): Promis
   for (const order of completedOrders) {
     const tenders = attributeOrderPayments(order, paymentsByOrderId);
     for (const t of tenders) {
-      if (t.method in totals) {
-        totals[t.method as keyof MethodTotals] += t.amount;
+      const methodKey = t.method === "cod" ? "physical" : t.method;
+      if (methodKey in totals) {
+        totals[methodKey as keyof MethodTotals] += t.amount;
       }
     }
   }

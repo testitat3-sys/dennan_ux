@@ -234,6 +234,14 @@ async function upsertSingleProduct(ctx: any, fields: any) {
     unitsSold: fields.unitsSold,
     actual_data: fields.actual_data ?? true, // DEFAULTS TO TRUE FOR WEBHOOK UPLOADS
     updatedAt: Date.now(),
+    searchText: computeSearchText({
+      name: fields.name,
+      brand,
+      category: fields.category ?? "Feeding/Nursing Essentials",
+      subCategory: fields.subCategory,
+      description: fields.description ?? "",
+      tags: fields.tags ?? [],
+    }),
   };
 
   if (existing) {
@@ -260,6 +268,25 @@ async function upsertSingleProduct(ctx: any, fields: any) {
 }
 
 export const ONLY_FETCH_ACTUAL_DATA = true;
+
+export function computeSearchText(fields: {
+  name?: string;
+  brand?: string;
+  category?: string;
+  subCategory?: string;
+  description?: string;
+  tags?: Array<{ text?: string; type?: string }>;
+}): string {
+  const parts = [
+    fields.name || "",
+    fields.brand || "",
+    fields.category || "",
+    fields.subCategory || "",
+    fields.description || "",
+    fields.tags?.map((t) => t?.text || "").join(" ") || "",
+  ];
+  return parts.filter(Boolean).join(" ");
+}
 
 export function shouldKeepProduct(product: any, includeStoreOnly: boolean = false): boolean {
   if (!product) return false;
@@ -449,7 +476,21 @@ export const getProductsByBrand = query({
   },
 });
 
-function toStockRow(p: any) {
+function toStockRow(p: any, isProductEditor = false) {
+  if (isProductEditor) {
+    return {
+      id: p._id,
+      name: p.name,
+      old_name: p.old_name,
+      sku: p.sku,
+      barcode: p.barcode,
+      price: p.price ?? 0,
+      costPrice: p.costPrice ?? 0,
+      category: p.category,
+      brand: p.brand,
+      isActive: p.isActive,
+    };
+  }
   return {
     id: p._id,
     name: p.name,
@@ -474,7 +515,8 @@ export const getStockList = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
+    const isProductEditor = user.accountRole === "productEditor";
 
     const result = await ctx.db
       .query("products")
@@ -483,7 +525,7 @@ export const getStockList = query({
 
     return {
       ...result,
-      page: result.page.filter((p) => shouldKeepProduct(p, true)).map(toStockRow),
+      page: result.page.filter((p) => shouldKeepProduct(p, true)).map((p) => toStockRow(p, isProductEditor)),
     };
   },
 });
@@ -500,13 +542,14 @@ export const searchStockList = query({
     searchTerm: v.string(),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
+    const isProductEditor = user.accountRole === "productEditor";
 
     const term = args.searchTerm.trim();
     if (!term) return [];
 
     const SEARCH_CAP = 100;
-    const upperBound = term + "￿";
+    const upperBound = term + "\uFFFF";
 
     const [byName, byBarcode, bySku] = await Promise.all([
       ctx.db
@@ -528,7 +571,7 @@ export const searchStockList = query({
       if (shouldKeepProduct(p, true)) merged.set(p._id.toString(), p);
     }
 
-    return Array.from(merged.values()).slice(0, SEARCH_CAP).map(toStockRow);
+    return Array.from(merged.values()).slice(0, SEARCH_CAP).map((p) => toStockRow(p, isProductEditor));
   },
 });
 
@@ -925,7 +968,7 @@ export const generateCloudinarySignature = mutation({
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
 
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
     const apiKey = process.env.CLOUDINARY_API_KEY;
@@ -954,11 +997,15 @@ export const getProductDetail = query({
     productId: v.id("products"),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
 
     const product = await ctx.db.get(args.productId);
     if (!product) {
       throw new Error("Product not found");
+    }
+    if (user.accountRole === "productEditor") {
+      const { inventory, storeStock, warehouseStock, reorderPoint, ...rest } = product as any;
+      return rest;
     }
     return product;
   },
@@ -1007,7 +1054,7 @@ export const updateProduct = mutation({
     isStoreOnly: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
 
     const { token, productId, isStoreOnly, ...fields } = args;
     const product = await ctx.db.get(productId);
@@ -1351,6 +1398,12 @@ export async function executeBulkCreateStoreOnlyProducts(
         inventory,
         unitsSold: 0,
         updatedAt: Date.now(),
+        searchText: computeSearchText({
+          name: row.name.trim(),
+          brand,
+          category: row.category?.trim(),
+          description: row.description?.trim(),
+        }),
       });
 
       await applyStockCounterDelta(ctx, null, { inventory, reorderPoint: undefined });
@@ -1416,14 +1469,15 @@ export const createProduct = mutation({
     initialInventory: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin"]);
-    return await executeCreateProduct(ctx, args);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "productEditor"]);
+    const createArgs = user.accountRole === "productEditor" ? { ...args, initialInventory: 0 } : args;
+    return await executeCreateProduct(ctx, createArgs);
   },
 });
 
 /**
  * Bulk-creates "back store" products from an xlsx upload. Directly accessible
- * only by admins; stock managers submit bulk_upload requests via stockRequests.
+ * by admins and product editors.
  */
 export const bulkCreateStoreOnlyProducts = mutation({
   args: {
@@ -1446,7 +1500,10 @@ export const bulkCreateStoreOnlyProducts = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const { user } = await verifyStaffSession(ctx, args.token, ["admin"]);
-    return await executeBulkCreateStoreOnlyProducts(ctx, args.rows, { actorId: user._id, actorName: user.name });
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "productEditor"]);
+    const rows = user.accountRole === "productEditor"
+      ? args.rows.map((r) => ({ ...r, quantity: 0 }))
+      : args.rows;
+    return await executeBulkCreateStoreOnlyProducts(ctx, rows, { actorId: user._id, actorName: user.name });
   },
 });

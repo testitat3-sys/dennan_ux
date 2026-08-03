@@ -102,7 +102,7 @@ export default defineSchema({
     engagementScore: v.optional(v.number()),
     recentlyViewed: v.optional(v.array(v.id("products"))), // Capped array of recently viewed product IDs
     password: v.optional(v.string()),
-    accountRole: v.optional(v.union(v.literal("staff"), v.literal("admin"), v.literal("accounting"), v.literal("stockManager"))),
+    accountRole: v.optional(v.union(v.literal("staff"), v.literal("admin"), v.literal("accounting"), v.literal("stockManager"), v.literal("productEditor"))),
     customerNotes: v.optional(v.string()),
     isWalkIn: v.optional(v.boolean()),
     // Free-form dictionary for tagging account-level facts that don't warrant
@@ -128,7 +128,8 @@ export default defineSchema({
     .index("by_accountRole", ["accountRole"])
     .index("by_importSource", ["importSource"])
     .index("by_preLaunchId", ["preLaunchId"])
-    .index("by_phone", ["phone"]),
+    .index("by_phone", ["phone"])
+    .searchIndex("search_name", { searchField: "name" }),
 
   testLinks: defineTable({
     email: v.string(),
@@ -279,6 +280,12 @@ export default defineSchema({
      * product and normalizing `brand` in JS on every request.
      */
     brandSlug: v.optional(v.string()),
+
+    /**
+     * Denormalized composite text field combining name, brand, category, subCategory,
+     * tags, and description for multi-keyword full-text search.
+     */
+    searchText: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_barcode", ["barcode"])
@@ -300,7 +307,8 @@ export default defineSchema({
     .index("by_stage_and_actual_data", ["stage", "actual_data"])
     .index("by_isMostLoved_and_actual_data", ["isMostLoved", "actual_data"])
     .index("by_isCuratedForYou_and_actual_data", ["isCuratedForYou", "actual_data"])
-    .searchIndex("search_name", { searchField: "name" }),
+    .searchIndex("search_name", { searchField: "name" })
+    .searchIndex("search_text", { searchField: "searchText", filterFields: ["actual_data"] }),
 
   // ─── Product Reviews ─────────────────────────────────────────────────────────
 

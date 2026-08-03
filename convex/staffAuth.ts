@@ -36,7 +36,7 @@ function generateSessionToken(): string {
 export async function verifyStaffSession(
   ctx: { db: any },
   token: string,
-  allowedRoles?: ("staff" | "admin" | "accounting" | "stockManager")[]
+  allowedRoles?: ("staff" | "admin" | "accounting" | "stockManager" | "productEditor")[]
 ): Promise<{ user: Doc<"users">; session: Doc<"staffSessions"> }> {
   if (!token) {
     throw new Error("Unauthorized: Session token is missing");
@@ -88,7 +88,7 @@ export const seedStaff = mutation({
       }
     }
 
-    // 1. Fetch existing users with accountRole set (staff or admin)
+    // 1. Fetch existing users with accountRole set (staff, admin, etc.)
     const staff = await ctx.db
       .query("users")
       .withIndex("by_accountRole", (q) => q.eq("accountRole", "staff"))
@@ -105,7 +105,11 @@ export const seedStaff = mutation({
       .query("users")
       .withIndex("by_accountRole", (q) => q.eq("accountRole", "stockManager"))
       .collect();
-    const existingStaffAndAdmin = [...staff, ...admins, ...accounting, ...stockManagers];
+    const productEditors = await ctx.db
+      .query("users")
+      .withIndex("by_accountRole", (q) => q.eq("accountRole", "productEditor"))
+      .collect();
+    const existingStaffAndAdmin = [...staff, ...admins, ...accounting, ...stockManagers, ...productEditors];
 
     // 2. Delete leaked/stale staff accounts whose emails do not end with @dennan.ug
     for (const u of existingStaffAndAdmin) {
@@ -134,6 +138,7 @@ export const seedStaff = mutation({
       { name: "Cashier", email: "cashier@dennan.ug", key: "cashier", accountRole: "staff" as const },
       { name: "Accounts", email: "accounts@dennan.ug", key: "accounts", accountRole: "accounting" as const },
       { name: "Stock", email: "stock@dennan.ug", key: "stock", accountRole: "stockManager" as const },
+      { name: "Jeremy", email: "jeremy@dennan.ug", key: "jeremy", accountRole: "productEditor" as const },
     ];
 
     let seededCount = 0;

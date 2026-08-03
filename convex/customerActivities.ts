@@ -300,3 +300,106 @@ export const deleteActivity = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Real-time, resource-efficient customer search by name or phone.
+ * Uses search_name search index for name search and by_phone index for phone search.
+ * Bounded with .take(6) and deduplicated.
+ */
+export const searchCustomers = trackedQuery("customerActivities.searchCustomers", {
+  args: {
+    token: v.string(),
+    query: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    const cleanQuery = args.query.trim();
+    if (cleanQuery.length < 2) {
+      return [];
+    }
+
+    // 1. Search by name using searchIndex (case-insensitive full-text search)
+    const nameMatches = await ctx.db
+      .query("users")
+      .withSearchIndex("search_name", (q) => q.search("name", cleanQuery))
+      .take(6);
+
+    // 2. Search by phone using by_phone index
+    let phoneMatches: typeof nameMatches = [];
+    const cleanPhoneDigits = cleanQuery.replace(/[^\d+]/g, "");
+    if (cleanPhoneDigits.length >= 3) {
+      phoneMatches = await ctx.db
+        .query("users")
+        .withIndex("by_phone", (q) => q.eq("phone", cleanQuery))
+        .take(6);
+
+      // If exact phone match yielded nothing and query has enough digits, check partial phone match
+      if (phoneMatches.length === 0 && cleanPhoneDigits.length >= 4) {
+        const customers = await ctx.db
+          .query("users")
+          .withIndex("by_accountRole", (q) => q.eq("accountRole", undefined))
+          .take(100);
+        phoneMatches = customers.filter(
+          (c) => c.phone && c.phone.replace(/[^\d]/g, "").includes(cleanPhoneDigits)
+        );
+      }
+    }
+
+    // 3. Combine and deduplicate, retaining only non-staff customers
+    const combinedMap = new Map();
+    [...nameMatches, ...phoneMatches].forEach((u) => {
+      if (!u.accountRole) {
+        combinedMap.set(u._id.toString(), u);
+      }
+    });
+
+    return Array.from(combinedMap.values())
+      .slice(0, 6)
+      .map((c) => ({
+        _id: c._id,
+        name: c.name ?? "Unnamed Customer",
+        phone: c.phone ?? "",
+        email: c.email ?? "",
+        isWalkIn: !!c.isWalkIn,
+        customerNotes: c.customerNotes ?? "",
+      }));
+  },
+});
+
+/**
+ * Updates a customer's phone number or name directly.
+ */
+export const patchCustomerContact = mutation({
+  args: {
+    token: v.string(),
+    customerId: v.id("users"),
+    name: v.optional(v.string()),
+    phone: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    const targetUser = await ctx.db.get(args.customerId);
+    if (!targetUser) {
+      throw new Error("Customer user not found");
+    }
+    if (targetUser.accountRole) {
+      throw new Error("Cannot update contact info for staff/admin user");
+    }
+
+    const updates: Record<string, any> = {};
+    if (args.name !== undefined && args.name.trim() !== "") {
+      updates.name = args.name.trim();
+    }
+    if (args.phone !== undefined) {
+      updates.phone = args.phone.trim() || undefined;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await ctx.db.patch(args.customerId, updates);
+    }
+
+    return { success: true };
+  },
+});

@@ -9,6 +9,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 import AccountingDashboard from './pages/AccountingDashboard';
 import StockManagerDashboard from './pages/StockManagerDashboard';
+import ProductEditorDashboard from './pages/ProductEditorDashboard';
 import AdminProductEdit from './pages/AdminProductEdit';
 import AdminProductCreate from './pages/AdminProductCreate';
 import AdminBulkProductUpload from './pages/AdminBulkProductUpload';
@@ -110,6 +111,8 @@ function MainRouter() {
           <AccountingDashboard />
         ) : user.accountRole === "stockManager" ? (
           <StockManagerDashboard />
+        ) : user.accountRole === "productEditor" ? (
+          <ProductEditorDashboard />
         ) : (
           <div style={{
             display: 'flex',
@@ -133,7 +136,7 @@ function MainRouter() {
       <Route path="/admin/products/new" element={
         !user ? (
           <Navigate to="/login" replace />
-        ) : user.accountRole === "admin" || user.accountRole === "stockManager" ? (
+        ) : user.accountRole === "admin" || user.accountRole === "stockManager" || user.accountRole === "productEditor" ? (
           <AdminProductCreate />
         ) : (
           <Navigate to="/" replace />
@@ -144,7 +147,7 @@ function MainRouter() {
       <Route path="/admin/products/bulk-upload" element={
         !user ? (
           <Navigate to="/login" replace />
-        ) : user.accountRole === "admin" || user.accountRole === "stockManager" ? (
+        ) : user.accountRole === "admin" || user.accountRole === "stockManager" || user.accountRole === "productEditor" ? (
           <AdminBulkProductUpload />
         ) : (
           <Navigate to="/" replace />
@@ -155,7 +158,7 @@ function MainRouter() {
       <Route path="/admin/products/:productId" element={
         !user ? (
           <Navigate to="/login" replace />
-        ) : user.accountRole === "admin" || user.accountRole === "stockManager" ? (
+        ) : user.accountRole === "admin" || user.accountRole === "stockManager" || user.accountRole === "productEditor" ? (
           <AdminProductEdit />
         ) : (
           <Navigate to="/" replace />

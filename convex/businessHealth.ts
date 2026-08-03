@@ -39,10 +39,11 @@ export const getBusinessHealthMetrics = trackedQuery("businessHealth.getBusiness
       const tenders = attributeOrderPayments(order, paymentsByOrderId);
       for (const t of tenders) {
         grossRevenue += t.amount;
-        if (t.method === "physical") cashGrossRevenue += t.amount;
-        else if (t.method === "momo") momoRevenue += t.amount;
-        else if (t.method === "card") cardRevenue += t.amount;
-        else if (t.method === "voucher") voucherRevenue += t.amount;
+        const methodKey = t.method === "cod" ? "physical" : t.method;
+        if (methodKey === "physical") cashGrossRevenue += t.amount;
+        else if (methodKey === "momo") momoRevenue += t.amount;
+        else if (methodKey === "card") cardRevenue += t.amount;
+        else if (methodKey === "voucher") voucherRevenue += t.amount;
       }
     }
 
