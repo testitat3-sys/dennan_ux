@@ -145,6 +145,7 @@ export const stageStockDecrease = mutation({
     token: v.string(),
     productId: v.id("products"),
     requestedDelta: v.number(),
+    reasonCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { user } = await verifyStaffSession(ctx, args.token, ["stockManager"]);
@@ -176,6 +177,7 @@ export const stageStockDecrease = mutation({
         currentInventoryAtStage: currentInventory,
         requestedDelta: args.requestedDelta,
         requestedInventory,
+        reasonCode: args.reasonCode ?? existingDraft.reasonCode,
         updatedAt: now,
       });
       return { success: true, draftId: existingDraft._id };
@@ -191,6 +193,7 @@ export const stageStockDecrease = mutation({
       requestedDelta: args.requestedDelta,
       requestedInventory,
       kind: "inventory_decrease",
+      reasonCode: args.reasonCode,
       status: "draft",
       createdAt: now,
     });
@@ -483,6 +486,7 @@ export const approveStockRequestItem = trackedMutation("stockRequests.approveSto
         actorId: approver._id,
         actorName: approver.name,
         source: "stock_request_approval",
+        reasonCode: item.reasonCode || "STOCK_REQUEST_APPROVAL",
         note: `Approved stock decrease requested by ${item.staffName}`,
       });
       await ctx.db.patch(args.itemId, {

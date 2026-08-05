@@ -41,6 +41,7 @@ export default function OrderExchangePage() {
   const [topUpCardOrderId, setTopUpCardOrderId] = useState("");
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [completedReceipt, setCompletedReceipt] = useState(null);
   const [error, setError] = useState("");
   const errorRef = React.useRef(null);
 
@@ -151,10 +152,16 @@ export default function OrderExchangePage() {
   const difference = exchangeTotal - returnedTotal;
   const topUpRequired = difference > 0 ? difference : 0;
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(exchangeSearch.toLowerCase()) ||
-    p.barcode?.includes(exchangeSearch) ||
-    p.sku?.toLowerCase().includes(exchangeSearch.toLowerCase())
+  // Memoized so this doesn't re-run over the full catalog on every render -
+  // only when the cached catalog or the search term actually change.
+  const filteredProducts = useMemo(
+    () =>
+      products.filter(p =>
+        p.name.toLowerCase().includes(exchangeSearch.toLowerCase()) ||
+        p.barcode?.includes(exchangeSearch) ||
+        p.sku?.toLowerCase().includes(exchangeSearch.toLowerCase())
+      ),
+    [products, exchangeSearch]
   );
 
   const handleSubmit = async (e) => {
@@ -187,7 +194,7 @@ export default function OrderExchangePage() {
     setIsSubmitting(true);
 
     try {
-      await submitExchangeMutation({
+      const res = await submitExchangeMutation({
         token,
         orderId,
         returnedItems,
@@ -200,7 +207,38 @@ export default function OrderExchangePage() {
         } : undefined,
         note: note.trim() || undefined
       });
-      navigate("/", { state: { toast: { message: "Exchange processed successfully.", type: "success" } } });
+
+      const processedReceipt = {
+        isReturn: true,
+        type: "return",
+        returnId: res.returnId,
+        receiptNumber: res.receiptNumber,
+        orderReceiptNumber: order.receiptNumber,
+        date: Date.now(),
+        customerName: order.customerName || order.deliveryAddress?.name,
+        customerPhone: order.deliveryAddress?.phone || order.customerPhone,
+        cashier: user?.name || "Staff",
+        returnedItems: returnedItems.map(item => {
+          const orig = order.items?.find(i => i.productId === item.productId);
+          return {
+            name: orig?.productName || "Product",
+            quantity: item.quantity,
+            price: orig?.unitPrice || 0,
+          };
+        }),
+        exchangeItems: exchangeCart.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        returnedTotal,
+        exchangeTotal,
+        topUpAmount: topUpRequired > 0 ? topUpRequired : 0,
+        topUpMethod: topUpRequired > 0 ? topUpMethod : undefined,
+        note: note.trim() || undefined,
+      };
+
+      setCompletedReceipt(processedReceipt);
     } catch (err) {
       showError("Failed to process exchange: " + err.message);
     } finally {
@@ -506,6 +544,13 @@ export default function OrderExchangePage() {
         </div>
         </main>
       </div>
+
+      {completedReceipt && (
+        <ReceiptModal
+          receipt={completedReceipt}
+          onClose={() => navigate("/", { state: { toast: { message: "Exchange processed successfully.", type: "success" } } })}
+        />
+      )}
     </div>
   );
 }

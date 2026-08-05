@@ -226,6 +226,7 @@ export default defineSchema({
     /** Status & Metrics */
     isActive: v.boolean(),
     inventory: v.optional(v.number()),
+    allocatedInventory: v.optional(v.number()),
     unitsSold: v.optional(v.number()),
     actual_data: v.boolean(), // Now strictly required in Phase 3
 
@@ -978,6 +979,7 @@ export default defineSchema({
 
   returns: defineTable({
     orderId: v.id("orders"),
+    receiptNumber: v.optional(v.string()), // Human-readable return receipt number (RET-YYYYMMDD-XXXX)
     // Legacy embedded shape — no longer written by submitReturn; kept optional so old
     // rows still validate. New code treats `returnItems` as the source of truth.
     returnedItems: v.optional(
@@ -1006,7 +1008,8 @@ export default defineSchema({
     topUpMomoPhone: v.optional(v.string()),
     topUpCardOrderId: v.optional(v.string()),
   }).index("by_order", ["orderId"])
-    .index("by_createdAt", ["createdAt"]),
+    .index("by_createdAt", ["createdAt"])
+    .index("by_receiptNumber", ["receiptNumber"]),
 
   returnItems: defineTable({
     returnId: v.id("returns"),
@@ -1096,6 +1099,7 @@ export default defineSchema({
     approvedBy: v.optional(v.id("users")),
     approvedAt: v.optional(v.number()),
     rejectedReason: v.optional(v.string()),
+    reasonCode: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
@@ -1122,15 +1126,31 @@ export default defineSchema({
     source: v.union(
       v.literal("manual_adjust"),
       v.literal("stock_request_approval"),
-      v.literal("bulk_upload")
+      v.literal("bulk_upload"),
+      v.literal("customer_sale"),
+      v.literal("customer_return"),
+      v.literal("exchange_in"),
+      v.literal("exchange_out"),
+      v.literal("delivery_failure_restock"),
+      v.literal("physical_audit"),
+      v.literal("direct_admin_edit"),
+      v.literal("order_cancellation"),
+      v.literal("vendor_receipt")
     ),
+    reasonCode: v.optional(v.string()),
     actorId: v.optional(v.id("users")),
     actorName: v.string(),
+    orderId: v.optional(v.id("orders")),
+    returnId: v.optional(v.id("returns")),
+    requestId: v.optional(v.id("stockRequests")),
+    unitCost: v.optional(v.number()),
     note: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_productId_and_createdAt", ["productId", "createdAt"])
     .index("by_createdAt", ["createdAt"])
-    .index("by_source_and_createdAt", ["source", "createdAt"]),
+    .index("by_source_and_createdAt", ["source", "createdAt"])
+    .index("by_reasonCode_and_createdAt", ["reasonCode", "createdAt"])
+    .index("by_orderId", ["orderId"]),
 
   customerActivities: defineTable({
     customerId: v.id("users"),
@@ -1326,6 +1346,37 @@ export default defineSchema({
   })
     .index("by_createdAt", ["createdAt"])
     .index("by_voucherNumber", ["voucherNumber"]),
+
+  // ─── Client-side performance instrumentation ─────────────────────────────
+
+  /**
+   * perfMetrics — per (metric, day) denormalized timing counters powering
+   * the admin Performance settings panel. Same get-or-init-then-patch idiom
+   * as dbIOCounters (convex/lib/ioTracking.ts) - never scanned/recomputed
+   * from raw per-sample logs. `sumMs`/`count` give the average; `maxMs` is
+   * the worst single sample seen that day, which matters more than the
+   * average for "does the POS grid ever visibly stutter" questions.
+   */
+  perfMetrics: defineTable({
+    metric: v.string(), // e.g. "pos_grid_render", "pos_search_filter"
+    day: v.string(), // "YYYY-MM-DD", server-local
+    count: v.number(),
+    sumMs: v.number(),
+    maxMs: v.number(),
+  })
+    .index("by_metric_and_day", ["metric", "day"])
+    .index("by_day", ["day"]),
+
+  /**
+   * perfMetricsAllTime — one row per metric, running total across all days.
+   * Updated in the same write as perfMetrics, mirroring dbIOAllTimeCounters.
+   */
+  perfMetricsAllTime: defineTable({
+    metric: v.string(),
+    count: v.number(),
+    sumMs: v.number(),
+    maxMs: v.number(),
+  }).index("by_metric", ["metric"]),
 });
 
 

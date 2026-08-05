@@ -952,6 +952,37 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   });
   expect(invalidReceiptResult.data).toBeNull();
 
+  // Test Return Receipt generation and searchReceipts query
+  const exchangeRes = await t.mutation(api.returns.submitExchange, {
+    token: staffToken,
+    orderId: receiptTestOrderRes.orderId,
+    returnedItems: [{ productId: productId1, quantity: 1, restock: true }],
+    exchangeItems: [{ productId: productId2, quantity: 1 }],
+  });
+  expect(exchangeRes.success).toBe(true);
+  expect(exchangeRes.receiptNumber).toBeDefined();
+  expect(exchangeRes.receiptNumber).toMatch(/^RET-/);
+
+  // Search by Return Receipt Number
+  const searchReturnRes = await t.query(api.returns.searchReceipts, {
+    token: staffToken,
+    query: exchangeRes.receiptNumber!,
+  });
+  const returnSearchResult = searchReturnRes.data;
+  expect(returnSearchResult.order).toBeDefined();
+  expect(returnSearchResult.returns.length).toBeGreaterThan(0);
+  expect(returnSearchResult.returns[0].receiptNumber).toBe(exchangeRes.receiptNumber);
+
+  // Search by Order Receipt Number
+  const searchOrderRes = await t.query(api.returns.searchReceipts, {
+    token: staffToken,
+    query: receiptTestOrderRes.receiptNumber,
+  });
+  const orderSearchResult = searchOrderRes.data;
+  expect(orderSearchResult.order).toBeDefined();
+  expect(orderSearchResult.order.receiptNumber).toBe(receiptTestOrderRes.receiptNumber);
+  expect(orderSearchResult.returns.length).toBeGreaterThan(0);
+
   // Test Admin Business Health Metrics calculation
   const bizHealthMetricsResult = await t.query(api.businessHealth.getBusinessHealthMetrics, {
     token: adminToken,
@@ -970,6 +1001,42 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   });
   expect(multiKeywordSearchResults.length).toBeGreaterThan(0);
   expect(multiKeywordSearchResults[0].name).toBe("Baby Bottle Premium");
+
+  // ─── 16. Unified Stock Lifecycle & Physical Audit Tests ───
+  // Test physical audit / cycle count mutation
+  const auditRes = await t.mutation(api.stockHistory.recordPhysicalAudit, {
+    token: adminToken,
+    productId: productId1,
+    physicalCount: 25,
+    reasonCode: "PHYSICAL_AUDIT_SURPLUS",
+    note: "Quarterly stock audit adjustment",
+  });
+  expect(auditRes.success).toBe(true);
+  expect(auditRes.afterInventory).toBe(25);
+
+  // Verify product inventory was updated
+  const auditedProduct = await t.run(async (ctx) => ctx.db.get(productId1));
+  expect(auditedProduct?.inventory).toBe(25);
+
+  // Verify history entry was recorded with reason code
+  const product1HistoryRes = await t.query(api.stockHistory.getProductStockHistory, {
+    token: adminToken,
+    productId: productId1,
+  });
+  const product1History = product1HistoryRes.data;
+  const auditHistoryEntry = product1History.find((h: any) => h.source === "physical_audit");
+  expect(auditHistoryEntry).toBeDefined();
+  expect(auditHistoryEntry?.reasonCode).toBe("PHYSICAL_AUDIT_SURPLUS");
+  expect(auditHistoryEntry?.afterInventory).toBe(25);
+
+  // Verify getStockHistoryFeed works with reasonCode filter
+  const feedRes = await t.query(api.stockHistory.getStockHistoryFeed, {
+    token: adminToken,
+    paginationOpts: { numItems: 10, cursor: null },
+    reasonCode: "PHYSICAL_AUDIT_SURPLUS",
+  });
+  expect(feedRes.page.length).toBeGreaterThan(0);
+  expect(feedRes.page[0].reasonCode).toBe("PHYSICAL_AUDIT_SURPLUS");
 });
 
 

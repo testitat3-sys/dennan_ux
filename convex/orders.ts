@@ -12,11 +12,14 @@ import { computeDeliveryQuote, computeDeliveryQuoteByName } from "./delivery";
 import { applyStockCounterDelta } from "./stockCounters";
 import { trackedQuery, trackedMutation } from "./lib/ioTracking";
 import { restockByBarcode } from "./returns";
+import { recordStockHistory } from "./stockHistory";
 
 async function syncStockDeductionByBarcode(
   ctx: MutationCtx,
   product: any,
-  quantity: number
+  quantity: number,
+  orderId?: Id<"orders">,
+  actorName?: string
 ) {
   const productsToUpdate = [product];
   if (product.barcode) {
@@ -47,6 +50,19 @@ async function syncStockDeductionByBarcode(
         { inventory: newInventory, reorderPoint: pToUpdate.reorderPoint },
         pToUpdate._id
       );
+      await recordStockHistory(ctx, {
+        productId: pToUpdate._id,
+        productName: pToUpdate.name,
+        barcode: pToUpdate.barcode,
+        before: pToUpdate.inventory,
+        after: newInventory,
+        source: "customer_sale",
+        reasonCode: "CUSTOMER_SALE",
+        actorName: actorName || "Order System",
+        orderId,
+        unitCost: pToUpdate.costPrice,
+        note: `Order sale fulfillment (${quantity} unit${quantity === 1 ? "" : "s"})`,
+      });
     } else {
       await ctx.db.patch(pToUpdate._id, {
         unitsSold: (pToUpdate.unitsSold || 0) + quantity,
@@ -1019,8 +1035,17 @@ export const reportDeliveryFailure = trackedMutation("orders.reportDeliveryFailu
     });
 
     if (args.failedItems.length > 0) {
+      const receiptDate = new Date(failedAt);
+      const receiptDateStr =
+        String(receiptDate.getUTCFullYear()) +
+        String(receiptDate.getUTCMonth() + 1).padStart(2, "0") +
+        String(receiptDate.getUTCDate()).padStart(2, "0");
+      const receiptSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const returnReceiptNumber = `RET-${receiptDateStr}-${receiptSuffix}`;
+
       const returnId = await ctx.db.insert("returns", {
         orderId: args.orderId,
+        receiptNumber: returnReceiptNumber,
         refundAmount,
         note: args.note,
         staffId: user._id,
@@ -1046,7 +1071,15 @@ export const reportDeliveryFailure = trackedMutation("orders.reportDeliveryFailu
           createdAt: failedAt,
         });
         if (failedItem.restock) {
-          await restockByBarcode(ctx, failedItem.productId, failedItem.quantity);
+          await restockByBarcode(ctx, failedItem.productId, failedItem.quantity, {
+            actorId: user._id,
+            actorName: user.name || "Staff",
+            source: "delivery_failure_restock",
+            reasonCode: "DELIVERY_FAILURE_RESTOCK",
+            orderId: args.orderId,
+            returnId,
+            note: `Restocked ${failedItem.quantity} unit(s) from failed delivery`,
+          });
         }
       }
     }

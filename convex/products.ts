@@ -810,7 +810,13 @@ export async function applyInventoryDelta(
   ctx: MutationCtx,
   productId: Id<"products">,
   delta: number,
-  actor?: { actorId?: Id<"users">; actorName: string; source: "manual_adjust" | "stock_request_approval"; note?: string }
+  actor?: {
+    actorId?: Id<"users">;
+    actorName: string;
+    source: StockHistorySource;
+    note?: string;
+    reasonCode?: string;
+  }
 ) {
   const product = await ctx.db.get(productId);
   if (!product) {
@@ -859,6 +865,7 @@ export async function applyInventoryDelta(
         before: currentInv,
         after: newInv,
         source: actor.source,
+        reasonCode: actor.reasonCode,
         actorId: actor.actorId,
         actorName: actor.actorName,
         note: actor.note,
@@ -874,6 +881,8 @@ export const adjustStock = mutation({
     token: v.string(),
     productId: v.id("products"),
     delta: v.number(),
+    reasonCode: v.optional(v.string()),
+    note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
@@ -888,6 +897,8 @@ export const adjustStock = mutation({
       actorId: user._id,
       actorName: user.name,
       source: "manual_adjust",
+      reasonCode: args.reasonCode,
+      note: args.note,
     });
   },
 });
@@ -1104,14 +1115,34 @@ export const updateProduct = mutation({
       throw new Error("Customer-facing products require a primary image before they can be made active.");
     }
 
+    const beforeInv = product.inventory ?? 0;
+    const afterInv = "inventory" in patch ? (patch.inventory as number) : beforeInv;
+
     await ctx.db.patch(productId, { ...patch, updatedAt: Date.now() });
 
-    if ("reorderPoint" in patch) {
+    if ("inventory" in patch || "reorderPoint" in patch) {
       await applyStockCounterDelta(
         ctx,
-        { inventory: product.inventory, reorderPoint: product.reorderPoint },
-        { inventory: product.inventory, reorderPoint: patch.reorderPoint as number | undefined }
+        { inventory: beforeInv, reorderPoint: product.reorderPoint },
+        { inventory: afterInv, reorderPoint: ("reorderPoint" in patch ? patch.reorderPoint : product.reorderPoint) as number | undefined },
+        productId
       );
+    }
+
+    if ("inventory" in patch && beforeInv !== afterInv) {
+      await recordStockHistory(ctx, {
+        productId,
+        productName: (patch.name as string) || product.name,
+        barcode: product.barcode,
+        before: beforeInv,
+        after: afterInv,
+        source: "direct_admin_edit",
+        reasonCode: "DIRECT_ADMIN_EDIT",
+        actorId: user._id,
+        actorName: user.name || "Admin",
+        unitCost: (patch.costPrice as number | undefined) ?? product.costPrice,
+        note: "Direct inventory patch via admin product editor",
+      });
     }
 
     return { success: true };

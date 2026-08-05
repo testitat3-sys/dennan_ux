@@ -28,6 +28,7 @@ import OnlineOrdersPanel from "../components/OnlineOrdersPanel";
 import ErrorLogSettingsPanel from "../components/ErrorLogSettingsPanel";
 import ProductDisplaySettingsPanel from "../components/ProductDisplaySettingsPanel";
 import ThemeSettingsPanel from "../components/ThemeSettingsPanel";
+import PerfSettingsPanel from "../components/PerfSettingsPanel";
 import DbIOPanel from "../components/DbIOPanel";
 import LeadsPanel from "../components/LeadsPanel";
 import BusinessHealthPanel from "../components/BusinessHealthPanel";
@@ -675,6 +676,7 @@ export default function AdminDashboard() {
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
               <ThemeSettingsPanel />
               <ProductDisplaySettingsPanel token={token} />
+              <PerfSettingsPanel token={token} />
               <ErrorLogSettingsPanel token={token} />
             </div>
           )}

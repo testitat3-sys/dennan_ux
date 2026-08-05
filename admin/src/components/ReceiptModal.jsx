@@ -20,6 +20,8 @@ export default function ReceiptModal({ receipt, onClose }) {
 
   if (!receipt) return null;
 
+  const isReturn = receipt.isReturn || receipt.type === "return";
+
   const formattedDate = new Date(receipt.date).toLocaleString("en-GB", {
     year: "numeric",
     month: "short",
@@ -29,16 +31,18 @@ export default function ReceiptModal({ receipt, onClose }) {
     hour12: true,
   });
 
-  // Use stored receipt number from DB; fall back to orderId suffix or timestamp
+  // Use stored receipt number from DB; fall back to returnId/orderId suffix or timestamp
   const receiptNo = receipt.receiptNumber ||
-    (receipt.orderId
+    (receipt.returnId
+      ? receipt.returnId.slice(-8).toUpperCase()
+      : receipt.orderId
       ? receipt.orderId.slice(-8).toUpperCase()
       : new Date(receipt.date).getTime().toString(36).toUpperCase().slice(-8));
 
   const hasDiscount = receipt.discountAmount && receipt.discountAmount > 0;
   const hasDeliveryFee = receipt.deliveryFee && receipt.deliveryFee > 0;
-  const subtotal = receipt.subtotal ?? receipt.total;
-  const grandTotal = receipt.total;
+  const subtotal = receipt.subtotal ?? receipt.total ?? 0;
+  const grandTotal = receipt.total ?? 0;
 
   // Normalise payments array
   const payments = receipt.payments || [];
@@ -48,6 +52,13 @@ export default function ReceiptModal({ receipt, onClose }) {
     card: "Card / POS",
     voucher: "Gift Voucher",
   };
+
+  const returnedItems = receipt.returnedItems || (isReturn ? receipt.items : []) || [];
+  const exchangeItems = receipt.exchangeItems || [];
+  const returnedTotal = receipt.returnedTotal ?? returnedItems.reduce((s, i) => s + (i.price || i.unitPrice || 0) * i.quantity, 0);
+  const exchangeTotal = receipt.exchangeTotal ?? exchangeItems.reduce((s, i) => s + (i.price || i.unitPrice || 0) * i.quantity, 0);
+  const topUpAmount = receipt.topUpAmount || 0;
+  const topUpMethod = receipt.topUpMethod;
 
   const handleCopyImage = async () => {
     if (!receiptRef.current || copying) return;
@@ -97,7 +108,7 @@ export default function ReceiptModal({ receipt, onClose }) {
         logging: false,
       });
       const namePrefix = (receipt.customerName && receipt.customerName.trim()) || "client";
-      const pdfFileName = `${namePrefix} dennan receipt.pdf`;
+      const pdfFileName = `${namePrefix} dennan ${isReturn ? "return " : ""}receipt.pdf`;
 
       const width = element.offsetWidth;
       const height = element.offsetHeight;
@@ -127,6 +138,11 @@ export default function ReceiptModal({ receipt, onClose }) {
             <h2>DENNAN</h2>
             <p className="receipt-location">Ntinda Complex GF-02 · 0784 733314</p>
             <p className="receipt-location">MM Plaza L-01 · 0786 690058</p>
+            {isReturn && (
+              <p style={{ fontWeight: 700, fontSize: 13, textTransform: "uppercase", color: "#111111", marginTop: 4 }}>
+                {exchangeItems.length > 0 ? "RETURN & EXCHANGE RECEIPT" : "RETURN RECEIPT"}
+              </p>
+            )}
             {receipt.pendingSync && (
               <p style={{ fontWeight: 700, color: "#b45309", marginTop: 4 }}>
                 RECORDED OFFLINE — PENDING SYNC
@@ -158,9 +174,15 @@ export default function ReceiptModal({ receipt, onClose }) {
               <span>Receipt No:</span>
               <span className="receipt-no">#{receiptNo}</span>
             </div>
+            {receipt.orderReceiptNumber && (
+              <div className="receipt-meta-row">
+                <span>Original Order:</span>
+                <span>#{receipt.orderReceiptNumber}</span>
+              </div>
+            )}
             {receipt.cashier && (
               <div className="receipt-meta-row">
-                <span>Cashier:</span>
+                <span>Staff:</span>
                 <span>{receipt.cashier}</span>
               </div>
             )}
@@ -168,61 +190,154 @@ export default function ReceiptModal({ receipt, onClose }) {
 
           <div className="divider-dots" />
 
-          {/* ── Items ── */}
-          <div className="receipt-items">
-            <div className="receipt-items-header">
-              <span style={{ flex: 1 }}>Item</span>
-              <span className="receipt-col-qty">Qty</span>
-              <span className="receipt-col-amt">Amount</span>
-            </div>
-            <div className="divider-dots" style={{ marginTop: "6px" }} />
-            {receipt.items.map((item, idx) => (
-              <div key={idx} className="receipt-item-row">
-                <span className="receipt-item-name">{item.name}</span>
-                <span className="receipt-col-qty">{item.quantity}</span>
-                <span className="receipt-col-amt">
-                  {(item.price * item.quantity).toLocaleString()}
-                </span>
+          {/* ── Items Section ── */}
+          {isReturn ? (
+            <>
+              {/* Returned Items */}
+              {returnedItems.length > 0 && (
+                <div className="receipt-items" style={{ marginBottom: 12 }}>
+                  <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 4, textTransform: "uppercase" }}>
+                    Returned Items
+                  </div>
+                  <div className="receipt-items-header">
+                    <span style={{ flex: 1 }}>Item</span>
+                    <span className="receipt-col-qty">Qty</span>
+                    <span className="receipt-col-amt">Amount</span>
+                  </div>
+                  <div className="divider-dots" style={{ marginTop: "4px" }} />
+                  {returnedItems.map((item, idx) => (
+                    <div key={idx} className="receipt-item-row">
+                      <span className="receipt-item-name">{item.name || item.productName}</span>
+                      <span className="receipt-col-qty">{item.quantity}</span>
+                      <span className="receipt-col-amt">
+                        {((item.price || item.unitPrice || 0) * item.quantity).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="receipt-total-row" style={{ marginTop: 6, fontWeight: 600 }}>
+                    <span>Returned Value</span>
+                    <span>UGX {returnedTotal.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Exchange Items */}
+              {exchangeItems.length > 0 && (
+                <div className="receipt-items" style={{ marginTop: 10 }}>
+                  <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 4, textTransform: "uppercase" }}>
+                    Exchange Items
+                  </div>
+                  <div className="receipt-items-header">
+                    <span style={{ flex: 1 }}>Item</span>
+                    <span className="receipt-col-qty">Qty</span>
+                    <span className="receipt-col-amt">Amount</span>
+                  </div>
+                  <div className="divider-dots" style={{ marginTop: "4px" }} />
+                  {exchangeItems.map((item, idx) => (
+                    <div key={idx} className="receipt-item-row">
+                      <span className="receipt-item-name">{item.name || item.productName}</span>
+                      <span className="receipt-col-qty">{item.quantity}</span>
+                      <span className="receipt-col-amt">
+                        {((item.price || item.unitPrice || 0) * item.quantity).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="receipt-total-row" style={{ marginTop: 6, fontWeight: 600 }}>
+                    <span>Exchange Value</span>
+                    <span>UGX {exchangeTotal.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="receipt-items">
+              <div className="receipt-items-header">
+                <span style={{ flex: 1 }}>Item</span>
+                <span className="receipt-col-qty">Qty</span>
+                <span className="receipt-col-amt">Amount</span>
               </div>
-            ))}
-          </div>
+              <div className="divider-dots" style={{ marginTop: "6px" }} />
+              {receipt.items.map((item, idx) => (
+                <div key={idx} className="receipt-item-row">
+                  <span className="receipt-item-name">{item.name}</span>
+                  <span className="receipt-col-qty">{item.quantity}</span>
+                  <span className="receipt-col-amt">
+                    {(item.price * item.quantity).toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="divider-dots" />
 
           {/* ── Totals ── */}
-          <div className="receipt-totals">
-            {(hasDiscount || hasDeliveryFee) && (
+          {isReturn ? (
+            <div className="receipt-totals">
               <div className="receipt-total-row">
-                <span>Subtotal</span>
-                <span>UGX {subtotal.toLocaleString()}</span>
+                <span>Returned Value</span>
+                <span>UGX {returnedTotal.toLocaleString()}</span>
               </div>
-            )}
-            {hasDiscount && (
-              <div className="receipt-total-row receipt-discount">
-                <span>
-                  Discount
-                  {receipt.couponApplied ? ` (${receipt.couponApplied})` : ""}
-                </span>
-                <span>- UGX {receipt.discountAmount.toLocaleString()}</span>
-              </div>
-            )}
-            {hasDeliveryFee && (
-              <div className="receipt-total-row">
-                <span>Delivery Fee</span>
-                <span>UGX {receipt.deliveryFee.toLocaleString()}</span>
-              </div>
-            )}
-            <div className="receipt-total-row receipt-grand-total">
-              <span>AMOUNT DUE</span>
-              <span>UGX {grandTotal.toLocaleString()}</span>
+              {exchangeItems.length > 0 && (
+                <div className="receipt-total-row">
+                  <span>Exchange Value</span>
+                  <span>UGX {exchangeTotal.toLocaleString()}</span>
+                </div>
+              )}
+              {topUpAmount > 0 && (
+                <div className="receipt-total-row receipt-grand-total">
+                  <span>TOP-UP PAID</span>
+                  <span>UGX {topUpAmount.toLocaleString()}</span>
+                </div>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className="receipt-totals">
+              {(hasDiscount || hasDeliveryFee) && (
+                <div className="receipt-total-row">
+                  <span>Subtotal</span>
+                  <span>UGX {subtotal.toLocaleString()}</span>
+                </div>
+              )}
+              {hasDiscount && (
+                <div className="receipt-total-row receipt-discount">
+                  <span>
+                    Discount
+                    {receipt.couponApplied ? ` (${receipt.couponApplied})` : ""}
+                  </span>
+                  <span>- UGX {receipt.discountAmount.toLocaleString()}</span>
+                </div>
+              )}
+              {hasDeliveryFee && (
+                <div className="receipt-total-row">
+                  <span>Delivery Fee</span>
+                  <span>UGX {receipt.deliveryFee.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="receipt-total-row receipt-grand-total">
+                <span>AMOUNT DUE</span>
+                <span>UGX {grandTotal.toLocaleString()}</span>
+              </div>
+            </div>
+          )}
 
           <div className="divider-dots" />
 
           {/* ── Payment Mode ── */}
           <div className="receipt-payment">
-            {payments.length > 0 ? (
+            {isReturn ? (
+              topUpAmount > 0 ? (
+                <div className="receipt-meta-row">
+                  <span>Top-Up Payment Method:</span>
+                  <span>{methodLabels[topUpMethod] || topUpMethod || "Cash"}</span>
+                </div>
+              ) : (
+                <div className="receipt-meta-row">
+                  <span>Return Status:</span>
+                  <span>Completed (No Top-Up Required)</span>
+                </div>
+              )
+            ) : payments.length > 0 ? (
               payments.map((p, idx) => (
                 <div key={idx} className="receipt-meta-row">
                   <span>{methodLabels[p.method] || p.method}:</span>

@@ -21,6 +21,7 @@ import { useNewOrderNotifications } from "../hooks/useNewOrderNotifications";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { useOfflineProducts } from "../hooks/useOfflineProducts";
 import { useOfflineOrderSync } from "../hooks/useOfflineOrderSync";
+import { usePerfTracking } from "../hooks/usePerfTracking";
 import { addPendingOrder, listPendingOrders } from "../lib/offlineDb";
 import OfflineBanner from "../components/OfflineBanner";
 import CatalogDownloadBanner from "../components/CatalogDownloadBanner";
@@ -191,6 +192,7 @@ export default function StaffDashboard() {
     requestBootstrap: requestCatalogBootstrap,
     refreshBootstrapStatus: refreshCatalogBootstrapStatus,
   } = useOfflineProducts(token);
+  const recordPerfSample = usePerfTracking(token);
   const createPhysicalOrderMutation = useMutation(api.orders.createPhysicalOrder);
   // Reserves stock against not-yet-synced offline sales so a second offline
   // sale of the same product can't oversell the cached inventory figure.
@@ -331,22 +333,22 @@ export default function StaffDashboard() {
     }
   }, [pendingOrderDetail]);
 
-  const getOriginalPrice = (product) => {
+  const getOriginalPrice = React.useCallback((product) => {
     if (!product) return 0;
     const prices = [product.price, product.wasPrice, product.originalPrice, product.discountPrice].filter(
       v => typeof v === "number" && v > 0
     );
     return prices.length > 0 ? Math.max(...prices) : (product.price || 0);
-  };
+  }, []);
 
   // Subtracts stock already reserved by not-yet-synced offline sales, so a
   // second offline sale of the same product can't oversell the cached
   // inventory figure. A no-op once everything's synced (reservations clear).
-  const getEffectiveInventory = (product) => {
+  const getEffectiveInventory = React.useCallback((product) => {
     if (!product || product.inventory === undefined) return undefined;
     const reserved = offlineStockReservations[product._id] || 0;
     return Math.max(0, product.inventory - reserved);
-  };
+  }, [offlineStockReservations]);
 
   const addToCart = (product) => {
     const availableInventory = getEffectiveInventory(product);
@@ -713,11 +715,45 @@ export default function StaffDashboard() {
     onNewOrder: (order) => showToast(`New order received from ${order.customerName}`, "info"),
   });
 
-  const filteredPosProducts = posProducts?.filter(p =>
-    p.name.toLowerCase().includes(posSearch.toLowerCase()) ||
-    p.barcode?.includes(posSearch) ||
-    p.sku?.toLowerCase().includes(posSearch.toLowerCase())
-  ) || [];
+  // Memoized so this doesn't re-run over the full (up to ~5,000-row) catalog
+  // on every render - only when the catalog or the search term actually
+  // change. Also the one place that times how long filtering the full
+  // catalog takes, reported to the Settings > Performance panel (see
+  // convex/perfMetrics.ts).
+  const filteredPosProducts = React.useMemo(() => {
+    const start = performance.now();
+    const term = posSearch.toLowerCase();
+    const result = posProducts?.filter(p =>
+      p.name.toLowerCase().includes(term) ||
+      p.barcode?.includes(posSearch) ||
+      p.sku?.toLowerCase().includes(term)
+    ) || [];
+    recordPerfSample("pos_search_filter", performance.now() - start);
+    return result;
+  }, [posProducts, posSearch, recordPerfSample]);
+
+  // Times how long the POS tab takes to actually paint after being opened,
+  // reported to the Settings > Performance panel. `posTabOpenedAtRef` is set
+  // once per tab-open below and cleared as soon as it's been measured, so a
+  // later product/cart update doesn't get mistaken for a fresh tab-open.
+  // Declared after filteredPosProducts (not up near the other POS effects)
+  // since it depends on that value - must exist before this reads it.
+  const posTabOpenedAtRef = React.useRef(null);
+  React.useEffect(() => {
+    if (activeTab === "pos") posTabOpenedAtRef.current = performance.now();
+  }, [activeTab]);
+  React.useEffect(() => {
+    if (activeTab !== "pos" || posTabOpenedAtRef.current === null) return;
+    const openedAt = posTabOpenedAtRef.current;
+    posTabOpenedAtRef.current = null;
+    // Double rAF: the first fires before the browser has actually painted
+    // the newly-committed DOM, the second is guaranteed to run after paint.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        recordPerfSample("pos_grid_render", performance.now() - openedAt);
+      });
+    });
+  }, [activeTab, filteredPosProducts, recordPerfSample]);
 
   const filteredCustomers = customerList?.filter(c =>
     c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||

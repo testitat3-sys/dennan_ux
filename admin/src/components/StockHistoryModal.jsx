@@ -7,6 +7,15 @@ const SOURCE_LABELS = {
   manual_adjust: "Manual adjustment",
   stock_request_approval: "Approved stock request",
   bulk_upload: "Bulk upload",
+  customer_sale: "Customer sale",
+  customer_return: "Customer return",
+  exchange_in: "Exchange (In)",
+  exchange_out: "Exchange (Out)",
+  delivery_failure_restock: "Delivery failure restock",
+  physical_audit: "Physical audit",
+  direct_admin_edit: "Direct admin edit",
+  order_cancellation: "Order cancellation",
+  vendor_receipt: "Vendor receipt",
 };
 
 export default function StockHistoryModal({ product, displayName, token, onClose }) {

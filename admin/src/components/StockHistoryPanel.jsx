@@ -6,6 +6,15 @@ const SOURCE_LABELS = {
   manual_adjust: "Manual adjustment",
   stock_request_approval: "Approved stock request",
   bulk_upload: "Bulk upload",
+  customer_sale: "Customer sale",
+  customer_return: "Customer return",
+  exchange_in: "Exchange (In)",
+  exchange_out: "Exchange (Out)",
+  delivery_failure_restock: "Delivery failure restock",
+  physical_audit: "Physical audit",
+  direct_admin_edit: "Direct admin edit",
+  order_cancellation: "Order cancellation",
+  vendor_receipt: "Vendor receipt",
 };
 
 const SOURCE_FILTERS = [
@@ -13,6 +22,15 @@ const SOURCE_FILTERS = [
   { value: "manual_adjust", label: "Manual adjustments" },
   { value: "stock_request_approval", label: "Approved stock requests" },
   { value: "bulk_upload", label: "Bulk uploads" },
+  { value: "customer_sale", label: "Customer sales" },
+  { value: "customer_return", label: "Customer returns" },
+  { value: "exchange_in", label: "Exchanges (In)" },
+  { value: "exchange_out", label: "Exchanges (Out)" },
+  { value: "delivery_failure_restock", label: "Delivery failure restocks" },
+  { value: "physical_audit", label: "Physical audits" },
+  { value: "direct_admin_edit", label: "Direct admin edits" },
+  { value: "order_cancellation", label: "Order cancellations" },
+  { value: "vendor_receipt", label: "Vendor receipts" },
 ];
 
 export default function StockHistoryPanel({ token }) {

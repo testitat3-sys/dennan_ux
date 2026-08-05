@@ -7,9 +7,23 @@ import { applyStockCounterDelta } from "./stockCounters";
 import { Id } from "./_generated/dataModel";
 import { parseDateStrToMs } from "./orders";
 import { trackedQuery, trackedMutation } from "./lib/ioTracking";
+import { recordStockHistory, StockHistorySource } from "./stockHistory";
 
 // Restocks a product (and any barcode-matching duplicate product rows) by `quantity`.
-async function restockByBarcode(ctx: any, productId: Id<"products">, quantity: number) {
+async function restockByBarcode(
+  ctx: any,
+  productId: Id<"products">,
+  quantity: number,
+  actorInfo?: {
+    actorId?: Id<"users">;
+    actorName?: string;
+    source?: StockHistorySource;
+    reasonCode?: string;
+    orderId?: Id<"orders">;
+    returnId?: Id<"returns">;
+    note?: string;
+  }
+) {
   const product = await ctx.db.get(productId);
   if (!product) return;
 
@@ -41,8 +55,33 @@ async function restockByBarcode(ctx: any, productId: Id<"products">, quantity: n
         { inventory: newInventory, reorderPoint: pToUpdate.reorderPoint },
         pToUpdate._id
       );
+      await recordStockHistory(ctx, {
+        productId: pToUpdate._id,
+        productName: pToUpdate.name,
+        barcode: pToUpdate.barcode,
+        before: pToUpdate.inventory,
+        after: newInventory,
+        source: actorInfo?.source || (quantity < 0 ? "exchange_out" : "customer_return"),
+        reasonCode: actorInfo?.reasonCode || (quantity < 0 ? "CUSTOMER_EXCHANGE_OUT" : "CUSTOMER_RETURN"),
+        actorId: actorInfo?.actorId,
+        actorName: actorInfo?.actorName || "System / Staff",
+        orderId: actorInfo?.orderId,
+        returnId: actorInfo?.returnId,
+        unitCost: pToUpdate.costPrice,
+        note: actorInfo?.note || `Inventory adjustment of ${quantity > 0 ? "+" : ""}${quantity} via barcode sync`,
+      });
     }
   }
+}
+
+function generateReturnReceiptNumber(now: number): string {
+  const receiptDate = new Date(now);
+  const receiptDateStr =
+    String(receiptDate.getUTCFullYear()) +
+    String(receiptDate.getUTCMonth() + 1).padStart(2, "0") +
+    String(receiptDate.getUTCDate()).padStart(2, "0");
+  const receiptSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `RET-${receiptDateStr}-${receiptSuffix}`;
 }
 
 export const submitReturn = trackedMutation("returns.submitReturn", {
@@ -129,10 +168,12 @@ export const submitReturn = trackedMutation("returns.submitReturn", {
     }
 
     const now = Date.now();
+    const receiptNumber = generateReturnReceiptNumber(now);
 
     // 5. Insert the returns envelope row
     const returnId = await ctx.db.insert("returns", {
       orderId: args.orderId,
+      receiptNumber,
       refundAmount: args.refundAmount,
       note: args.note,
       staffId: staffUser._id,
@@ -183,6 +224,7 @@ export const submitReturn = trackedMutation("returns.submitReturn", {
     return {
       success: true,
       returnId,
+      receiptNumber,
       status: newStatus,
     };
   },
@@ -337,9 +379,11 @@ export const submitExchange = trackedMutation("returns.submitExchange", {
     }
 
     const now = Date.now();
+    const receiptNumber = generateReturnReceiptNumber(now);
 
     const returnId = await ctx.db.insert("returns", {
       orderId: args.orderId,
+      receiptNumber,
       refundAmount: 0,
       note: args.note,
       staffId: staffUser._id,
@@ -388,7 +432,13 @@ export const submitExchange = trackedMutation("returns.submitExchange", {
         unitPrice: item.unitPrice,
         createdAt: now,
       });
-      await restockByBarcode(ctx, item.productId, -item.quantity);
+      await restockByBarcode(ctx, item.productId, -item.quantity, {
+        actorId: staffUser._id,
+        actorName: staffUser.name || "Staff",
+        source: "exchange_out",
+        reasonCode: "CUSTOMER_EXCHANGE_OUT",
+        note: `Issued product for customer exchange (Order ${args.orderId})`,
+      });
       await appendAttribute(ctx, "products", item.productId, "sold_via_exchange");
     }
 
@@ -412,6 +462,7 @@ export const submitExchange = trackedMutation("returns.submitExchange", {
     return {
       success: true,
       returnId,
+      receiptNumber,
       status: newStatus,
       returnedTotal,
       exchangeTotal,
@@ -439,7 +490,15 @@ export const approveReturnItem = trackedMutation("returns.approveReturnItem", {
 
     const shouldRestock = args.restock ?? true;
     if (shouldRestock) {
-      await restockByBarcode(ctx, item.productId, item.quantity);
+      await restockByBarcode(ctx, item.productId, item.quantity, {
+        actorId: approver._id,
+        actorName: approver.name || "Staff",
+        source: "customer_return",
+        reasonCode: "CUSTOMER_RETURN",
+        orderId: item.orderId,
+        returnId: item.returnId,
+        note: `Approved return restocked to inventory shelf`,
+      });
     }
 
     await ctx.db.patch(args.returnItemId, {
@@ -560,12 +619,18 @@ async function enrichReturns(
     const order = orderMap.get(group.orderId.toString());
     const orderUser = order ? userMap.get(order.userId.toString()) : null;
     const customerName = order?.deliveryAddress?.name || orderUser?.name || "Unknown";
+    const customerPhone = order?.deliveryAddress?.phone || orderUser?.phone || "";
+    const receiptNumber = returnEnvelope.receiptNumber || `RET-${returnEnvelope._id.toString().slice(-8).toUpperCase()}`;
+    const orderReceiptNumber = order?.receiptNumber;
     const exchangeItems = exchangeItemsMap.get(group.returnId.toString()) ?? [];
 
     results.push({
       returnId: group.returnId,
       orderId: group.orderId,
+      receiptNumber,
+      orderReceiptNumber,
       customerName,
+      customerPhone,
       staffName: returnEnvelope.staffName,
       note: returnEnvelope.note,
       createdAt: returnEnvelope.createdAt,
@@ -720,6 +785,9 @@ export const getReturnById = trackedQuery("returns.getReturnById", {
     const order = await ctx.db.get(returnEnvelope.orderId);
     const orderUser = order ? await ctx.db.get(order.userId) : null;
     const customerName = order?.deliveryAddress?.name || orderUser?.name || "Unknown";
+    const customerPhone = order?.deliveryAddress?.phone || orderUser?.phone || "";
+    const receiptNumber = returnEnvelope.receiptNumber || `RET-${returnEnvelope._id.toString().slice(-8).toUpperCase()}`;
+    const orderReceiptNumber = order?.receiptNumber;
 
     const exchangeItems = await ctx.db
       .query("returnExchangeItems")
@@ -729,7 +797,10 @@ export const getReturnById = trackedQuery("returns.getReturnById", {
     return {
       returnId: returnEnvelope._id,
       orderId: returnEnvelope.orderId,
+      receiptNumber,
+      orderReceiptNumber,
       customerName,
+      customerPhone,
       staffName: returnEnvelope.staffName,
       note: returnEnvelope.note,
       createdAt: returnEnvelope.createdAt,
@@ -754,6 +825,148 @@ export const getReturnById = trackedQuery("returns.getReturnById", {
         quantity: e.quantity,
         unitPrice: e.unitPrice,
       })),
+    };
+  },
+});
+
+/**
+ * Searches receipts by receipt number (e.g. RCP-..., RET-...), return ID, or order ID.
+ * Returns matching order receipt details AND matching return receipt details.
+ */
+export const searchReceipts = trackedQuery("returns.searchReceipts", {
+  args: {
+    token: v.string(),
+    query: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    const cleanQuery = args.query.trim();
+    if (!cleanQuery) {
+      return { order: null, returns: [] };
+    }
+
+    let order: any = null;
+    const returnsList: any[] = [];
+
+    // 1. Point lookup order by receiptNumber
+    const orderDoc = await ctx.db
+      .query("orders")
+      .withIndex("by_receiptNumber", (q) => q.eq("receiptNumber", cleanQuery))
+      .first();
+
+    if (orderDoc) {
+      order = orderDoc;
+    } else {
+      // Try by ID
+      try {
+        const byId = await ctx.db.get(cleanQuery as Id<"orders">);
+        if (byId && "grandTotal" in byId) {
+          order = byId;
+        }
+      } catch {
+        // Not a valid order ID
+      }
+    }
+
+    // 2. Point lookup return by receiptNumber
+    const returnDoc = await ctx.db
+      .query("returns")
+      .withIndex("by_receiptNumber", (q) => q.eq("receiptNumber", cleanQuery))
+      .first();
+
+    if (returnDoc) {
+      const enriched = await enrichReturns(ctx, [
+        {
+          returnId: returnDoc._id,
+          orderId: returnDoc.orderId,
+          items: await ctx.db
+            .query("returnItems")
+            .withIndex("by_return", (q) => q.eq("returnId", returnDoc._id))
+            .collect(),
+        },
+      ]);
+      if (enriched.length > 0) returnsList.push(enriched[0]);
+      if (!order) {
+        order = await ctx.db.get(returnDoc.orderId);
+      }
+    } else {
+      // Try return by ID
+      try {
+        const retById = await ctx.db.get(cleanQuery as Id<"returns">);
+        if (retById && "orderId" in retById) {
+          const enriched = await enrichReturns(ctx, [
+            {
+              returnId: retById._id,
+              orderId: retById.orderId,
+              items: await ctx.db
+                .query("returnItems")
+                .withIndex("by_return", (q) => q.eq("returnId", retById._id))
+                .collect(),
+            },
+          ]);
+          if (enriched.length > 0) returnsList.push(enriched[0]);
+          if (!order) order = await ctx.db.get(retById.orderId);
+        }
+      } catch {
+        // Not a valid return ID
+      }
+    }
+
+    // 3. If an order was matched, also find any returns linked to it
+    if (order) {
+      const orderReturns = await ctx.db
+        .query("returns")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+
+      const existingReturnIds = new Set(returnsList.map((r) => r.returnId.toString()));
+      const missingReturnEnvelopes = orderReturns.filter((r) => !existingReturnIds.has(r._id.toString()));
+
+      if (missingReturnEnvelopes.length > 0) {
+        const itemsByReturn = await Promise.all(
+          missingReturnEnvelopes.map((ret) =>
+            ctx.db
+              .query("returnItems")
+              .withIndex("by_return", (q) => q.eq("returnId", ret._id))
+              .collect()
+          )
+        );
+
+        const additionalEnriched = await enrichReturns(
+          ctx,
+          missingReturnEnvelopes.map((ret, i) => ({
+            returnId: ret._id,
+            orderId: ret.orderId,
+            items: itemsByReturn[i],
+          }))
+        );
+        returnsList.push(...additionalEnriched);
+      }
+
+      // Enrich order items and customer info for UI display
+      const items = await ctx.db
+        .query("orderItems")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+      const customer = await ctx.db.get(order.userId);
+
+      order = {
+        ...order,
+        customerName: order.deliveryAddress?.name || customer?.name || "Customer",
+        customerPhone: order.deliveryAddress?.phone || customer?.phone || "",
+        items: items.map((i) => ({
+          productId: i.productId,
+          productName: i.productName,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+        })),
+      };
+    }
+
+    return {
+      order,
+      returns: returnsList,
     };
   },
 });

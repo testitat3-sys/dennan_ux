@@ -33,6 +33,7 @@ import type * as leads from "../leads.js";
 import type * as lib_ioTracking from "../lib/ioTracking.js";
 import type * as migrations from "../migrations.js";
 import type * as orders from "../orders.js";
+import type * as perfMetrics from "../perfMetrics.js";
 import type * as pesapal from "../pesapal.js";
 import type * as productBrandNames from "../productBrandNames.js";
 import type * as products from "../products.js";
@@ -89,6 +90,7 @@ declare const fullApi: ApiFromModules<{
   "lib/ioTracking": typeof lib_ioTracking;
   migrations: typeof migrations;
   orders: typeof orders;
+  perfMetrics: typeof perfMetrics;
   pesapal: typeof pesapal;
   productBrandNames: typeof productBrandNames;
   products: typeof products;
