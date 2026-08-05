@@ -3,6 +3,9 @@ import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Database, Layers, HardDrive, Archive } from "lucide-react";
 import { estimateBytes, formatBytes } from "../utils/dbIOEstimate";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { SortableHeader, TableFilterBar } from "./DataTableControls";
+import { useSessionState } from "../hooks/useSessionDateRange";
 
 function getTodayStr() {
   const d = new Date();
@@ -13,14 +16,46 @@ function getTodayStr() {
 }
 
 export default function DbIOPanel({ token }) {
-  const [day, setDay] = useState(getTodayStr());
+  const [day, setDay] = useSessionState("admin_dbio_day", getTodayStr());
 
-  // getIOStatsForDay/getCumulativeIOStats are plain queries, not
-  // trackedQuery - the dashboard's own stat reads aren't instrumented
-  // (avoids tracking the tracker), so this uses useQuery directly rather
-  // than useTrackedQuery.
   const dayStats = useQuery(api.dbIOStats.getIOStatsForDay, { token, day });
   const cumulative = useQuery(api.dbIOStats.getCumulativeIOStats, { token });
+
+  const {
+    processedData: dayRows,
+    sortConfig: daySortConfig,
+    requestSort: requestDaySort,
+    searchQuery: daySearch,
+    setSearchQuery: setDaySearch,
+    filterValues: dayFilters,
+    setFilterValue: setDayFilterValue,
+    resetFilters: resetDayFilters,
+    isFiltered: isDayFiltered,
+  } = useTableSortAndFilter(dayStats?.rows || [], {
+    searchFields: ["functionName"],
+    initialSort: { key: "reads", direction: "desc" },
+    customSorts: {
+      estSize: (a, b) => estimateBytes(a.functionName, a.reads) - estimateBytes(b.functionName, b.reads),
+    },
+  });
+
+  const {
+    processedData: cumulativeRows,
+    sortConfig: cumSortConfig,
+    requestSort: requestCumSort,
+    searchQuery: cumSearch,
+    setSearchQuery: setCumSearch,
+    filterValues: cumFilters,
+    setFilterValue: setCumFilterValue,
+    resetFilters: resetCumFilters,
+    isFiltered: isCumFiltered,
+  } = useTableSortAndFilter(cumulative?.rows || [], {
+    searchFields: ["functionName"],
+    initialSort: { key: "reads", direction: "desc" },
+    customSorts: {
+      estSize: (a, b) => estimateBytes(a.functionName, a.reads) - estimateBytes(b.functionName, b.reads),
+    },
+  });
 
   const loading = dayStats === undefined || cumulative === undefined;
 
@@ -100,24 +135,51 @@ export default function DbIOPanel({ token }) {
           <div className="section-header">
             <h2 className="section-title">By Function — {dayStats.day}</h2>
           </div>
+
+          <TableFilterBar
+            searchQuery={daySearch}
+            onSearchChange={setDaySearch}
+            searchPlaceholder="Search function name..."
+            filterValues={dayFilters}
+            onFilterChange={(key, val) => setDayFilterValue(key, val)}
+            isFiltered={isDayFiltered}
+            onResetFilters={resetDayFilters}
+            totalCount={dayStats.rows.length}
+            filteredCount={dayRows.length}
+          />
+
           {dayStats.rows.length === 0 ? (
             <div className="empty-state">
               <div className="empty-title">No tracked function calls recorded for this day.</div>
+            </div>
+          ) : dayRows.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-title">No functions match search.</div>
             </div>
           ) : (
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Function</th>
-                    <th>Invocations</th>
-                    <th>Reads</th>
-                    <th>Avg Reads / Invocation</th>
-                    <th>Est. Size</th>
+                    <SortableHeader sortKey="functionName" sortConfig={daySortConfig} onRequestSort={requestDaySort}>
+                      Function
+                    </SortableHeader>
+                    <SortableHeader sortKey="invocations" sortConfig={daySortConfig} onRequestSort={requestDaySort}>
+                      Invocations
+                    </SortableHeader>
+                    <SortableHeader sortKey="reads" sortConfig={daySortConfig} onRequestSort={requestDaySort}>
+                      Reads
+                    </SortableHeader>
+                    <SortableHeader sortKey="avgReadsPerInvocation" sortConfig={daySortConfig} onRequestSort={requestDaySort}>
+                      Avg Reads / Invocation
+                    </SortableHeader>
+                    <SortableHeader sortKey="estSize" sortConfig={daySortConfig} onRequestSort={requestDaySort}>
+                      Est. Size
+                    </SortableHeader>
                   </tr>
                 </thead>
                 <tbody>
-                  {dayStats.rows.map((row) => (
+                  {dayRows.map((row) => (
                     <tr key={row.functionName}>
                       <td>{row.functionName}</td>
                       <td>{row.invocations.toLocaleString()}</td>
@@ -131,27 +193,54 @@ export default function DbIOPanel({ token }) {
             </div>
           )}
 
-          <div className="section-header">
+          <div className="section-header" style={{ marginTop: "24px" }}>
             <h2 className="section-title">All-Time Cumulative By Function</h2>
           </div>
+
+          <TableFilterBar
+            searchQuery={cumSearch}
+            onSearchChange={setCumSearch}
+            searchPlaceholder="Search cumulative functions..."
+            filterValues={cumFilters}
+            onFilterChange={(key, val) => setCumFilterValue(key, val)}
+            isFiltered={isCumFiltered}
+            onResetFilters={resetCumFilters}
+            totalCount={cumulative.rows.length}
+            filteredCount={cumulativeRows.length}
+          />
+
           {cumulative.rows.length === 0 ? (
             <div className="empty-state">
               <div className="empty-title">No tracked function calls recorded yet.</div>
+            </div>
+          ) : cumulativeRows.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-title">No functions match search.</div>
             </div>
           ) : (
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Function</th>
-                    <th>Invocations</th>
-                    <th>Reads</th>
-                    <th>Avg Reads / Invocation</th>
-                    <th>Est. Size</th>
+                    <SortableHeader sortKey="functionName" sortConfig={cumSortConfig} onRequestSort={requestCumSort}>
+                      Function
+                    </SortableHeader>
+                    <SortableHeader sortKey="invocations" sortConfig={cumSortConfig} onRequestSort={requestCumSort}>
+                      Invocations
+                    </SortableHeader>
+                    <SortableHeader sortKey="reads" sortConfig={cumSortConfig} onRequestSort={requestCumSort}>
+                      Reads
+                    </SortableHeader>
+                    <SortableHeader sortKey="avgReadsPerInvocation" sortConfig={cumSortConfig} onRequestSort={requestCumSort}>
+                      Avg Reads / Invocation
+                    </SortableHeader>
+                    <SortableHeader sortKey="estSize" sortConfig={cumSortConfig} onRequestSort={requestCumSort}>
+                      Est. Size
+                    </SortableHeader>
                   </tr>
                 </thead>
                 <tbody>
-                  {cumulative.rows.map((row) => (
+                  {cumulativeRows.map((row) => (
                     <tr key={row.functionName}>
                       <td>{row.functionName}</td>
                       <td>{row.invocations.toLocaleString()}</td>

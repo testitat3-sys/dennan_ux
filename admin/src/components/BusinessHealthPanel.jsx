@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
+import { SortableHeader } from "./DataTableControls";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { useSessionState } from "../hooks/useSessionDateRange";
 import {
   Activity,
   TrendingUp,
@@ -33,9 +36,9 @@ function getNDaysAgoStr(days) {
 }
 
 export default function BusinessHealthPanel({ token, user }) {
-  const [preset, setPreset] = useState("30"); // "today", "7", "30", "custom"
-  const [startDate, setStartDate] = useState(getNDaysAgoStr(30));
-  const [endDate, setEndDate] = useState(getTodayStr());
+  const [preset, setPreset] = useSessionState("admin_bizhealth_preset", "30");
+  const [startDate, setStartDate] = useSessionState("admin_bizhealth_start", () => getNDaysAgoStr(30));
+  const [endDate, setEndDate] = useSessionState("admin_bizhealth_end", getTodayStr());
 
   const isAdmin = user?.accountRole === "admin";
 

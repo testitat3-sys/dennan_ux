@@ -3,10 +3,11 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useProductDisplayName } from "../hooks/useProductDisplayName";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { SortableHeader, TableFilterBar } from "./DataTableControls";
 
 export default function DiscountsPanel({ token }) {
   const { getDisplayName } = useProductDisplayName(token);
-  // Discount list
   const discountList = useTrackedQuery(api.products.getDiscountList, { token });
   const setDiscountMutation = useMutation(api.products.setDiscount);
   const [discountForm, setDiscountForm] = useState({
@@ -22,139 +23,166 @@ export default function DiscountsPanel({ token }) {
     discountProductSearch.trim() ? { token, searchTerm: discountProductSearch.trim() } : "skip"
   );
 
+  const {
+    processedData: filteredDiscounts,
+    sortConfig,
+    requestSort,
+    searchQuery,
+    setSearchQuery,
+    filterValues,
+    setFilterValue,
+    resetFilters,
+    isFiltered,
+    totalCount,
+    filteredCount,
+  } = useTableSortAndFilter(discountList || [], {
+    searchFields: [(p) => getDisplayName(p), "originalPrice", "discountPrice"],
+    initialSort: { key: "discountExpiry", direction: "asc" },
+    customSorts: {
+      product: (a, b) => getDisplayName(a).localeCompare(getDisplayName(b)),
+    },
+  });
+
   const handleSetDiscount = async (e) => {
     e.preventDefault();
     if (!discountForm.productId) {
       setDiscountStatus("Please select a product.");
       return;
     }
-    if (discountForm.discountPrice <= 0) {
-      setDiscountStatus("Price must be greater than 0.");
+    if (!discountForm.discountPrice || discountForm.discountPrice <= 0) {
+      setDiscountStatus("Enter a valid discount price.");
       return;
     }
-
+    setDiscountStatus("Setting discount...");
     try {
-      const expiryTimestamp = Date.now() + discountForm.expiryDays * 24 * 60 * 60 * 1000;
       await setDiscountMutation({
         token,
         productId: discountForm.productId,
-        discountPrice: discountForm.discountPrice,
-        discountExpiry: expiryTimestamp
+        discountPrice: Number(discountForm.discountPrice),
+        expiryDays: Number(discountForm.expiryDays),
       });
       setDiscountStatus("Discount applied successfully!");
       setDiscountForm({ productId: "", discountPrice: 0, expiryDays: 7 });
       setDiscountProductSearch("");
       setDiscountSelectedProductName("");
-      setTimeout(() => setDiscountStatus(""), 4000);
     } catch (err) {
-      setDiscountStatus("Error: " + err.message);
+      setDiscountStatus("Failed: " + err.message);
     }
   };
 
   return (
     <div className="admin-tab-panel is-active">
-      <h1 className="admin-page-title">Discounts & Promos</h1>
-      <div className="product-edit-grid">
-        {/* Left Column: Set Discount Form */}
+      <div className="page-header">
+        <h1 className="admin-page-title">Discount Manager</h1>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "var(--space-6)" }}>
+        {/* Set Discount Form */}
         <div className="product-edit-card">
-          <h3 className="product-edit-card-title">Create Product Discount</h3>
-
-          {discountStatus && (
-            <div className={`form-error ${discountStatus.includes("success") ? "" : "is-visible"}`}>
-              {discountStatus}
-            </div>
-          )}
-
-          <form onSubmit={handleSetDiscount} className="modal-form">
-            <div className="form-group" style={{ position: "relative" }}>
-              <label className="form-label">Select Product</label>
-              {discountForm.productId ? (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <input className="form-input" type="text" value={discountSelectedProductName} disabled readOnly />
-                  <button
-                    type="button"
-                    className="btn btn--secondary btn--sm"
-                    onClick={() => {
-                      setDiscountForm(prev => ({ ...prev, productId: "" }));
-                      setDiscountSelectedProductName("");
-                      setDiscountProductSearch("");
-                    }}
-                  >
-                    Change
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <input
-                    className="form-input"
-                    type="text"
-                    placeholder="Search by name, SKU, or barcode..."
-                    value={discountProductSearch}
-                    onChange={(e) => setDiscountProductSearch(e.target.value)}
-                  />
-                  {discountProductSearch.trim() && (
-                    <div className="table-wrap" style={{ maxHeight: "220px", overflowY: "auto", marginTop: "4px" }}>
-                      {discountProductResults === undefined ? (
-                        <div className="empty-state"><div className="empty-title">Searching...</div></div>
-                      ) : discountProductResults.length === 0 ? (
-                        <div className="empty-state"><div className="empty-title">No matches.</div></div>
-                      ) : (
-                        discountProductResults.map(p => (
-                          <div
-                            key={p.id}
-                            style={{ padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid var(--border-subtle)" }}
-                            onClick={() => {
-                              setDiscountForm(prev => ({ ...prev, productId: p.id }));
-                              setDiscountSelectedProductName(`${getDisplayName(p)} (Barcode: ${p.barcode})`);
-                            }}
-                          >
-                            {getDisplayName(p)} <span style={{ color: "var(--text-tertiary)", fontSize: "12px" }}>(Barcode: {p.barcode})</span>
-                          </div>
-                        ))
-                      )}
+          <h3 className="product-edit-card-title">Set Campaign Discount</h3>
+          <form onSubmit={handleSetDiscount} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+            <div className="form-group">
+              <label className="form-label">Search Product *</label>
+              <input
+                type="text"
+                className="form-input"
+                value={discountSelectedProductName || discountProductSearch}
+                onChange={(e) => {
+                  setDiscountProductSearch(e.target.value);
+                  setDiscountSelectedProductName("");
+                  setDiscountForm((f) => ({ ...f, productId: "" }));
+                }}
+                placeholder="Type name or barcode to search..."
+              />
+              {discountProductSearch && !discountSelectedProductName && discountProductResults && (
+                <div
+                  style={{
+                    maxHeight: "160px",
+                    overflowY: "auto",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "6px",
+                    marginTop: "4px",
+                    background: "var(--surface-container-low)",
+                  }}
+                >
+                  {discountProductResults.length === 0 ? (
+                    <div style={{ padding: "8px 12px", fontSize: "12px", color: "var(--text-tertiary)" }}>
+                      No matching products found
                     </div>
+                  ) : (
+                    discountProductResults.map((p) => (
+                      <div
+                        key={p._id}
+                        onClick={() => {
+                          setDiscountForm((f) => ({ ...f, productId: p._id }));
+                          setDiscountSelectedProductName(getDisplayName(p));
+                          setDiscountProductSearch("");
+                        }}
+                        style={{
+                          padding: "8px 12px",
+                          fontSize: "13px",
+                          cursor: "pointer",
+                          borderBottom: "1px solid var(--border-subtle)",
+                        }}
+                      >
+                        <strong>{getDisplayName(p)}</strong> — UGX {p.originalPrice?.toLocaleString()}
+                      </div>
+                    ))
                   )}
-                </>
+                </div>
               )}
             </div>
 
             <div className="form-group">
-              <label className="form-label">Discount Price (UGX)</label>
+              <label className="form-label">Discounted / Promo Price (UGX) *</label>
               <input
                 type="number"
                 className="form-input"
-                min="1"
-                placeholder="e.g. 25000"
                 value={discountForm.discountPrice || ""}
-                onChange={(e) => setDiscountForm(prev => ({ ...prev, discountPrice: parseInt(e.target.value) || 0 }))}
-                required
+                onChange={(e) => setDiscountForm((f) => ({ ...f, discountPrice: e.target.value }))}
+                placeholder="e.g. 25000"
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Discount Validity (Days)</label>
-              <select
+              <label className="form-label">Campaign Duration (Days) *</label>
+              <input
+                type="number"
                 className="form-input"
                 value={discountForm.expiryDays}
-                onChange={(e) => setDiscountForm(prev => ({ ...prev, expiryDays: parseInt(e.target.value) }))}
-              >
-                <option value={1}>1 Day</option>
-                <option value={3}>3 Days</option>
-                <option value={7}>1 Week</option>
-                <option value={14}>2 Weeks</option>
-                <option value={30}>1 Month</option>
-              </select>
+                onChange={(e) => setDiscountForm((f) => ({ ...f, expiryDays: e.target.value }))}
+                min={1}
+                max={365}
+              />
             </div>
 
-            <button type="submit" className="btn btn--primary btn--md btn--full-width">
-              Apply Discount
+            {discountStatus && (
+              <div style={{ fontSize: "13px", color: discountStatus.includes("successfully") ? "var(--color-support-green, #10b981)" : "var(--color-support-red, #ef4444)" }}>
+                {discountStatus}
+              </div>
+            )}
+
+            <button type="submit" className="btn btn--primary btn--md">
+              Apply Campaign Discount
             </button>
           </form>
         </div>
 
-        {/* Right Column: Active Discount List */}
+        {/* Active Campaign Discounts Table */}
         <div className="product-edit-card">
           <h3 className="product-edit-card-title">Active Campaign Discounts</h3>
+
+          <TableFilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Filter discounts..."
+            filterValues={filterValues}
+            onFilterChange={(key, val) => setFilterValue(key, val)}
+            isFiltered={isFiltered}
+            onResetFilters={resetFilters}
+            totalCount={totalCount}
+            filteredCount={filteredCount}
+          />
 
           {discountList === undefined ? (
             <div className="empty-state">
@@ -165,24 +193,39 @@ export default function DiscountsPanel({ token }) {
               <div className="empty-title">No active discounts.</div>
               <div className="empty-sub">Use the form to create one.</div>
             </div>
+          ) : filteredDiscounts.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-title">No discounts match search filter.</div>
+              <button className="btn btn--secondary btn--sm" style={{ marginTop: "12px" }} onClick={resetFilters}>
+                Clear Filter
+              </button>
+            </div>
           ) : (
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Product</th>
-                    <th>Original Price</th>
-                    <th>Promo Price</th>
-                    <th>Expiry Date</th>
+                    <SortableHeader sortKey="product" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Product
+                    </SortableHeader>
+                    <SortableHeader sortKey="originalPrice" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Original Price
+                    </SortableHeader>
+                    <SortableHeader sortKey="discountPrice" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Promo Price
+                    </SortableHeader>
+                    <SortableHeader sortKey="discountExpiry" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Expiry Date
+                    </SortableHeader>
                   </tr>
                 </thead>
                 <tbody>
-                  {discountList.map((product) => {
+                  {filteredDiscounts.map((product) => {
                     const isActive = product.discountExpiry > Date.now();
                     return (
                       <tr key={product._id} className={isActive ? "discount-row-active" : ""}>
                         <td><strong>{getDisplayName(product)}</strong></td>
-                        <td>UGX {product.originalPrice.toLocaleString()}</td>
+                        <td>UGX {product.originalPrice?.toLocaleString()}</td>
                         <td>
                           <span className="discount-badge discount-badge--cash">
                             UGX {product.discountPrice?.toLocaleString()}

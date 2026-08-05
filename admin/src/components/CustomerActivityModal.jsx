@@ -3,9 +3,22 @@ import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { X, Calendar, Phone, Mail, Users, Bell, FileText, Trash } from "lucide-react";
+import {
+  getChurnBand,
+  CHURN_BAND_LABELS,
+  LOYALTY_TIER_LABELS,
+  CHURN_BAND_BADGE_CLASS,
+  LOYALTY_TIER_BADGE_CLASS,
+} from "../utils/customerScoreHelpers";
 
 export default function CustomerActivityModal({ customer, token, onClose }) {
   if (!customer) return null;
+
+  // Callers pass different shapes: AdminDashboard/StaffDashboard's customer-list
+  // rows use `id` (see customerActivities.getCustomerList), but LeadsPanel's
+  // "Notes & Reminder" flow builds its object from ensureLeadUser's result,
+  // which returns `_id`. Normalize once here instead of assuming one shape.
+  const customerId = customer.id || customer._id;
 
   // Which form tab is active: 'note' or 'schedule'
   const [activeInteractionTab, setActiveInteractionTab] = useState("note");
@@ -16,10 +29,10 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
   const [activityError, setActivityError] = useState("");
 
   // Queries and mutations
-  const activities = useTrackedQuery(api.customerActivities.getActivitiesByCustomer, {
-    token,
-    customerId: customer.id
-  });
+  const activities = useTrackedQuery(
+    api.customerActivities.getActivitiesByCustomer,
+    customerId ? { token, customerId } : "skip"
+  );
 
   const addActivityMutation = useMutation(api.customerActivities.addActivity);
   const completeActivityMutation = useMutation(api.customerActivities.completeActivity);
@@ -41,7 +54,7 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
     try {
       await addActivityMutation({
         token,
-        customerId: customer.id,
+        customerId,
         type: "note",
         note: interactionNote.trim()
       });
@@ -68,7 +81,7 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
     try {
       await addActivityMutation({
         token,
-        customerId: customer.id,
+        customerId,
         type: scheduledActivityType,
         note: interactionNote.trim(),
         scheduledDate
@@ -144,9 +157,36 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
                 <div className="avatar avatar--lg">{(customer.name || "?")[0]}</div>
                 <div>
                   <h3 className="customer-info-title">{customer.name}</h3>
-                  <span>Registered {new Date(customer.createdAt).toLocaleDateString()}</span>
+                  {customer.createdAt && <span>Registered {new Date(customer.createdAt).toLocaleDateString()}</span>}
                 </div>
               </div>
+
+              {(customer.loyaltyTier || customer.churnRisk !== undefined) && (
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", margin: "var(--space-3) 0" }}>
+                  {customer.loyaltyTier && (
+                    <span className={`active-badge ${LOYALTY_TIER_BADGE_CLASS[customer.loyaltyTier] || "active-badge--off"}`}>
+                      {LOYALTY_TIER_LABELS[customer.loyaltyTier] || "Bronze"} tier
+                    </span>
+                  )}
+                  {customer.churnRisk !== undefined && customer.churnRisk !== null && (
+                    <span className={`active-badge ${CHURN_BAND_BADGE_CLASS[getChurnBand(customer.churnRisk)]}`}>
+                      Churn risk: {CHURN_BAND_LABELS[getChurnBand(customer.churnRisk)]}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {customer.engagementScore !== undefined && customer.engagementScore !== null && (
+                <div style={{ margin: "0 0 var(--space-3)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--label-sm)", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    <span>Engagement score</span>
+                    <span>{customer.engagementScore}/100</span>
+                  </div>
+                  <div style={{ height: "6px", borderRadius: "99px", background: "var(--surface-container)", marginTop: "4px", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${customer.engagementScore}%`, background: "var(--color-brand-primary)" }} />
+                  </div>
+                </div>
+              )}
 
               <table className="customer-meta-table">
                 <tbody>

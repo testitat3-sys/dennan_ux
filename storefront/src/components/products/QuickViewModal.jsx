@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { formatPrice } from '../../utils/priceUtils';
 import { stripBrandFromName } from '../../utils/productNameUtils';
+import { getPrimaryProductImage } from '../../utils/productImageUtils';
 import Button from '../ui/Button';
 import DefaultProductImage from './DefaultProductImage';
 import './QuickViewModal.css';
@@ -19,6 +20,8 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
   const [active, setActive] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
+
+  const primaryImage = getPrimaryProductImage(product);
 
   useEffect(() => {
     if (product) {
@@ -102,8 +105,8 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
             <>
               <div className="quick-view-left">
                 <div className="quick-view-image">
-                  {product.image ? (
-                    <img src={product.image} alt={displayName} />
+                  {primaryImage ? (
+                    <img src={primaryImage} alt={displayName} />
                   ) : (
                     <DefaultProductImage />
                   )}
@@ -225,8 +228,8 @@ const QuickViewModal = ({ product, isOpen, onClose, onSuccess }) => {
               <div className="added-product-card">
                 <div className="mini-cart-item">
                   <div className="mini-cart-img">
-                    {product.image ? (
-                      <img src={product.image} alt={displayName} />
+                    {primaryImage ? (
+                      <img src={primaryImage} alt={displayName} />
                     ) : (
                       <DefaultProductImage />
                     )}

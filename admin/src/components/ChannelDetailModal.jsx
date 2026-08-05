@@ -2,6 +2,8 @@ import React from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { X } from "lucide-react";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { SortableHeader, TableFilterBar } from "./DataTableControls";
 
 function formatDisplayDate(dateStr) {
   if (typeof dateStr !== "string") return dateStr;
@@ -19,10 +21,23 @@ export default function ChannelDetailModal({
   onClose,
   onOpenOrder,
 }) {
-  const orders = useQuery(
+  const rawOrders = useQuery(
     api.orders.adminGetChannelTransactions,
     channel ? { token, startDate, endDate, channel } : "skip"
   );
+
+  const {
+    processedData: orders,
+    sortConfig,
+    requestSort,
+    searchQuery,
+    setSearchQuery,
+    isFiltered,
+    resetFilters,
+  } = useTableSortAndFilter(rawOrders || [], {
+    searchFields: ["customerName", "orderId", "amount"],
+    initialSort: { key: "createdAt", direction: "desc" },
+  });
 
   if (!channel) return null;
 
@@ -41,7 +56,7 @@ export default function ChannelDetailModal({
     onClose();
   };
 
-  const total = orders?.reduce((sum, r) => sum + r.amount, 0) || 0;
+  const total = rawOrders?.reduce((sum, r) => sum + r.amount, 0) || 0;
 
   return (
     <div className="modal-overlay is-open">
@@ -58,28 +73,45 @@ export default function ChannelDetailModal({
           </button>
         </div>
 
-        {orders === undefined ? (
+        {rawOrders === undefined ? (
           <div className="empty-state">
             <div className="empty-title">Loading orders...</div>
           </div>
-        ) : orders.length === 0 ? (
+        ) : rawOrders.length === 0 ? (
           <div className="empty-state">
             <div className="empty-title">No orders found.</div>
           </div>
         ) : (
           <>
-            <div className="price-preview-row font-final">
-              <span>{orders.length} order{orders.length === 1 ? "" : "s"}</span>
+            <div className="price-preview-row font-final" style={{ marginBottom: "12px" }}>
+              <span>{rawOrders.length} order{rawOrders.length === 1 ? "" : "s"}</span>
               <strong>UGX {total.toLocaleString()}</strong>
             </div>
+
+            <TableFilterBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Filter channel orders..."
+              isFiltered={isFiltered}
+              onResetFilters={resetFilters}
+            />
+
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Customer</th>
-                    <th>Order</th>
-                    <th>Amount</th>
+                    <SortableHeader sortKey="createdAt" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Date
+                    </SortableHeader>
+                    <SortableHeader sortKey="customerName" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Customer
+                    </SortableHeader>
+                    <SortableHeader sortKey="orderId" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Order
+                    </SortableHeader>
+                    <SortableHeader sortKey="amount" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Amount
+                    </SortableHeader>
                   </tr>
                 </thead>
                 <tbody>

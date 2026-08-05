@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Flame, Heart, FileText, ClipboardList, MessageSquare } from 'lucide-react';
 import { formatPrice } from '../../utils/priceUtils';
 import { stripBrandFromName } from '../../utils/productNameUtils';
+import { getProductImages } from '../../utils/productImageUtils';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Toast from '../../components/ui/Toast';
@@ -18,7 +19,7 @@ const PDPOptionA = ({ product, reviews }) => {
 
   const displayName = stripBrandFromName(product.name, product.brand);
   const isOutOfStock = product.inventory !== undefined && product.inventory <= 0;
-  const images = product.images || [];
+  const images = getProductImages(product);
   const discountPct = product.wasPrice
     ? Math.round(((product.wasPrice - product.price) / product.wasPrice) * 100)
     : null;

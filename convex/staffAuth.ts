@@ -122,6 +122,14 @@ export const seedStaff = mutation({
         for (const session of sessions) {
           await ctx.db.delete(session._id);
         }
+        // Delete all authAccounts linked to this user to prevent orphaned auth entries
+        const authAccounts = await ctx.db
+          .query("authAccounts")
+          .withIndex("userIdAndProvider", (q) => q.eq("userId", u._id))
+          .collect();
+        for (const account of authAccounts) {
+          await ctx.db.delete(account._id);
+        }
         await ctx.db.delete(u._id);
         console.log(`Deleted leaked/stale staff user: ${u.email} (${u.name})`);
       }

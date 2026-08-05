@@ -8,6 +8,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { useLeadCapture } from '../context/LeadCaptureContext';
 import { formatPrice } from '../utils/priceUtils';
 import { stripBrandFromName, normalizeBrandName } from '../utils/productNameUtils';
+import { getProductImages } from '../utils/productImageUtils';
 import Toast from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import PDPSkeleton from '../components/ui/PDPSkeleton';
@@ -86,6 +87,7 @@ const PDP = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadedImages, setLoadedImages] = useState({});
+  const [imageErrors, setImageErrors] = useState({});
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('Newborn');
   const [showToast, setShowToast] = useState(false);
@@ -177,7 +179,7 @@ const PDP = () => {
   const answerFirstSummary = buildAnswerFirstSummary(product, displayName);
   const showAnswerFirstSummary = hasAnswerFirstFacts(product);
   const factBullets = buildFactBullets(product);
-  const productImages = (product.images || (product.image ? [product.image] : [])).filter(Boolean);
+  const productImages = getProductImages(product);
 
   const productJsonLd = {
     '@context': 'https://schema.org',
@@ -260,8 +262,7 @@ const PDP = () => {
     ? ['Newborn', '0-3m', '3-6m', '6-9m']
     : ['S', 'M', 'L', 'XL'];
 
-  const rawImages = product.images || (product.image ? [product.image] : []);
-  const imagesList = rawImages.filter(Boolean);
+  const imagesList = getProductImages(product);
   const hasNoImages = imagesList.length === 0;
   const displayImages = hasNoImages ? ['placeholder'] : imagesList;
 
@@ -336,10 +337,14 @@ const PDP = () => {
                 className={`pdp__rail-item ${activeImageIndex === idx ? 'is-active' : ''}`}
                 onClick={() => setActiveImageIndex(idx)}
               >
-                {imgUrl === 'placeholder' ? (
+                {imgUrl === 'placeholder' || imageErrors[idx] ? (
                   <DefaultProductImage />
                 ) : (
-                  <img src={imgUrl} alt={`${displayName} view ${idx + 1}`} />
+                  <img 
+                    src={imgUrl} 
+                    alt={`${displayName} view ${idx + 1}`}
+                    onError={() => setImageErrors(prev => ({ ...prev, [idx]: true }))}
+                  />
                 )}
               </button>
             ))}
@@ -347,7 +352,7 @@ const PDP = () => {
 
           {/* Main image / carousel */}
           <div className="pdp__main-image">
-            {!loadedImages[activeImageIndex] && displayImages[activeImageIndex] !== 'placeholder' && (
+            {!loadedImages[activeImageIndex] && displayImages[activeImageIndex] !== 'placeholder' && !imageErrors[activeImageIndex] && (
               <div className="skeleton-shimmer" style={{
                 position: 'absolute',
                 top: 0,
@@ -359,14 +364,17 @@ const PDP = () => {
                 borderRadius: 'var(--radius-lg)'
               }} />
             )}
-            {displayImages[activeImageIndex] === 'placeholder' ? (
+            {displayImages[activeImageIndex] === 'placeholder' || imageErrors[activeImageIndex] ? (
               <DefaultProductImage />
             ) : (
               <img
                 src={displayImages[activeImageIndex]}
                 alt={displayName}
                 onLoad={() => setLoadedImages(prev => ({ ...prev, [activeImageIndex]: true }))}
-                onError={() => setLoadedImages(prev => ({ ...prev, [activeImageIndex]: true }))}
+                onError={() => {
+                  setLoadedImages(prev => ({ ...prev, [activeImageIndex]: true }));
+                  setImageErrors(prev => ({ ...prev, [activeImageIndex]: true }));
+                }}
               />
             )}
             {displayImages.length > 1 && (

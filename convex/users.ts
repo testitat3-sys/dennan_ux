@@ -444,3 +444,247 @@ export const recalculateUserBehavioralPreferences = internalMutation({
     };
   }
 });
+
+// ==========================================
+// ENGAGEMENT SCORE & CHURN RISK ENGINE
+// ==========================================
+// Both scores are 0-100. engagementScore: higher = more engaged.
+// churnRisk: higher = more likely to lapse. They are related but not
+// mirror images of each other - see docs/crm_implementation_and_industry_comparison_report.html
+// and docs/ux-audit-leads-customers.html for the rationale behind the weights below.
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Fallback expected reorder gap (days) for customers with fewer than 2 orders. */
+const DEFAULT_REORDER_CADENCE_DAYS = 45;
+
+function computeEngagementScore(
+  orders: { createdAt: number }[],
+  completedActivitiesInLast60Days: number
+): number {
+  const now = Date.now();
+
+  // Recency (0-40): most recent order age, full marks <=14d, tapers to 0 at 120d+.
+  let recencyScore = 0;
+  if (orders.length > 0) {
+    const lastOrderCreatedAt = Math.max(...orders.map((o) => o.createdAt));
+    const daysSinceLastOrder = (now - lastOrderCreatedAt) / DAY_MS;
+    if (daysSinceLastOrder <= 14) {
+      recencyScore = 40;
+    } else if (daysSinceLastOrder < 120) {
+      recencyScore = 40 * (1 - (daysSinceLastOrder - 14) / (120 - 14));
+    }
+  }
+
+  // Frequency (0-35): orders in trailing 180 days, capped at 5+.
+  const ordersLast180Days = orders.filter((o) => now - o.createdAt <= 180 * DAY_MS).length;
+  const frequencyScore = (Math.min(ordersLast180Days, 5) / 5) * 35;
+
+  // CRM touch (0-25): completed staff interactions in trailing 60 days, capped at 3.
+  const crmScore = (Math.min(completedActivitiesInLast60Days, 3) / 3) * 25;
+
+  return Math.round(Math.min(100, recencyScore + frequencyScore + crmScore));
+}
+
+function computeChurnRisk(orders: { createdAt: number }[], engagementScore: number): number {
+  // A customer who has never ordered isn't "churning" - they're a lead that
+  // hasn't converted yet, which is a different problem the lead-scoring work
+  // (UX audit § Surface a lead-priority signal) covers instead.
+  if (orders.length === 0) return 0;
+
+  const now = Date.now();
+  const sortedAsc = [...orders].sort((a, b) => a.createdAt - b.createdAt);
+  const lastOrderCreatedAt = sortedAsc[sortedAsc.length - 1].createdAt;
+  const daysSinceLastOrder = (now - lastOrderCreatedAt) / DAY_MS;
+
+  // Expected reorder cadence: this customer's own historical average gap
+  // once they have 2+ orders, else a global default.
+  let cadenceDays = DEFAULT_REORDER_CADENCE_DAYS;
+  if (sortedAsc.length >= 2) {
+    let totalGapDays = 0;
+    for (let i = 1; i < sortedAsc.length; i++) {
+      totalGapDays += (sortedAsc[i].createdAt - sortedAsc[i - 1].createdAt) / DAY_MS;
+    }
+    cadenceDays = Math.max(totalGapDays / (sortedAsc.length - 1), 14);
+  }
+
+  // Recency-vs-cadence (0-50): 0 within 1x expected cadence, ramps to 50 at 3x.
+  const cadenceRatio = daysSinceLastOrder / cadenceDays;
+  let recencyRisk = 0;
+  if (cadenceRatio > 1) {
+    recencyRisk = Math.min(50, (50 * (cadenceRatio - 1)) / 2);
+  }
+
+  // Frequency trend (0-30): orders in the last 90 days vs. the 90 days before that.
+  const ordersLast90Days = sortedAsc.filter((o) => now - o.createdAt <= 90 * DAY_MS).length;
+  const ordersPrior90Days = sortedAsc.filter((o) => {
+    const ageDays = (now - o.createdAt) / DAY_MS;
+    return ageDays > 90 && ageDays <= 180;
+  }).length;
+  let trendRisk = 0;
+  if (ordersPrior90Days > 0) {
+    const dropRatio = Math.max(0, (ordersPrior90Days - ordersLast90Days) / ordersPrior90Days);
+    trendRisk = Math.min(1, dropRatio) * 30;
+  }
+
+  // Engagement decay (0-20): low engagement compounds the risk score.
+  const decayRisk = (100 - engagementScore) * 0.2;
+
+  return Math.round(Math.min(100, recencyRisk + trendRisk + decayRisk));
+}
+
+/**
+ * Recomputes engagementScore and churnRisk for a single customer from their
+ * order history and recent CRM activity, and patches the result onto the
+ * user document. Called after order completion and after a CRM activity is
+ * logged/completed; also swept nightly (see crons.ts) so scores that should
+ * decay purely from the passage of time - no new order, no new note - still
+ * update for customers nobody has touched recently.
+ */
+export const recalculateEngagementAndChurn = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user || user.accountRole) return { success: false, reason: "not_a_customer" };
+
+    const orders = await ctx.db
+      .query("orders")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const sixtyDaysAgo = Date.now() - 60 * DAY_MS;
+    const activities = await ctx.db
+      .query("customerActivities")
+      .withIndex("by_customerId", (q) => q.eq("customerId", args.userId))
+      .collect();
+    const completedActivitiesInLast60Days = activities.filter(
+      (a) => a.status === "completed" && (a.completedAt ?? a.createdAt) >= sixtyDaysAgo
+    ).length;
+
+    const engagementScore = computeEngagementScore(orders, completedActivitiesInLast60Days);
+    const churnRisk = computeChurnRisk(orders, engagementScore);
+
+    await ctx.db.patch(args.userId, { engagementScore, churnRisk });
+
+    return { success: true, engagementScore, churnRisk };
+  },
+});
+
+/**
+ * Nightly sweep (see crons.ts) that recomputes engagementScore/churnRisk for
+ * every customer, so scores decay for accounts nobody has interacted with
+ * today. Mirrors the "recompute stock counters" cron's shape. At current
+ * customer volumes a single `.collect()` is fine; if the customer table
+ * grows large this should move to paginated batches like other admin list
+ * queries already flag as a future scaling concern.
+ */
+export const recalculateEngagementAndChurnForAllCustomers = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const customers = await ctx.db
+      .query("users")
+      .withIndex("by_accountRole", (q) => q.eq("accountRole", undefined))
+      .collect();
+
+    let updatedCount = 0;
+    for (const customer of customers) {
+      const orders = await ctx.db
+        .query("orders")
+        .withIndex("by_user", (q) => q.eq("userId", customer._id))
+        .collect();
+
+      const sixtyDaysAgo = Date.now() - 60 * DAY_MS;
+      const activities = await ctx.db
+        .query("customerActivities")
+        .withIndex("by_customerId", (q) => q.eq("customerId", customer._id))
+        .collect();
+      const completedActivitiesInLast60Days = activities.filter(
+        (a) => a.status === "completed" && (a.completedAt ?? a.createdAt) >= sixtyDaysAgo
+      ).length;
+
+      const engagementScore = computeEngagementScore(orders, completedActivitiesInLast60Days);
+      const churnRisk = computeChurnRisk(orders, engagementScore);
+
+      await ctx.db.patch(customer._id, { engagementScore, churnRisk });
+      updatedCount++;
+    }
+
+    console.log(`[convex/users.ts] Nightly engagement/churn sweep updated ${updatedCount} customers.`);
+    return { success: true, updatedCount };
+  },
+});
+
+/**
+ * Sweeps the authAccounts and authSessions tables for entries pointing to user IDs
+ * that no longer exist in the `users` table, and removes them.
+ */
+export const cleanupOrphanedAuthAccounts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    let deletedAccountsCount = 0;
+    let deletedSessionsCount = 0;
+
+    const accounts = await ctx.db.query("authAccounts").collect();
+    for (const account of accounts) {
+      const user = await ctx.db.get(account.userId);
+      if (!user) {
+        await ctx.db.delete(account._id);
+        deletedAccountsCount++;
+      }
+    }
+
+    const sessions = await ctx.db.query("authSessions").collect();
+    for (const session of sessions) {
+      const user = await ctx.db.get(session.userId);
+      if (!user) {
+        await ctx.db.delete(session._id);
+        deletedSessionsCount++;
+      }
+    }
+
+    console.log(
+      `[convex/users.ts] Cleaned up ${deletedAccountsCount} orphaned auth accounts and ${deletedSessionsCount} orphaned auth sessions.`
+    );
+
+    return {
+      deletedAccountsCount,
+      deletedSessionsCount,
+    };
+  },
+});
+
+/**
+ * Safely deletes a user document and all associated authAccounts and authSessions documents.
+ */
+export const deleteUserCascade = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      return { success: false, reason: "User not found" };
+    }
+
+    // 1. Delete associated authAccounts
+    const accounts = await ctx.db
+      .query("authAccounts")
+      .withIndex("userIdAndProvider", (q) => q.eq("userId", args.userId))
+      .collect();
+    for (const account of accounts) {
+      await ctx.db.delete(account._id);
+    }
+
+    // 2. Delete associated authSessions
+    const sessions = await ctx.db
+      .query("authSessions")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .collect();
+    for (const session of sessions) {
+      await ctx.db.delete(session._id);
+    }
+
+    // 3. Delete user document
+    await ctx.db.delete(args.userId);
+
+    return { success: true };
+  },
+});
+

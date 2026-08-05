@@ -5,6 +5,8 @@ import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { Wallet, Trash2 } from "lucide-react";
 import { getTodayStr } from "../utils/reminderHelpers";
 
+import { useSessionState } from "../hooks/useSessionDateRange";
+
 const METHODS = [
   { key: "physical", label: "Cash" },
   { key: "momo", label: "Mobile Money" },
@@ -15,7 +17,7 @@ const METHODS = [
 const EMPTY_COUNTS = { physical: 0, momo: 0, card: 0, voucher: 0 };
 
 export default function CashUpPanel({ token }) {
-  const [date, setDate] = useState(getTodayStr());
+  const [date, setDate] = useSessionState("admin_cashup_date", getTodayStr());
   const [counts, setCounts] = useState(EMPTY_COUNTS);
   const [notes, setNotes] = useState("");
   const [expenseDesc, setExpenseDesc] = useState("");

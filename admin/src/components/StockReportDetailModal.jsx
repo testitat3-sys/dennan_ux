@@ -59,23 +59,39 @@ export default function StockReportDetailModal({
   onClose,
 }) {
   // Only fires when a row is selected — zero cost otherwise.
-  const orders = useQuery(
+  const rawOrders = useQuery(
     api.products.getProductOrdersInRange,
     product
       ? { token, productId: product.productId, startDate, endDate }
       : "skip"
   );
 
+  const {
+    processedData: orders,
+    sortConfig,
+    requestSort,
+    searchQuery,
+    setSearchQuery,
+    isFiltered,
+    resetFilters,
+  } = useTableSortAndFilter(rawOrders || [], {
+    searchFields: ["customerName", "channel", "status", "grandTotal"],
+    initialSort: { key: "createdAt", direction: "desc" },
+    customSorts: {
+      quantityOfProduct: (a, b) => a.quantityOfProduct - b.quantityOfProduct,
+    },
+  });
+
   if (!product) return null;
 
-  const isLoading = orders === undefined;
-  const isEmpty = !isLoading && orders.length === 0;
+  const isLoading = rawOrders === undefined;
+  const isEmpty = !isLoading && rawOrders.length === 0;
 
   const totalUnits = !isLoading && !isEmpty
-    ? orders.reduce((s, r) => s + r.quantityOfProduct, 0)
+    ? rawOrders.reduce((s, r) => s + r.quantityOfProduct, 0)
     : 0;
   const totalValue = !isLoading && !isEmpty
-    ? orders.reduce((s, r) => s + r.grandTotal, 0)
+    ? rawOrders.reduce((s, r) => s + r.grandTotal, 0)
     : 0;
 
   return (
@@ -151,18 +167,38 @@ export default function StockReportDetailModal({
               </div>
             </div>
           ) : (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Customer</th>
-                    <th>Channel</th>
-                    <th style={{ textAlign: "center" }}>Qty Bought</th>
-                    <th>Order Total</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
+            <>
+              <TableFilterBar
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Filter orders by customer, channel..."
+                isFiltered={isFiltered}
+                onResetFilters={resetFilters}
+              />
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <SortableHeader sortKey="customerName" sortConfig={sortConfig} onRequestSort={requestSort}>
+                        Customer
+                      </SortableHeader>
+                      <SortableHeader sortKey="channel" sortConfig={sortConfig} onRequestSort={requestSort}>
+                        Channel
+                      </SortableHeader>
+                      <SortableHeader sortKey="quantityOfProduct" sortConfig={sortConfig} onRequestSort={requestSort} align="center">
+                        Qty Bought
+                      </SortableHeader>
+                      <SortableHeader sortKey="grandTotal" sortConfig={sortConfig} onRequestSort={requestSort}>
+                        Order Total
+                      </SortableHeader>
+                      <SortableHeader sortKey="status" sortConfig={sortConfig} onRequestSort={requestSort}>
+                        Status
+                      </SortableHeader>
+                      <SortableHeader sortKey="createdAt" sortConfig={sortConfig} onRequestSort={requestSort}>
+                        Date
+                      </SortableHeader>
+                    </tr>
+                  </thead>
                 <tbody>
                   {orders.map((row) => {
                     const ChannelIcon = CHANNEL_ICON[row.channel] ?? Package;
@@ -209,6 +245,7 @@ export default function StockReportDetailModal({
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
 

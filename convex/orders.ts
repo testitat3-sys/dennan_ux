@@ -259,6 +259,13 @@ export const placeOrder = mutation({
       console.error("[orders.ts] Failed to recalculate user preferences:", err);
     }
 
+    // 8.5. Recalculate engagement/churn scores now that a new order landed
+    try {
+      await ctx.runMutation(internal.users.recalculateEngagementAndChurn, { userId });
+    } catch (err) {
+      console.error("[orders.ts] Failed to recalculate engagement/churn:", err);
+    }
+
     return {
       success: true,
       orderId,
@@ -479,6 +486,13 @@ export const placeGuestOrder = mutation({
         description: `Earned from purchase (Order #${orderId})`,
         createdAt: Date.now(),
       });
+    }
+
+    // 7.5. Recalculate engagement/churn scores now that a new order landed
+    try {
+      await ctx.runMutation(internal.users.recalculateEngagementAndChurn, { userId: guestUserId });
+    } catch (err) {
+      console.error("[orders.ts] Failed to recalculate engagement/churn:", err);
     }
 
     return {

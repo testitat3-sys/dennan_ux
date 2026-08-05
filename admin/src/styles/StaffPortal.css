@@ -1554,6 +1554,36 @@
   color: #6b21a8;
 }
 
+.active-badge--yellow {
+  background: color-mix(in srgb, #eab308, transparent 85%);
+  color: #854d0e;
+}
+
+.active-badge--red {
+  background: color-mix(in srgb, #dc2626, transparent 85%);
+  color: #991b1b;
+}
+
+.active-badge--amber {
+  background: color-mix(in srgb, #d97706, transparent 85%);
+  color: #92400e;
+}
+
+.active-badge--gold {
+  background: color-mix(in srgb, #ca8a04, transparent 85%);
+  color: #713f12;
+}
+
+.active-badge--silver {
+  background: color-mix(in srgb, #64748b, transparent 85%);
+  color: #334155;
+}
+
+.active-badge--platinum {
+  background: color-mix(in srgb, #6366f1, transparent 85%);
+  color: #3730a3;
+}
+
 .active-dot {
   width: 6px;
   height: 6px;

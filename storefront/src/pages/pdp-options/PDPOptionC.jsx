@@ -18,7 +18,7 @@ const PDPOptionC = ({ product, reviews }) => {
 
   const displayName = stripBrandFromName(product.name, product.brand);
   const isOutOfStock = product.inventory !== undefined && product.inventory <= 0;
-  const images = product.images || [];
+  const images = getProductImages(product);
 
   const handleAddToCart = () => setToast(`${displayName} added to cart!`);
 

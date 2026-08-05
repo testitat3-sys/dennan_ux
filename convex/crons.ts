@@ -12,4 +12,13 @@ crons.cron(
   {}
 );
 
+// Nightly: recompute engagementScore/churnRisk for every customer, so scores
+// decay purely from inactivity even when nobody logs an order or CRM touch.
+crons.cron(
+  "recompute engagement and churn scores",
+  "0 4 * * *", // 04:00 UTC nightly (07:00 EAT)
+  internal.users.recalculateEngagementAndChurnForAllCustomers,
+  {}
+);
+
 export default crons;

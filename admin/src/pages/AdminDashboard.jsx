@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
@@ -8,6 +8,9 @@ import Toast from "../components/Toast";
 import { useStaffAuth } from "../hooks/useStaffAuth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import OfflineBanner from "../components/OfflineBanner";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { SortableHeader, TableFilterBar } from "../components/DataTableControls";
+
 import Sidebar from "../components/Sidebar";
 import CustomerActivityModal from "../components/CustomerActivityModal";
 import OrderDetailModal from "../components/OrderDetailModal";
@@ -36,6 +39,15 @@ import CashUpPanel from "../components/CashUpPanel";
 import BusinessExpensesPanel from "../components/BusinessExpensesPanel";
 import { getTodayStr } from "../utils/reminderHelpers";
 import {
+  getChurnBand,
+  CHURN_BAND_LABELS,
+  LOYALTY_TIER_LABELS,
+  LOYALTY_TIER_OPTIONS,
+  CHURN_BAND_OPTIONS,
+  CHURN_BAND_BADGE_CLASS,
+  LOYALTY_TIER_BADGE_CLASS,
+} from "../utils/customerScoreHelpers";
+import {
   LayoutDashboard,
   Boxes,
   Tag,
@@ -51,7 +63,6 @@ import {
   XCircle,
   ChevronRight,
   ClipboardList,
-  Search,
   Package,
   Settings,
   Inbox,
@@ -94,6 +105,25 @@ export default function AdminDashboard() {
   // Queries for badges and overview
   const pendingOrders = useQuery(api.orders.getPendingOrders, { token });
   const pendingReturns = useTrackedQuery(api.returns.getPendingReturns, { token });
+
+  const {
+    processedData: filteredPendingOrders,
+    sortConfig: pendingOrdersSort,
+    requestSort: requestPendingOrdersSort,
+  } = useTableSortAndFilter(pendingOrders || [], {
+    searchFields: ["customerName", "customerPhone", "status", "claimantName"],
+    initialSort: { key: "createdAt", direction: "desc" },
+  });
+
+  const {
+    processedData: filteredPendingReturns,
+    sortConfig: pendingReturnsSort,
+    requestSort: requestPendingReturnsSort,
+  } = useTableSortAndFilter(pendingReturns || [], {
+    searchFields: ["customerName", "staffName"],
+    initialSort: { key: "createdAt", direction: "desc" },
+  });
+
 
   // Unseen logic
   const [lastSeenOrders, setLastSeenOrders] = useState(() => parseInt(localStorage.getItem("dennan_admin_last_seen_orders") || "0"));
@@ -243,17 +273,35 @@ export default function AdminDashboard() {
     api.customerActivities.getCustomerList,
     activeTab === "customers" ? { token } : "skip"
   );
-  const [customerSearch, setCustomerSearch] = useState("");
+  // churnRisk is a raw 0-100 number; bucket it into bands so it can be a
+  // filter-select option the same way loyaltyTier already is.
+  const customersWithDerived = useMemo(() => {
+    return (customerList || []).map((c) => ({
+      ...c,
+      churnBand: getChurnBand(c.churnRisk),
+    }));
+  }, [customerList]);
+
+  const {
+    processedData: filteredCustomers,
+    sortConfig: customersSort,
+    requestSort: requestCustomersSort,
+    searchQuery: customerSearch,
+    setSearchQuery: setCustomerSearch,
+    filterValues: customerFilterValues,
+    setFilterValue: setCustomerFilterValue,
+    resetFilters: resetCustomerFilters,
+    isFiltered: isCustomersFiltered,
+    totalCount: customersTotalCount,
+    filteredCount: customersFilteredCount,
+  } = useTableSortAndFilter(customersWithDerived, {
+    searchFields: ["name", "email", "phone", "customerNotes"],
+    initialSort: { key: "name", direction: "asc" },
+  });
 
   // Leads (store requests + back-in-stock signups)
   const leadsList = useTrackedQuery(api.leads.getLeads, { token });
   const unresolvedLeadsCount = leadsList?.filter((l) => l.status !== "resolved").length || 0;
-
-  const filteredCustomers = customerList?.filter(c =>
-    c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    c.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    c.phone?.includes(customerSearch)
-  ) || [];
 
   const adminSidebarGroups = [
     {
@@ -381,16 +429,27 @@ export default function AdminDashboard() {
                       <table className="data-table">
                         <thead>
                           <tr>
-                            <th>Customer</th>
-                            <th>Status</th>
-                            <th>Grand Total</th>
-                            <th>Assigned Staff</th>
-                            <th>Created At</th>
+                            <SortableHeader sortKey="customerName" sortConfig={pendingOrdersSort} onRequestSort={requestPendingOrdersSort}>
+                              Customer
+                            </SortableHeader>
+                            <SortableHeader sortKey="status" sortConfig={pendingOrdersSort} onRequestSort={requestPendingOrdersSort}>
+                              Status
+                            </SortableHeader>
+                            <SortableHeader sortKey="grandTotal" sortConfig={pendingOrdersSort} onRequestSort={requestPendingOrdersSort}>
+                              Grand Total
+                            </SortableHeader>
+                            <SortableHeader sortKey="claimantName" sortConfig={pendingOrdersSort} onRequestSort={requestPendingOrdersSort}>
+                              Assigned Staff
+                            </SortableHeader>
+                            <SortableHeader sortKey="createdAt" sortConfig={pendingOrdersSort} onRequestSort={requestPendingOrdersSort}>
+                              Created At
+                            </SortableHeader>
                             <th>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {pendingOrders.map((order) => (
+                          {filteredPendingOrders.map((order) => (
+
                             <tr key={order._id}>
                               <td>
                                 <strong>{order.customerName}</strong>
@@ -436,16 +495,26 @@ export default function AdminDashboard() {
                       <table className="data-table">
                         <thead>
                           <tr>
-                            <th>Customer</th>
-                            <th>Submitted By</th>
-                            <th>Returned Total</th>
-                            <th>Exchange Total</th>
-                            <th>Date</th>
+                            <SortableHeader sortKey="customerName" sortConfig={pendingReturnsSort} onRequestSort={requestPendingReturnsSort}>
+                              Customer
+                            </SortableHeader>
+                            <SortableHeader sortKey="staffName" sortConfig={pendingReturnsSort} onRequestSort={requestPendingReturnsSort}>
+                              Submitted By
+                            </SortableHeader>
+                            <SortableHeader sortKey="returnedTotal" sortConfig={pendingReturnsSort} onRequestSort={requestPendingReturnsSort}>
+                              Returned Total
+                            </SortableHeader>
+                            <SortableHeader sortKey="exchangeTotal" sortConfig={pendingReturnsSort} onRequestSort={requestPendingReturnsSort}>
+                              Exchange Total
+                            </SortableHeader>
+                            <SortableHeader sortKey="createdAt" sortConfig={pendingReturnsSort} onRequestSort={requestPendingReturnsSort}>
+                              Date
+                            </SortableHeader>
                             <th>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {pendingReturns.map((ret) => (
+                          {filteredPendingReturns.map((ret) => (
                             <tr key={ret.returnId}>
                               <td><strong>{ret.customerName}</strong></td>
                               <td>{ret.staffName}</td>
@@ -592,16 +661,6 @@ export default function AdminDashboard() {
             <div className="admin-tab-panel is-active">
               <div className="page-header">
                 <h1 className="admin-page-title">Customers</h1>
-                <div className="stock-search-wrap">
-                  <Search className="stock-search-icon" size={16} />
-                  <input
-                    className="stock-search-input"
-                    type="text"
-                    placeholder="Search by name, email, phone..."
-                    value={customerSearch}
-                    onChange={(e) => setCustomerSearch(e.target.value)}
-                  />
-                </div>
               </div>
 
               {customerList === undefined ? (
@@ -609,14 +668,44 @@ export default function AdminDashboard() {
                   <div className="empty-title">Loading customer data...</div>
                 </div>
               ) : (
-                <div className="table-wrap">
+                <>
+                  <TableFilterBar
+                    searchQuery={customerSearch}
+                    onSearchChange={setCustomerSearch}
+                    searchPlaceholder="Search by name, email, phone..."
+                    filterValues={customerFilterValues}
+                    onFilterChange={(key, val) => setCustomerFilterValue(key, val === "all" ? "" : val)}
+                    filters={[
+                      { key: "loyaltyTier", width: "140px", options: LOYALTY_TIER_OPTIONS },
+                      { key: "churnBand", width: "150px", options: CHURN_BAND_OPTIONS },
+                    ]}
+                    isFiltered={isCustomersFiltered}
+                    onResetFilters={resetCustomerFilters}
+                    totalCount={customersTotalCount}
+                    filteredCount={customersFilteredCount}
+                  />
+                  <div className="table-wrap">
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th>Customer Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Total Orders</th>
+                        <SortableHeader sortKey="name" sortConfig={customersSort} onRequestSort={requestCustomersSort}>
+                          Customer Name
+                        </SortableHeader>
+                        <SortableHeader sortKey="email" sortConfig={customersSort} onRequestSort={requestCustomersSort}>
+                          Email
+                        </SortableHeader>
+                        <SortableHeader sortKey="phone" sortConfig={customersSort} onRequestSort={requestCustomersSort}>
+                          Phone
+                        </SortableHeader>
+                        <SortableHeader sortKey="ordersCount" sortConfig={customersSort} onRequestSort={requestCustomersSort}>
+                          Total Orders
+                        </SortableHeader>
+                        <SortableHeader sortKey="loyaltyTier" sortConfig={customersSort} onRequestSort={requestCustomersSort}>
+                          Tier
+                        </SortableHeader>
+                        <SortableHeader sortKey="churnRisk" sortConfig={customersSort} onRequestSort={requestCustomersSort}>
+                          Churn Risk
+                        </SortableHeader>
                         <th>CRM Notes Summary</th>
                         <th style={{ width: "120px" }}>Actions</th>
                       </tr>
@@ -628,6 +717,17 @@ export default function AdminDashboard() {
                           <td className="td-email">{c.email || "—"}</td>
                           <td className="td-phone">{c.phone || "—"}</td>
                           <td>{c.ordersCount}</td>
+                          <td>
+                            <span className={`active-badge ${LOYALTY_TIER_BADGE_CLASS[c.loyaltyTier] || "active-badge--off"}`}>
+                              {LOYALTY_TIER_LABELS[c.loyaltyTier] || "Bronze"}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`active-badge ${CHURN_BAND_BADGE_CLASS[c.churnBand]}`}>
+                              {CHURN_BAND_LABELS[c.churnBand]}
+                              {c.churnRisk !== undefined && c.churnRisk !== null ? ` (${c.churnRisk})` : ""}
+                            </span>
+                          </td>
                           <td>{c.customerNotes ? (c.customerNotes.length > 50 ? c.customerNotes.substring(0, 50) + "..." : c.customerNotes) : "No notes logged."}</td>
                           <td className="td-action">
                             <button
@@ -641,7 +741,8 @@ export default function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                  </div>
+                </>
               )}
             </div>
           )}

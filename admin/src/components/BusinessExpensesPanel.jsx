@@ -4,6 +4,8 @@ import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { Receipt, Trash2 } from "lucide-react";
 import ExpenseNameCombobox from "./ExpenseNameCombobox";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { SortableHeader, TableFilterBar } from "./DataTableControls";
 
 const EMPTY_FORM = { voucherNumber: "", name: "", amount: "", note: "" };
 
@@ -12,9 +14,26 @@ export default function BusinessExpensesPanel({ token }) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const expenses = useTrackedQuery(api.businessExpenses.listBusinessExpenses, { token });
+  const rawExpenses = useTrackedQuery(api.businessExpenses.listBusinessExpenses, { token });
   const createExpense = useMutation(api.businessExpenses.createBusinessExpense);
   const deleteExpense = useMutation(api.businessExpenses.deleteBusinessExpense);
+
+  const {
+    processedData: expenses,
+    sortConfig,
+    requestSort,
+    searchQuery,
+    setSearchQuery,
+    filterValues,
+    setFilterValue,
+    resetFilters,
+    isFiltered,
+    totalCount,
+    filteredCount,
+  } = useTableSortAndFilter(rawExpenses || [], {
+    searchFields: ["voucherNumber", "name", "note", "staffName", "amount"],
+    initialSort: { key: "createdAt", direction: "desc" },
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,26 +151,57 @@ export default function BusinessExpensesPanel({ token }) {
         <h2 className="section-title">Expense History</h2>
       </div>
 
-      {expenses === undefined ? (
+      <TableFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search expenses by voucher, name, note, staff..."
+        filterValues={filterValues}
+        onFilterChange={(key, val) => setFilterValue(key, val)}
+        isFiltered={isFiltered}
+        onResetFilters={resetFilters}
+        totalCount={totalCount}
+        filteredCount={filteredCount}
+      />
+
+      {rawExpenses === undefined ? (
         <div className="empty-state">
           <div className="empty-title">Loading expenses...</div>
         </div>
-      ) : expenses.length === 0 ? (
+      ) : rawExpenses.length === 0 ? (
         <div className="empty-state">
           <div className="empty-title">No business expenses recorded yet.</div>
+        </div>
+      ) : expenses.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-title">No expenses match filter criteria.</div>
+          <button className="btn btn--secondary btn--sm" style={{ marginTop: "12px" }} onClick={resetFilters}>
+            Clear Filters
+          </button>
         </div>
       ) : (
         <div className="table-wrap">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Voucher #</th>
-                <th>Expense Name</th>
-                <th>Amount (UGX)</th>
-                <th>Note</th>
-                <th>Recorded By</th>
-                <th>Date</th>
-                <th></th>
+                <SortableHeader sortKey="voucherNumber" sortConfig={sortConfig} onRequestSort={requestSort}>
+                  Voucher #
+                </SortableHeader>
+                <SortableHeader sortKey="name" sortConfig={sortConfig} onRequestSort={requestSort}>
+                  Expense Name
+                </SortableHeader>
+                <SortableHeader sortKey="amount" sortConfig={sortConfig} onRequestSort={requestSort}>
+                  Amount (UGX)
+                </SortableHeader>
+                <SortableHeader sortKey="note" sortConfig={sortConfig} onRequestSort={requestSort}>
+                  Note
+                </SortableHeader>
+                <SortableHeader sortKey="staffName" sortConfig={sortConfig} onRequestSort={requestSort}>
+                  Recorded By
+                </SortableHeader>
+                <SortableHeader sortKey="createdAt" sortConfig={sortConfig} onRequestSort={requestSort}>
+                  Date
+                </SortableHeader>
+                <th style={{ width: "60px" }}></th>
               </tr>
             </thead>
             <tbody>

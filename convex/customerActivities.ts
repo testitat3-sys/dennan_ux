@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { verifyStaffSession } from "./staffAuth";
 import { trackedQuery } from "./lib/ioTracking";
+import { internal } from "./_generated/api";
 
 /**
  * Retrieves a list of all customers (users without an accountRole),
@@ -41,6 +42,9 @@ export const getCustomerList = trackedQuery("customerActivities.getCustomerList"
           ordersCount: orders.length,
           activitiesCount: activities.length,
           createdAt: c._creationTime,
+          loyaltyTier: c.loyaltyTier ?? "bronze",
+          churnRisk: c.churnRisk,
+          engagementScore: c.engagementScore,
         };
       })
     );
@@ -140,6 +144,17 @@ export const addActivity = mutation({
       await ctx.db.patch(args.customerId, {
         customerNotes: args.note,
       });
+    }
+
+    // A "note" logs as immediately completed, which counts toward the CRM-touch
+    // component of engagementScore - recompute right away. Scheduled activities
+    // (call/meeting/etc.) start "pending" and only count once completeActivity runs.
+    if (args.type === "note") {
+      try {
+        await ctx.runMutation(internal.users.recalculateEngagementAndChurn, { userId: args.customerId });
+      } catch (err) {
+        console.error("[customerActivities.ts] Failed to recalculate engagement/churn:", err);
+      }
     }
 
     return { success: true, activityId };
@@ -273,6 +288,12 @@ export const completeActivity = mutation({
       status: "completed",
       completedAt: Date.now(),
     });
+
+    try {
+      await ctx.runMutation(internal.users.recalculateEngagementAndChurn, { userId: activity.customerId });
+    } catch (err) {
+      console.error("[customerActivities.ts] Failed to recalculate engagement/churn:", err);
+    }
 
     return { success: true };
   },

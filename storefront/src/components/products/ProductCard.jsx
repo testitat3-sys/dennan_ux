@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ProductCardSkeleton from './ProductCardSkeleton';
 import { formatPrice } from '../../utils/priceUtils';
 import { stripBrandFromName, normalizeBrandName } from '../../utils/productNameUtils';
+import { getPrimaryProductImage } from '../../utils/productImageUtils';
 import { useConvexAuth } from 'convex/react';
 import { useWishlist } from '../../context/WishlistContext';
 import { useLeadCapture } from '../../context/LeadCaptureContext';
@@ -41,7 +42,8 @@ const ProductCard = ({
   const { isAuthenticated } = useConvexAuth();
   const { hasLeadInfo, openLeadModal } = useLeadCapture();
 
-  const { image, name, price, wasPrice, tier, badge, tags, variant, inventory, unitsSold, brand } = product;
+  const { name, price, wasPrice, tier, badge, tags, variant, inventory, unitsSold, brand } = product;
+  const cardImage = getPrimaryProductImage(product);
   const id = product.id || product._id;
 
   const displayName = normalizeBrandName(stripBrandFromName(name, brand));
@@ -54,13 +56,13 @@ const ProductCard = ({
   ) % 4;
 
   // 1. Render the skeleton fallback until the image has preloaded or errored (only if an image exists)
-  if (!imageLoaded && !imageError && image) {
+  if (!imageLoaded && !imageError && cardImage) {
     return (
       <div className="product-card-preload-container" style={{ position: 'relative' }}>
         <ProductCardSkeleton className={className} />
         {/* Hidden image element to trigger the browser's native preload & cache */}
         <img 
-          src={image} 
+          src={cardImage} 
           alt="" 
           onLoad={() => setImageLoaded(true)} 
           onError={() => setImageError(true)} 
@@ -105,8 +107,8 @@ const ProductCard = ({
     <article className={`product-card product-card--loaded variant-${variantIndex} ${isOutOfStock ? 'is-out-of-stock' : ''} ${variant ? `product-card--${variant}` : ''} ${wishlistMode ? 'product-card--wishlist' : ''} ${className}`}>
       <Link to={`/product/${id}`} className="product-card__image-link">
         <div className="card-image">
-          {image && !imageError ? (
-            <img src={image} alt={displayName} className="card-image-el" />
+          {cardImage && !imageError ? (
+            <img src={cardImage} alt={displayName} className="card-image-el" onError={() => setImageError(true)} />
           ) : (
             renderPlaceholder()
           )}

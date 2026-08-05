@@ -1,27 +1,40 @@
 import React, { useState } from "react";
-import { useQuery, usePaginatedQuery } from "convex/react";
+import { useQuery } from "convex/react";
+import { useNavigate } from "react-router-dom";
 import { api } from "@convex/_generated/api";
+import { Search, Plus, Edit2, Upload } from "lucide-react";
 import { useProductDisplayName } from "../hooks/useProductDisplayName";
-import { Search, Pencil, Plus, Upload } from "lucide-react";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { SortableHeader } from "./DataTableControls";
 
-export default function ProductEditorPanel({ token, navigate, user }) {
+export default function ProductEditorPanel({ token }) {
+  const navigate = useNavigate();
   const { getDisplayName } = useProductDisplayName(token);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const {
-    results: browseResults,
-    status: browseStatus,
-    loadMore,
-  } = usePaginatedQuery(api.products.getStockList, { token }, { initialNumItems: 25 });
 
   const searchResults = useQuery(
     api.products.searchStockList,
     searchTerm.trim() ? { token, searchTerm: searchTerm.trim() } : "skip"
   );
+  const browseResults = useQuery(
+    api.products.listCatalogProducts,
+    searchTerm.trim() ? "skip" : { token }
+  );
 
   const isSearching = searchTerm.trim().length > 0;
-  const productList = isSearching ? searchResults : browseResults;
-  const filteredProducts = productList || [];
+  const rawProductList = isSearching ? searchResults : browseResults;
+
+  const {
+    processedData: filteredProducts,
+    sortConfig,
+    requestSort,
+  } = useTableSortAndFilter(rawProductList || [], {
+    searchFields: [(p) => getDisplayName(p), "sku", "barcode", "category", "brand"],
+    initialSort: { key: "name", direction: "asc" },
+    customSorts: {
+      name: (a, b) => getDisplayName(a).localeCompare(getDisplayName(b)),
+    },
+  });
 
   return (
     <div className="admin-tab-panel is-active">
@@ -58,7 +71,7 @@ export default function ProductEditorPanel({ token, navigate, user }) {
         </div>
       </div>
 
-      {productList === undefined ? (
+      {rawProductList === undefined ? (
         <div className="empty-state">
           <div className="empty-title">Loading catalog...</div>
         </div>
@@ -72,12 +85,24 @@ export default function ProductEditorPanel({ token, navigate, user }) {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Product Details</th>
-                  <th>Barcode</th>
-                  <th>Category / Brand</th>
-                  <th>Retail Price</th>
-                  <th>Cost Price</th>
-                  <th>Status</th>
+                  <SortableHeader sortKey="name" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Product Details
+                  </SortableHeader>
+                  <SortableHeader sortKey="barcode" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Barcode
+                  </SortableHeader>
+                  <SortableHeader sortKey="category" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Category / Brand
+                  </SortableHeader>
+                  <SortableHeader sortKey="price" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Retail Price
+                  </SortableHeader>
+                  <SortableHeader sortKey="costPrice" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Cost Price
+                  </SortableHeader>
+                  <SortableHeader sortKey="isActive" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Status
+                  </SortableHeader>
                   <th style={{ width: "100px" }}>Actions</th>
                 </tr>
               </thead>
@@ -112,11 +137,10 @@ export default function ProductEditorPanel({ token, navigate, user }) {
                     <td>
                       <button
                         className="btn btn--secondary btn--sm"
-                        onClick={() => navigate(`/admin/products/${product.id}`)}
-                        title="Edit product attributes"
+                        onClick={() => navigate(`/admin/products/${product.id}/edit`)}
                         style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
                       >
-                        <Pencil size={12} /> Edit
+                        <Edit2 size={12} /> Edit
                       </button>
                     </td>
                   </tr>
@@ -124,14 +148,6 @@ export default function ProductEditorPanel({ token, navigate, user }) {
               </tbody>
             </table>
           </div>
-
-          {!isSearching && browseStatus === "CanLoadMore" && (
-            <div style={{ textAlign: "center", marginTop: "var(--space-4)" }}>
-              <button className="btn btn--secondary btn--sm" onClick={() => loadMore(25)}>
-                Load More
-              </button>
-            </div>
-          )}
         </>
       )}
     </div>

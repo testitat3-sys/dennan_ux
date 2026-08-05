@@ -10,6 +10,7 @@ import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import Sidebar from "../components/Sidebar";
 import ProductPickerGrid from "../components/ProductPickerGrid";
 import CatalogDownloadBanner from "../components/CatalogDownloadBanner";
+import ReceiptModal from "../components/ReceiptModal";
 import { getReturnPageSidebarGroups } from "../utils/sidebarGroups";
 import { ArrowLeft, RotateCcw, AlertTriangle, Minus, Plus } from "lucide-react";
 

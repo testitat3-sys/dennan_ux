@@ -8,6 +8,9 @@ import { Search, AlertCircle, Pencil, Plus, Minus, Check, Printer, Upload, X, Se
 import BarcodeLabelModal from "./BarcodeLabelModal";
 import StockHistoryModal from "./StockHistoryModal";
 import Toast from "./Toast";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { SortableHeader, TableFilterBar } from "./DataTableControls";
+
 
 /** Derive a single overall status label for a submitted stock request group. */
 function getStockRequestOverallStatus(group) {
@@ -145,25 +148,31 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
     }
   };
 
-  const filteredStock = stockList || [];
+  const {
+    processedData: filteredStock,
+    sortConfig,
+    requestSort,
+    searchQuery,
+    setSearchQuery,
+    filterValues,
+    setFilterValue,
+    resetFilters,
+    isFiltered,
+    totalCount,
+    filteredCount,
+  } = useTableSortAndFilter(stockList || [], {
+    searchFields: [(p) => getDisplayName(p), "barcode", "sku", "id"],
+    initialSort: { key: "name", direction: "asc" },
+    customSorts: {
+      name: (a, b) => getDisplayName(a).localeCompare(getDisplayName(b)),
+      status: (a, b) => (a.inventory <= 0 ? -1 : 1) - (b.inventory <= 0 ? -1 : 1),
+    },
+  });
 
   return (
     <div className="admin-tab-panel is-active">
       <div className="page-header">
         <h1 className="admin-page-title">Catalogue Inventory Manager</h1>
-        <div className="stock-search-wrap">
-          <Search className="stock-search-icon" size={16} />
-          <input
-            className="stock-search-input"
-            type="text"
-            placeholder="Search by SKU, barcode, name..."
-            value={stockSearch}
-            onChange={(e) => setStockSearch(e.target.value)}
-          />
-          {stockSearch && (
-            <button className="stock-search-clear" onClick={() => setStockSearch("")}>×</button>
-          )}
-        </div>
         <button
           className="btn btn--primary btn--sm"
           onClick={() => navigate("/admin/products/new")}
@@ -179,6 +188,37 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
           <Upload size={14} /> Bulk Upload (.xlsx)
         </button>
       </div>
+
+      <TableFilterBar
+        searchQuery={searchQuery || stockSearch}
+        onSearchChange={(val) => {
+          setStockSearch(val);
+          setSearchQuery(val);
+        }}
+        searchPlaceholder="Search product by name, barcode, SKU..."
+        filterValues={filterValues}
+        onFilterChange={(key, val) => setFilterValue(key, val === "all" ? "" : val)}
+        filters={[
+          {
+            key: "inventoryStatus",
+            width: "160px",
+            options: [
+              { value: "all", label: "All Stock Levels" },
+              { value: "in_stock", label: "In Stock" },
+              { value: "low_stock", label: "Low Stock Alert" },
+              { value: "out_of_stock", label: "Out of Stock" },
+            ],
+          },
+        ]}
+        isFiltered={isFiltered}
+        onResetFilters={() => {
+          setStockSearch("");
+          resetFilters();
+        }}
+        totalCount={totalCount}
+        filteredCount={filteredCount}
+      />
+
 
       {isStockManager && myDrafts && myDrafts.length > 0 && (
         <div
@@ -246,16 +286,29 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Product Details</th>
-                  <th>Barcode</th>
-                  <th>Cost Price</th>
-                  <th>Inventory</th>
-                  <th>Units Sold</th>
-                  <th>Status</th>
+                  <SortableHeader sortKey="name" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Product Details
+                  </SortableHeader>
+                  <SortableHeader sortKey="barcode" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Barcode
+                  </SortableHeader>
+                  <SortableHeader sortKey="costPrice" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Cost Price
+                  </SortableHeader>
+                  <SortableHeader sortKey="inventory" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Inventory
+                  </SortableHeader>
+                  <SortableHeader sortKey="unitsSold" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Units Sold
+                  </SortableHeader>
+                  <SortableHeader sortKey="status" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Status
+                  </SortableHeader>
                   <th style={{ width: "180px" }}>Stock Adjustment</th>
                   <th style={{ width: "110px" }}>Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 {filteredStock.map((product) => {
                   const isOut = product.inventory <= 0;

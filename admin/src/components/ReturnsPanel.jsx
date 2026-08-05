@@ -3,6 +3,9 @@ import { usePaginatedQuery } from "convex/react";
 import { useNavigate } from "react-router-dom";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { SortableHeader, TableFilterBar } from "./DataTableControls";
+import { useSessionState } from "../hooks/useSessionDateRange";
 import ReceiptModal from "./ReceiptModal";
 import {
   CheckCircle,
@@ -13,6 +16,7 @@ import {
   RotateCcw,
   Printer,
 } from "lucide-react";
+
 
 function getTodayDateStr() {
   const d = new Date();
@@ -248,8 +252,8 @@ function ReturnDetailModal({ ret, onClose, onPrintReceipt }) {
 export default function ReturnsPanel({ token }) {
   const navigate = useNavigate();
   const todayStr = getTodayDateStr();
-  const [startDate, setStartDate] = useState(todayStr);
-  const [endDate, setEndDate] = useState(todayStr);
+  const [startDate, setStartDate] = useSessionState("admin_returns_start", todayStr);
+  const [endDate, setEndDate] = useSessionState("admin_returns_end", todayStr);
   const [selectedReturn, setSelectedReturn] = useState(null);
   const [activeReceipt, setActiveReceipt] = useState(null);
 
@@ -262,13 +266,34 @@ export default function ReturnsPanel({ token }) {
     token && searchedReceipt ? { token, query: searchedReceipt } : "skip"
   );
 
-  const { results: returns, status: returnsStatus, loadMore } = usePaginatedQuery(
+  const { results: rawReturns, status: returnsStatus, loadMore } = usePaginatedQuery(
     api.returns.getReturnsByDateRange,
     { token, startDate, endDate },
-    { initialNumItems: 25 }
+    { initialNumItems: 50 }
   );
 
+  const {
+    processedData: returns,
+    sortConfig,
+    requestSort,
+    searchQuery,
+    setSearchQuery,
+    filterValues,
+    setFilterValue,
+    resetFilters,
+    isFiltered,
+    totalCount,
+    filteredCount,
+  } = useTableSortAndFilter(rawReturns || [], {
+    searchFields: ["customerName", "receiptNumber", (ret) => (ret.items || []).map((i) => i.productName).join(" ")],
+    initialSort: { key: "createdAt", direction: "desc" },
+    customSorts: {
+      status: (a, b) => getReturnOverallStatus(a).localeCompare(getReturnOverallStatus(b)),
+    },
+  });
+
   const isToday = startDate === todayStr && endDate === todayStr;
+
 
   const handleResetToday = () => {
     setStartDate(todayStr);
@@ -501,17 +526,38 @@ export default function ReturnsPanel({ token }) {
         )}
       </div>
 
+      {/* ── Filter and Search Bar ── */}
+      <TableFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Filter returns by customer, receipt #, or item..."
+        filterValues={filterValues}
+        onFilterChange={(key, val) => setFilterValue(key, val)}
+        isFiltered={isFiltered}
+        onResetFilters={resetFilters}
+        totalCount={totalCount}
+        filteredCount={filteredCount}
+      />
+
       {/* ── Returns List ── */}
       {returnsStatus === "LoadingFirstPage" ? (
         <div className="empty-state" style={{ fontFamily: "var(--font-sans)" }}>
           <div className="empty-title" style={{ fontFamily: "var(--font-editorial)" }}>Loading returns...</div>
         </div>
-      ) : returns.length === 0 ? (
+      ) : rawReturns?.length === 0 ? (
         <div className="empty-state" style={{ fontFamily: "var(--font-sans)" }}>
           <div className="empty-title" style={{ fontFamily: "var(--font-editorial)" }}>No returns in this period.</div>
           <div className="empty-sub">Delivery-failure and customer returns will appear here.</div>
         </div>
+      ) : returns.length === 0 ? (
+        <div className="empty-state" style={{ fontFamily: "var(--font-sans)" }}>
+          <div className="empty-title" style={{ fontFamily: "var(--font-editorial)" }}>No returns match filter criteria.</div>
+          <button className="btn btn--secondary btn--sm" style={{ marginTop: "12px" }} onClick={resetFilters}>
+            Clear Filters
+          </button>
+        </div>
       ) : (
+
         <>
           <div className="returns-panel-list" style={{ gap: "var(--space-2)", fontFamily: "var(--font-sans)" }}>
             {returns.map((ret) => {

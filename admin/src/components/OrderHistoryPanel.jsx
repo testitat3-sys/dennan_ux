@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { usePaginatedQuery, useConvex } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Eye, Download } from "lucide-react";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { SortableHeader, TableFilterBar } from "./DataTableControls";
+import { useSessionState } from "../hooks/useSessionDateRange";
 
 function getStatusModifier(status) {
   switch (status) {
@@ -43,22 +46,60 @@ function toCsv(rows) {
   return lines.join("\n");
 }
 
+const ORDER_STATUS_OPTIONS = [
+  { value: "all", label: "All Statuses" },
+  { value: "pending_cod", label: "Pending COD" },
+  { value: "preparing", label: "Preparing" },
+  { value: "packing", label: "Packing" },
+  { value: "dispatched", label: "Dispatched" },
+  { value: "delivered", label: "Delivered" },
+  { value: "failed", label: "Failed" },
+  { value: "returned", label: "Returned" },
+  { value: "partially_returned", label: "Partially Returned" },
+];
+
+const ORDER_TYPE_OPTIONS = [
+  { value: "all", label: "All Order Types" },
+  { value: "online", label: "Online Orders" },
+  { value: "walk_in", label: "Walk-in Orders" },
+];
+
 export default function OrderHistoryPanel({ token, onOpenOrder, user }) {
   const todayStr = getTodayDateStr();
   const isRestrictedToToday = user?.accountRole === "accounting" || user?.accountRole === "staff";
-  const [startDate, setStartDate] = useState(todayStr);
-  const [endDate, setEndDate] = useState(todayStr);
+  const [startDate, setStartDate] = useSessionState("admin_order_history_start", todayStr);
+  const [endDate, setEndDate] = useSessionState("admin_order_history_end", todayStr);
   const [downloadStatus, setDownloadStatus] = useState("");
   const convex = useConvex();
 
   const queryStartDate = isRestrictedToToday ? todayStr : startDate;
   const queryEndDate = isRestrictedToToday ? todayStr : endDate;
 
-  const { results: orderHistory, status: orderHistoryStatus, loadMore: loadMoreOrderHistory } = usePaginatedQuery(
+  const { results: rawOrderHistory, status: orderHistoryStatus, loadMore: loadMoreOrderHistory } = usePaginatedQuery(
     api.orders.adminGetOrdersByDateRange,
     { token, startDate: queryStartDate, endDate: queryEndDate },
-    { initialNumItems: 25 }
+    { initialNumItems: 50 }
   );
+
+  const {
+    processedData: orderHistory,
+    sortConfig,
+    requestSort,
+    searchQuery,
+    setSearchQuery,
+    filterValues,
+    setFilterValue,
+    resetFilters,
+    isFiltered,
+    totalCount,
+    filteredCount,
+  } = useTableSortAndFilter(rawOrderHistory || [], {
+    searchFields: ["customerName", "claimantName", "status", "grandTotal"],
+    initialSort: { key: "createdAt", direction: "desc" },
+    customSorts: {
+      items: (a, b) => (a.items?.length || 0) - (b.items?.length || 0),
+    },
+  });
 
   const isToday = startDate === todayStr && endDate === todayStr;
 
@@ -70,9 +111,6 @@ export default function OrderHistoryPanel({ token, onOpenOrder, user }) {
   const handleDownload = async () => {
     setDownloadStatus("Preparing download...");
     try {
-      // adminExportOrdersByDateRange is a trackedQuery, so its return is
-      // wrapped as { data, _io } - this is a one-off imperative call (not a
-      // hook), so we just unwrap .data here rather than reporting _io.
       const { data: result } = await convex.query(api.orders.adminExportOrdersByDateRange, {
         token,
         startDate: queryStartDate,
@@ -107,7 +145,9 @@ export default function OrderHistoryPanel({ token, onOpenOrder, user }) {
       <div className="page-header">
         <h1 className="admin-page-title">Order History</h1>
         <span style={{ fontSize: "12px", color: "var(--text-tertiary)", alignSelf: "center" }}>
-          Sorted: Newest First
+          {sortConfig.key
+            ? `Sorted by ${sortConfig.key} (${sortConfig.direction === "asc" ? "Ascending" : "Descending"})`
+            : "Sorted: Newest First"}
         </span>
       </div>
 
@@ -158,13 +198,46 @@ export default function OrderHistoryPanel({ token, onOpenOrder, user }) {
         )}
       </div>
 
-      {orderHistory === undefined ? (
+      {/* Filter and Search Bar */}
+      <TableFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search customer, status, staff..."
+        filterValues={filterValues}
+        onFilterChange={(key, val) => {
+          if (key === "type") {
+            if (val === "walk_in") setFilterValue("isWalkIn", true);
+            else if (val === "online") setFilterValue("isWalkIn", false);
+            else setFilterValue("isWalkIn", "all");
+            setFilterValue("type", val);
+          } else {
+            setFilterValue(key, val);
+          }
+        }}
+        filters={[
+          { key: "status", width: "160px", options: ORDER_STATUS_OPTIONS },
+          { key: "type", width: "150px", options: ORDER_TYPE_OPTIONS },
+        ]}
+        isFiltered={isFiltered}
+        onResetFilters={resetFilters}
+        totalCount={totalCount}
+        filteredCount={filteredCount}
+      />
+
+      {rawOrderHistory === undefined ? (
         <div className="empty-state">
           <div className="empty-title">Loading order history...</div>
         </div>
+      ) : rawOrderHistory.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-title">No orders {isToday ? "yet today" : "in this date range"}.</div>
+        </div>
       ) : orderHistory.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-title">No orders {isToday ? "yet today" : "in this range"}.</div>
+          <div className="empty-title">No orders match your filter criteria.</div>
+          <button className="btn btn--secondary btn--sm" style={{ marginTop: "12px" }} onClick={resetFilters}>
+            Clear Filters
+          </button>
         </div>
       ) : (
         <>
@@ -172,13 +245,27 @@ export default function OrderHistoryPanel({ token, onOpenOrder, user }) {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Date & Time</th>
-                  <th>Customer</th>
-                  <th>Type</th>
-                  <th>Items</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Claimed By</th>
+                  <SortableHeader sortKey="createdAt" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Date & Time
+                  </SortableHeader>
+                  <SortableHeader sortKey="customerName" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Customer
+                  </SortableHeader>
+                  <SortableHeader sortKey="isWalkIn" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Type
+                  </SortableHeader>
+                  <SortableHeader sortKey="items" sortConfig={sortConfig} onRequestSort={requestSort} align="center">
+                    Items
+                  </SortableHeader>
+                  <SortableHeader sortKey="grandTotal" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Total
+                  </SortableHeader>
+                  <SortableHeader sortKey="status" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Status
+                  </SortableHeader>
+                  <SortableHeader sortKey="claimantName" sortConfig={sortConfig} onRequestSort={requestSort}>
+                    Claimed By
+                  </SortableHeader>
                   <th style={{ width: "80px" }}>Actions</th>
                 </tr>
               </thead>

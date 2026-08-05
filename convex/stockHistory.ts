@@ -209,3 +209,90 @@ export const getStockHistoryFeed = query({
   },
 });
 
+/**
+ * Admin/Stock Manager: Fetch stock history events within a date range (YYYY-MM-DD).
+ */
+export const adminGetStockHistoryByDateRange = query({
+  args: {
+    token: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+    source: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "accounting"]);
+    const startMs = new Date(`${args.startDate}T00:00:00`).getTime() - 86400000;
+    const endMs = new Date(`${args.endDate}T23:59:59.999`).getTime() + 86400000;
+    const cap = 1000;
+
+    const rows = await ctx.db
+      .query("stockHistory")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", startMs).lte("createdAt", endMs))
+      .order("desc")
+      .take(cap);
+
+    const filtered = rows.filter((row) => {
+      const d = new Date(row.createdAt);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const dateStr = `${y}-${m}-${day}`;
+      if (dateStr < args.startDate || dateStr > args.endDate) return false;
+      if (args.source && row.source !== args.source) return false;
+      return true;
+    });
+
+    // The ±1 day padding means some capped-out reads may be padding rows we'd
+    // have filtered out anyway; treat hitting the cap as a signal worth
+    // surfacing rather than trying to prove real data was dropped.
+    return { rows: filtered, truncated: rows.length >= cap, cap };
+  },
+});
+
+/**
+ * Admin/Stock Manager: Summarize stock activity per calendar day for a given month/year.
+ */
+export const adminGetStockHistoryCalendarData = query({
+  args: {
+    token: v.string(),
+    year: v.number(),
+    month: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "accounting"]);
+    const startMs = new Date(args.year, args.month - 1, 1, 0, 0, 0).getTime() - 86400000;
+    const endMs = new Date(args.year, args.month, 0, 23, 59, 59).getTime() + 86400000;
+    const cap = 2000;
+
+    const rows = await ctx.db
+      .query("stockHistory")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", startMs).lte("createdAt", endMs))
+      .take(cap);
+
+    const summaryByDate: Record<string, { count: number; added: number; removed: number }> = {};
+
+    for (const row of rows) {
+      const d = new Date(row.createdAt);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const dateStr = `${y}-${m}-${day}`;
+
+      if (!summaryByDate[dateStr]) {
+        summaryByDate[dateStr] = { count: 0, added: 0, removed: 0 };
+      }
+      summaryByDate[dateStr].count += 1;
+      if (row.delta > 0) {
+        summaryByDate[dateStr].added += row.delta;
+      } else {
+        summaryByDate[dateStr].removed += Math.abs(row.delta);
+      }
+    }
+
+    // Hitting the cap means some days in this month may be undercounted;
+    // surface that instead of silently returning a partial summary.
+    return { summary: summaryByDate, truncated: rows.length >= cap, cap };
+  },
+});
+
+

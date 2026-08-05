@@ -2,6 +2,8 @@ import React from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { X } from "lucide-react";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { SortableHeader, TableFilterBar } from "./DataTableControls";
 
 function formatDisplayDate(dateStr) {
   if (typeof dateStr !== "string") return dateStr;
@@ -19,10 +21,23 @@ export default function PaymentMethodDetailModal({
   onClose,
   onOpenOrder,
 }) {
-  const transactions = useQuery(
+  const rawTransactions = useQuery(
     api.orders.adminGetPaymentMethodTransactions,
     method ? { token, startDate, endDate, paymentMethod: method } : "skip"
   );
+
+  const {
+    processedData: transactions,
+    sortConfig,
+    requestSort,
+    searchQuery,
+    setSearchQuery,
+    isFiltered,
+    resetFilters,
+  } = useTableSortAndFilter(rawTransactions || [], {
+    searchFields: ["customerName", "orderId", "amount", "momoPhone", "cardOrderId", "voucherCode"],
+    initialSort: { key: "createdAt", direction: "desc" },
+  });
 
   if (!method) return null;
 
@@ -48,7 +63,7 @@ export default function PaymentMethodDetailModal({
     onClose();
   };
 
-  const total = transactions?.reduce((sum, r) => sum + r.amount, 0) || 0;
+  const total = rawTransactions?.reduce((sum, r) => sum + r.amount, 0) || 0;
 
   return (
     <div className="modal-overlay is-open">
@@ -65,28 +80,45 @@ export default function PaymentMethodDetailModal({
           </button>
         </div>
 
-        {transactions === undefined ? (
+        {rawTransactions === undefined ? (
           <div className="empty-state">
             <div className="empty-title">Loading transactions...</div>
           </div>
-        ) : transactions.length === 0 ? (
+        ) : rawTransactions.length === 0 ? (
           <div className="empty-state">
             <div className="empty-title">No transactions found.</div>
           </div>
         ) : (
           <>
-            <div className="price-preview-row font-final">
-              <span>{transactions.length} payment{transactions.length === 1 ? "" : "s"}</span>
+            <div className="price-preview-row font-final" style={{ marginBottom: "12px" }}>
+              <span>{rawTransactions.length} payment{rawTransactions.length === 1 ? "" : "s"}</span>
               <strong>UGX {total.toLocaleString()}</strong>
             </div>
+
+            <TableFilterBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Filter payment transactions..."
+              isFiltered={isFiltered}
+              onResetFilters={resetFilters}
+            />
+
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Customer</th>
-                    <th>Order</th>
-                    <th>Amount</th>
+                    <SortableHeader sortKey="createdAt" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Date
+                    </SortableHeader>
+                    <SortableHeader sortKey="customerName" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Customer
+                    </SortableHeader>
+                    <SortableHeader sortKey="orderId" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Order
+                    </SortableHeader>
+                    <SortableHeader sortKey="amount" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Amount
+                    </SortableHeader>
                     <th>Detail</th>
                   </tr>
                 </thead>

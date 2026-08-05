@@ -20,6 +20,9 @@ import { TrendingUp, CheckCircle, DollarSign, RefreshCw } from "lucide-react";
 import { getTodayStr } from "../utils/reminderHelpers";
 import PaymentMethodDetailModal from "./PaymentMethodDetailModal";
 import ChannelDetailModal from "./ChannelDetailModal";
+import { SortableHeader } from "./DataTableControls";
+import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
+import { useSessionState } from "../hooks/useSessionDateRange";
 import "../styles/SalesMetrics.css";
 
 const METHOD_COLORS = {
@@ -111,12 +114,12 @@ function formatDisplayTime(bucketStartMs) {
 export default function SalesMetricsPanel({ token, onOpenOrder, user }) {
   const todayStr = getTodayStr();
   const isAccounting = user?.accountRole === "accounting";
-  const [datePreset, setDatePreset] = useState("today");
-  const [customStart, setCustomStart] = useState(addDays(todayStr, -29));
-  const [customEnd, setCustomEnd] = useState(todayStr);
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
-  const [channelFilter, setChannelFilter] = useState("all");
-  const [brandFilter, setBrandFilter] = useState("all");
+  const [datePreset, setDatePreset] = useSessionState("admin_sales_preset", "today");
+  const [customStart, setCustomStart] = useSessionState("admin_sales_start", () => addDays(todayStr, -29));
+  const [customEnd, setCustomEnd] = useSessionState("admin_sales_end", todayStr);
+  const [paymentMethodFilter, setPaymentMethodFilter] = useSessionState("admin_sales_pm_filter", "all");
+  const [channelFilter, setChannelFilter] = useSessionState("admin_sales_chan_filter", "all");
+  const [brandFilter, setBrandFilter] = useSessionState("admin_sales_brand_filter", "all");
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [selectedChannel, setSelectedChannel] = useState(null);
 
