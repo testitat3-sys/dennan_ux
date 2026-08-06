@@ -1343,9 +1343,17 @@ export default defineSchema({
     staffId: v.id("users"),
     staffName: v.string(),
     createdAt: v.number(),
+    // Soft voiding & Audit fields (Gap 2)
+    isVoided: v.optional(v.boolean()),
+    voidedBy: v.optional(v.id("users")),
+    voidedByName: v.optional(v.string()),
+    voidedAt: v.optional(v.number()),
+    voidReason: v.optional(v.string()),
+    voidNote: v.optional(v.string()),
   })
     .index("by_createdAt", ["createdAt"])
-    .index("by_voucherNumber", ["voucherNumber"]),
+    .index("by_voucherNumber", ["voucherNumber"])
+    .index("by_isVoided", ["isVoided"]),
 
   // ─── Client-side performance instrumentation ─────────────────────────────
 

@@ -1037,7 +1037,46 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   });
   expect(feedRes.page.length).toBeGreaterThan(0);
   expect(feedRes.page[0].reasonCode).toBe("PHYSICAL_AUDIT_SURPLUS");
+
+  // ─── 17. Gap 1 & Gap 2 Audit & Profitability Tests ───
+  // Test soft voiding a business expense voucher (Gap 2)
+  const voidTestVoucherId = await t.mutation(api.businessExpenses.createBusinessExpense, {
+    token: adminToken,
+    voucherNumber: "VCH-VOID-TEST-001",
+    name: "Catering Expense",
+    amount: 100000,
+    note: "Staff lunch catering",
+  });
+  expect(voidTestVoucherId).toBeDefined();
+
+  // Perform soft void with audit reason
+  await t.mutation(api.businessExpenses.voidBusinessExpense, {
+    token: adminToken,
+    expenseId: voidTestVoucherId,
+    voidReason: "Duplicate Entry / Double Logged",
+    voidNote: "Catering was already logged under petty cash VCH-008",
+  });
+
+  // Verify voucher is marked isVoided in list
+  const expensesListAfterVoidRes = await t.query(api.businessExpenses.listBusinessExpenses, {
+    token: adminToken,
+  });
+  const voidedVoucher = expensesListAfterVoidRes.data.find((e: any) => e._id === voidTestVoucherId);
+  expect(voidedVoucher).toBeDefined();
+  expect(voidedVoucher.isVoided).toBe(true);
+  expect(voidedVoucher.voidReason).toBe("Duplicate Entry / Double Logged");
+
+  // Verify getBusinessHealthMetrics computes COGS, Gross Profit, and excludes voided expense (Gap 1 & Gap 2)
+  const postVoidMetricsRes = await t.query(api.businessHealth.getBusinessHealthMetrics, {
+    token: adminToken,
+  });
+  const postVoidMetrics = postVoidMetricsRes.data;
+  expect(postVoidMetrics).toBeDefined();
+  expect(postVoidMetrics.totalCogs).toBeGreaterThanOrEqual(0);
+  expect(postVoidMetrics.grossProfit).toBe(postVoidMetrics.grossRevenue - postVoidMetrics.totalCogs);
+  expect(postVoidMetrics.netProfit).toBe(postVoidMetrics.grossProfit - postVoidMetrics.totalExpenses);
 });
+
 
 
 

@@ -33,7 +33,7 @@ export const requestCreateProduct = trackedMutation("stockRequests.requestCreate
     color: v.optional(v.string()),
     material: v.optional(v.string()),
     pattern: v.optional(v.string()),
-    costPrice: v.optional(v.number()),
+    costPrice: v.number(),
     reorderPoint: v.optional(v.number()),
     image: v.optional(v.string()),
     images: v.optional(v.array(v.string())),

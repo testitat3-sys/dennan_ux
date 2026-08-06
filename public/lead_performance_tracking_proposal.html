@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lead Performance Tracking & Governance Framework | Dennan UX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0B0F19;
+      --bg-card: #111827;
+      --bg-card-hover: #1F2937;
+      --bg-glass: rgba(17, 24, 39, 0.75);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(99, 102, 241, 0.3);
+      --text-main: #F9FAFB;
+      --text-muted: #9CA3AF;
+      --text-dim: #6B7280;
+      
+      --accent-primary: #6366F1;
+      --accent-secondary: #8B5CF6;
+      --accent-gradient: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%);
+      
+      --success: #10B981;
+      --success-glow: rgba(16, 185, 129, 0.2);
+      --warning: #F59E0B;
+      --warning-glow: rgba(245, 158, 11, 0.2);
+      --danger: #EF4444;
+      --danger-glow: rgba(239, 68, 68, 0.2);
+      --info: #3B82F6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+
+    /* Header & Navigation */
+    header {
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 900;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-main);
+    }
+
+    /* Hero Section */
+    .hero {
+      max-width: 1200px;
+      margin: 40px auto 20px;
+      padding: 0 24px;
+      text-align: center;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #818CF8;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #9CA3AF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Grid Layouts */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin: 40px 0;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-accent);
+    }
+
+    .stat-val {
+      font-size: 2.25rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .stat-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Section Styling */
+    section {
+      margin: 50px 0;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 24px;
+      background: var(--accent-gradient);
+      border-radius: 4px;
+    }
+
+    .section-subtitle {
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+
+    /* Good vs Bad Actions Split Cards */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .actions-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero h1 {
+        font-size: 2.2rem;
+      }
+    }
+
+    .action-box {
+      background: var(--bg-card);
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .action-box.good {
+      border-top: 4px solid var(--success);
+    }
+
+    .action-box.bad {
+      border-top: 4px solid var(--danger);
+    }
+
+    .box-header {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .good .box-header { color: var(--success); }
+    .bad .box-header { color: var(--danger); }
+
+    .action-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .action-item-info {
+      max-width: 75%;
+    }
+
+    .action-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      margin-bottom: 2px;
+    }
+
+    .action-impact {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .score-chip {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .chip-good {
+      background: var(--success-glow);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .chip-bad {
+      background: var(--danger-glow);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Calculator Widget */
+    .calculator-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .calculator-card {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .calc-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .control-val-display {
+      color: #818CF8;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #374151;
+      border-radius: 3px;
+      outline: none;
+      accent-color: var(--accent-primary);
+    }
+
+    select, input[type="text"] {
+      background: #1F2937;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    select:focus {
+      border-color: var(--accent-primary);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .checkbox-group input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--danger);
+    }
+
+    /* Calculator Result Panel */
+    .calc-result {
+      background: rgba(11, 15, 25, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+    }
+
+    .score-dial {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent-primary) 0deg, #374151 0deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      position: relative;
+      transition: background 0.4s ease;
+    }
+
+    .score-dial-inner {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-number {
+      font-size: 3rem;
+      font-weight: 900;
+      line-height: 1;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .score-max {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .grade-badge {
+      padding: 6px 20px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .breakdown-list {
+      width: 100%;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+    }
+
+    .breakdown-row span:last-child {
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Code Block */
+    .code-block {
+      background: #090D16;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #E5E7EB;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    .code-keyword { color: #F472B6; }
+    .code-type { color: #60A5FA; }
+    .code-string { color: #34D399; }
+    .code-comment { color: #6B7280; font-style: italic; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 60px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">D</div>
+      <span>Dennan Lead Engine</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#research">Industry Research</a></li>
+      <li><a href="#matrix">Good vs Bad Actions</a></li>
+      <li><a href="#formula">0-100 Scoring Model</a></li>
+      <li><a href="#simulator">Live Simulator</a></li>
+      <li><a href="#schema">Convex Schema</a></li>
+    </ul>
+  </header>
+
+  <div class="hero">
+    <div class="badge-pill">⚡ Lead Governance & SLA Performance Framework</div>
+    <h1>Lead Handling Performance Score (LHPS)</h1>
+    <p>A comprehensive research-backed model to quantify speed-to-lead, enforce CRM note hygiene, reward on-time SLA fulfillment, and eliminate ghost lead resolutions.</p>
+  </div>
+
+  <div class="container">
+    
+    <!-- Top Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val">9x</div>
+        <div class="stat-label">Conversion Multiplier</div>
+        <div class="stat-desc">Contacting leads under 5 minutes vs 30 minutes.</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">15m</div>
+        <div class="stat-label">Tier 1 Request SLA</div>
+        <div class="stat-desc">Store Sourcing Requests demand urgent response.</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">65%</div>
+        <div class="stat-label">CRM Decay Rate</div>
+        <div class="stat-desc">Caused by "Ghost Resolutions" (resolving with 0 notes).</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">0–100</div>
+        <div class="stat-label">Dynamic Score Range</div>
+        <div class="stat-desc">Unified 100-point index per lead & staff agent.</div>
+      </div>
+    </div>
+
+    <!-- Section: Industry Research -->
+    <section id="research">
+      <h2 class="section-title">Industry Research & Benchmarks</h2>
+      <p class="section-subtitle">Insights distilled from top-performing sales operations (Salesforce, Kixie, InsideSales)</p>
+      
+      <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div>
+          <h3 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--accent-primary);">1. The 5-Minute Speed-to-Lead Benchmark</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">Research demonstrates that buyer intent degrades exponentially with time. Reaching an inbound customer within 5 minutes results in a <strong>21x qualification rate boost</strong> over 30-minute delays.</p>
+        </div>
+        <div>
+          <h3 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--accent-secondary);">2. Tiered Intent SLAs</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">Blanket SLAs hurt productivity. Dennan categorizes leads by intent intensity: Tier 1 (Store Sourcing - 15m), Tier 2 (Wishlist Alerts - 2h), and Tier 3 (Pre-launch signups - 24h).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Good vs Bad Actions -->
+    <section id="matrix">
+      <h2 class="section-title">Good vs. Bad Actions Matrix</h2>
+      <p class="section-subtitle">Defining rewarded behaviors and penalized anti-patterns in lead management</p>
+
+      <div class="actions-grid">
+        <!-- Good Box -->
+        <div class="action-box good">
+          <div class="box-header">
+            <span>✅ Rewarded Good Actions</span>
+          </div>
+
+          <div class="action-item">
+            <div class="action-item-info">
+              <div class="action-name">Rapid First Touch (&lt;5 mins)</div>
+              <div class="action-impact">Contacting customer immediately upon inquiry</div>
+            </div>
+            <span class="score-chip chip-good">+35 PTS</span>
+          </div>
+
+          <div class="action-item">
+            <div class="action-item-info">
+              <div class="action-name">3-Pillar Note Documentation</div>
+              <div class="action-impact">Logging Outcome + Customer Preference + Next Step</div>
+            </div>
+            <span class="score-chip chip-good">+20 PTS</span>
+          </div>
+
+          <div class="action-item">
+            <div class="action-item-info">
+              <div class="action-name">On-Time SLA Resolution</div>
+              <div class="action-impact">Resolving lead within designated intent tier deadline</div>
+            </div>
+            <span class="score-chip chip-good">+25 PTS</span>
+          </div>
+
+          <div class="action-item">
+            <div class="action-item-info">
+              <div class="action-name">Verified Order Conversion</div>
+              <div class="action-impact">Converting lead into a completed purchase</div>
+            </div>
+            <span class="score-chip chip-good">+15 PTS</span>
+          </div>
+
+          <div class="action-item">
+            <div class="action-item-info">
+              <div class="action-name">Scheduled Follow-Up Attached</div>
+              <div class="action-impact">Setting explicit next date/time reminder</div>
+            </div>
+            <span class="score-chip chip-good">+5 PTS</span>
+          </div>
+        </div>
+
+        <!-- Bad Box -->
+        <div class="action-box bad">
+          <div class="box-header">
+            <span>❌ Penalized Bad Practices</span>
+          </div>
+
+          <div class="action-item">
+            <div class="action-item-info">
+              <div class="action-name">Ghost Resolution</div>
+              <div class="action-impact">Marking resolved with zero or &lt;10 character notes</div>
+            </div>
+            <span class="score-chip chip-bad">-30 PTS</span>
+          </div>
+
+          <div class="action-item">
+            <div class="action-item-info">
+              <div class="action-name">Stale Lead Neglect (&gt;48h)</div>
+              <div class="action-impact">Leaving lead untouched in 'new' state without activity</div>
+            </div>
+            <span class="score-chip chip-bad">-25 PTS</span>
+          </div>
+
+          <div class="action-item">
+            <div class="action-item-info">
+              <div class="action-name">Severe SLA Breach (&gt;2x SLA)</div>
+              <div class="action-impact">Leaving customer waiting far past target deadline</div>
+            </div>
+            <span class="score-chip chip-bad">-15 PTS</span>
+          </div>
+
+          <div class="action-item">
+            <div class="action-item-info">
+              <div class="action-name">Lead Hoarding / Cherry Picking</div>
+              <div class="action-impact">Claiming a lead but making no touch for &gt;2 hours</div>
+            </div>
+            <span class="score-chip chip-bad">-15 PTS</span>
+          </div>
+
+          <div class="action-item">
+            <div class="action-item-info">
+              <div class="action-name">Single-Touch Abandonment</div>
+              <div class="action-impact">Closing as unreachable after 1 call with zero WhatsApp</div>
+            </div>
+            <span class="score-chip chip-bad">-10 PTS</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Live Score Simulator -->
+    <section id="simulator">
+      <h2 class="section-title">Interactive Score Calculator</h2>
+      <p class="section-subtitle">Simulate lead handling scenarios and calculate the dynamic 0–100 LHPS rating</p>
+
+      <div class="calculator-card">
+        <!-- Controls -->
+        <div class="calc-controls">
+          <div class="control-group">
+            <div class="control-label">
+              <span>First Touch Response Time:</span>
+              <span class="control-val-display" id="time-val">4 mins</span>
+            </div>
+            <input type="range" id="time-slider" min="1" max="180" value="4">
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">
+              <span>Note Character Length:</span>
+              <span class="control-val-display" id="chars-val">65 chars</span>
+            </div>
+            <input type="range" id="chars-slider" min="0" max="150" value="65">
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">
+              <span>Lead SLA Tier & Resolution:</span>
+            </div>
+            <select id="sla-select">
+              <option value="ontime">Resolved On Time (Within SLA)</option>
+              <option value="minor_delay">Minor SLA Overrun (1.2x SLA)</option>
+              <option value="breached">SLA Breached (>2.0x SLA)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">
+              <span>Resolution Outcome:</span>
+            </div>
+            <select id="outcome-select">
+              <option value="converted">Converted to Paid Order (+15 pts)</option>
+              <option value="fulfilled">Fulfilled / Satisfied (+10 pts)</option>
+              <option value="closed_valid">Valid Non-Sale (+5 pts)</option>
+              <option value="abandoned">Abandoned / Unresolved (0 pts)</option>
+            </select>
+          </div>
+
+          <div class="control-group" style="gap: 12px; margin-top: 8px;">
+            <label class="checkbox-group">
+              <input type="checkbox" id="check-tag" checked>
+              <span>Attached Intent Tag & Outcome Category (+5 pts)</span>
+            </label>
+            <label class="checkbox-group">
+              <input type="checkbox" id="check-reminder" checked>
+              <span>Scheduled Next Follow-Up Date (+5 pts)</span>
+            </label>
+            <label class="checkbox-group">
+              <input type="checkbox" id="check-ghost">
+              <span style="color: #F87171;">Flag Ghost Resolution Penalty (-30 pts)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Result Display -->
+        <div class="calc-result">
+          <div class="score-dial" id="score-dial">
+            <div class="score-dial-inner">
+              <div class="score-number" id="score-num">95</div>
+              <div class="score-max">OUT OF 100</div>
+            </div>
+          </div>
+
+          <div class="grade-badge" id="grade-badge" style="background: var(--success-glow); color: var(--success); border: 1px solid var(--success);">
+            🌟 Platinum Exemplary
+          </div>
+
+          <div class="breakdown-list">
+            <div class="breakdown-row">
+              <span>Speed Sub-Score</span>
+              <span id="b-speed">+35 pts</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Hygiene Sub-Score</span>
+              <span id="b-hygiene">+25 pts</span>
+            </div>
+            <div class="breakdown-row">
+              <span>SLA Adherence Sub-Score</span>
+              <span id="b-sla">+25 pts</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Outcome Sub-Score</span>
+              <span id="b-outcome">+15 pts</span>
+            </div>
+            <div class="breakdown-row" style="color: var(--danger);">
+              <span>Applied Penalties</span>
+              <span id="b-penalties">0 pts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Convex Schema -->
+    <section id="schema">
+      <h2 class="section-title">Convex Database Architecture Proposal</h2>
+      <p class="section-subtitle">Schema definitions to support native performance tracking in Convex backend</p>
+
+      <div class="code-block">
+<span class="code-comment">// convex/schema.ts extension for Lead Performance Tracking</span>
+
+<span class="code-keyword">export</span> <span class="code-keyword">const</span> leadPerformanceSchema = {
+  assignedStaffId: <span class="code-type">v.optional</span>(<span class="code-type">v.id</span>(<span class="code-string">"users"</span>)),
+  assignedAt: <span class="code-type">v.optional</span>(<span class="code-type">v.number</span>()),
+  firstContactAt: <span class="code-type">v.optional</span>(<span class="code-type">v.number</span>()),
+  performanceScore: <span class="code-type">v.optional</span>(<span class="code-type">v.number</span>()), <span class="code-comment">// Calculated 0-100 LHPS score</span>
+  ghostResolutionFlag: <span class="code-type">v.optional</span>(<span class="code-type">v.boolean</span>()),
+  slaTier: <span class="code-type">v.optional</span>(<span class="code-type">v.union</span>(<span class="code-type">v.literal</span>(<span class="code-string">"tier1"</span>), <span class="code-type">v.literal</span>(<span class="code-string">"tier2"</span>), <span class="code-type">v.literal</span>(<span class="code-string">"tier3"</span>))),
+};
+
+<span class="code-comment">// Audit & Activity Log Table</span>
+<span class="code-keyword">export</span> <span class="code-keyword">const</span> leadActivities = <span class="code-type">defineTable</span>({
+  leadId: <span class="code-type">v.string</span>(),
+  staffId: <span class="code-type">v.id</span>(<span class="code-string">"users"</span>),
+  type: <span class="code-type">v.union</span>(<span class="code-type">v.literal</span>(<span class="code-string">"call"</span>), <span class="code-type">v.literal</span>(<span class="code-string">"whatsapp"</span>), <span class="code-type">v.literal</span>(<span class="code-string">"note"</span>)),
+  content: <span class="code-type">v.string</span>(),
+  characterCount: <span class="code-type">v.number</span>(),
+  createdAt: <span class="code-type">v.number</span>(),
+}).<span class="code-type">index</span>(<span class="code-string">"by_lead"</span>, [<span class="code-string">"leadId"</span>]);
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    Dennan UX Lead Governance & Performance Framework &copy; 2026. Internal Operations Documentation.
+  </footer>
+
+  <script>
+    // Simulator Logic
+    const timeSlider = document.getElementById('time-slider');
+    const timeVal = document.getElementById('time-val');
+    const charsSlider = document.getElementById('chars-slider');
+    const charsVal = document.getElementById('chars-val');
+    const slaSelect = document.getElementById('sla-select');
+    const outcomeSelect = document.getElementById('outcome-select');
+    const checkTag = document.getElementById('check-tag');
+    const checkReminder = document.getElementById('check-reminder');
+    const checkGhost = document.getElementById('check-ghost');
+
+    const scoreNum = document.getElementById('score-num');
+    const scoreDial = document.getElementById('score-dial');
+    const gradeBadge = document.getElementById('grade-badge');
+
+    const bSpeed = document.getElementById('b-speed');
+    const bHygiene = document.getElementById('b-hygiene');
+    const bSla = document.getElementById('b-sla');
+    const bOutcome = document.getElementById('b-outcome');
+    const bPenalties = document.getElementById('b-penalties');
+
+    function calculateScore() {
+      const mins = parseInt(timeSlider.value);
+      const chars = parseInt(charsSlider.value);
+
+      timeVal.textContent = mins < 60 ? `${mins} mins` : `${(mins/60).toFixed(1)} hrs`;
+      charsVal.textContent = `${chars} chars`;
+
+      // 1. Speed Sub-Score (Max 35)
+      let speedPts = 0;
+      if (mins <= 5) speedPts = 35;
+      else if (mins <= 15) speedPts = 30;
+      else if (mins <= 30) speedPts = 22;
+      else if (mins <= 60) speedPts = 15;
+      else if (mins <= 120) speedPts = 8;
+      else speedPts = 0;
+
+      // 2. Hygiene Sub-Score (Max 25)
+      let hygienePts = 0;
+      if (chars < 10) hygienePts = 0;
+      else if (chars < 40) hygienePts = 8;
+      else hygienePts = 15;
+
+      if (checkTag.checked) hygienePts += 5;
+      if (checkReminder.checked) hygienePts += 5;
+
+      // 3. SLA Sub-Score (Max 25)
+      let slaPts = 0;
+      if (slaSelect.value === 'ontime') slaPts = 25;
+      else if (slaSelect.value === 'minor_delay') slaPts = 15;
+      else slaPts = 0;
+
+      // 4. Outcome Sub-Score (Max 15)
+      let outcomePts = 0;
+      if (outcomeSelect.value === 'converted') outcomePts = 15;
+      else if (outcomeSelect.value === 'fulfilled') outcomePts = 10;
+      else if (outcomeSelect.value === 'closed_valid') outcomePts = 5;
+      else outcomePts = 0;
+
+      // 5. Penalties
+      let penalties = 0;
+      if (checkGhost.checked) penalties += 30;
+      if (slaSelect.value === 'breached') penalties += 15;
+
+      const totalRaw = speedPts + hygienePts + slaPts + outcomePts - penalties;
+      const totalScore = Math.max(0, Math.min(100, totalRaw));
+
+      // UI Update
+      scoreNum.textContent = totalScore;
+      bSpeed.textContent = `+${speedPts} pts`;
+      bHygiene.textContent = `+${hygienePts} pts`;
+      bSla.textContent = `+${slaPts} pts`;
+      bOutcome.textContent = `+${outcomePts} pts`;
+      bPenalties.textContent = `-${penalties} pts`;
+
+      const degrees = (totalScore / 100) * 360;
+      
+      let color = 'var(--success)';
+      let gradeText = '🌟 Platinum Exemplary';
+      let badgeBg = 'var(--success-glow)';
+
+      if (totalScore >= 90) {
+        color = '#10B981';
+        gradeText = '🌟 Platinum Exemplary';
+        badgeBg = 'rgba(16, 185, 129, 0.2)';
+      } else if (totalScore >= 75) {
+        color = '#8B5CF6';
+        gradeText = '🟢 Gold High Standards';
+        badgeBg = 'rgba(139, 92, 246, 0.2)';
+      } else if (totalScore >= 60) {
+        color = '#3B82F6';
+        gradeText = '🟡 Silver Acceptable';
+        badgeBg = 'rgba(59, 130, 246, 0.2)';
+      } else if (totalScore >= 40) {
+        color = '#F59E0B';
+        gradeText = '🟠 Bronze Needs Imprv.';
+        badgeBg = 'rgba(245, 158, 11, 0.2)';
+      } else {
+        color = '#EF4444';
+        gradeText = '🔴 Critical Action Req.';
+        badgeBg = 'rgba(239, 68, 68, 0.2)';
+      }
+
+      scoreDial.style.background = `conic-gradient(${color} ${degrees}deg, #374151 ${degrees}deg)`;
+      gradeBadge.textContent = gradeText;
+      gradeBadge.style.color = color;
+      gradeBadge.style.borderColor = color;
+      gradeBadge.style.background = badgeBg;
+    }
+
+    [timeSlider, charsSlider, slaSelect, outcomeSelect, checkTag, checkReminder, checkGhost].forEach(el => {
+      el.addEventListener('input', calculateScore);
+    });
+
+    calculateScore();
+  </script>
+</body>
+</html>

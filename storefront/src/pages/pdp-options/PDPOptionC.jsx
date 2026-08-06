@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Heart, Flame, ShieldCheck, Truck } from 'lucide-react';
 import { formatPrice } from '../../utils/priceUtils';
 import { stripBrandFromName } from '../../utils/productNameUtils';
+import { getProductImages } from '../../utils/productImageUtils';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Toast from '../../components/ui/Toast';

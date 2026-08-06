@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Flame, Heart, FileText, ClipboardList, MessageSquare } from 'lucide-react';
 import { formatPrice } from '../../utils/priceUtils';
 import { stripBrandFromName } from '../../utils/productNameUtils';

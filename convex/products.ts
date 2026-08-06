@@ -1170,7 +1170,7 @@ export async function executeCreateProduct(ctx: any, args: {
   color?: string;
   material?: string;
   pattern?: string;
-  costPrice?: number;
+  costPrice: number;
   reorderPoint?: number;
   image?: string;
   images?: string[];
@@ -1185,6 +1185,9 @@ export async function executeCreateProduct(ctx: any, args: {
   }
   if (args.isActive && !args.isStoreOnly && !args.description?.trim()) {
     throw new Error("Customer-facing products require a description before they can be made active.");
+  }
+  if (args.costPrice === undefined || args.costPrice === null || args.costPrice <= 0) {
+    throw new Error("Cost price is required and must be greater than 0.");
   }
 
   const baseSlug = slugify(args.name);
@@ -1489,7 +1492,7 @@ export const createProduct = mutation({
     color: v.optional(v.string()),
     material: v.optional(v.string()),
     pattern: v.optional(v.string()),
-    costPrice: v.optional(v.number()),
+    costPrice: v.number(),
     reorderPoint: v.optional(v.number()),
     image: v.optional(v.string()),
     images: v.optional(v.array(v.string())),

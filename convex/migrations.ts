@@ -84,7 +84,11 @@ export const backfillLegacyProducts = mutation({
 
       // 5. Seed default logistics and automation values
       if (product.costPrice === undefined) {
-        updates.costPrice = product.price * 0.60;
+        const prices = [product.originalPrice, product.wasPrice, product.price, product.discountPrice].filter(
+          (p): p is number => typeof p === "number" && !isNaN(p) && p > 0
+        );
+        const largestPrice = prices.length > 0 ? Math.max(...prices) : product.price;
+        updates.costPrice = Math.round(largestPrice * 0.60);
       }
       if (product.productType === undefined) {
         updates.productType = "physical";
@@ -107,6 +111,78 @@ export const backfillLegacyProducts = mutation({
     return { success: true, totalFound: products.length, updatedCount };
   }
 });
+
+/**
+ * Migration Mutation: Backfills `costPrice` on products missing it (or updating where costPrice was < 60% of largest display price).
+ * Calculates costPrice as 60% of the largest price on the product (Math.max(originalPrice, wasPrice, price, discountPrice)).
+ */
+export const backfillProductCostPrice = mutation({
+  args: {
+    cursor: v.optional(v.union(v.string(), v.null())),
+    forceAll: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const BATCH_SIZE = 200;
+    const result = await ctx.db
+      .query("products")
+      .paginate({ numItems: BATCH_SIZE, cursor: args.cursor ?? null });
+
+    let updatedCount = 0;
+    let skippedCount = 0;
+    const now = Date.now();
+
+    for (const product of result.page) {
+      // Find largest price among all price fields on this product (taking care not to use discount price if original price is larger)
+      const prices = [
+        product.originalPrice,
+        product.wasPrice,
+        product.price,
+        product.discountPrice,
+      ].filter((p): p is number => typeof p === "number" && !isNaN(p) && p > 0);
+
+      const largestPrice = prices.length > 0 ? Math.max(...prices) : 0;
+      const targetCostPrice = Math.round(largestPrice * 0.60);
+
+      const needsUpdate =
+        args.forceAll ||
+        product.costPrice === undefined ||
+        product.costPrice === null ||
+        (largestPrice > 0 && product.costPrice < targetCostPrice);
+
+      if (needsUpdate) {
+        await ctx.db.patch(product._id, {
+          costPrice: targetCostPrice,
+          updatedAt: now,
+        });
+        updatedCount++;
+      } else {
+        skippedCount++;
+      }
+    }
+
+
+    console.log(
+      `[migrations.ts] backfillProductCostPrice: updated ${updatedCount}, skipped ${skippedCount} of ${result.page.length} scanned this batch${result.isDone ? " (final batch)" : ""}.`
+    );
+
+    if (!result.isDone) {
+      await ctx.scheduler.runAfter(0, api.migrations.backfillProductCostPrice, {
+        cursor: result.continueCursor,
+        forceAll: args.forceAll,
+      });
+    }
+
+    return {
+      batchScanned: result.page.length,
+      batchUpdated: updatedCount,
+      batchSkipped: skippedCount,
+      isDone: result.isDone,
+    };
+  },
+});
+
+
+
 
 /**
  * Migration Mutation: Backfills all existing users in the database.

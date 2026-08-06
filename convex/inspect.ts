@@ -62,4 +62,69 @@ export const checkCollectionCounts = query({
   },
 });
 
+export const checkProductCostPrices = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    let withCostPrice = 0;
+    let missingCostPrice = 0;
+    let costPriceLowerThanDiscount = 0;
+    const samples: any[] = [];
+    const missingItems: any[] = [];
+
+    for (const p of products) {
+      if (p.costPrice !== undefined && p.costPrice !== null) {
+        withCostPrice++;
+      } else {
+        missingCostPrice++;
+        missingItems.push({
+          _id: p._id,
+          name: p.name,
+          price: p.price,
+          originalPrice: p.originalPrice,
+          wasPrice: p.wasPrice,
+          discountPrice: p.discountPrice,
+          costPrice: p.costPrice,
+        });
+      }
+
+      const prices = [p.originalPrice, p.wasPrice, p.price, p.discountPrice].filter(
+        (v): v is number => typeof v === "number" && v > 0
+      );
+      const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+      const expectedCostPrice = Math.round(maxPrice * 0.60);
+
+      if (p.discountPrice && p.discountPrice < maxPrice) {
+        const costBasedOnDiscount = Math.round(p.discountPrice * 0.60);
+        if (p.costPrice === costBasedOnDiscount && p.costPrice < expectedCostPrice) {
+          costPriceLowerThanDiscount++;
+        }
+      }
+
+      if (samples.length < 5) {
+        samples.push({
+          name: p.name,
+          originalPrice: p.originalPrice,
+          price: p.price,
+          discountPrice: p.discountPrice,
+          wasPrice: p.wasPrice,
+          maxPrice,
+          costPrice: p.costPrice,
+          expectedCostPrice,
+        });
+      }
+    }
+
+    return {
+      totalProducts: products.length,
+      withCostPrice,
+      missingCostPrice,
+      costPriceLowerThanDiscount,
+      missingItems,
+      samples,
+    };
+  },
+});
+
+
 

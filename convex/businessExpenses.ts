@@ -98,11 +98,60 @@ export const createBusinessExpense = trackedMutation("businessExpenses.createBus
   },
 });
 
+export const voidBusinessExpense = trackedMutation("businessExpenses.voidBusinessExpense", {
+  args: {
+    token: v.string(),
+    expenseId: v.id("businessExpenses"),
+    voidReason: v.string(),
+    voidNote: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
+
+    const expense = await ctx.db.get(args.expenseId);
+    if (!expense) {
+      throw new Error("Business expense not found.");
+    }
+    if (expense.isVoided) {
+      throw new Error("Voucher is already voided.");
+    }
+
+    const reason = args.voidReason.trim();
+    if (!reason) {
+      throw new Error("A void reason is required for financial audit compliance.");
+    }
+
+    await ctx.db.patch(args.expenseId, {
+      isVoided: true,
+      voidedBy: user._id,
+      voidedByName: user.name || "Unknown Staff",
+      voidedAt: Date.now(),
+      voidReason: reason,
+      voidNote: args.note ? args.note.trim() : args.voidNote ? args.voidNote.trim() : undefined,
+    });
+
+    return null;
+  },
+});
+
 export const deleteBusinessExpense = trackedMutation("businessExpenses.deleteBusinessExpense", {
   args: { token: v.string(), expenseId: v.id("businessExpenses") },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
-    await ctx.db.delete(args.expenseId);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "accounting"]);
+    const expense = await ctx.db.get(args.expenseId);
+    if (!expense) {
+      return null;
+    }
+
+    // Perform audit-compliant soft void instead of permanent deletion
+    await ctx.db.patch(args.expenseId, {
+      isVoided: true,
+      voidedBy: user._id,
+      voidedByName: user.name || "Unknown Staff",
+      voidedAt: Date.now(),
+      voidReason: "Deleted by staff",
+    });
+
     return null;
   },
 });

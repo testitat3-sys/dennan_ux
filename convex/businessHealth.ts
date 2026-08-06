@@ -47,7 +47,31 @@ export const getBusinessHealthMetrics = trackedQuery("businessHealth.getBusiness
       }
     }
 
-    // 3. Fetch daily cash-up expenses in date range
+    // 3. Compute Cost of Goods Sold (COGS) for completed orders
+    let totalCogs = 0;
+    let uncostedItemsCount = 0;
+
+    for (const order of completedOrders) {
+      const orderItems = await ctx.db
+        .query("orderItems")
+        .withIndex("by_order", (q) => q.eq("orderId", order._id))
+        .collect();
+
+      for (const item of orderItems) {
+        const product = await ctx.db.get(item.productId);
+        const costPrice = product && typeof product.costPrice === "number" && product.costPrice > 0 ? product.costPrice : 0;
+        if (costPrice > 0) {
+          totalCogs += costPrice * item.quantity;
+        } else {
+          uncostedItemsCount += item.quantity;
+        }
+      }
+    }
+
+    const grossProfit = grossRevenue - totalCogs;
+    const grossMarginPercent = grossRevenue > 0 ? (grossProfit / grossRevenue) * 100 : 0;
+
+    // 4. Fetch daily cash-up expenses in date range
     const allDailyExpenses = await ctx.db.query("cashUpExpenses").collect();
     let totalDailyExpenses = 0;
     for (const de of allDailyExpenses) {
@@ -57,19 +81,22 @@ export const getBusinessHealthMetrics = trackedQuery("businessHealth.getBusiness
       }
     }
 
-    // 4. Fetch major business expenses in date range
+    // 5. Fetch major business expenses in date range (excluding voided vouchers for audit integrity)
     const allMajorExpenses = await ctx.db
       .query("businessExpenses")
       .withIndex("by_createdAt", (q) => q.gte("createdAt", rangeStartMs).lt("createdAt", rangeEndMs))
       .collect();
 
-    const totalMajorExpenses = allMajorExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const activeMajorExpenses = allMajorExpenses.filter((e) => !e.isVoided);
+    const totalMajorExpenses = activeMajorExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-    // 5. Compute Net Business Revenue and Financial Margins
+    // 6. Compute True Net Profit and Financial Margins
     const totalExpenses = totalDailyExpenses + totalMajorExpenses;
-    const netRevenue = grossRevenue - totalExpenses;
+    const netProfit = grossProfit - totalExpenses;
+    // Keep netRevenue for backwards compatibility
+    const netRevenue = netProfit;
     const netCashInDrawer = Math.max(0, cashGrossRevenue - totalDailyExpenses);
-    const netMarginPercent = grossRevenue > 0 ? (netRevenue / grossRevenue) * 100 : 0;
+    const netMarginPercent = grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0;
 
     return {
       grossRevenue,
@@ -77,14 +104,19 @@ export const getBusinessHealthMetrics = trackedQuery("businessHealth.getBusiness
       momoRevenue,
       cardRevenue,
       voucherRevenue,
+      totalCogs,
+      grossProfit,
+      grossMarginPercent,
       totalDailyExpenses,
       totalMajorExpenses,
       totalExpenses,
+      netProfit,
       netRevenue,
       netCashInDrawer,
       netMarginPercent,
       completedOrdersCount: completedOrders.length,
-      majorExpensesCount: allMajorExpenses.length,
+      majorExpensesCount: activeMajorExpenses.length,
+      uncostedItemsCount,
     };
   },
 });

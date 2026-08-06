@@ -60,6 +60,8 @@ export default function AdminProductCreate() {
   const [brand, setBrand] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [costPrice, setCostPrice] = useState("");
+  const [costPriceTouched, setCostPriceTouched] = useState(false);
   const [reorderPoint, setReorderPoint] = useState("");
   const [initialInventory, setInitialInventory] = useState("");
   const [category, setCategory] = useState("");
@@ -87,15 +89,27 @@ export default function AdminProductCreate() {
   const [isDirty, setIsDirty] = useState(false);
   const [toasts, setToasts] = useState([]);
 
+  // Prefill cost price as 60% of the price whenever price changes, unless
+  // the user has manually edited the cost price field themselves.
+  useEffect(() => {
+    if (costPriceTouched) return;
+    const priceNum = parseFloat(price);
+    if (!priceNum || priceNum <= 0) {
+      setCostPrice("");
+      return;
+    }
+    setCostPrice(String(Math.round(priceNum * 0.6)));
+  }, [price, costPriceTouched]);
+
   useEffect(() => {
     const dirty =
-      name || brand || description || price ||
+      name || brand || description || price || costPrice ||
       reorderPoint || initialInventory || category || subCategory || stage || tier ||
       size || color || material || pattern || targetGender || minMonth ||
       maxMonth || image || images.length > 0;
     setIsDirty(Boolean(dirty));
   }, [
-    name, brand, description, price, reorderPoint, initialInventory,
+    name, brand, description, price, costPrice, reorderPoint, initialInventory,
     category, subCategory, stage, tier, size, color, material,
     pattern, targetGender, minMonth, maxMonth, image, images,
   ]);
@@ -203,6 +217,11 @@ export default function AdminProductCreate() {
       showToast("Please enter a valid price.", "error");
       return;
     }
+    const costPriceNum = parseFloat(costPrice);
+    if (!costPriceNum || costPriceNum <= 0) {
+      showToast("Please enter a valid cost price.", "error");
+      return;
+    }
     if (!category) {
       showToast("Category is required.", "error");
       return;
@@ -237,6 +256,7 @@ export default function AdminProductCreate() {
         description: description.trim() || "no-description",
         price: priceNum,
         originalPrice: priceNum,
+        costPrice: costPriceNum,
         reorderPoint: !isProductEditor && reorderPoint ? parseInt(reorderPoint) : undefined,
         initialInventory: !isProductEditor && initialInventory !== "" ? parseInt(initialInventory) : 0,
         category,
@@ -620,6 +640,24 @@ export default function AdminProductCreate() {
                     <label className="form-label">Price (UGX) *</label>
                     <input type="number" className="form-input-box" value={price} onChange={(e) => setPrice(e.target.value)} required />
                   </div>
+                  <div className="form-group flex-1">
+                    <label className="form-label">Cost Price (UGX) *</label>
+                    <input
+                      type="number"
+                      className="form-input-box"
+                      value={costPrice}
+                      onChange={(e) => {
+                        setCostPriceTouched(true);
+                        setCostPrice(e.target.value);
+                      }}
+                      required
+                    />
+                    <span style={{ fontSize: "12px", color: "var(--text-tertiary)", marginTop: "4px", display: "block" }}>
+                      Defaults to 60% of price — adjust if needed.
+                    </span>
+                  </div>
+                </div>
+                <div className="product-edit-fields-row">
                   {!isProductEditor && (
                     <div className="form-group flex-1">
                       <label className="form-label">Reorder Point</label>
