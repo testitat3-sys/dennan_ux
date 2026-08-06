@@ -286,7 +286,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
               onClick={() => {
                 if (!isAuthenticated && step === 4 && sent) {
                   setSent(false);
-                  setCapturedLink('');
                   setResendCooldown(0);
                 } else if (isDirectLogin && step === 4) {
                   setIsDirectLogin(false);
@@ -346,15 +345,17 @@ const OnboardingModal = ({ isOpen, onClose }) => {
                   <span className="onboarding-card-sub">My child is here</span>
                 </Button>
               </div>
-              <div style={{ marginTop: 'var(--space-6)', textAlign: 'center' }}>
-                <Button
-                  variant="link"
-                  onClick={handleDirectLoginClick}
-                  style={{ fontSize: '0.875rem' }}
-                >
-                  Already have an account? Login
-                </Button>
-              </div>
+              {!isAuthenticated && (
+                <div style={{ marginTop: 'var(--space-6)', textAlign: 'center' }}>
+                  <Button
+                    variant="link"
+                    onClick={handleDirectLoginClick}
+                    style={{ fontSize: '0.875rem' }}
+                  >
+                    Already have an account? Login
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 

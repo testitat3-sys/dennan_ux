@@ -36,9 +36,7 @@ const formatDimensions = (dimensions) => {
   return `${length}×${width}×${height}${unit ? ` ${unit}` : ''}`;
 };
 
-// Builds a direct, fact-dense 40-60 word answer-first summary from real product
-// fields instead of generic marketing copy, so AI agents/answer engines can lift
-// a concrete answer without parsing the full page.
+// Builds a direct, fact-dense answer-first summary for SEO & social metadata
 const buildAnswerFirstSummary = (product, displayName) => {
   const facts = [];
   const ageRange = formatAgeRange(product);
@@ -53,16 +51,11 @@ const buildAnswerFirstSummary = (product, displayName) => {
   }
 
   const category = product.category ? product.category.toLowerCase() : 'baby and kids';
-  return `${displayName} is a ${category} product from ${product.brand || 'Dennan'}, ${facts.join(', ')}. Priced at UGX ${typeof product.price === 'number' ? product.price.toLocaleString() : product.price}, available for delivery in Kampala.`;
+  const article = /^[aeiou]/i.test(category) ? 'an' : 'a';
+  return `${displayName} is ${article} ${category} product from ${product.brand || 'Dennan'}, ${facts.join(', ')}. Priced at UGX ${typeof product.price === 'number' ? product.price.toLocaleString() : product.price}, available for delivery in Kampala.`;
 };
 
-const hasAnswerFirstFacts = (product) => {
-  if (formatAgeRange(product)) return true;
-  if (product.material) return true;
-  if (formatDimensions(product.dimensions)) return true;
-  if (product.weightGrams) return true;
-  return false;
-};
+
 
 const buildFactBullets = (product) => {
   const bullets = [];
@@ -177,7 +170,6 @@ const PDP = () => {
 
   const canonicalUrl = `https://dennan.ug/product/${product.slug || id}`;
   const answerFirstSummary = buildAnswerFirstSummary(product, displayName);
-  const showAnswerFirstSummary = hasAnswerFirstFacts(product);
   const factBullets = buildFactBullets(product);
   const productImages = getProductImages(product);
 
@@ -527,20 +519,21 @@ const PDP = () => {
 
       {/* Product Details — stacked sections (Option C layout, no tabs) */}
       <Page.Section className="pdp__details">
-        <div className="pdp__section">
-          <h2>Description</h2>
-          <div className="pdp__description">
-            {showAnswerFirstSummary && <p className="pdp__answer-first">{answerFirstSummary}</p>}
-            <p>{product.description}</p>
-            {factBullets.length > 0 && (
-              <ul className="pdp__feature-list">
-                {factBullets.map((fact, idx) => (
-                  <li key={idx}>{fact}</li>
-                ))}
-              </ul>
-            )}
+        {(product.description || factBullets.length > 0) && (
+          <div className="pdp__section">
+            <h2>Description</h2>
+            <div className="pdp__description">
+              {product.description && <p>{product.description}</p>}
+              {factBullets.length > 0 && (
+                <ul className="pdp__feature-list">
+                  {factBullets.map((fact, idx) => (
+                    <li key={idx}>{fact}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="pdp__section">
           <h2>Specifications</h2>

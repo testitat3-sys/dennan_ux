@@ -50,15 +50,9 @@
       <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
     </noscript>
     <title>Dennan — Shop for baby, kid and mum care.</title>
-    <!-- Microsoft Clarity -->
-    <script type="text/javascript">
-      (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "x6gplhstk6");
-    </script>
-    <!-- End Microsoft Clarity -->
+    <!-- Microsoft Clarity is initialized in src/utils/clarity.js, which is
+         gated so it only runs in production (see initClarity()). Do not add
+         a raw Clarity <script> tag here — it would bypass that dev check. -->
     <!-- X conversion tracking base code -->
     <script>
       !function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);

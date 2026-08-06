@@ -31,7 +31,7 @@ export default defineSchema({
     momoPhone: v.optional(v.string()),
     deliveryLocations: v.optional(v.array(v.object({
       name: v.string(),
-      zone: v.string(),
+      zone: v.optional(v.string()),
       lat: v.optional(v.number()),
       lng: v.optional(v.number()),
     }))),
@@ -1377,6 +1377,24 @@ export default defineSchema({
     sumMs: v.number(),
     maxMs: v.number(),
   }).index("by_metric", ["metric"]),
+
+  /**
+   * missingImageProducts — tracks store-facing products that do not have image URLs.
+   */
+  missingImageProducts: defineTable({
+    productId: v.id("products"),
+    name: v.string(),
+    slug: v.string(),
+    brand: v.optional(v.string()),
+    barcode: v.optional(v.string()),
+    category: v.optional(v.string()),
+    price: v.optional(v.number()),
+    actual_data: v.boolean(),
+    loggedAt: v.number(),
+  })
+    .index("by_productId", ["productId"])
+    .index("by_slug", ["slug"]),
 });
+
 
 

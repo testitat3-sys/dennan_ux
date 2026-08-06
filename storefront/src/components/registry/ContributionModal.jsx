@@ -157,7 +157,7 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onPaymentInitiat
 
   // Ugandan Mobile Money phone validation
   useEffect(() => {
-    const cleanNum = momoPhone.replace(/\s+/g, '');
+    const cleanNum = momoPhone.replace(/[\s\-\(\)]/g, '');
     if (!cleanNum) {
       setIsValidPhone(false);
       setPhoneError('Please enter your mobile money number.');
@@ -165,13 +165,13 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onPaymentInitiat
     }
 
     // RegEx checking for valid MTN/Airtel Uganda mobile ranges
-    const isValidUG = /^(77|78|76|70|75|74)\d{7}$/.test(cleanNum);
+    const isValidUG = /^(?:\+?2560?|0)?(77|78|76|70|75|74)\d{7}$/.test(cleanNum);
     if (isValidUG) {
       setIsValidPhone(true);
       setPhoneError('');
     } else {
       setIsValidPhone(false);
-      setPhoneError('Must start with 77, 78, 76 (MTN) or 70, 75, 74 (Airtel), followed by 7 digits.');
+      setPhoneError('Must start with 07 or +2567 (MTN: 77, 78, 76 or Airtel: 70, 75, 74), followed by 7 digits.');
     }
   }, [momoPhone]);
 
@@ -193,12 +193,13 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onPaymentInitiat
     if (!isFormValid()) return;
     setLoading(true);
     try {
+      const cleanDigits = momoPhone.replace(/[\s\-\(\)]/g, '').replace(/^(?:\+?2560?|0)?/, '');
       const { redirectUrl, paymentId } = await initiateContributionPayment({
         registryId,
         productId: item.productId,
         contributorName: isAnonymous ? 'Anonymous' : name.trim(),
         contributorEmail: email.trim(),
-        contributorPhone: `256${momoPhone.replace(/\s+/g, '')}`,
+        contributorPhone: `256${cleanDigits}`,
         amount: parseFloat(amount),
         frontendUrl: window.location.origin,
       });
@@ -389,7 +390,7 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onPaymentInitiat
                     className={`momo-input ${momoPhone ? (isValidPhone ? 'is-valid' : 'is-invalid') : ''}`}
                     placeholder="772 123456"
                     value={momoPhone}
-                    onChange={(e) => setMomoPhone(e.target.value.replace(/[^0-9\s]/g, ''))}
+                    onChange={(e) => setMomoPhone(e.target.value.replace(/[^0-9\s\+]/g, ''))}
                   />
                 </div>
                 {phoneError && (

@@ -4,7 +4,7 @@ import { api } from "@convex/_generated/api";
 import { X } from 'lucide-react';
 import Button from '../ui/Button';
 import Toast from '../ui/Toast';
-import { STAGE_OPTIONS, splitName, mapUserStage, validateNotifySignup } from '../../utils/notifySignup';
+import { STAGE_OPTIONS, splitName, mapUserStage, validateNotifySignup, normalizeUgPhone } from '../../utils/notifySignup';
 import './NotifySignupModal.css';
 
 const NotifySignupModal = ({
@@ -85,11 +85,12 @@ const NotifySignupModal = ({
     setLoading(true);
     try {
       const trimmedProductInterest = productInterest.trim();
+      const normalizedPhone = normalizeUgPhone(phone);
       await submitNotifySignup({
         email: email.trim(),
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phone: phone.trim(),
+        phone: normalizedPhone,
         stage,
         source,
         specifications: showProductField
@@ -193,7 +194,7 @@ const NotifySignupModal = ({
             <input
               className="notify-signup-input"
               type="tel"
-              placeholder="e.g. 0772 123456"
+              placeholder="e.g. 0772 123456 or +256709773183"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               autoComplete="tel"

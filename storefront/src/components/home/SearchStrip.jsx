@@ -55,7 +55,15 @@ const SearchStrip = ({
   const containerRef = useRef(null);
   const navigate = useNavigate();
 
+  const fetchedProducts = useQuery(api.data.getProducts, {});
   const allBrands = useQuery(api.data.getBrands) || [];
+
+  const availableProducts = useMemo(() => {
+    if (products && Array.isArray(products) && products.length > 0) {
+      return products;
+    }
+    return fetchedProducts || [];
+  }, [products, fetchedProducts]);
 
   const navigateToTag = (tagText) => {
     const textLower = tagText.toLowerCase().trim();
@@ -111,12 +119,13 @@ const SearchStrip = ({
   };
 
   const chipsToDisplay = useMemo(() => {
-    if (!products || !Array.isArray(products) || products.length === 0) {
+    const sourceProducts = availableProducts;
+    if (!sourceProducts || !Array.isArray(sourceProducts) || sourceProducts.length === 0) {
       return popularChips;
     }
 
     const counts = {};
-    products.forEach(p => {
+    sourceProducts.forEach(p => {
       if (p && p.tags && Array.isArray(p.tags)) {
         p.tags.forEach(t => {
           if (t && typeof t === 'object' && t.text) {
@@ -140,7 +149,7 @@ const SearchStrip = ({
       text: tag,
       accent: index === 0
     }));
-  }, [products]);
+  }, [availableProducts]);
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -166,7 +175,60 @@ const SearchStrip = ({
     // Only show dynamic suggestions if suggestions are enabled and not minimal
     if (showSuggestions && !isMinimal) {
       const normalizedVal = val.toLowerCase().trim();
-      if (normalizedVal.length > 1) {
+      if (normalizedVal.length > 0) {
+        // 1. Product name recommendations (in-memory matching to avoid API expenses)
+        const productMatches = [];
+        if (availableProducts && availableProducts.length > 0) {
+          const scored = [];
+          availableProducts.forEach(p => {
+            if (!p || !p.name) return;
+            const nameLower = p.name.toLowerCase();
+            const brandLower = (p.brand || '').toLowerCase();
+            const catLower = (p.category || '').toLowerCase();
+
+            let score = 0;
+            if (nameLower === normalizedVal) {
+              score = 100;
+            } else if (nameLower.startsWith(normalizedVal)) {
+              score = 90;
+            } else if (nameLower.split(/\s+/).some(w => w.startsWith(normalizedVal))) {
+              score = 75;
+            } else if (nameLower.includes(normalizedVal)) {
+              score = 50;
+            } else if (brandLower.includes(normalizedVal)) {
+              score = 40;
+            } else if (catLower.includes(normalizedVal)) {
+              score = 30;
+            }
+
+            if (score > 0) {
+              scored.push({ p, score });
+            }
+          });
+
+          scored.sort((a, b) => b.score - a.score || a.p.name.length - b.p.name.length);
+
+          scored.slice(0, 5).forEach(({ p }) => {
+            const priceVal = p.price || p.originalPrice;
+            const formattedPrice = priceVal ? `UGX ${priceVal.toLocaleString()}` : null;
+            const subParts = [
+              p.brand && p.brand !== 'no-brand' ? p.brand : null,
+              formattedPrice,
+              p.category
+            ].filter(Boolean);
+
+            productMatches.push({
+              text: p.name,
+              sub: subParts.join(' • ') || 'Product',
+              type: 'product',
+              image: p.image,
+              route: `/product/${p.slug || p._id}`,
+              product: p
+            });
+          });
+        }
+
+        // 2. Shortcut matches
         const matchedShortcuts = Object.keys(SEARCH_SHORTCUTS)
           .filter(key => key.includes(normalizedVal))
           .map(key => ({
@@ -176,8 +238,27 @@ const SearchStrip = ({
             route: SEARCH_SHORTCUTS[key]
           }));
         
-        setLocalSuggestions([...matchedShortcuts, ...suggestions].slice(0, 5));
-        setIsDropdownOpen(true);
+        // Combine product matches first, then shortcuts, deduplicate by text, cap at 5 total
+        const combined = [...productMatches, ...matchedShortcuts];
+        const seen = new Set();
+        const uniqueSuggestions = [];
+        for (const item of combined) {
+          const key = item.text.toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            uniqueSuggestions.push(item);
+          }
+        }
+
+        const finalSuggestions = uniqueSuggestions.slice(0, 5);
+
+        if (finalSuggestions.length > 0) {
+          setLocalSuggestions(finalSuggestions);
+          setIsDropdownOpen(true);
+        } else {
+          setLocalSuggestions(suggestions);
+          setIsDropdownOpen(false);
+        }
       } else {
         setLocalSuggestions(suggestions);
         setIsDropdownOpen(false);
@@ -231,6 +312,8 @@ const SearchStrip = ({
   const handleSuggestionClick = (item) => {
     if (item.route) {
       navigate(item.route);
+    } else if (item.product) {
+      navigate(`/product/${item.product.slug || item.product._id}`);
     } else {
       setQuery(item.text);
       if (onChange) {
@@ -289,9 +372,24 @@ const SearchStrip = ({
         {showSuggestions && !isMinimal && isDropdownOpen && (
           <div className="search-dropdown is-active" role="listbox" aria-label="Search suggestions">
             {localSuggestions.map((item, i) => (
-              <div key={i} className="search-dropdown__item" role="option" onClick={() => handleSuggestionClick(item)}>
+              <div 
+                key={i} 
+                className="search-dropdown__item" 
+                role="option" 
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleSuggestionClick(item);
+                }}
+                onClick={() => handleSuggestionClick(item)}
+              >
                 <div className="search-dropdown__icon">
-                  {item.type === 'shortcut' ? (
+                  {item.type === 'product' && item.image ? (
+                    <img 
+                      src={item.image} 
+                      alt="" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} 
+                    />
+                  ) : item.type === 'shortcut' ? (
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M5 12h14M12 5l7 7-7 7"/>
                     </svg>

@@ -223,7 +223,7 @@ export const updateProfile = mutation({
     momoPhone: v.optional(v.union(v.string(), v.null())),
     deliveryLocations: v.optional(v.array(v.object({
       name: v.string(),
-      zone: v.string(),
+      zone: v.optional(v.string()),
       lat: v.optional(v.number()),
       lng: v.optional(v.number()),
     }))),

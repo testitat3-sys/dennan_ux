@@ -193,8 +193,14 @@ export default function ProfilePage() {
     setDeliveryLocations(deliveryLocations.filter((_, i) => i !== idx));
   };
 
-  const handleConfirmLocation = (address) => {
-    const newLoc = { name: address.name, zone: address.zone };
+  const handleConfirmLocation = (address, quoteArg) => {
+    const zoneName = address?.zone || quoteArg?.zone;
+    const newLoc = { 
+      name: address.name, 
+      ...(zoneName ? { zone: zoneName } : {}),
+      ...(address.lat !== undefined ? { lat: address.lat } : {}),
+      ...(address.lng !== undefined ? { lng: address.lng } : {}),
+    };
     if (editingLocationIndex === -1) {
       setDeliveryLocations([...deliveryLocations, newLoc]);
     } else {
@@ -667,7 +673,7 @@ export default function ProfilePage() {
                           <Card.Header>
                             <h3 className="delivery-name">{loc.name}</h3>
                           </Card.Header>
-                          <p className="delivery-zone">Zone: {loc.zone}</p>
+                          {loc.zone && <p className="delivery-zone">Zone: {loc.zone}</p>}
                         </Card.Body>
                         <Card.Actions>
                           <Button 

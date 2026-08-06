@@ -8,7 +8,13 @@ const GUEST_WISHLIST_KEY = 'dennan_guest_wishlist';
 export const useWishlist = () => {
   const context = useContext(WishlistContext);
   if (!context) {
-    throw new Error('useWishlist must be used within a WishlistProvider');
+    return {
+      wishlistIds: [],
+      isInWishlist: () => false,
+      toggleWishlist: () => {},
+      removeFromWishlist: () => {},
+      clearWishlist: () => {},
+    };
   }
   return context;
 };

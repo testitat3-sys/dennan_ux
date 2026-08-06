@@ -10,6 +10,7 @@ import { identifyUser, trackEvent } from '../../utils/analytics';
 import {
   STAGE_OPTIONS,
   validateNotifySignup,
+  normalizeUgPhone,
 } from '../../utils/notifySignup';
 import './LaunchGate.css';
 
@@ -57,8 +58,7 @@ const LaunchGate = () => {
 
     setLoading(true);
     try {
-      const localPhone = phone.replace(/\s+/g, '').trim().replace(/^0/, '');
-      const fullPhone = `+256${localPhone}`;
+      const fullPhone = normalizeUgPhone(phone);
       await submitNotifySignup({
         email: email.trim(),
         firstName: firstName.trim(),

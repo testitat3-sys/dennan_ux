@@ -4,10 +4,9 @@ import { api } from "@convex/_generated/api";
 import Button from '../ui/Button';
 import Text from '../ui/Text';
 import Toast from '../ui/Toast';
-import './StoreRequestModal.css';
+import { UG_PHONE_RE, normalizeUgPhone } from '../../utils/notifySignup';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const UG_PHONE_RE = /^0?7\d{8}$/;
 
 // 'not_a_mum' is a local-only sentinel (never sent to the backend) so the
 // chip can be selected/highlighted distinctly from "nothing chosen yet".
@@ -120,7 +119,7 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
     if (!lastName.trim()) next.lastName = 'Last name is required.';
     if (!email.trim()) next.email = 'Email is required.';
     else if (!EMAIL_RE.test(email.trim())) next.email = 'Enter a valid email address.';
-    const cleanedPhone = phone.replace(/\s+/g, '').trim();
+    const cleanedPhone = phone.replace(/[\s\-\(\)]/g, '').trim();
     if (!cleanedPhone) next.phone = 'Phone number is required.';
     else if (!UG_PHONE_RE.test(cleanedPhone)) next.phone = 'Enter a valid Ugandan phone number (e.g. 0772123456).';
     if (!stage) next.stage = 'Please select where you are in the journey.';
@@ -134,12 +133,12 @@ const StoreRequestModal = ({ isOpen, onClose, initialItemDescription = '' }) => 
 
     setIsSubmitting(true);
     try {
-      const localPhone = phone.replace(/\s+/g, '').trim().replace(/^0/, '');
+      const fullPhone = normalizeUgPhone(phone);
       await submitStoreRequest({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
-        phone: `+256${localPhone}`,
+        phone: fullPhone,
         stage: (stage && stage !== 'not_a_mum') ? stage : undefined,
         itemDescription: itemDescription.trim() || undefined,
       });

@@ -9,7 +9,12 @@ const LEAD_CAPTURED_KEY = 'dennan_lead_captured';
 export const useLeadCapture = () => {
   const context = useContext(LeadCaptureContext);
   if (!context) {
-    throw new Error('useLeadCapture must be used within a LeadCaptureProvider');
+    return {
+      hasLeadInfo: true,
+      leadCaptured: true,
+      openLeadModal: () => {},
+      markLeadCaptured: () => {},
+    };
   }
   return context;
 };
