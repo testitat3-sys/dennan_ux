@@ -152,7 +152,13 @@ const PDPOptionA = ({ product, reviews }) => {
         <div className="pdpA__tab-content">
           {activeTab === 'details' && (
             <div>
-              <p>{product.description}</p>
+              {product.description && (
+                typeof product.description === 'string'
+                  ? product.description.split(/\r?\n\s*\r?\n/).map((para, idx) => (
+                      <p key={idx}>{para}</p>
+                    ))
+                  : <p>{product.description}</p>
+              )}
               <ul className="pdpA__facts">
                 <li>Material: {product.material}</li>
                 <li>Weight: {product.weightGrams}g</li>

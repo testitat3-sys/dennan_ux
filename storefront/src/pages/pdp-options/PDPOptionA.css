@@ -326,6 +326,13 @@
   border-bottom-color: var(--color-brand-primary);
 }
 
+.pdpA__tab-content p {
+  white-space: pre-line;
+  margin-bottom: var(--space-4);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
 .pdpA__facts {
   display: flex;
   flex-direction: column;

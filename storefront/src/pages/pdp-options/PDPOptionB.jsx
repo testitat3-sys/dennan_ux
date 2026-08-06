@@ -62,7 +62,13 @@ const PDPOptionB = ({ product, reviews }) => {
             ))}
           </div>
 
-          <p className="pdpB__lede">{product.description}</p>
+          {product.description && (
+            typeof product.description === 'string'
+              ? product.description.split(/\r?\n\s*\r?\n/).map((para, idx) => (
+                  <p key={idx} className="pdpB__lede">{para}</p>
+                ))
+              : <p className="pdpB__lede">{product.description}</p>
+          )}
 
           <div className="pdpB__accordion">
             <div className="pdpB__accordion-item">

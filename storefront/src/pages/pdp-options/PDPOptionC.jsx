@@ -125,7 +125,13 @@ const PDPOptionC = ({ product, reviews }) => {
       <div className="pdpC__details">
         <div className="pdpC__section">
           <h2>Description</h2>
-          <p>{product.description}</p>
+          {product.description && (
+            typeof product.description === 'string'
+              ? product.description.split(/\r?\n\s*\r?\n/).map((para, idx) => (
+                  <p key={idx}>{para}</p>
+                ))
+              : <p>{product.description}</p>
+          )}
         </div>
         <div className="pdpC__section">
           <h2>Specifications</h2>

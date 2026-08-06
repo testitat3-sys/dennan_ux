@@ -523,7 +523,13 @@ const PDP = () => {
           <div className="pdp__section">
             <h2>Description</h2>
             <div className="pdp__description">
-              {product.description && <p>{product.description}</p>}
+              {product.description && (
+                typeof product.description === 'string'
+                  ? product.description.split(/\r?\n\s*\r?\n/).map((para, idx) => (
+                      <p key={idx}>{para}</p>
+                    ))
+                  : <p>{product.description}</p>
+              )}
               {factBullets.length > 0 && (
                 <ul className="pdp__feature-list">
                   {factBullets.map((fact, idx) => (

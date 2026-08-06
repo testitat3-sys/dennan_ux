@@ -388,6 +388,11 @@
   line-height: 1.6;
   color: var(--text-secondary);
   max-width: var(--width-medium);
+  margin-bottom: var(--space-4);
+  white-space: pre-line;
+}
+
+.pdp__description p:last-child {
   margin-bottom: var(--space-8);
 }
 

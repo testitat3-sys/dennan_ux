@@ -233,6 +233,17 @@
   margin-bottom: var(--space-4);
 }
 
+.pdpC__section p {
+  white-space: pre-line;
+  margin-bottom: var(--space-4);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.pdpC__section p:last-of-type {
+  margin-bottom: 0;
+}
+
 .pdpC__specs-table {
   width: 100%;
   border-collapse: collapse;
