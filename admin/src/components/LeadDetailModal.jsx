@@ -1,5 +1,5 @@
 import React from "react";
-import { X, ShoppingBag, Bell, Megaphone, UserPlus } from "lucide-react";
+import { X, ShoppingBag, Bell, Megaphone, UserPlus, Calendar, PhoneCall, AlertTriangle } from "lucide-react";
 
 const KIND_LABEL = {
   storeRequest: "Order Reminder",
@@ -13,6 +13,12 @@ const KIND_ICON = {
   restockNotify: Bell,
   notifySignup: Megaphone,
   preLaunchSignup: UserPlus,
+};
+
+const EVENT_STATUS_CONFIG = {
+  upcoming: { label: "Upcoming", badgeClass: "active-badge--off", icon: Calendar },
+  overdue: { label: "Overdue - Not Contacted", badgeClass: "active-badge--red", icon: AlertTriangle },
+  contacted: { label: "Contacted", badgeClass: "active-badge--on", icon: PhoneCall },
 };
 
 export default function LeadDetailModal({ lead, onClose }) {
@@ -48,12 +54,55 @@ export default function LeadDetailModal({ lead, onClose }) {
             <tbody>
               <tr>
                 <td>Email</td>
-                <td>{lead.email || "No email"}</td>
+                <td>
+                  {lead.email ? (
+                    <a href={`mailto:${lead.email}`} style={{ color: "var(--accent-primary, #3b82f6)", textDecoration: "none" }}>
+                      {lead.email}
+                    </a>
+                  ) : (
+                    "No email"
+                  )}
+                </td>
               </tr>
               <tr>
                 <td>Phone</td>
-                <td>{lead.phone || "No phone"}</td>
+                <td>
+                  {lead.phone ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                      <span>{lead.phone}</span>
+                      <a
+                        href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: "12px", color: "#16a34a", textDecoration: "none", fontWeight: 600 }}
+                        title="Chat on WhatsApp"
+                      >
+                        WhatsApp 💬
+                      </a>
+                    </span>
+                  ) : (
+                    "No phone"
+                  )}
+                </td>
               </tr>
+              {lead.kind === "storeRequest" && (
+                <>
+                  <tr>
+                    <td>Requested Item</td>
+                    <td style={{ fontWeight: 600 }}>{lead.itemDescription || "No item description provided"}</td>
+                  </tr>
+                  <tr>
+                    <td>Journey Stage</td>
+                    <td>
+                      {lead.stageLabel ? (
+                        <span className="active-badge active-badge--off">{lead.stageLabel}</span>
+                      ) : (
+                        "Not specified"
+                      )}
+                    </td>
+                  </tr>
+                </>
+              )}
               <tr>
                 <td>Submitted</td>
                 <td>{new Date(lead.createdAt).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
@@ -71,6 +120,33 @@ export default function LeadDetailModal({ lead, onClose }) {
                 <td>Details</td>
                 <td>{lead.detail || "—"}</td>
               </tr>
+              {lead.eventStatus && lead.eventStatus !== "none" && lead.eventDate && (
+                <tr>
+                  <td>Scheduled Event</td>
+                  <td>
+                    {(() => {
+                      const cfg = EVENT_STATUS_CONFIG[lead.eventStatus];
+                      const EventIcon = cfg?.icon;
+                      return (
+                        <span className={`active-badge ${cfg?.badgeClass || "active-badge--off"}`}>
+                          {EventIcon && <EventIcon size={12} />}
+                          {cfg?.label} · {new Date(lead.eventDate).toLocaleDateString()}
+                        </span>
+                      );
+                    })()}
+                    {lead.eventNote && (
+                      <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--text-secondary)" }}>
+                        Plan: {lead.eventNote}
+                      </div>
+                    )}
+                    {lead.eventStatus === "contacted" && (
+                      <div style={{ marginTop: "4px", fontSize: "13px", color: "var(--text-secondary)" }}>
+                        Outcome: {lead.eventCompletionNote || "No outcome notes recorded."}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

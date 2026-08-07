@@ -27,6 +27,8 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
   const [scheduledDate, setScheduledDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activityError, setActivityError] = useState("");
+  const [completingId, setCompletingId] = useState(null);
+  const [completionNoteDraft, setCompletionNoteDraft] = useState("");
 
   // Queries and mutations
   const activities = useTrackedQuery(
@@ -97,7 +99,13 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
 
   const handleCompleteActivity = async (activityId) => {
     try {
-      await completeActivityMutation({ token, activityId });
+      await completeActivityMutation({
+        token,
+        activityId,
+        completionNote: completionNoteDraft.trim() || undefined,
+      });
+      setCompletingId(null);
+      setCompletionNoteDraft("");
     } catch (err) {
       console.error(err);
     }
@@ -328,14 +336,56 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
 
                       <div className="timeline-card-body">{act.note}</div>
 
-                      <div className="timeline-card-footer">
-                        <span>Logged by {act.staffName}</span>
-                        <div className="timeline-actions">
-                          {isPending && (
+                      {act.status === "completed" && (
+                        <div className="timeline-card-body" style={{ marginTop: "6px" }}>
+                          <strong style={{ color: "var(--color-support-green, #2e7d32)" }}>
+                            Contacted{act.completedAt ? ` · ${formatDate(act.completedAt)}` : ""}
+                          </strong>
+                          {act.completionNote ? (
+                            <div style={{ marginTop: "2px" }}>Outcome: {act.completionNote}</div>
+                          ) : (
+                            <div style={{ marginTop: "2px", color: "var(--text-tertiary)" }}>No outcome notes recorded.</div>
+                          )}
+                        </div>
+                      )}
+
+                      {completingId === act._id && (
+                        <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                          <textarea
+                            className="form-input"
+                            placeholder="What happened when you contacted them? (optional)"
+                            rows={2}
+                            value={completionNoteDraft}
+                            onChange={(e) => setCompletionNoteDraft(e.target.value)}
+                            autoFocus
+                          />
+                          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                             <button
                               type="button"
                               className="timeline-btn-text"
+                              onClick={() => { setCompletingId(null); setCompletionNoteDraft(""); }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn--primary btn--sm"
                               onClick={() => handleCompleteActivity(act._id)}
+                            >
+                              Save & Mark Completed
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="timeline-card-footer">
+                        <span>Logged by {act.staffName}</span>
+                        <div className="timeline-actions">
+                          {isPending && completingId !== act._id && (
+                            <button
+                              type="button"
+                              className="timeline-btn-text"
+                              onClick={() => { setCompletingId(act._id); setCompletionNoteDraft(""); }}
                             >
                               Mark Completed
                             </button>

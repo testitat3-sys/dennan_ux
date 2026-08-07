@@ -1541,3 +1541,238 @@ export const bulkCreateStoreOnlyProducts = mutation({
     return await executeBulkCreateStoreOnlyProducts(ctx, rows, { actorId: user._id, actorName: user.name });
   },
 });
+
+/**
+ * Search storefront products only (actual_data === true) for creating package bundles.
+ * Enforces strict filtering to guarantee only storefront items can be selected.
+ */
+export const searchStorefrontProductsForPackage = query({
+  args: {
+    token: v.string(),
+    searchTerm: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
+
+    const term = (args.searchTerm || "").trim();
+    const LIMIT = 50;
+
+    if (!term) {
+      const items = await ctx.db
+        .query("products")
+        .withIndex("by_actual_data", (q) => q.eq("actual_data", true))
+        .take(LIMIT);
+      return items
+        .filter((p) => p.isActive !== false)
+        .map((p) => ({
+          _id: p._id,
+          name: p.name,
+          brand: p.brand,
+          price: p.price,
+          wasPrice: p.wasPrice,
+          image: p.image,
+          inventory: p.inventory ?? 0,
+          sku: p.sku,
+          barcode: p.barcode,
+          category: p.category,
+          stage: p.stage,
+          tier: p.tier,
+          actual_data: p.actual_data,
+        }));
+    }
+
+    const bySearchText = await ctx.db
+      .query("products")
+      .withSearchIndex("search_text", (q) =>
+        q.search("searchText", term).eq("actual_data", true)
+      )
+      .take(LIMIT);
+
+    const upperBound = term + "\uFFFF";
+    const [byBarcode, bySku] = await Promise.all([
+      ctx.db
+        .query("products")
+        .withIndex("by_barcode", (q) => q.gte("barcode", term).lt("barcode", upperBound))
+        .take(LIMIT),
+      ctx.db
+        .query("products")
+        .withIndex("by_sku", (q) => q.gte("sku", term).lt("sku", upperBound))
+        .take(LIMIT),
+    ]);
+
+    const merged = new Map<string, any>();
+    for (const p of [...bySearchText, ...byBarcode, ...bySku]) {
+      if (p.actual_data === true && p.isActive !== false) {
+        merged.set(p._id.toString(), p);
+      }
+    }
+
+    return Array.from(merged.values())
+      .slice(0, LIMIT)
+      .map((p) => ({
+        _id: p._id,
+        name: p.name,
+        brand: p.brand,
+        price: p.price,
+        wasPrice: p.wasPrice,
+        image: p.image,
+        inventory: p.inventory ?? 0,
+        sku: p.sku,
+        barcode: p.barcode,
+        category: p.category,
+        stage: p.stage,
+        tier: p.tier,
+        actual_data: p.actual_data,
+      }));
+  },
+});
+
+/**
+ * Creates a product package from existing storefront products.
+ * Available to both Stock Manager and Admin.
+ */
+export const createPackageProduct = mutation({
+  args: {
+    token: v.string(),
+    name: v.string(),
+    image: v.string(),
+    images: v.optional(v.array(v.string())),
+    items: v.array(
+      v.object({
+        productId: v.id("products"),
+        quantity: v.number(),
+      })
+    ),
+    price: v.number(),
+    wasPrice: v.optional(v.number()),
+    category: v.optional(
+      v.union(
+        v.literal("Expectant and New Mom Essentials"),
+        v.literal("Newborn Essentials & Kids Apparel/Footwear"),
+        v.literal("Nursery and Furnishing"),
+        v.literal("Feeding/Nursing Essentials"),
+        v.literal("Bathing and Changing"),
+        v.literal("Baby Play and Safety Gear"),
+        v.literal("Travel Must-Haves")
+      )
+    ),
+    stage: v.optional(v.union(v.literal("mother"), v.literal("newborn"), v.literal("kid"))),
+    tier: v.optional(v.union(v.literal("essentials"), v.literal("musthaves"), v.literal("luxuries"))),
+    description: v.optional(v.string()),
+    inventory: v.optional(v.number()),
+    sku: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await verifyStaffSession(ctx, args.token, [
+      "admin",
+      "stockManager",
+      "productEditor",
+    ]);
+
+    const name = args.name.trim();
+    if (!name) {
+      throw new Error("Package name is mandatory.");
+    }
+
+    const image = args.image.trim();
+    if (!image) {
+      throw new Error("Package image is mandatory.");
+    }
+
+    if (!args.items || args.items.length === 0) {
+      throw new Error("Package must contain at least one storefront product.");
+    }
+
+    let totalItemsValue = 0;
+    const validatedItems = [];
+    for (const item of args.items) {
+      if (item.quantity <= 0) {
+        throw new Error("Quantity for each package item must be greater than zero.");
+      }
+      const p = await ctx.db.get(item.productId);
+      if (!p) {
+        throw new Error(`Product ${item.productId} was not found.`);
+      }
+      if (p.actual_data !== true) {
+        throw new Error(`Product '${p.name}' is not a storefront product. Only storefront products can be added to packages.`);
+      }
+      totalItemsValue += p.price * item.quantity;
+      validatedItems.push({ productId: p._id, quantity: item.quantity });
+    }
+
+    const barcode = await allocateNextBarcode(ctx);
+
+    const baseSlug = slugify(name);
+    let slug = baseSlug;
+    let counter = 1;
+    while (true) {
+      const conflicting = await ctx.db
+        .query("products")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .unique();
+      if (!conflicting) break;
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    const brand = "Dennan Packages";
+    const category = args.category || "Expectant and New Mom Essentials";
+    const stage = args.stage || "newborn";
+    const tier = args.tier || "essentials";
+    const description =
+      args.description?.trim() || `Product package containing ${validatedItems.length} storefront items.`;
+
+    const packagePrice = args.price;
+    const packageWasPrice =
+      args.wasPrice ?? (packagePrice < totalItemsValue ? totalItemsValue : undefined);
+
+    const searchText = computeSearchText({
+      name,
+      brand,
+      category,
+      description,
+      tags: [{ type: "package", text: "Package Bundle" }],
+    });
+
+    const inventory = args.inventory ?? 10;
+    const packageProductId = await ctx.db.insert("products", {
+      name,
+      brand,
+      brandSlug: slugify(brand),
+      slug,
+      barcode,
+      sku: args.sku?.trim() || `PKG-${barcode}`,
+      price: packagePrice,
+      wasPrice: packageWasPrice,
+      originalPrice: packageWasPrice || packagePrice,
+      image,
+      images: args.images && args.images.length > 0 ? args.images : [image],
+      category,
+      stage,
+      tier,
+      description,
+      tags: [{ type: "package", text: "Package Bundle" }],
+      specifications: [
+        { label: "Type", value: "Package Bundle" },
+        { label: "Items Included", value: `${validatedItems.length} items` },
+      ],
+      isActive: true,
+      actual_data: true,
+      isPackage: true,
+      packageItems: validatedItems,
+      inventory,
+      updatedAt: Date.now(),
+      searchText,
+    });
+
+    await applyStockCounterDelta(ctx, null, { inventory, reorderPoint: undefined });
+
+    return {
+      success: true,
+      productId: packageProductId,
+      barcode,
+      slug,
+    };
+  },
+});
+

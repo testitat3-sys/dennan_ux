@@ -1311,6 +1311,11 @@
   padding: var(--space-6);
   box-shadow: 0 2px 12px var(--shadow-ambient);
   transition: transform 0.2s, box-shadow 0.2s;
+  /* Grid items default to min-width: auto, which lets long unbroken figures
+     (e.g. "UGX 9,999,999,999") force the track wider than its column and
+     overflow the card. Allow the card to shrink below its content size so
+     .stat-value's own wrapping/font-size rules are what keep it contained. */
+  min-width: 0;
 }
 
 .stat-card:hover {
@@ -1355,10 +1360,17 @@
 
 .stat-value {
   font-family: var(--font-editorial);
-  font-size: var(--display-lg);
+  /* Sized to comfortably fit a currency-prefixed figure up to 10 digits
+     (e.g. "UGX 9,999,999,999") without overflowing the card at any
+     viewport width - var(--display-lg) alone runs up to 62px, wide enough
+     to blow past a 300px card on long figures. */
+  font-size: clamp(20px, 1.6vw + 12px, 32px);
   color: var(--text-primary);
-  line-height: 1;
+  line-height: 1.15;
   margin-bottom: var(--space-2);
+  display: block;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .stat-label {

@@ -179,7 +179,7 @@ export default function BusinessHealthPanel({ token, user }) {
       ) : (
         <>
           {/* ── 5 Stat Cards: Gross Revenue, COGS, Gross Profit, Expenses, True Net Profit ── */}
-          <div className="stats-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "var(--space-3)" }}>
+          <div className="stats-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "var(--space-3)" }}>
             {/* 1. Gross Revenue Card */}
             <div className="stat-card">
               <div className="stat-icon stat-icon--orchid">

@@ -27,17 +27,33 @@ export function StaffAuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const result = await loginMutation({ email, password });
+      const cleanEmail = (email || "").trim().toLowerCase();
+      const result = await loginMutation({ email: cleanEmail, password });
       if (result && result.token) {
         localStorage.setItem("staffToken", result.token);
         setToken(result.token);
         setUser(result.user);
         return { success: true, user: result.user };
       }
-      return { success: false, error: "Authentication failed" };
+      return { success: false, error: "Invalid email or password. Please check your credentials." };
     } catch (err) {
       console.error("[useStaffAuth] Login error:", err);
-      return { success: false, error: err.message || "Invalid credentials" };
+      let errorMessage = err?.data || err?.message || "";
+      if (typeof errorMessage !== "string") {
+        errorMessage = err?.message || "";
+      }
+      if (errorMessage.includes("Uncaught Error:")) {
+        errorMessage = errorMessage.split("Uncaught Error:")[1];
+      }
+      if (errorMessage.includes("Error:")) {
+        errorMessage = errorMessage.split("Error:")[1];
+      }
+      errorMessage = errorMessage.split("\n")[0].trim();
+
+      if (!errorMessage || errorMessage.toLowerCase().includes("server error")) {
+        errorMessage = "Invalid email or password. Please check your credentials.";
+      }
+      return { success: false, error: errorMessage };
     }
   };
 

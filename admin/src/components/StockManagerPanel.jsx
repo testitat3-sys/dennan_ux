@@ -4,9 +4,10 @@ import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
 import { useProductDisplayName } from "../hooks/useProductDisplayName";
 import { useToast } from "../hooks/useToast";
-import { Search, AlertCircle, Pencil, Plus, Minus, Check, Printer, Upload, X, Send, History } from "lucide-react";
+import { Search, AlertCircle, Pencil, Plus, Minus, Check, Printer, Upload, X, Send, History, PackagePlus } from "lucide-react";
 import BarcodeLabelModal from "./BarcodeLabelModal";
 import StockHistoryModal from "./StockHistoryModal";
+import CreatePackageModal from "./CreatePackageModal";
 import Toast from "./Toast";
 import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
 import { SortableHeader, TableFilterBar } from "./DataTableControls";
@@ -64,6 +65,7 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
   const [setTargetInputs, setSetTargetInputs] = useState({}); // productId -> string ("set to" value in progress)
   const [labelProduct, setLabelProduct] = useState(null);
   const [historyProduct, setHistoryProduct] = useState(null);
+  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
 
   const isStockManager = user?.accountRole === "stockManager";
   const isAdmin = user?.accountRole === "admin";
@@ -186,6 +188,13 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
           style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
         >
           <Upload size={14} /> Bulk Upload (.xlsx)
+        </button>
+        <button
+          className="btn btn--secondary btn--sm"
+          onClick={() => setIsPackageModalOpen(true)}
+          style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--surface-container-high, #1e2430)", borderColor: "var(--primary, #3b82f6)" }}
+        >
+          <PackagePlus size={14} style={{ color: "var(--primary, #3b82f6)" }} /> Create Package
         </button>
       </div>
 
@@ -565,6 +574,13 @@ export default function StockManagerPanel({ token, navigate, user, showToast: ex
           onClose={() => setHistoryProduct(null)}
         />
       )}
+
+      <CreatePackageModal
+        isOpen={isPackageModalOpen}
+        onClose={() => setIsPackageModalOpen(false)}
+        token={token}
+        showToast={showToast}
+      />
 
       {!externalShowToast && <Toast toasts={toasts} onDismiss={dismissToast} />}
     </div>

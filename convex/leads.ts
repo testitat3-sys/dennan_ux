@@ -4,10 +4,13 @@ import { verifyStaffSession } from "./staffAuth";
 import { trackedQuery } from "./lib/ioTracking";
 
 const STAGE_LABELS: Record<string, string> = {
-  expectant: "Expectant",
+  mother: "Pregnant",
+  expectant: "Pregnant",
   newborn: "Newborn",
+  kid: "Toddler+",
   toddler: "Toddler",
   not_a_mother: "Not a Mom",
+  not_a_mum: "Not a Mom",
 };
 
 /**
@@ -47,6 +50,10 @@ export const getLeads = trackedQuery("leads.getLeads", {
           }
         }
 
+        const stageLabel = r.stage ? STAGE_LABELS[r.stage] ?? r.stage : undefined;
+        const itemDesc = r.itemDescription || "No item description provided.";
+        const detail = stageLabel ? `${itemDesc} · Stage: ${stageLabel}` : itemDesc;
+
         return {
           id: r._id,
           kind: "storeRequest" as const,
@@ -54,7 +61,10 @@ export const getLeads = trackedQuery("leads.getLeads", {
           name: `${r.firstName} ${r.lastName}`.trim(),
           email: r.email,
           phone: r.phone,
-          detail: r.itemDescription || "No item description provided.",
+          stage: r.stage,
+          stageLabel,
+          itemDescription: r.itemDescription,
+          detail,
           createdAt: r.createdAt,
           status: r.status ?? "new",
           resolvedAt: r.resolvedAt,
@@ -174,14 +184,76 @@ export const getLeads = trackedQuery("leads.getLeads", {
       };
     });
 
-    return [
+    const allLeads = [
       ...storeRequestLeads,
       ...wishlistLeads,
       ...notifySignupLeads,
       ...preLaunchLeads,
-    ]
-      .filter((lead) => Boolean(lead.email?.trim() || lead.phone?.trim()))
-      .sort((a, b) => b.createdAt - a.createdAt);
+    ].filter((lead) => Boolean(lead.email?.trim() || lead.phone?.trim()));
+
+    // ── Scheduled-event / contacted enrichment ─────────────────────────────
+    // For every lead linked to a users row, pull its CRM activities so the
+    // Leads table can surface "has a scheduled follow-up" and, once that
+    // date has passed, whether the lead was actually contacted (activity
+    // completed) or not (still pending). Batched per unique userId so leads
+    // sharing a customer only fetch activities once.
+    const uniqueUserIds = [...new Set(allLeads.map((l) => l.userId).filter(Boolean))];
+    const activityEntries = await Promise.all(
+      uniqueUserIds.map(async (userId) => [
+        userId,
+        await ctx.db
+          .query("customerActivities")
+          .withIndex("by_customerId", (q) => q.eq("customerId", userId as any))
+          .collect(),
+      ] as const)
+    );
+    const activitiesByUser = new Map(activityEntries);
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    const enrichedLeads = allLeads.map((lead) => {
+      const activities = lead.userId ? activitiesByUser.get(lead.userId) ?? [] : [];
+
+      // Soonest still-pending scheduled activity, if any.
+      const pendingScheduled = activities
+        .filter((a) => a.status === "pending" && a.scheduledDate)
+        .sort((a, b) => (a.scheduledDate! < b.scheduledDate! ? -1 : a.scheduledDate! > b.scheduledDate! ? 1 : 0));
+
+      let eventStatus: "none" | "upcoming" | "overdue" | "contacted" = "none";
+      let eventDate: string | undefined;
+      let eventTime: string | undefined;
+      let eventType: string | undefined;
+      let eventNote: string | undefined;
+      let eventCompletionNote: string | undefined;
+
+      if (pendingScheduled.length > 0) {
+        const next = pendingScheduled[0];
+        eventDate = next.scheduledDate;
+        eventTime = next.scheduledTime;
+        eventType = next.type;
+        eventNote = next.note;
+        eventStatus = next.scheduledDate! < todayStr ? "overdue" : "upcoming";
+      } else {
+        // No pending scheduled activity left - if the most recently
+        // completed one had a scheduled date, treat it as "contacted".
+        const lastCompletedScheduled = activities
+          .filter((a) => a.status === "completed" && a.scheduledDate)
+          .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
+        if (lastCompletedScheduled.length > 0) {
+          const last = lastCompletedScheduled[0];
+          eventDate = last.scheduledDate;
+          eventTime = last.scheduledTime;
+          eventType = last.type;
+          eventNote = last.note;
+          eventCompletionNote = last.completionNote;
+          eventStatus = "contacted";
+        }
+      }
+
+      return { ...lead, eventStatus, eventDate, eventTime, eventType, eventNote, eventCompletionNote };
+    });
+
+    return enrichedLeads.sort((a, b) => b.createdAt - a.createdAt);
   },
 });
 

@@ -1075,7 +1075,101 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(postVoidMetrics.totalCogs).toBeGreaterThanOrEqual(0);
   expect(postVoidMetrics.grossProfit).toBe(postVoidMetrics.grossRevenue - postVoidMetrics.totalCogs);
   expect(postVoidMetrics.netProfit).toBe(postVoidMetrics.grossProfit - postVoidMetrics.totalExpenses);
+
+  // ─── 14. Product Package Creation & Storefront Product Filtering Tests ───
+  // Insert a storefront product (actual_data: true)
+  const sfProdId = await t.run(async (ctx) => {
+    return await ctx.db.insert("products", {
+      name: "Storefront Teether Ring",
+      brand: "Dennan Kids",
+      slug: "storefront-teether-ring",
+      barcode: "BAR-SF-999",
+      price: 25000,
+      originalPrice: 25000,
+      isActive: true,
+      inventory: 20,
+      actual_data: true,
+      description: "Organic silicone teether ring for storefront",
+      tags: [],
+      specifications: [],
+      searchText: "Storefront Teether Ring Dennan Kids Organic silicone teether ring",
+    });
+  });
+
+  // Insert a non-storefront product (actual_data: false)
+  const nonSfProdId = await t.run(async (ctx) => {
+    return await ctx.db.insert("products", {
+      name: "Backstore Storage Box",
+      brand: "Dennan Internal",
+      slug: "backstore-storage-box",
+      barcode: "BAR-BS-000",
+      price: 15000,
+      originalPrice: 15000,
+      isActive: true,
+      inventory: 50,
+      actual_data: false,
+      description: "Internal warehouse box non-storefront",
+      tags: [],
+      specifications: [],
+      searchText: "Backstore Storage Box Dennan Internal warehouse box",
+    });
+  });
+
+  // Test searchStorefrontProductsForPackage: MUST only return actual_data: true items
+  const sfSearchResults = await t.query(api.products.searchStorefrontProductsForPackage, {
+    token: adminToken,
+    searchTerm: "Teether",
+  });
+  expect(sfSearchResults.length).toBeGreaterThan(0);
+  expect(sfSearchResults.some((p: any) => p._id === sfProdId)).toBe(true);
+  expect(sfSearchResults.some((p: any) => p._id === nonSfProdId)).toBe(false);
+
+  // Test creating package with non-storefront product: MUST fail
+  await expect(
+    t.mutation(api.products.createPackageProduct, {
+      token: adminToken,
+      name: "Invalid Package",
+      image: "https://example.com/invalid.jpg",
+      items: [{ productId: nonSfProdId, quantity: 1 }],
+      price: 30000,
+    })
+  ).rejects.toThrow("not a storefront product");
+
+  // Test creating package without mandatory image: MUST fail
+  await expect(
+    t.mutation(api.products.createPackageProduct, {
+      token: adminToken,
+      name: "No Image Package",
+      image: "   ",
+      items: [{ productId: sfProdId, quantity: 2 }],
+      price: 45000,
+    })
+  ).rejects.toThrow("Package image is mandatory.");
+
+  // Test creating package with valid storefront product & mandatory name/image
+  const createPkgRes = await t.mutation(api.products.createPackageProduct, {
+    token: adminToken,
+    name: "Baby Gift Starter Package",
+    image: "https://example.com/package-starter.jpg",
+    items: [{ productId: sfProdId, quantity: 2 }],
+    price: 45000,
+    category: "Expectant and New Mom Essentials",
+  });
+  expect(createPkgRes.success).toBe(true);
+  expect(createPkgRes.productId).toBeDefined();
+
+  // Verify created package in database
+  const createdPkgDoc = await t.run(async (ctx) => {
+    return await ctx.db.get(createPkgRes.productId);
+  });
+  expect(createdPkgDoc).toBeDefined();
+  expect(createdPkgDoc.name).toBe("Baby Gift Starter Package");
+  expect(createdPkgDoc.image).toBe("https://example.com/package-starter.jpg");
+  expect(createdPkgDoc.isPackage).toBe(true);
+  expect(createdPkgDoc.actual_data).toBe(true);
+  expect(createdPkgDoc.packageItems).toEqual([{ productId: sfProdId, quantity: 2 }]);
 });
+
 
 
 

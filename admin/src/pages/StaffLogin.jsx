@@ -12,19 +12,43 @@ export default function StaffLogin() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+    if (error) setError("");
+  };
+
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+    if (error) setError("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError("Please fill in all fields.");
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail || !password) {
+      setError("Please enter both your email address and password.");
       return;
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     setError("");
     setIsSubmitting(true);
 
-    const res = await login(email, password);
-    setIsSubmitting(false);
-    if (!res.success) {
-      setError(res.error || "Invalid email or password.");
+    try {
+      const res = await login(trimmedEmail, password);
+      if (!res.success) {
+        setError(res.error || "Invalid email or password. Please check your credentials.");
+      }
+    } catch (err) {
+      setError("An error occurred while logging in. Please check your credentials and try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -48,9 +72,10 @@ export default function StaffLogin() {
               placeholder="name@dennan.ug"
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               required
               disabled={isSubmitting}
+              aria-invalid={!!error}
             />
           </div>
 
@@ -65,9 +90,10 @@ export default function StaffLogin() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 required
                 disabled={isSubmitting}
+                aria-invalid={!!error}
               />
               <button
                 type="button"
@@ -101,3 +127,4 @@ export default function StaffLogin() {
     </div>
   );
 }
+

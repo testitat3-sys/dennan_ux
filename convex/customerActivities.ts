@@ -270,6 +270,7 @@ export const completeActivity = mutation({
   args: {
     token: v.string(),
     activityId: v.id("customerActivities"),
+    completionNote: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Verify staff or admin session
@@ -287,6 +288,7 @@ export const completeActivity = mutation({
     await ctx.db.patch(args.activityId, {
       status: "completed",
       completedAt: Date.now(),
+      completionNote: args.completionNote?.trim() || undefined,
     });
 
     try {

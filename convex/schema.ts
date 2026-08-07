@@ -287,6 +287,17 @@ export default defineSchema({
      * tags, and description for multi-keyword full-text search.
      */
     searchText: v.optional(v.string()),
+
+    /** Package metadata if product is a package bundle composed of other products */
+    isPackage: v.optional(v.boolean()),
+    packageItems: v.optional(
+      v.array(
+        v.object({
+          productId: v.id("products"),
+          quantity: v.number(),
+        })
+      )
+    ),
   })
     .index("by_slug", ["slug"])
     .index("by_barcode", ["barcode"])
@@ -1165,6 +1176,8 @@ export default defineSchema({
     staffName: v.string(),
     createdAt: v.number(),
     completedAt: v.optional(v.number()),
+    /** What actually happened on the call/meeting/etc, captured when it's marked completed. */
+    completionNote: v.optional(v.string()),
     /** Old-DB _id from the pre-launch Convex project; used for idempotent re-imports. */
     preLaunchId: v.optional(v.string()),
     /** "pre_launch" when this row was imported from the pre-launch site. */

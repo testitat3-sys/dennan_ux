@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
-import { Copy, CheckCircle, RotateCcw, ShoppingBag, Bell, Megaphone, UserPlus } from "lucide-react";
+import { Copy, CheckCircle, RotateCcw, ShoppingBag, Bell, Megaphone, UserPlus, Calendar, PhoneCall, AlertTriangle } from "lucide-react";
 import CustomerActivityModal from "./CustomerActivityModal";
 import LeadDetailModal from "./LeadDetailModal";
 import { useTableSortAndFilter } from "../hooks/useTableSortAndFilter";
@@ -30,6 +30,21 @@ const LEAD_TYPE_OPTIONS = [
   { value: "notifySignup", label: "Launch Signup" },
   { value: "preLaunchSignup", label: "Pre-Launch" },
 ];
+
+const EVENT_STATUS_OPTIONS = [
+  { value: "all", label: "All Events" },
+  { value: "upcoming", label: "Has Upcoming Event" },
+  { value: "overdue", label: "Overdue - Not Contacted" },
+  { value: "contacted", label: "Contacted" },
+  { value: "none", label: "No Scheduled Event" },
+];
+
+const EVENT_STATUS_CONFIG = {
+  upcoming: { label: "Upcoming", badgeClass: "active-badge--off", icon: Calendar },
+  overdue: { label: "Overdue - Not Contacted", badgeClass: "active-badge--red", icon: AlertTriangle },
+  contacted: { label: "Contacted", badgeClass: "active-badge--on", icon: PhoneCall },
+  none: { label: "—", badgeClass: "active-badge--off", icon: null },
+};
 
 // convex/leads.ts's resolveLead is a discriminated union keyed by which id
 // field is set (storeRequestId | wishlistItemId | notifySignupId |
@@ -73,8 +88,14 @@ export default function LeadsPanel({ token }) {
     totalCount: totalTabLeads,
     filteredCount,
   } = useTableSortAndFilter(rawLeadsForTab, {
-    searchFields: ["name", "email", "phone", "detail", "kind"],
+    searchFields: ["name", "email", "phone", "detail", "kind", "stageLabel", "itemDescription"],
     initialSort: { key: "createdAt", direction: "desc" },
+    customSorts: {
+      eventStatus: (a, b) => {
+        const rank = { overdue: 0, upcoming: 1, contacted: 2, none: 3 };
+        return (rank[a.eventStatus ?? "none"] ?? 3) - (rank[b.eventStatus ?? "none"] ?? 3);
+      },
+    },
   });
 
   const handleCopyPhone = (lead) => {
@@ -188,6 +209,7 @@ export default function LeadsPanel({ token }) {
             onFilterChange={(key, val) => setFilterValue(key, val === "all" ? "" : val)}
             filters={[
               { key: "kind", width: "160px", options: LEAD_TYPE_OPTIONS },
+              { key: "eventStatus", width: "190px", options: EVENT_STATUS_OPTIONS },
             ]}
             isFiltered={isFiltered}
             onResetFilters={resetFilters}
@@ -214,11 +236,11 @@ export default function LeadsPanel({ token }) {
                     <SortableHeader sortKey="kind" sortConfig={sortConfig} onRequestSort={requestSort}>
                       Type
                     </SortableHeader>
-                    <SortableHeader sortKey="detail" sortConfig={sortConfig} onRequestSort={requestSort}>
-                      Wants
-                    </SortableHeader>
                     <SortableHeader sortKey="createdAt" sortConfig={sortConfig} onRequestSort={requestSort}>
                       Date
+                    </SortableHeader>
+                    <SortableHeader sortKey="eventStatus" sortConfig={sortConfig} onRequestSort={requestSort}>
+                      Scheduled Event
                     </SortableHeader>
                     <SortableHeader sortKey="status" sortConfig={sortConfig} onRequestSort={requestSort}>
                       Status
@@ -265,11 +287,26 @@ export default function LeadsPanel({ token }) {
                           {lead.kind === "preLaunchSignup" && "Pre-Launch"}
                         </span>
                       </td>
-                      <td title={lead.detail}>
-                        {lead.detail && lead.detail.length > 60 ? lead.detail.substring(0, 60) + "..." : lead.detail}
-                      </td>
                       <td style={{ whiteSpace: "nowrap" }}>
                         {new Date(lead.createdAt).toLocaleDateString()}
+                      </td>
+                      <td style={{ whiteSpace: "nowrap" }}>
+                        {(() => {
+                          const cfg = EVENT_STATUS_CONFIG[lead.eventStatus] || EVENT_STATUS_CONFIG.none;
+                          const EventIcon = cfg.icon;
+                          if (lead.eventStatus === "none" || !lead.eventDate) {
+                            return <span style={{ color: "var(--text-tertiary)" }}>—</span>;
+                          }
+                          return (
+                            <span
+                              className={`active-badge ${cfg.badgeClass}`}
+                              title={lead.eventNote || undefined}
+                            >
+                              {EventIcon && <EventIcon size={12} />}
+                              {cfg.label} · {new Date(lead.eventDate).toLocaleDateString()}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td>
                         <span className={`active-badge ${lead.status === "resolved" ? "active-badge--on" : "active-badge--yellow"}`}>

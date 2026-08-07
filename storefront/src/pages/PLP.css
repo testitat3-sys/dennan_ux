@@ -513,7 +513,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: clamp(120px, 20vw, 260px);
+  height: clamp(140px, 22vw, 280px);
+  padding: var(--space-4) var(--space-6);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -524,6 +527,8 @@
   width: auto;
   max-width: 100%;
   object-fit: contain;
+  padding: var(--space-3) 0;
+  box-sizing: border-box;
 }
 
 /* ─── LAUNCH PAGE STICKY BANNER ───────────────────────────────────── */
@@ -539,6 +544,16 @@
 }
 
 @media (max-width: 768px) {
+  .launch-page__hero-banner {
+    padding: var(--space-3) var(--space-4);
+    margin-top: var(--space-3);
+    height: clamp(120px, 28vw, 200px);
+  }
+
+  .launch-page__hero-banner-image {
+    padding: var(--space-2) 0;
+  }
+
   .launch-page__sticky-banner {
     top: var(--nav-offset, 56px);
   }

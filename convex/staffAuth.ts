@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { trackedQuery } from "./lib/ioTracking";
 
@@ -199,18 +199,19 @@ export const login = mutation({
     password: v.string(),
   },
   handler: async (ctx, args) => {
+    const normalizedEmail = args.email.trim().toLowerCase();
     const user = await ctx.db
       .query("users")
-      .withIndex("email", (q) => q.eq("email", args.email))
+      .withIndex("email", (q) => q.eq("email", normalizedEmail))
       .first();
 
     if (!user || !user.password || !user.accountRole) {
-      throw new Error("Invalid email or password");
+      throw new ConvexError("Invalid email or password");
     }
 
     const hashedPassword = await hashPassword(args.password);
     if (user.password !== hashedPassword) {
-      throw new Error("Invalid email or password");
+      throw new ConvexError("Invalid email or password");
     }
 
     // Create session token and set expiry to 24 hours
