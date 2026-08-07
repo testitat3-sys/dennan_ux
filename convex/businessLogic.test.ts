@@ -204,6 +204,20 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(activitiesCompleted[0].status).toBe("completed");
   expect(activitiesCompleted[0].completedAt).toBeDefined();
 
+  // Update CRM Activity note as Staff
+  const updateActRes = await t.mutation(api.customerActivities.updateActivity, {
+    token: staffToken,
+    activityId,
+    note: "Updated note: Checked baby bottle preferences and confirmed order details.",
+  });
+  expect(updateActRes.success).toBe(true);
+
+  const activitiesUpdatedResult = await t.query(api.customerActivities.getActivitiesByCustomer, {
+    token: staffToken,
+    customerId,
+  });
+  expect(activitiesUpdatedResult.data[0].note).toBe("Updated note: Checked baby bottle preferences and confirmed order details.");
+
   // ─── 4. Fulfillment & Order Lifecycle Tests ───
   // Admin creates an order manually
   const orderRes = await t.mutation(api.orders.adminCreateOrder, {

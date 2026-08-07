@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
-import { ChevronLeft, ChevronRight, Calendar, Phone, Mail, Users, Bell, FileText, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Phone, Mail, Users, Bell, FileText, ChevronRight as ChevronRightIcon, Pencil, Trash } from "lucide-react";
 import { getTodayStr, getLocalDateString, formatScheduledDate, getUrgency, priorityRank } from "../utils/reminderHelpers";
 
 const typeIcon = {
@@ -27,10 +27,13 @@ export default function CalendarPanel({ token, onOpenOrder }) {
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
   const [selectedDateStr, setSelectedDateStr] = useState(todayStr);
   const [completingId, setCompletingId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editNoteDraft, setEditNoteDraft] = useState("");
 
   const allActivities = useTrackedQuery(api.customerActivities.getAllActivities, { token });
   const completeActivityMutation = useMutation(api.customerActivities.completeActivity);
   const deleteActivityMutation = useMutation(api.customerActivities.deleteActivity);
+  const updateActivityMutation = useMutation(api.customerActivities.updateActivity);
 
   const calendarDays = useMemo(() => {
     const days = [];
@@ -85,6 +88,29 @@ export default function CalendarPanel({ token, onOpenOrder }) {
       await deleteActivityMutation({ token, activityId });
     } catch (err) {
       alert("Failed to delete: " + err.message);
+    }
+  };
+
+  const handleStartEdit = (act) => {
+    setEditingId(act._id);
+    setEditNoteDraft(act.note || "");
+    setCompletingId(null);
+  };
+
+  const handleSaveEdit = async (activityId) => {
+    if (!editNoteDraft.trim()) {
+      alert("Note cannot be empty.");
+      return;
+    }
+    try {
+      await updateActivityMutation({
+        token,
+        activityId,
+        note: editNoteDraft.trim(),
+      });
+      setEditingId(null);
+    } catch (err) {
+      alert("Failed to update note: " + err.message);
     }
   };
 
@@ -186,6 +212,7 @@ export default function CalendarPanel({ token, onOpenOrder }) {
             ) : (
               selectedActivities.map((act) => {
                 const isPending = act.status === "pending";
+                const isEditing = editingId === act._id;
                 const urgency = getUrgency(act.scheduledDate, todayStr);
                 const cardClass = !isPending ? "is-completed" : urgency === "overdue" ? "is-overdue" : act.type === "note" ? "is-note" : "is-pending";
 
@@ -219,17 +246,35 @@ export default function CalendarPanel({ token, onOpenOrder }) {
                       </button>
                     )}
 
-                    <div className="calendar-detail-card-body">{act.note}</div>
-                    {act.scheduledTime && (
-                      <div style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>Time: {act.scheduledTime}</div>
+                    {isEditing ? (
+                      <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <textarea
+                          className="form-input"
+                          rows={3}
+                          value={editNoteDraft}
+                          onChange={(e) => setEditNoteDraft(e.target.value)}
+                          autoFocus
+                        />
+                        <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+                          <button type="button" className="btn btn--secondary btn--xs" onClick={() => setEditingId(null)}>Cancel</button>
+                          <button type="button" className="btn btn--primary btn--xs" onClick={() => handleSaveEdit(act._id)}>Save</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="calendar-detail-card-body">{act.note}</div>
+                        {act.scheduledTime && (
+                          <div style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>Time: {act.scheduledTime}</div>
+                        )}
+                      </>
                     )}
 
-                    {isPending && completingId === act._id ? (
+                    {isPending && completingId === act._id && !isEditing ? (
                       <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end", marginTop: "8px" }}>
                         <button type="button" className="btn btn--secondary btn--xs" onClick={() => setCompletingId(null)}>Cancel</button>
                         <button type="button" className="btn btn--primary btn--xs" onClick={() => handleComplete(act._id)}>Confirm</button>
                       </div>
-                    ) : (
+                    ) : !isEditing && (
                       <div className="calendar-detail-card-footer">
                         <span>Logged by {act.staffName}</span>
                         <div className="calendar-detail-card-actions">
@@ -239,7 +284,12 @@ export default function CalendarPanel({ token, onOpenOrder }) {
                           {isPending && (
                             <button type="button" className="timeline-btn-text" onClick={() => setCompletingId(act._id)}>Mark Completed</button>
                           )}
-                          <button type="button" className="timeline-btn-text timeline-btn-text--danger" onClick={() => handleDelete(act._id)}>Delete</button>
+                          <button type="button" className="timeline-btn-text" onClick={() => handleStartEdit(act)}>
+                            <Pencil size={12} /> Edit
+                          </button>
+                          <button type="button" className="timeline-btn-text timeline-btn-text--danger" onClick={() => handleDelete(act._id)}>
+                            <Trash size={12} /> Delete
+                          </button>
                         </div>
                       </div>
                     )}

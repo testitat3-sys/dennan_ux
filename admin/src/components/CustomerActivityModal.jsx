@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
-import { X, Calendar, Phone, Mail, Users, Bell, FileText, Trash } from "lucide-react";
+import { X, Calendar, Phone, Mail, Users, Bell, FileText, Trash, Pencil } from "lucide-react";
 import {
   getChurnBand,
   CHURN_BAND_LABELS,
@@ -30,6 +30,12 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
   const [completingId, setCompletingId] = useState(null);
   const [completionNoteDraft, setCompletionNoteDraft] = useState("");
 
+  // Edit state for existing timeline notes/activities
+  const [editingId, setEditingId] = useState(null);
+  const [editNoteDraft, setEditNoteDraft] = useState("");
+  const [editCompletionNoteDraft, setEditCompletionNoteDraft] = useState("");
+  const [editDateDraft, setEditDateDraft] = useState("");
+
   // Queries and mutations
   const activities = useTrackedQuery(
     api.customerActivities.getActivitiesByCustomer,
@@ -37,13 +43,15 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
   );
 
   const addActivityMutation = useMutation(api.customerActivities.addActivity);
+  const updateActivityMutation = useMutation(api.customerActivities.updateActivity);
   const completeActivityMutation = useMutation(api.customerActivities.completeActivity);
   const deleteActivityMutation = useMutation(api.customerActivities.deleteActivity);
 
   useEffect(() => {
     setInteractionNote("");
     setActivityError("");
-  }, [activeInteractionTab]);
+    setEditingId(null);
+  }, [activeInteractionTab, customerId]);
 
   const handleAddNote = async (e) => {
     e.preventDefault();
@@ -118,6 +126,34 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
       } catch (err) {
         console.error(err);
       }
+    }
+  };
+
+  const handleStartEdit = (act) => {
+    setEditingId(act._id);
+    setEditNoteDraft(act.note || "");
+    setEditCompletionNoteDraft(act.completionNote || "");
+    setEditDateDraft(act.scheduledDate || "");
+    setCompletingId(null);
+  };
+
+  const handleSaveEdit = async (activityId) => {
+    if (!editNoteDraft.trim()) {
+      setActivityError("Note content cannot be empty.");
+      return;
+    }
+    setActivityError("");
+    try {
+      await updateActivityMutation({
+        token,
+        activityId,
+        note: editNoteDraft.trim(),
+        scheduledDate: editDateDraft || undefined,
+        completionNote: editCompletionNoteDraft.trim() || undefined,
+      });
+      setEditingId(null);
+    } catch (err) {
+      setActivityError("Failed to update note: " + err.message);
     }
   };
 
@@ -322,6 +358,7 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
                 {activities.map((act) => {
                   const isPending = act.status === "pending";
                   const isNote = act.type === "note";
+                  const isEditing = editingId === act._id;
                   return (
                     <div key={act._id} className={`timeline-card ${isPending ? "is-pending" : isNote ? "is-note" : ""}`}>
                       <span className="timeline-node" />
@@ -334,22 +371,77 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
                         <span className="timeline-card-time">{formatDate(act.createdAt)}</span>
                       </div>
 
-                      <div className="timeline-card-body">{act.note}</div>
-
-                      {act.status === "completed" && (
-                        <div className="timeline-card-body" style={{ marginTop: "6px" }}>
-                          <strong style={{ color: "var(--color-support-green, #2e7d32)" }}>
-                            Contacted{act.completedAt ? ` · ${formatDate(act.completedAt)}` : ""}
-                          </strong>
-                          {act.completionNote ? (
-                            <div style={{ marginTop: "2px" }}>Outcome: {act.completionNote}</div>
-                          ) : (
-                            <div style={{ marginTop: "2px", color: "var(--text-tertiary)" }}>No outcome notes recorded.</div>
+                      {isEditing ? (
+                        <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                          <div className="form-group">
+                            <label className="form-label" style={{ fontSize: "11px" }}>Edit Note / Description</label>
+                            <textarea
+                              className="form-input"
+                              rows={3}
+                              value={editNoteDraft}
+                              onChange={(e) => setEditNoteDraft(e.target.value)}
+                              autoFocus
+                            />
+                          </div>
+                          {act.scheduledDate !== undefined && (
+                            <div className="form-group">
+                              <label className="form-label" style={{ fontSize: "11px" }}>Scheduled Date</label>
+                              <input
+                                type="date"
+                                className="form-input"
+                                value={editDateDraft}
+                                onChange={(e) => setEditDateDraft(e.target.value)}
+                              />
+                            </div>
                           )}
+                          {act.status === "completed" && act.type !== "note" && (
+                            <div className="form-group">
+                              <label className="form-label" style={{ fontSize: "11px" }}>Outcome / Completion Note</label>
+                              <textarea
+                                className="form-input"
+                                rows={2}
+                                value={editCompletionNoteDraft}
+                                onChange={(e) => setEditCompletionNoteDraft(e.target.value)}
+                              />
+                            </div>
+                          )}
+                          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "4px" }}>
+                            <button
+                              type="button"
+                              className="timeline-btn-text"
+                              onClick={() => setEditingId(null)}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn--primary btn--sm"
+                              onClick={() => handleSaveEdit(act._id)}
+                            >
+                              Save Note
+                            </button>
+                          </div>
                         </div>
+                      ) : (
+                        <>
+                          <div className="timeline-card-body">{act.note}</div>
+
+                          {act.status === "completed" && (
+                            <div className="timeline-card-body" style={{ marginTop: "6px" }}>
+                              <strong style={{ color: "var(--color-support-green, #2e7d32)" }}>
+                                Contacted{act.completedAt ? ` · ${formatDate(act.completedAt)}` : ""}
+                              </strong>
+                              {act.completionNote ? (
+                                <div style={{ marginTop: "2px" }}>Outcome: {act.completionNote}</div>
+                              ) : (
+                                <div style={{ marginTop: "2px", color: "var(--text-tertiary)" }}>No outcome notes recorded.</div>
+                              )}
+                            </div>
+                          )}
+                        </>
                       )}
 
-                      {completingId === act._id && (
+                      {completingId === act._id && !isEditing && (
                         <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "6px" }}>
                           <textarea
                             className="form-input"
@@ -381,7 +473,7 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
                       <div className="timeline-card-footer">
                         <span>Logged by {act.staffName}</span>
                         <div className="timeline-actions">
-                          {isPending && completingId !== act._id && (
+                          {isPending && completingId !== act._id && !isEditing && (
                             <button
                               type="button"
                               className="timeline-btn-text"
@@ -390,13 +482,26 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
                               Mark Completed
                             </button>
                           )}
-                          <button
-                            type="button"
-                            className="timeline-btn-text timeline-btn-text--danger"
-                            onClick={() => handleDeleteActivity(act._id)}
-                          >
-                            <Trash size={12} /> Delete
-                          </button>
+                          {!isEditing && (
+                            <>
+                              <button
+                                type="button"
+                                className="timeline-btn-text"
+                                onClick={() => handleStartEdit(act)}
+                                title="Edit this note"
+                              >
+                                <Pencil size={12} /> Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="timeline-btn-text timeline-btn-text--danger"
+                                onClick={() => handleDeleteActivity(act._id)}
+                                title="Delete this note"
+                              >
+                                <Trash size={12} /> Delete
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -410,3 +515,4 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
     </div>
   );
 }
+

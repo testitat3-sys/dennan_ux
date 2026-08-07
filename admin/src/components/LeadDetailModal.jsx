@@ -21,7 +21,7 @@ const EVENT_STATUS_CONFIG = {
   contacted: { label: "Contacted", badgeClass: "active-badge--on", icon: PhoneCall },
 };
 
-export default function LeadDetailModal({ lead, onClose }) {
+export default function LeadDetailModal({ lead, onClose, onResolve, onOpenNotes }) {
   if (!lead) return null;
 
   const KindIcon = KIND_ICON[lead.kind];
@@ -149,6 +149,27 @@ export default function LeadDetailModal({ lead, onClose }) {
               )}
             </tbody>
           </table>
+
+          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px", paddingTop: "12px", borderTop: "1px solid var(--border-subtle, #e5e7eb)" }}>
+            {onOpenNotes && (
+              <button
+                type="button"
+                className="btn btn--secondary btn--sm"
+                onClick={() => onOpenNotes(lead)}
+              >
+                Activity & Notes
+              </button>
+            )}
+            {onResolve && (
+              <button
+                type="button"
+                className={`btn btn--sm ${lead.status === "resolved" ? "btn--ghost" : "btn--primary"}`}
+                onClick={() => onResolve(lead)}
+              >
+                {lead.status === "resolved" ? "Re-open Lead" : "Mark Resolved"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

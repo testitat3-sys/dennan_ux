@@ -325,6 +325,63 @@ export const deleteActivity = mutation({
 });
 
 /**
+ * Updates an existing CRM activity/note.
+ */
+export const updateActivity = mutation({
+  args: {
+    token: v.string(),
+    activityId: v.id("customerActivities"),
+    note: v.optional(v.string()),
+    scheduledDate: v.optional(v.string()),
+    scheduledTime: v.optional(v.string()),
+    priority: v.optional(v.union(v.literal("low"), v.literal("normal"), v.literal("high"))),
+    completionNote: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Verify staff or admin session
+    await verifyStaffSession(ctx, args.token, ["staff", "admin"]);
+
+    const activity = await ctx.db.get(args.activityId);
+    if (!activity) {
+      throw new Error("CRM activity not found");
+    }
+
+    const updates: Record<string, any> = {};
+    if (args.note !== undefined) {
+      const trimmed = args.note.trim();
+      if (!trimmed) {
+        throw new Error("Note content cannot be empty.");
+      }
+      updates.note = trimmed;
+    }
+    if (args.scheduledDate !== undefined) {
+      updates.scheduledDate = args.scheduledDate || undefined;
+    }
+    if (args.scheduledTime !== undefined) {
+      updates.scheduledTime = args.scheduledTime || undefined;
+    }
+    if (args.priority !== undefined) {
+      updates.priority = args.priority;
+    }
+    if (args.completionNote !== undefined) {
+      updates.completionNote = args.completionNote.trim() || undefined;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await ctx.db.patch(args.activityId, updates);
+    }
+
+    if (updates.note && (activity.type === "note" || activity.status === "completed")) {
+      await ctx.db.patch(activity.customerId, {
+        customerNotes: updates.note,
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+/**
  * Real-time, resource-efficient customer search by name or phone.
  * Uses search_name search index for name search and by_phone index for phone search.
  * Bounded with .take(6) and deduplicated.
