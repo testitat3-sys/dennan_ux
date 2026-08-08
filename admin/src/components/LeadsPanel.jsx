@@ -359,6 +359,7 @@ export default function LeadsPanel({ token }) {
       {viewingLead && (
         <LeadDetailModal
           lead={viewingLead}
+          token={token}
           onClose={() => setViewingLead(null)}
           onResolve={async (leadToResolve) => {
             await resolveLeadMutation({

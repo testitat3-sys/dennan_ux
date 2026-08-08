@@ -1,6 +1,7 @@
 import { v, ConvexError } from "convex/values";
 import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { validateCouponInternal } from "./coupons";
 import { normalizeProductPrice, shouldKeepProduct } from "./products";
@@ -784,6 +785,81 @@ export const getOrderDetailById = trackedQuery("orders.getOrderDetailById", {
 
     const [enriched] = await enrichOrders(ctx, [order]);
     return enriched;
+  },
+});
+
+/**
+ * Returns all enriched orders for a specific customer identified by userId,
+ * email, or phone. Used by customer detail and leads modals to display order history.
+ */
+export const getCustomerOrders = trackedQuery("orders.getCustomerOrders", {
+  args: {
+    token: v.string(),
+    userId: v.optional(v.id("users")),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
+
+    const userIdsSet = new Set<Id<"users">>();
+
+    if (args.userId) {
+      userIdsSet.add(args.userId);
+    }
+
+    if (args.phone) {
+      const cleanPhone = args.phone.trim();
+      if (cleanPhone) {
+        const usersByPhone = await ctx.db
+          .query("users")
+          .withIndex("by_phone", (q) => q.eq("phone", cleanPhone))
+          .collect();
+        for (const u of usersByPhone) {
+          userIdsSet.add(u._id);
+        }
+      }
+    }
+
+    if (args.email) {
+      const cleanEmail = args.email.trim();
+      if (cleanEmail) {
+        const userByEmail = await ctx.db
+          .query("users")
+          .withIndex("email", (q) => q.eq("email", cleanEmail))
+          .first();
+        if (userByEmail) {
+          userIdsSet.add(userByEmail._id);
+        }
+      }
+    }
+
+    if (userIdsSet.size === 0) {
+      return [];
+    }
+
+    const allOrdersArrays = await Promise.all(
+      Array.from(userIdsSet).map((uid) =>
+        ctx.db
+          .query("orders")
+          .withIndex("by_user", (q) => q.eq("userId", uid))
+          .order("desc")
+          .collect()
+      )
+    );
+
+    const ordersMap = new Map<string, any>();
+    for (const orderArr of allOrdersArrays) {
+      for (const order of orderArr) {
+        ordersMap.set(order._id.toString(), order);
+      }
+    }
+
+    const deduplicatedOrders = Array.from(ordersMap.values()).sort(
+      (a, b) => b.createdAt - a.createdAt
+    );
+
+    return await enrichOrders(ctx, deduplicatedOrders);
   },
 });
 

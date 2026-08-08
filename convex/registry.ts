@@ -577,6 +577,10 @@ export const addContribution = mutation({
     const product = normalizeProductPrice(rawProduct);
 
     const currentContributions = registryItem.contributions || [];
+    const previousTotal = currentContributions.reduce((acc, c) => acc + c.amount, 0);
+    const remainingBefore = Math.max(0, product.price - previousTotal);
+    const excessAmount = Math.max(0, args.amount - remainingBefore);
+
     const newContributions = [
       ...currentContributions,
       {
@@ -584,6 +588,7 @@ export const addContribution = mutation({
         amount: args.amount,
         date: new Date().toISOString(),
         email: args.email,
+        excessAmount: excessAmount > 0 ? excessAmount : undefined,
       },
     ];
 
@@ -848,6 +853,10 @@ export const completeContributionPayment = internalMutation({
         const product = rawProduct ? normalizeProductPrice(rawProduct) : null;
 
         const currentContributions = registryItem.contributions || [];
+        const previousTotal = currentContributions.reduce((acc, c) => acc + c.amount, 0);
+        const remainingBefore = product ? Math.max(0, product.price - previousTotal) : 0;
+        const excessAmount = Math.max(0, payment.amount - remainingBefore);
+
         const newContributions = [
           ...currentContributions,
           {
@@ -855,6 +864,7 @@ export const completeContributionPayment = internalMutation({
             amount: payment.amount,
             date: new Date().toISOString(),
             email: payment.contributorEmail,
+            excessAmount: excessAmount > 0 ? excessAmount : undefined,
           },
         ];
 

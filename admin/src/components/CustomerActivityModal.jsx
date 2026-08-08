@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useTrackedQuery } from "../hooks/useTrackedQuery";
-import { X, Calendar, Phone, Mail, Users, Bell, FileText, Trash, Pencil } from "lucide-react";
+import { X, Calendar, Phone, Mail, Users, Bell, FileText, Trash, Pencil, ShoppingBag } from "lucide-react";
 import {
   getChurnBand,
   CHURN_BAND_LABELS,
@@ -40,6 +40,13 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
   const activities = useTrackedQuery(
     api.customerActivities.getActivitiesByCustomer,
     customerId ? { token, customerId } : "skip"
+  );
+
+  const customerOrders = useTrackedQuery(
+    api.orders.getCustomerOrders,
+    token && (customerId || customer.email || customer.phone)
+      ? { token, userId: customerId, email: customer.email, phone: customer.phone }
+      : "skip"
   );
 
   const addActivityMutation = useMutation(api.customerActivities.addActivity);
@@ -244,11 +251,83 @@ export default function CustomerActivityModal({ customer, token, onClose }) {
                   </tr>
                   <tr>
                     <td>Orders</td>
-                    <td>{customer.ordersCount} orders</td>
+                    <td>
+                      {customerOrders === undefined
+                        ? (customer.ordersCount !== undefined ? `${customer.ordersCount} orders` : "Loading orders...")
+                        : `${customerOrders.length} order${customerOrders.length === 1 ? "" : "s"}`}
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </div>
+
+            {/* Customer Order History Card */}
+            {customerOrders && customerOrders.length > 0 && (
+              <div className="customer-info-box">
+                <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <ShoppingBag size={14} />
+                  <span>Order History ({customerOrders.length})</span>
+                </h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "200px", overflowY: "auto", paddingRight: "4px" }}>
+                  {customerOrders.map((order) => {
+                    const orderDateStr = new Date(order.createdAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    });
+                    const isDeliveredOrCompleted = order.status === "delivered" || order.status === "completed";
+                    const isFailed = order.status === "cancelled" || order.status === "failed" || order.status === "returned";
+                    const statusBadgeClass = isDeliveredOrCompleted
+                      ? "active-badge--on"
+                      : isFailed
+                      ? "active-badge--red"
+                      : "active-badge--yellow";
+
+                    return (
+                      <div
+                        key={order._id}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid var(--border-subtle, #e5e7eb)",
+                          backgroundColor: "var(--surface-card, #ffffff)",
+                          fontSize: "12px",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                          <span style={{ fontWeight: 600 }}>
+                            Order #{order._id.slice(-6).toUpperCase()}
+                            {order.isWalkIn ? (
+                              <span className="active-badge active-badge--off" style={{ marginLeft: "4px", fontSize: "10px" }}>
+                                Walk-in
+                              </span>
+                            ) : (
+                              <span className="active-badge active-badge--purple" style={{ marginLeft: "4px", fontSize: "10px" }}>
+                                Online
+                              </span>
+                            )}
+                          </span>
+                          <span className={`active-badge ${statusBadgeClass}`} style={{ fontSize: "10px" }}>
+                            {order.status.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-secondary)", marginBottom: "4px" }}>
+                          <span>{orderDateStr}</span>
+                          <strong style={{ color: "var(--text-primary)" }}>
+                            UGX {order.grandTotal?.toLocaleString() ?? 0}
+                          </strong>
+                        </div>
+                        {order.items && order.items.length > 0 && (
+                          <div style={{ color: "var(--text-secondary)", fontSize: "11px" }}>
+                            {order.items.map((it) => `${it.quantity}x ${it.productName}`).join(", ")}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="interaction-form-box">
               <div className="form-tabs">

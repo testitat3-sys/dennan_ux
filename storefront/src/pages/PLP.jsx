@@ -48,77 +48,72 @@ const COLLECTIONS_METADATA = {
   }
 };
 
+// Maps a handful of exact subcategory search phrases to the strict category
+// union values from convex/schema.ts (see migrations.ts CATEGORY_MAP for the
+// legacy -> current mapping). These MUST stay in sync with that union - a
+// value here that doesn't match a real `category` on any product silently
+// zeroes out the result set for that search phrase.
 const SUBCATEGORY_MAP = {
-  // Comfort subcategories
-  "pregnancy pillows": "Comfort",
-  "support belts": "Comfort",
-  "sleep aids": "Comfort",
-  "relaxation kits": "Comfort",
+  // Comfort / Nursing / Recovery subcategories
+  "pregnancy pillows": "Expectant and New Mom Essentials",
+  "support belts": "Expectant and New Mom Essentials",
+  "sleep aids": "Expectant and New Mom Essentials",
+  "relaxation kits": "Expectant and New Mom Essentials",
+  "nursing bras": "Expectant and New Mom Essentials",
+  "breast pads": "Expectant and New Mom Essentials",
+  "nipple care": "Expectant and New Mom Essentials",
+  "breast pumps": "Expectant and New Mom Essentials",
+  "postpartum care": "Expectant and New Mom Essentials",
+  "soothe & heal": "Expectant and New Mom Essentials",
+  "wellness": "Expectant and New Mom Essentials",
 
-  // Apparel subcategories
-  "nightdresses": "Apparel",
-  "nursing pajamas": "Apparel",
-  "cozy robes": "Apparel",
-  "slippers & footwear": "Apparel",
+  // Apparel / Clothing subcategories
+  "nightdresses": "Newborn Essentials & Kids Apparel/Footwear",
+  "nursing pajamas": "Newborn Essentials & Kids Apparel/Footwear",
+  "cozy robes": "Newborn Essentials & Kids Apparel/Footwear",
+  "slippers & footwear": "Newborn Essentials & Kids Apparel/Footwear",
+  "sleepsuits": "Newborn Essentials & Kids Apparel/Footwear",
+  "bodysuits": "Newborn Essentials & Kids Apparel/Footwear",
+  "knitted sets": "Newborn Essentials & Kids Apparel/Footwear",
+  "organic cotton": "Newborn Essentials & Kids Apparel/Footwear",
 
-  // Nursing subcategories
-  "nursing bras": "Nursing",
-  "breast pads": "Nursing",
-  "nipple care": "Nursing",
-  "breast pumps": "Nursing",
+  // Sleep subcategories
+  "swaddles": "Nursery and Furnishing",
+  "sleeping bags": "Nursery and Furnishing",
+  "crib bedding": "Nursery and Furnishing",
+  "night lights": "Nursery and Furnishing",
 
-  // Recovery subcategories
-  "postpartum care": "Recovery",
-  "soothe & heal": "Recovery",
-  "wellness": "Recovery",
+  // Bath & Care subcategories
+  "baby bathtubs": "Bathing and Changing",
+  "grooming kits": "Bathing and Changing",
+  "skincare": "Bathing and Changing",
+  "hooded towels": "Bathing and Changing",
 
-  // Newborn Sleep subcategories
-  "swaddles": "Sleep",
-  "sleeping bags": "Sleep",
-  "crib bedding": "Sleep",
-  "night lights": "Sleep",
+  // Essentials / Weaning subcategories
+  "bottle feeding": "Feeding/Nursing Essentials",
+  "changing mats": "Feeding/Nursing Essentials",
+  "nappy caddies": "Feeding/Nursing Essentials",
+  "first gifts": "Feeding/Nursing Essentials",
+  "high chairs": "Feeding/Nursing Essentials",
+  "bowls & plates": "Feeding/Nursing Essentials",
+  "baby spoons": "Feeding/Nursing Essentials",
+  "food blenders": "Feeding/Nursing Essentials",
 
-  // Newborn Clothing subcategories
-  "sleepsuits": "Clothing",
-  "bodysuits": "Clothing",
-  "knitted sets": "Clothing",
-  "organic cotton": "Clothing",
+  // Play & Learn / Safety subcategories
+  "activity mats": "Baby Play and Safety Gear",
+  "wooden toys": "Baby Play and Safety Gear",
+  "educational": "Baby Play and Safety Gear",
+  "board books": "Baby Play and Safety Gear",
+  "baby monitors": "Baby Play and Safety Gear",
+  "safety gates": "Baby Play and Safety Gear",
+  "corner protectors": "Baby Play and Safety Gear",
+  "socket plugs": "Baby Play and Safety Gear",
 
-  // Newborn Bath & Care subcategories
-  "baby bathtubs": "Bath & Care",
-  "grooming kits": "Bath & Care",
-  "skincare": "Bath & Care",
-  "hooded towels": "Bath & Care",
-
-  // Newborn Essentials subcategories
-  "bottle feeding": "Essentials",
-  "changing mats": "Essentials",
-  "nappy caddies": "Essentials",
-  "first gifts": "Essentials",
-
-  // Toddler Play & Learn subcategories
-  "activity mats": "Play & Learn",
-  "wooden toys": "Play & Learn",
-  "educational": "Play & Learn",
-  "board books": "Play & Learn",
-
-  // Toddler Weaning subcategories
-  "high chairs": "Weaning",
-  "bowls & plates": "Weaning",
-  "baby spoons": "Weaning",
-  "food blenders": "Weaning",
-
-  // Toddler On the Move subcategories
-  "strollers": "On the Move",
-  "car seats": "On the Move",
-  "baby carriers": "On the Move",
-  "travel bags": "On the Move",
-
-  // Toddler Safety subcategories
-  "baby monitors": "Safety",
-  "safety gates": "Safety",
-  "corner protectors": "Safety",
-  "socket plugs": "Safety"
+  // On the Move subcategories
+  "strollers": "Travel Must-Haves",
+  "car seats": "Travel Must-Haves",
+  "baby carriers": "Travel Must-Haves",
+  "travel bags": "Travel Must-Haves"
 };
 
 const TIERS_LIST = ['Essentials', 'Must-Haves', 'Luxuries'];

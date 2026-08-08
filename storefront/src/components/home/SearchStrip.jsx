@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
 import { useQuery } from 'convex/react';
 import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from '../../hooks/useTrackedQuery';
+import { getProductSearchSuggestions } from '../../utils/productSearch';
 
 const suggestions = [
   { text: 'Newborn essentials checklist', sub: '18 curated products', type: 'checklist' },
@@ -27,8 +29,11 @@ const SEARCH_SHORTCUTS = {
   'dashboard': '/dashboard',
   'account': '/dashboard',
   'profile': '/dashboard',
-  'registry': '/registry',
-  'wishlist': '/registry',
+  'circle-of-love': '/circle-of-love',
+  'circle of love': '/circle-of-love',
+  'gifting': '/circle-of-love',
+  'registry': '/circle-of-love',
+  'wishlist': '/circle-of-love',
   'checkout': '/checkout',
   'pay': '/checkout',
   'mother': '/category/mother',
@@ -55,7 +60,11 @@ const SearchStrip = ({
   const containerRef = useRef(null);
   const navigate = useNavigate();
 
-  const fetchedProducts = useQuery(api.data.getProducts, {});
+  // getProducts is defined with trackedQuery (convex/lib/ioTracking.ts), which
+  // returns { _io, data } to piggyback its read-count tally on the response;
+  // useTrackedQuery reports that tally and unwraps back to the plain array.
+  // This fallback only fires when no `products` prop is supplied.
+  const fetchedProducts = useTrackedQuery(api.data.getProducts, {}, 20);
   const allBrands = useQuery(api.data.getBrands) || [];
 
   const availableProducts = useMemo(() => {
@@ -175,82 +184,9 @@ const SearchStrip = ({
     // Only show dynamic suggestions if suggestions are enabled and not minimal
     if (showSuggestions && !isMinimal) {
       const normalizedVal = val.toLowerCase().trim();
+
       if (normalizedVal.length > 0) {
-        // 1. Product name recommendations (in-memory matching to avoid API expenses)
-        const productMatches = [];
-        if (availableProducts && availableProducts.length > 0) {
-          const scored = [];
-          availableProducts.forEach(p => {
-            if (!p || !p.name) return;
-            const nameLower = p.name.toLowerCase();
-            const brandLower = (p.brand || '').toLowerCase();
-            const catLower = (p.category || '').toLowerCase();
-
-            let score = 0;
-            if (nameLower === normalizedVal) {
-              score = 100;
-            } else if (nameLower.startsWith(normalizedVal)) {
-              score = 90;
-            } else if (nameLower.split(/\s+/).some(w => w.startsWith(normalizedVal))) {
-              score = 75;
-            } else if (nameLower.includes(normalizedVal)) {
-              score = 50;
-            } else if (brandLower.includes(normalizedVal)) {
-              score = 40;
-            } else if (catLower.includes(normalizedVal)) {
-              score = 30;
-            }
-
-            if (score > 0) {
-              scored.push({ p, score });
-            }
-          });
-
-          scored.sort((a, b) => b.score - a.score || a.p.name.length - b.p.name.length);
-
-          scored.slice(0, 5).forEach(({ p }) => {
-            const priceVal = p.price || p.originalPrice;
-            const formattedPrice = priceVal ? `UGX ${priceVal.toLocaleString()}` : null;
-            const subParts = [
-              p.brand && p.brand !== 'no-brand' ? p.brand : null,
-              formattedPrice,
-              p.category
-            ].filter(Boolean);
-
-            productMatches.push({
-              text: p.name,
-              sub: subParts.join(' • ') || 'Product',
-              type: 'product',
-              image: p.image,
-              route: `/product/${p.slug || p._id}`,
-              product: p
-            });
-          });
-        }
-
-        // 2. Shortcut matches
-        const matchedShortcuts = Object.keys(SEARCH_SHORTCUTS)
-          .filter(key => key.includes(normalizedVal))
-          .map(key => ({
-            text: key.charAt(0).toUpperCase() + key.slice(1),
-            sub: `Go to ${key} page`,
-            type: 'shortcut',
-            route: SEARCH_SHORTCUTS[key]
-          }));
-        
-        // Combine product matches first, then shortcuts, deduplicate by text, cap at 5 total
-        const combined = [...productMatches, ...matchedShortcuts];
-        const seen = new Set();
-        const uniqueSuggestions = [];
-        for (const item of combined) {
-          const key = item.text.toLowerCase();
-          if (!seen.has(key)) {
-            seen.add(key);
-            uniqueSuggestions.push(item);
-          }
-        }
-
-        const finalSuggestions = uniqueSuggestions.slice(0, 5);
+        const finalSuggestions = getProductSearchSuggestions(availableProducts, normalizedVal, 6);
 
         if (finalSuggestions.length > 0) {
           setLocalSuggestions(finalSuggestions);

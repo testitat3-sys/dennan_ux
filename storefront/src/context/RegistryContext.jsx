@@ -217,7 +217,10 @@ export const RegistryProvider = ({ children }) => {
   // --- Context Mutators ---
 
   const addToRegistry = async (product) => {
+    if (!product) return false;
     const prodId = product._id || product.id;
+    if (!prodId || typeof prodId !== 'string') return false;
+    const isMockId = prodId.startsWith('mock-') || prodId.startsWith('ri-');
     
     // Clean up price (legacy values etc)
     let cleanPrice = product.price;
@@ -230,7 +233,7 @@ export const RegistryProvider = ({ children }) => {
       }
     }
 
-    if (isAuthenticated) {
+    if (isAuthenticated && !isMockId) {
       try {
         await dbAddItem({ productId: prodId });
         return true;

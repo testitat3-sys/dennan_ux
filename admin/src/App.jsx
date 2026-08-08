@@ -164,6 +164,15 @@ function MainRouter() {
           <Navigate to="/" replace />
         )
       } />
+      <Route path="/admin/products/:productId/edit" element={
+        !user ? (
+          <Navigate to="/login" replace />
+        ) : user.accountRole === "admin" || user.accountRole === "stockManager" || user.accountRole === "productEditor" ? (
+          <AdminProductEdit />
+        ) : (
+          <Navigate to="/" replace />
+        )
+      } />
 
       {/* Walk-in exchange from an order's "return" button */}
       <Route path="/admin/orders/:orderId/exchange" element={

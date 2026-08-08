@@ -175,12 +175,13 @@ export default function AfterSignIn() {
         }
       }
 
-      // ── Check if they already have journey data ──────────────────────────
+      // ── Check if they already have journey data or a target redirect destination ──
       const hasJourneyData = user.isOnboarded || (user.role && (user.dueDate || (user.children && user.children.length > 0)));
+      const hasSpecificRedirect = savedRedirectPath && savedRedirectPath !== "/" && savedRedirectPath !== "/dashboard";
       const redirectTarget = (isDirectLogin && hasJourneyData) ? "/profile" : targetDestination;
 
-      if (hasJourneyData) {
-        console.log(`[AfterSignIn.jsx] Already has journey data — redirecting to ${redirectTarget}`);
+      if (hasJourneyData || hasSpecificRedirect) {
+        console.log(`[AfterSignIn.jsx] Redirecting authenticated user to ${redirectTarget}`);
         login({
           email: user.email,
           role: user.role,
@@ -194,16 +195,16 @@ export default function AfterSignIn() {
         navigate(redirectTarget, { replace: true });
         return;
       } else {
-        // ── Missing journey data — take them through the rest of onboarding ────
-        console.log(`[AfterSignIn.jsx] Missing journey data — opening onboarding modal`);
+        // ── Fallback for new users without a target path: navigate to dashboard or profile ──
+        console.log(`[AfterSignIn.jsx] Missing journey data — redirecting to ${targetDestination}`);
         login({
           email: user.email,
           role: user.role,
           dueDate: user.dueDate,
           children: user.children,
         });
-        setShowOnboarding(true);
-        navigate("/", { replace: true });
+        localStorage.removeItem('dennan_redirect_after_login');
+        navigate(targetDestination, { replace: true });
         return;
       }
 

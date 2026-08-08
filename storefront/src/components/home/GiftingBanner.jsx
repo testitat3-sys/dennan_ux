@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './GiftingBanner.css';
 
-const GiftingBanner = ({ href = '/registry' }) => {
+const GiftingBanner = ({ href = '/circle-of-love' }) => {
   return (
     <section className="gifting-banner" aria-label="Group gifting promotion">
       <Link

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAction } from 'convex/react';
 import { api } from "@convex/_generated/api";
-import { X, UserRound, EyeOff } from 'lucide-react';
+import { X, UserRound, EyeOff, Gift, Sparkles, Globe } from 'lucide-react';
 import Button from '../ui/Button';
 import Text from '../ui/Text';
 import Toast from '../ui/Toast';
@@ -140,13 +140,14 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onPaymentInitiat
     );
   };
 
-  // ── Validation ──────────────────────────────────────────────────────────
+  // ── Validation & Excess Calculation ──────────────────────────────────────────
+  const numAmount = parseFloat(amount) || 0;
+  const excessAmount = !isVirtualPackaging && numAmount > remaining ? numAmount - remaining : 0;
+
   const validateAmount = (val) => {
     const num = parseFloat(val);
     if (!val || isNaN(num)) return '';
     if (num < MIN_AMOUNT) return `Minimum contribution is UGX ${MIN_AMOUNT.toLocaleString()}`;
-    if (num > MAX_AMOUNT) return `Maximum contribution is UGX ${MAX_AMOUNT.toLocaleString()}`;
-    if (num > remaining) return `Amount exceeds the remaining UGX ${remaining.toLocaleString()}`;
     return '';
   };
 
@@ -182,7 +183,7 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onPaymentInitiat
     const isVirtualPackaging = item?.productId === 'virtual-packaging';
     const amtOk = isVirtualPackaging
       ? (!isNaN(num) && num === item.price)
-      : (!isNaN(num) && num >= MIN_AMOUNT && num <= MAX_AMOUNT && num <= remaining);
+      : (!isNaN(num) && num >= MIN_AMOUNT);
     const nameOk = isAnonymous || name.trim().length > 0;
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
     const paymentOk = isValidPhone;
@@ -323,14 +324,13 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onPaymentInitiat
           {/* Amount field */}
           <div className="contribution-field">
             <label className="contribution-label">
-              {isVirtualPackaging ? "Amount (Fixed for Packaging)" : "Amount (UGX) — Min 5,000 / Max 500,000"}
+              {isVirtualPackaging ? "Amount (Fixed for Packaging)" : `Amount (UGX) — Min ${MIN_AMOUNT.toLocaleString()} (Remaining ${remaining.toLocaleString()})`}
             </label>
             <input
               className="contribution-input"
               type="number"
               placeholder="Enter amount"
               min={MIN_AMOUNT}
-              max={Math.min(MAX_AMOUNT, remaining)}
               value={amount}
               onChange={handleAmountChange}
               disabled={isVirtualPackaging}
@@ -342,6 +342,27 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onPaymentInitiat
             />
             {amountError && (
               <span className="contribution-input-error">{amountError}</span>
+            )}
+            {excessAmount > 0 && (
+              <div className="contribution-excess-notice" style={{
+                marginTop: 'var(--space-2)',
+                padding: 'var(--space-3)',
+                backgroundColor: 'rgba(211, 80, 151, 0.08)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid rgba(211, 80, 151, 0.2)',
+                fontSize: '0.85rem',
+                color: 'var(--color-brand-primary)',
+                lineHeight: '1.4',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 'var(--space-2)'
+              }}>
+                <Gift size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span>
+                  <strong>UGX {remaining.toLocaleString()}</strong> will fully fund this gift! The extra <strong>UGX {excessAmount.toLocaleString()}</strong> will automatically be added as store credit towards the parents' registry fund.
+                </span>
+                <Sparkles size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+              </div>
             )}
           </div>
 
@@ -382,7 +403,9 @@ const ContributionModal = ({ item, registryId, isOpen, onClose, onPaymentInitiat
                 </Text>
                 <div className="momo-input-wrapper">
                   <div className="momo-prefix">
-                    <Text role="body-lg" as="span" className="ug-flag">🇺🇬</Text>
+                    <Text role="body-lg" as="span" className="ug-flag" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                      <Globe size={15} style={{ opacity: 0.8 }} />
+                    </Text>
                     <Text role="body-lg" as="span" color="primary">+256</Text>
                   </div>
                   <input

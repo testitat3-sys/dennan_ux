@@ -17,7 +17,7 @@ const RegistryHeader = ({
 }) => {
   const handleCopyLink = () => {
     if (!profile) return;
-    const shareUrl = `${window.location.origin}/registry/${profile.id}`;
+    const shareUrl = `${window.location.origin}/circle-of-love/${profile.id}`;
     navigator.clipboard.writeText(shareUrl)
       .then(() => {
         onShowToast && onShowToast('Registry link copied to clipboard!');

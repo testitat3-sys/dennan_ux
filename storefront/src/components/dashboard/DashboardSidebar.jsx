@@ -53,8 +53,8 @@ const DashboardSidebar = () => {
         </li>
         <li>
           <span 
-            onClick={() => navigate('/registry')} 
-            className={`dashboard-nav__link ${isActive('/registry') ? 'dashboard-nav__link--active' : ''}`}
+            onClick={() => navigate('/circle-of-love')} 
+            className={`dashboard-nav__link ${isActive('/circle-of-love') || isActive('/registry') ? 'dashboard-nav__link--active' : ''}`}
           >
             <Gift className="dashboard-nav__link-icon" />
             <span className="dashboard-nav__link-text">Circle of Love</span>

@@ -502,6 +502,9 @@ function toStockRow(p: any, isProductEditor = false) {
     unitsSold: p.unitsSold ?? 0,
     costPrice: p.costPrice ?? 0,
     reorderPoint: p.reorderPoint ?? 0,
+    category: p.category,
+    brand: p.brand,
+    isActive: p.isActive,
   };
 }
 
@@ -572,6 +575,31 @@ export const searchStockList = query({
     }
 
     return Array.from(merged.values()).slice(0, SEARCH_CAP).map((p) => toStockRow(p, isProductEditor));
+  },
+});
+
+/**
+ * Catalog product listing for Product Editor Hub.
+ * Bounded page of products for browsing the catalog in ProductEditorPanel when not searching.
+ */
+export const listCatalogProducts = query({
+  args: {
+    token: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
+    const isProductEditor = user.accountRole === "productEditor";
+
+    const cap = Math.min(args.limit ?? 500, 1000);
+    const products = await ctx.db
+      .query("products")
+      .order("desc")
+      .take(cap);
+
+    return products
+      .filter((p) => shouldKeepProduct(p, true))
+      .map((p) => toStockRow(p, isProductEditor));
   },
 });
 
@@ -885,9 +913,9 @@ export const adjustStock = mutation({
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    const { user } = await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
 
-    if (args.delta < 0 && user.accountRole !== "admin") {
+    if (args.delta < 0 && user.accountRole !== "admin" && user.accountRole !== "productEditor") {
       throw new Error(
         "Inventory decreases by Stock Managers require admin approval. Use the staged-decrease flow instead."
       );
@@ -912,7 +940,7 @@ export const setDiscount = mutation({
     discountExpiry: v.number(), // Unix timestamp (ms)
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
 
     const product = await ctx.db.get(args.productId);
     if (!product) {
@@ -942,7 +970,7 @@ export const getDiscountList = trackedQuery("products.getDiscountList", {
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    await verifyStaffSession(ctx, args.token, ["admin", "stockManager"]);
+    await verifyStaffSession(ctx, args.token, ["admin", "stockManager", "productEditor"]);
 
     // Indexed range query on discountPrice > 0 instead of a full table scan
     // -- skips every non-discounted product index-side.

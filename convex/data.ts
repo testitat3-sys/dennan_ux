@@ -98,12 +98,25 @@ export const getProductsByStage = query({
   handler: async (ctx, args) => {
     const results = await ctx.db
       .query("products")
-      .withIndex("by_stage", (q) => q.eq("stage", args.stage as any))
-      .take(args.limit);
+      .withIndex("by_stage_and_actual_data", (q) =>
+        q.eq("stage", args.stage as any).eq("actual_data", true)
+      )
+      .collect();
 
-    return results.filter((p) => shouldKeepProduct(p)).map(normalizeProductPrice);
+    return results
+      .filter((p) => shouldKeepProduct(p))
+      .slice(0, args.limit)
+      .map(normalizeProductPrice);
   },
 });
+
+function stemWord(word: string): string {
+  const w = word.toLowerCase();
+  if (w.endsWith("ies") && w.length > 4) return w.slice(0, -3) + "y";
+  if (w.endsWith("es") && w.length > 4) return w.slice(0, -2);
+  if (w.endsWith("s") && !w.endsWith("ss") && w.length > 3) return w.slice(0, -1);
+  return w;
+}
 
 export const searchProducts = query({
   args: {
@@ -114,6 +127,7 @@ export const searchProducts = query({
     const rawQuery = args.query.trim();
     if (!rawQuery) return [];
     const limit = args.limit || 50;
+    const stemmedQuery = stemWord(rawQuery);
 
     // 1. Primary Pass: Storage-pushed Search via `search_text` search index
     let candidates = await ctx.db
@@ -122,6 +136,16 @@ export const searchProducts = query({
         q.search("searchText", rawQuery).eq("actual_data", true)
       )
       .take(limit);
+
+    // Fallback pass with stemmed query if exact query yields no candidates
+    if (candidates.length === 0 && stemmedQuery !== rawQuery.toLowerCase()) {
+      candidates = await ctx.db
+        .query("products")
+        .withSearchIndex("search_text", (q) =>
+          q.search("searchText", stemmedQuery).eq("actual_data", true)
+        )
+        .take(limit);
+    }
 
     // Fallback pass via `search_name` if `search_text` index returns 0 results
     if (candidates.length === 0) {
@@ -134,12 +158,13 @@ export const searchProducts = query({
     // 2. Soft Keyword Fallback Pass:
     // If strict full-query search returns 0 results, extract primary tokens and query search_text
     const tokens = rawQuery.toLowerCase().split(/\s+/).filter((t) => t.length > 1);
-    if (candidates.length === 0 && tokens.length > 1) {
+    if (candidates.length === 0 && tokens.length > 0) {
       const primaryToken = tokens.reduce((a, b) => (a.length >= b.length ? a : b));
+      const stemmedPrimary = stemWord(primaryToken);
       candidates = await ctx.db
         .query("products")
         .withSearchIndex("search_text", (q) =>
-          q.search("searchText", primaryToken).eq("actual_data", true)
+          q.search("searchText", stemmedPrimary).eq("actual_data", true)
         )
         .take(limit);
     }
@@ -162,33 +187,37 @@ export const searchProducts = query({
       const description = (p.description || "").toLowerCase();
       const tags = (p.tags || []).map((t: any) => t.text.toLowerCase()).join(" ");
       const lowQuery = rawQuery.toLowerCase();
+      const lowStemmed = stemmedQuery;
 
       // Huge bonus for exact full phrase match in Title or Brand
-      if (name === lowQuery) score += 150;
-      else if (name.includes(lowQuery)) score += 100;
-      if (brand.includes(lowQuery)) score += 80;
+      if (name === lowQuery || name === lowStemmed) score += 150;
+      else if (name.includes(lowQuery) || name.includes(lowStemmed)) score += 100;
+      if (brand.includes(lowQuery) || brand.includes(lowStemmed)) score += 80;
+      if (tags.includes(lowQuery) || tags.includes(lowStemmed)) score += 60;
+      if (category.includes(lowQuery) || category.includes(lowStemmed)) score += 40;
 
-      // Token match scoring across distinct fields
+      // Token match scoring across distinct fields (original token or stemmed variant)
       let matchedTokenCount = 0;
       for (const token of tokens) {
+        const stemmed = stemWord(token);
         let matched = false;
-        if (name.includes(token)) {
+        if (name.includes(token) || name.includes(stemmed)) {
           score += 35;
           matched = true;
         }
-        if (brand.includes(token)) {
+        if (brand.includes(token) || brand.includes(stemmed)) {
           score += 25;
           matched = true;
         }
-        if (category.includes(token) || subCategory.includes(token)) {
+        if (category.includes(token) || subCategory.includes(token) || category.includes(stemmed) || subCategory.includes(stemmed)) {
           score += 15;
           matched = true;
         }
-        if (tags.includes(token)) {
-          score += 10;
+        if (tags.includes(token) || tags.includes(stemmed)) {
+          score += 15;
           matched = true;
         }
-        if (description.includes(token)) {
+        if (description.includes(token) || description.includes(stemmed)) {
           score += 5;
           matched = true;
         }

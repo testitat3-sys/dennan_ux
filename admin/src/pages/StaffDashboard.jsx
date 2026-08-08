@@ -1138,6 +1138,20 @@ export default function StaffDashboard() {
                       )}
 
                       <div className="form-group">
+                        <label className="form-label">Customer Phone</label>
+                        <input
+                          type="tel"
+                          className="form-input"
+                          placeholder="e.g. +256701..."
+                          value={posCustomer.phone}
+                          onChange={(e) => {
+                            setPosSelectedCustomer(null);
+                            setPosCustomer(prev => ({ ...prev, phone: e.target.value }));
+                          }}
+                          disabled={isCheckoutSubmitting}
+                        />
+                      </div>
+                      <div className="form-group">
                         <label className="form-label">Customer Name</label>
                         <input
                           type="text"
@@ -1149,20 +1163,6 @@ export default function StaffDashboard() {
                             setPosCustomer(prev => ({ ...prev, name: e.target.value }));
                           }}
                           required
-                          disabled={isCheckoutSubmitting}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Customer Phone (Optional)</label>
-                        <input
-                          type="tel"
-                          className="form-input"
-                          placeholder="e.g. +256701..."
-                          value={posCustomer.phone}
-                          onChange={(e) => {
-                            setPosSelectedCustomer(null);
-                            setPosCustomer(prev => ({ ...prev, phone: e.target.value }));
-                          }}
                           disabled={isCheckoutSubmitting}
                         />
                       </div>
@@ -1198,9 +1198,11 @@ export default function StaffDashboard() {
                                 }}
                               >
                                 <div>
-                                  <div style={{ fontWeight: 600, color: "#111" }}>{cust.name}</div>
+                                  <div style={{ fontWeight: 600, color: "#111" }}>
+                                    {cust.phone ? `${cust.phone} — ${cust.name}` : cust.name}
+                                  </div>
                                   <div style={{ color: "#666", fontSize: "11px" }}>
-                                    {cust.phone || "No phone registered"} {cust.email ? `· ${cust.email}` : ""}
+                                    {cust.email ? cust.email : "Registered Customer"}
                                   </div>
                                 </div>
                                 <button
@@ -1226,7 +1228,7 @@ export default function StaffDashboard() {
                       )}
 
                       <div className="form-group">
-                        <label className="form-label">Customer Email (Optional)</label>
+                        <label className="form-label">Customer Email</label>
                         <input
                           type="email"
                           className="form-input"

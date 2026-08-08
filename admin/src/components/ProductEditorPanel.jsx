@@ -137,7 +137,7 @@ export default function ProductEditorPanel({ token }) {
                     <td>
                       <button
                         className="btn btn--secondary btn--sm"
-                        onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                        onClick={() => navigate(`/admin/products/${product.id}`)}
                         style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
                       >
                         <Edit2 size={12} /> Edit

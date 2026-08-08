@@ -92,8 +92,10 @@ export default function CashUpPanel({ token }) {
   };
 
   const expected = cashUp?.expected || EMPTY_COUNTS;
+  const refunds = cashUp?.refunds || EMPTY_COUNTS;
   const expenses = cashUp?.expenses || [];
   const totalExpenses = expenses.reduce((sum, ex) => sum + ex.amount, 0);
+  const totalRefunds = Object.values(refunds).reduce((sum, val) => sum + (val || 0), 0);
 
   // Daily expenses deduction from cash at end of day
   const netExpectedCash = Math.max(0, expected.physical - totalExpenses);
@@ -128,8 +130,8 @@ export default function CashUpPanel({ token }) {
             <h2 className="section-title">Payment Reconciliation — {date}</h2>
           </div>
 
-          {/* Daily Expense Cash Deduction Callout Notice */}
-          {totalExpenses > 0 && (
+          {/* Callout Notice for Expenses and Refunds */}
+          {(totalExpenses > 0 || totalRefunds > 0) && (
             <div
               style={{
                 padding: "var(--space-3) var(--space-4)",
@@ -138,9 +140,21 @@ export default function CashUpPanel({ token }) {
                 borderLeft: "4px solid var(--color-support-amber, #f59e0b)",
                 borderRadius: "var(--radius-sm, 4px)",
                 fontSize: "var(--body-sm, 14px)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px"
               }}
             >
-              <strong>Daily Expenses Deducted from Cash:</strong> UGX {totalExpenses.toLocaleString()} (Gross Cash Sales: UGX {expected.physical.toLocaleString()} → Expected Cash in Drawer: <strong>UGX {netExpectedCash.toLocaleString()}</strong>).
+              {totalExpenses > 0 && (
+                <div>
+                  <strong>Daily Expenses Deducted from Cash:</strong> UGX {totalExpenses.toLocaleString()} (Expected Cash in Drawer: <strong>UGX {netExpectedCash.toLocaleString()}</strong>).
+                </div>
+              )}
+              {totalRefunds > 0 && (
+                <div>
+                  <strong>Refunds Issued Today:</strong> UGX {totalRefunds.toLocaleString()} (Net system expected totals automatically reflect refunded transactions).
+                </div>
+              )}
             </div>
           )}
 
@@ -149,6 +163,7 @@ export default function CashUpPanel({ token }) {
               <thead>
                 <tr>
                   <th>Method</th>
+                  <th>Refunds Issued (UGX)</th>
                   <th>System Expected (UGX)</th>
                   <th>Physical Count (UGX)</th>
                   <th>Discrepancy (UGX)</th>
@@ -160,6 +175,7 @@ export default function CashUpPanel({ token }) {
                   const expectedAmount = m.key === "physical" ? netExpectedCash : (expected[m.key] || 0);
                   const countedAmount = counts[m.key] ?? 0;
                   const discrepancy = countedAmount - expectedAmount;
+                  const methodRefund = refunds[m.key] || 0;
                   return (
                     <tr key={m.key}>
                       <td>
@@ -176,11 +192,20 @@ export default function CashUpPanel({ token }) {
                         )}
                       </td>
                       <td>
+                        {methodRefund > 0 ? (
+                          <span style={{ color: "var(--color-support-red, #ef4444)", fontWeight: 600 }}>
+                            − UGX {methodRefund.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span style={{ color: "var(--text-tertiary)" }}>UGX 0</span>
+                        )}
+                      </td>
+                      <td>
                         {m.key === "physical" && totalExpenses > 0 ? (
                           <div>
                             <div><strong>UGX {netExpectedCash.toLocaleString()}</strong></div>
                             <div style={{ fontSize: "var(--label-md, 11px)", color: "var(--text-tertiary)" }}>
-                              Gross UGX {expected.physical.toLocaleString()} − UGX {totalExpenses.toLocaleString()}
+                              Gross UGX {(expected.physical + methodRefund).toLocaleString()} − UGX {methodRefund.toLocaleString()} refund − UGX {totalExpenses.toLocaleString()} exp
                             </div>
                           </div>
                         ) : (

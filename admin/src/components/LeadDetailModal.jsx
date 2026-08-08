@@ -1,5 +1,7 @@
 import React from "react";
-import { X, ShoppingBag, Bell, Megaphone, UserPlus, Calendar, PhoneCall, AlertTriangle } from "lucide-react";
+import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from "../hooks/useTrackedQuery";
+import { X, ShoppingBag, Bell, Megaphone, UserPlus, Calendar, PhoneCall, AlertTriangle, Package } from "lucide-react";
 
 const KIND_LABEL = {
   storeRequest: "Order Reminder",
@@ -21,10 +23,17 @@ const EVENT_STATUS_CONFIG = {
   contacted: { label: "Contacted", badgeClass: "active-badge--on", icon: PhoneCall },
 };
 
-export default function LeadDetailModal({ lead, onClose, onResolve, onOpenNotes }) {
+export default function LeadDetailModal({ lead, token, onClose, onResolve, onOpenNotes }) {
   if (!lead) return null;
 
   const KindIcon = KIND_ICON[lead.kind];
+
+  const customerOrders = useTrackedQuery(
+    api.orders.getCustomerOrders,
+    token && (lead.userId || lead.email || lead.phone)
+      ? { token, userId: lead.userId, email: lead.email, phone: lead.phone }
+      : "skip"
+  );
 
   return (
     <div className="modal-overlay is-open" onClick={onClose}>
@@ -82,6 +91,20 @@ export default function LeadDetailModal({ lead, onClose, onResolve, onOpenNotes 
                     </span>
                   ) : (
                     "No phone"
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <td>Orders</td>
+                <td>
+                  {customerOrders === undefined ? (
+                    <span style={{ color: "var(--text-tertiary)" }}>Loading orders...</span>
+                  ) : customerOrders.length > 0 ? (
+                    <span className="active-badge active-badge--on">
+                      {customerOrders.length} order{customerOrders.length === 1 ? "" : "s"}
+                    </span>
+                  ) : (
+                    <span style={{ color: "var(--text-tertiary)" }}>No past orders</span>
                   )}
                 </td>
               </tr>
@@ -150,6 +173,101 @@ export default function LeadDetailModal({ lead, onClose, onResolve, onOpenNotes 
             </tbody>
           </table>
 
+          {/* Customer Orders Section */}
+          <div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid var(--border-subtle, #e5e7eb)" }}>
+            <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
+              <ShoppingBag size={14} />
+              <span>Order History {customerOrders ? `(${customerOrders.length})` : ""}</span>
+            </h4>
+
+            {customerOrders === undefined ? (
+              <div style={{ fontSize: "13px", color: "var(--text-tertiary)", fontStyle: "italic", padding: "8px 0" }}>
+                Loading customer order history...
+              </div>
+            ) : customerOrders.length === 0 ? (
+              <div style={{ fontSize: "13px", color: "var(--text-tertiary)", padding: "12px", background: "var(--surface-subtle, #f9fafb)", borderRadius: "6px", textAlign: "center" }}>
+                No orders placed by this customer yet.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "240px", overflowY: "auto", paddingRight: "4px" }}>
+                {customerOrders.map((order) => {
+                  const orderDateStr = new Date(order.createdAt).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                  const isDeliveredOrCompleted = order.status === "delivered" || order.status === "completed";
+                  const isFailed = order.status === "cancelled" || order.status === "failed" || order.status === "returned";
+                  const statusBadgeClass = isDeliveredOrCompleted
+                    ? "active-badge--on"
+                    : isFailed
+                    ? "active-badge--red"
+                    : "active-badge--yellow";
+
+                  return (
+                    <div
+                      key={order._id}
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border-subtle, #e5e7eb)",
+                        backgroundColor: "var(--surface-card, #ffffff)",
+                        fontSize: "13px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                        <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                          Order #{order._id.slice(-6).toUpperCase()}
+                          {order.isWalkIn ? (
+                            <span className="active-badge active-badge--off" style={{ marginLeft: "6px", fontSize: "11px" }}>
+                              Walk-in
+                            </span>
+                          ) : (
+                            <span className="active-badge active-badge--purple" style={{ marginLeft: "6px", fontSize: "11px" }}>
+                              Online
+                            </span>
+                          )}
+                        </span>
+                        <span className={`active-badge ${statusBadgeClass}`} style={{ fontSize: "11px" }}>
+                          {order.status.replace(/_/g, " ")}
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-secondary)", fontSize: "12px", marginBottom: "6px" }}>
+                        <span>{orderDateStr}</span>
+                        <strong style={{ color: "var(--text-primary)", fontSize: "13px" }}>
+                          UGX {order.grandTotal?.toLocaleString() ?? 0}
+                        </strong>
+                      </div>
+
+                      {order.items && order.items.length > 0 && (
+                        <div style={{ background: "var(--surface-subtle, #f9fafb)", borderRadius: "6px", padding: "6px 8px", marginTop: "6px" }}>
+                          <div style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--text-tertiary)", fontWeight: 600, marginBottom: "4px" }}>
+                            Items ({order.items.reduce((sum, item) => sum + (item.quantity || 1), 0)}):
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            {order.items.map((item, idx) => (
+                              <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "var(--text-primary)" }}>
+                                <span>
+                                  • {item.quantity}x {item.productName} {item.size ? `(${item.size})` : ""}
+                                </span>
+                                <span style={{ color: "var(--text-secondary)" }}>
+                                  UGX {((item.unitPrice || 0) * (item.quantity || 1)).toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px", paddingTop: "12px", borderTop: "1px solid var(--border-subtle, #e5e7eb)" }}>
             {onOpenNotes && (
               <button
@@ -175,3 +293,4 @@ export default function LeadDetailModal({ lead, onClose, onResolve, onOpenNotes 
     </div>
   );
 }
+

@@ -336,7 +336,7 @@ const RegistryPage = () => {
 
       const newToastMessages = toProcess.map(c => {
         const amountStr = c.priceContributed.toLocaleString();
-        return `🎉 ${c.from} just contributed UGX ${amountStr} towards "${c.itemName}"!`;
+        return `${c.from} just contributed UGX ${amountStr} towards "${c.itemName}"!`;
       });
 
       // Add to the queue
@@ -368,156 +368,15 @@ const RegistryPage = () => {
     }
   };
 
-  // Curated fallback packs
+  // Curated registry packs from live catalog
   const packs = useMemo(() => {
     const stage1Products = motherProducts.slice(0, 3);
     const stage2Products = newbornProducts.slice(0, 3);
     const stage3Products = kidProducts.slice(0, 3);
-    const stage4Products = []; // 'christening' isn't a valid stage in the schema; always empty, same as before
-
-    const fallbackMother = [
-      {
-        id: "mock-m1",
-        _id: "mock-m1",
-        name: "Closer to Nature Starter Set",
-        brand: "Tommee Tippee",
-        price: 180000,
-        image: "/assets/Tommee Tippee Closer to Nature Starter Set.jfif",
-        category: "Feeding",
-        stage: "mother",
-        tags: [{ type: "primary", text: "Newborn Starter" }]
-      },
-      {
-        id: "mock-m2",
-        _id: "mock-m2",
-        name: "Silicone Breast Pump Manual",
-        brand: "Haakaa",
-        price: 95000,
-        image: "https://picsum.photos/400/400?random=11",
-        category: "Nursing",
-        stage: "mother",
-        tags: [{ type: "primary", text: "Must-Have" }]
-      },
-      {
-        id: "mock-m3",
-        _id: "mock-m3",
-        name: "Hospital Bag Essentials",
-        brand: "Mamas & Papas",
-        price: 150000,
-        image: "/assets/Organic Cotton Starter Set.jfif",
-        category: "Apparel",
-        stage: "mother",
-        tags: [{ type: "primary", text: "Organic" }]
-      }
-    ];
-
-    const fallbackNewborn = [
-      {
-        id: "mock-n1",
-        _id: "mock-n1",
-        name: "SnüzPod 4 Bedside Crib",
-        brand: "Snuz",
-        price: 850000,
-        image: "/assets/SnüzPod 4 Bedside Crib - White.jfif",
-        category: "Sleep",
-        stage: "newborn",
-        tags: [{ type: "primary", text: "Premium Sleep" }]
-      },
-      {
-        id: "mock-n2",
-        _id: "mock-n2",
-        name: "Skip Hop Forma Backpack",
-        brand: "Skip Hop",
-        price: 295000,
-        image: "/assets/Skip Hop Forma Backpack Nappy Bag.jfif",
-        category: "Comfort",
-        stage: "newborn",
-        tags: [{ type: "primary", text: "Top Rated" }]
-      },
-      {
-        id: "mock-n3",
-        _id: "mock-n3",
-        name: "Organic Cotton Starter Set",
-        brand: "Mamas & Papas",
-        price: 150000,
-        image: "/assets/Organic Cotton Starter Set.jfif",
-        category: "Apparel",
-        stage: "newborn",
-        tags: [{ type: "primary", text: "Eco-Friendly" }]
-      }
-    ];
-
-    const fallbackToddler = [
-      {
-        id: "mock-t1",
-        _id: "mock-t1",
-        name: "Babycook Neo Blender",
-        brand: "Beaba",
-        price: 650000,
-        image: "/assets/BÉABA Babycook Neo Food Blender.jfif",
-        category: "Weaning",
-        stage: "kid",
-        tags: [{ type: "primary", text: "French Design" }]
-      },
-      {
-        id: "mock-t2",
-        _id: "mock-t2",
-        name: "Babycook Solo",
-        brand: "Beaba",
-        price: 470000,
-        image: "/assets/BÉABA Babycook Solo.jfif",
-        category: "Weaning",
-        stage: "kid",
-        tags: [{ type: "primary", text: "Compact Weaning" }]
-      },
-      {
-        id: "mock-t3",
-        _id: "mock-t3",
-        name: "Explore & More Gym",
-        brand: "Skip Hop",
-        price: 320000,
-        image: "https://picsum.photos/400/400?random=15",
-        category: "Play",
-        stage: "kid",
-        tags: [{ type: "primary", text: "Developmental" }]
-      }
-    ];
-
-    const fallbackChristening = [
-      {
-        id: "mock-c1",
-        _id: "mock-c1",
-        name: "Heirloom Linen Christening Gown",
-        brand: "Mamas & Papas",
-        price: 250000,
-        image: "https://images.unsplash.com/photo-1515488042361-404e9250afef?w=400&auto=format&fit=crop&q=80",
-        category: "Apparel",
-        stage: "christening",
-        tags: [{ type: "primary", text: "Heirloom Outfit" }]
-      },
-      {
-        id: "mock-c2",
-        _id: "mock-c2",
-        name: "Sterling Silver Keepsake Spoon & Rattle Set",
-        brand: "Tiffany & Co.",
-        price: 450000,
-        image: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&auto=format&fit=crop&q=80",
-        category: "Keepsakes",
-        stage: "christening",
-        tags: [{ type: "primary", text: "Sterling Silver" }]
-      },
-      {
-        id: "mock-c3",
-        _id: "mock-c3",
-        name: "Embroidered Organic Cotton Shawl",
-        brand: "Mamas & Papas",
-        price: 180000,
-        image: "/assets/Organic Cotton Starter Set.jfif",
-        category: "Comfort",
-        stage: "christening",
-        tags: [{ type: "primary", text: "100% Organic" }]
-      }
-    ];
+    // Christening pulls elegant keepsake / apparel picks from live newborn & kid catalog
+    const stage4Products = [...newbornProducts, ...kidProducts]
+      .filter(p => p.category?.toLowerCase().includes('apparel') || p.category?.toLowerCase().includes('nursery') || p.price > 150000)
+      .slice(0, 3);
 
     return {
       mother: {
@@ -525,28 +384,28 @@ const RegistryPage = () => {
         description: "Curated daily comfort, nursing, and recovery staples designed for your third trimester and hospital bag.",
         color: "rgba(211, 80, 151, 0.05)", // Muted Brand Primary
         badge: "Stage 1",
-        items: stage1Products.length > 0 ? stage1Products : fallbackMother
+        items: stage1Products
       },
       newborn: {
         title: "Newborn Journey",
         description: "Clinical precision and soft organic cotton essentials designed for sleep, comfort, and gentle grooming.",
         color: "rgba(77, 190, 227, 0.05)", // Muted Support Blue
         badge: "Stage 2",
-        items: stage2Products.length > 0 ? stage2Products : fallbackNewborn
+        items: stage2Products
       },
       toddler: {
         title: "Baby & Toddler",
         description: "Safety-tested active gear, feeding processors, and milestone play products designed for high curiosity.",
         color: "rgba(127, 169, 62, 0.05)", // Muted Support Green
         badge: "Stage 3",
-        items: stage3Products.length > 0 ? stage3Products : fallbackToddler
+        items: stage3Products
       },
       christening: {
         title: "Christening Celebration",
         description: "Elegant keepsake gifts, embroidered linen shawls, and heirloom outfits designed for a beautiful, blessed christening ceremony.",
         color: "rgba(225, 211, 40, 0.05)", // Muted Gold Brand Accent
         badge: "Special Event",
-        items: stage4Products.length > 0 ? stage4Products : fallbackChristening
+        items: stage4Products.length > 0 ? stage4Products : stage2Products
       }
     };
   }, [motherProducts, newbornProducts, kidProducts]);

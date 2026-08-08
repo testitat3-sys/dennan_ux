@@ -133,15 +133,15 @@ const LaunchPage = () => {
         />
       </div>
 
+      <div className="launch-page__sticky-banner">
+        <OfferCountdownBanner />
+      </div>
+
       <Page padding="inset" bottomSpacing="loose" noPaddingTop={true}>
       <Helmet>
         <title>Launch Offers | Dennan</title>
         <meta name="description" content={HERO.subtext} />
       </Helmet>
-
-      <div className="launch-page__sticky-banner">
-        <OfferCountdownBanner />
-      </div>
 
       <Page.Section className="plp__search-wrap plp__search-wrap--no-hero">
         <SearchStrip initialQuery={query} products={discountedProducts} onSubmit={handleSearchSubmit} />

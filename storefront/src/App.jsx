@@ -101,12 +101,19 @@ function App() {
             </ProtectedRoute>
           } />
           
+          <Route path="/circle-of-love" element={
+            <ProtectedRoute>
+              <RegistryPage />
+            </ProtectedRoute>
+          } />
+          
           <Route path="/registry" element={
             <ProtectedRoute>
               <RegistryPage />
             </ProtectedRoute>
           } />
           
+          <Route path="/circle-of-love/:registryId" element={<PublicRegistryPage />} />
           <Route path="/registry/:registryId" element={<PublicRegistryPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />

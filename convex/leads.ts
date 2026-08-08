@@ -97,17 +97,7 @@ export const getLeads = trackedQuery("leads.getLeads", {
       })
     );
 
-    const [launchSignups, launchOosSignups] = await Promise.all([
-      ctx.db
-        .query("registryNotifySignups")
-        .withIndex("by_source", (q) => q.eq("source", "launch"))
-        .collect(),
-      ctx.db
-        .query("registryNotifySignups")
-        .withIndex("by_source", (q) => q.eq("source", "launch_oos"))
-        .collect(),
-    ]);
-    const notifySignups = [...launchSignups, ...launchOosSignups];
+    const notifySignups = await ctx.db.query("registryNotifySignups").collect();
     const notifySignupLeads = await Promise.all(
       notifySignups.map(async (n) => {
         let userId = n.userId;
@@ -129,15 +119,24 @@ export const getLeads = trackedQuery("leads.getLeads", {
         }
 
         const stageLabel = n.stage ? STAGE_LABELS[n.stage] ?? n.stage : undefined;
-        const detail =
-          n.source === "launch_oos"
-            ? `Wants restock notification for: ${n.specifications?.join(", ") || "an out-of-stock product"}`
-            : `Signed up on the Launch page${stageLabel ? ` · Stage: ${stageLabel}` : ""}`;
+        let detail = `Signed up via ${n.source || "Registry"}${stageLabel ? ` · Stage: ${stageLabel}` : ""}`;
+        if (n.source === "launch_oos") {
+          detail = `Wants restock notification for: ${n.specifications?.join(", ") || "an out-of-stock product"}`;
+        } else if (n.source === "launch") {
+          detail = `Signed up on the Launch page${stageLabel ? ` · Stage: ${stageLabel}` : ""}`;
+        } else if (n.source === "gift-wrapping-sign-up" || n.source === "registry_gift_wrapping") {
+          detail = `Wants Gift Wrapping notification${stageLabel ? ` · Stage: ${stageLabel}` : ""}`;
+        } else if (n.source === "registry_group_gifting" || n.source === "group_gifting") {
+          detail = `Group Gifting interest${n.specifications?.length ? `: ${n.specifications.join(", ")}` : ""}${stageLabel ? ` · Stage: ${stageLabel}` : ""}`;
+        } else if (n.specifications?.length) {
+          detail = `${n.specifications.join(", ")}${stageLabel ? ` · Stage: ${stageLabel}` : ""}`;
+        }
+
         return {
           id: n._id,
           kind: "notifySignup" as const,
           userId: validUser ? validUser._id : undefined,
-          name: `${n.firstName} ${n.lastName}`.trim(),
+          name: `${n.firstName} ${n.lastName}`.trim() || n.email || n.phone || "Guest Lead",
           email: n.email,
           phone: n.phone,
           detail,

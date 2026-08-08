@@ -24,9 +24,8 @@ function zeroTotals(): MethodTotals {
 }
 
 // Sums each payment method's tenders across every completed order placed on
-// `date`, reusing the same order-fetch/payment-attribution helpers as the
-// Sales Metrics panel (convex/orders.ts) so the two surfaces never disagree.
-async function computeExpectedTotalsForDate(ctx: QueryCtx, date: string): Promise<MethodTotals> {
+// `date`, and deducts refunds issued on `date` per payment method.
+async function computeExpectedTotalsForDate(ctx: QueryCtx, date: string): Promise<{ totals: MethodTotals; refunds: MethodTotals }> {
   const rangeStartMs = parseDateStrToMs(date);
   const rangeEndMs = rangeStartMs + DAY_MS;
 
@@ -35,6 +34,8 @@ async function computeExpectedTotalsForDate(ctx: QueryCtx, date: string): Promis
   const paymentsByOrderId = await getPaymentsByOrderId(ctx, completedOrders);
 
   const totals = zeroTotals();
+  const refunds = zeroTotals();
+
   for (const order of completedOrders) {
     const tenders = attributeOrderPayments(order, paymentsByOrderId);
     for (const t of tenders) {
@@ -44,27 +45,49 @@ async function computeExpectedTotalsForDate(ctx: QueryCtx, date: string): Promis
       }
     }
   }
-  return totals;
+
+  // Fetch returns & refunds processed on this date
+  const returnsInRange = await ctx.db
+    .query("returns")
+    .filter((q) => q.and(q.gte(q.field("createdAt"), rangeStartMs), q.lt(q.field("createdAt"), rangeEndMs)))
+    .collect();
+
+  for (const ret of returnsInRange) {
+    const order = await ctx.db.get(ret.orderId);
+    if (ret.refundAmount && ret.refundAmount > 0) {
+      const methodKey = (order?.paymentMethod === "cod" ? "physical" : order?.paymentMethod) || "physical";
+      if (methodKey in refunds) {
+        refunds[methodKey as keyof MethodTotals] += ret.refundAmount;
+        totals[methodKey as keyof MethodTotals] = Math.max(0, totals[methodKey as keyof MethodTotals] - ret.refundAmount);
+      }
+    }
+    if (ret.topUpAmount && ret.topUpAmount > 0) {
+      const topUpKey = (ret.topUpMethod === "cod" ? "physical" : ret.topUpMethod) || "physical";
+      if (topUpKey in totals) {
+        totals[topUpKey as keyof MethodTotals] += ret.topUpAmount;
+      }
+    }
+  }
+
+  return { totals, refunds };
 }
 
 /**
  * Live-computed expected totals for a date, without persisting anything.
- * Used to preview the "System Expected" column before a cash-up entry has
- * been saved for that day.
  */
 export const getExpectedTotalsForDate = trackedQuery("cashUp.getExpectedTotalsForDate", {
   args: { token: v.string(), date: v.string() },
   handler: async (ctx, args) => {
     await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
-    return computeExpectedTotalsForDate(ctx, args.date);
+    const { totals } = await computeExpectedTotalsForDate(ctx, args.date);
+    return totals;
   },
 });
 
 /**
  * Everything the Balance Books panel needs for one day in a single round
- * trip: the saved entry (if any), that day's expenses, and the live-computed
- * expected totals (recomputed even if an entry already exists, so the panel
- * can flag if new orders landed after the entry was saved).
+ * trip: the saved entry (if any), that day's expenses, live-computed
+ * expected totals, and refunds breakdown per payment method.
  */
 export const getCashUpForDate = trackedQuery("cashUp.getCashUpForDate", {
   args: { token: v.string(), date: v.string() },
@@ -81,9 +104,9 @@ export const getCashUpForDate = trackedQuery("cashUp.getCashUpForDate", {
       .withIndex("by_date", (q) => q.eq("date", args.date))
       .collect();
 
-    const expected = await computeExpectedTotalsForDate(ctx, args.date);
+    const { totals: expected, refunds } = await computeExpectedTotalsForDate(ctx, args.date);
 
-    return { entry, expenses, expected };
+    return { entry, expenses, expected, refunds };
   },
 });
 
@@ -107,7 +130,7 @@ export const saveCashUpEntry = trackedMutation("cashUp.saveCashUpEntry", {
   handler: async (ctx, args) => {
     const { user } = await verifyStaffSession(ctx, args.token, ["staff", "admin", "accounting"]);
 
-    const expectedTotals = await computeExpectedTotalsForDate(ctx, args.date);
+    const { totals: expectedTotals } = await computeExpectedTotalsForDate(ctx, args.date);
     const discrepancies: MethodTotals = {
       physical: args.physicalCounts.physical - expectedTotals.physical,
       momo: args.physicalCounts.momo - expectedTotals.momo,

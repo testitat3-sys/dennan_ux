@@ -92,7 +92,11 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   const bottleStock = stockList.find((s: any) => s.id === productId1);
   expect(bottleStock?.inventory).toBe(10);
 
-  // Query stock list as Staff should fail (admin only)
+  // Query listCatalogProducts as Admin or Product Editor
+  const catalogList = await t.query(api.products.listCatalogProducts, { token: adminToken });
+  expect(catalogList.length).toBeGreaterThanOrEqual(2);
+
+  // Query stock list as Staff should fail (admin/stockManager/productEditor only)
   await expect(
     t.query(api.products.getStockList, { token: staffToken, paginationOpts: { numItems: 50, cursor: null } })
   ).rejects.toThrow("Access denied");
@@ -1016,6 +1020,14 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(multiKeywordSearchResults.length).toBeGreaterThan(0);
   expect(multiKeywordSearchResults[0].name).toBe("Baby Bottle Premium");
 
+  // Plural stemming search test ("bottles" -> "bottle")
+  const pluralSearchResults = await t.query(api.data.searchProducts, {
+    query: "bottles",
+    limit: 10,
+  });
+  expect(pluralSearchResults.length).toBeGreaterThan(0);
+  expect(pluralSearchResults.some((p: any) => p.name.toLowerCase().includes("bottle"))).toBe(true);
+
   // ─── 16. Unified Stock Lifecycle & Physical Audit Tests ───
   // Test physical audit / cycle count mutation
   const auditRes = await t.mutation(api.stockHistory.recordPhysicalAudit, {
@@ -1182,6 +1194,15 @@ test("complete business logic suite (fulfillment, stock, crm, returns, delivery 
   expect(createdPkgDoc.isPackage).toBe(true);
   expect(createdPkgDoc.actual_data).toBe(true);
   expect(createdPkgDoc.packageItems).toEqual([{ productId: sfProdId, quantity: 2 }]);
+
+  // ─── 14. Customer Orders in Leads Test ───
+  // Query orders for customer by userId and by phone/email
+  const custOrdersResult = await t.query(api.orders.getCustomerOrders, {
+    token: staffToken,
+    phone: "0770000000",
+  });
+  expect(custOrdersResult.data).toBeDefined();
+  expect(Array.isArray(custOrdersResult.data)).toBe(true);
 });
 
 

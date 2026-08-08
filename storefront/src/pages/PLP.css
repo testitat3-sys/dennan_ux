@@ -515,8 +515,8 @@
   align-items: center;
   height: clamp(140px, 22vw, 280px);
   padding: var(--space-4) var(--space-6);
-  margin-top: var(--space-4);
-  margin-bottom: var(--space-2);
+  margin-top: 0;
+  margin-bottom: 0;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -536,17 +536,16 @@
   position: sticky;
   top: var(--nav-offset, 68px);
   z-index: 990;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
-  margin-bottom: var(--space-2);
+  width: 100%;
+  margin: 0;
   transition: top 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (max-width: 768px) {
   .launch-page__hero-banner {
     padding: var(--space-3) var(--space-4);
-    margin-top: var(--space-3);
+    margin-top: 0;
+    margin-bottom: 0;
     height: clamp(120px, 28vw, 200px);
   }
 

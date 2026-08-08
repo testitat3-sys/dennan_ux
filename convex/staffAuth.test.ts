@@ -98,4 +98,25 @@ test("staff auth session lifecycle", async () => {
   expect(jeremyLogin.token).toBeDefined();
   expect(jeremyLogin.user.name).toBe("Jeremy");
   expect(jeremyLogin.user.accountRole).toBe("productEditor");
+
+  // 14. Verify Jeremy (productEditor) can list catalog products and edit product details
+  const catalog = await t.query(api.products.listCatalogProducts, { token: jeremyLogin.token });
+  expect(catalog).toBeDefined();
+
+  if (catalog.length > 0) {
+    const prod = catalog[0];
+    const updateRes = await t.mutation(api.products.updateProduct, {
+      token: jeremyLogin.token,
+      productId: prod.id,
+      description: "Updated by Jeremy",
+    });
+    expect(updateRes.success).toBe(true);
+
+    const adjustRes = await t.mutation(api.products.adjustStock, {
+      token: jeremyLogin.token,
+      productId: prod.id,
+      delta: 2,
+    });
+    expect(adjustRes.newInventory).toBeDefined();
+  }
 });

@@ -8,6 +8,9 @@ import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import Button from '../ui/Button';
 import { REAL_BRANDS } from '../../constants/brandsData';
+import { api } from "@convex/_generated/api";
+import { useTrackedQuery } from '../../hooks/useTrackedQuery';
+import { getProductSearchSuggestions } from '../../utils/productSearch';
 
 // Partition REAL_BRANDS dynamically
 const discountedBrands = REAL_BRANDS.filter(b => b.maxDiscount > 0).map(b => ({
@@ -198,16 +201,34 @@ const Navbar = () => {
   const handleMobileSearch = (e) => {
     e.preventDefault();
     if (mobileSearchQuery.trim()) {
+      setShowMobileSuggestions(false);
+      setSearchSuggestions([]);
+      setIsSearchActive(false);
       navigate(`/category/all?q=${encodeURIComponent(mobileSearchQuery.trim())}`);
       setIsMenuOpen(false);
     }
   };
 
+  // getProducts is defined with trackedQuery (convex/lib/ioTracking.ts), which
+  // returns { _io, data } to piggyback its read-count tally on the response.
+  // useTrackedQuery reports that tally and unwraps `.data` back to the plain
+  // product array - a raw useQuery() call here would hand back the wrapper
+  // object instead, silently breaking every Array.prototype call downstream.
+  const fetchedProducts = useTrackedQuery(api.data.getProducts, {}, 20);
+
+  const getSuggestionsForQuery = (queryText) => getProductSearchSuggestions(fetchedProducts, queryText, 6);
+
   const handleSuggestionClick = (suggestion) => {
-    setMobileSearchQuery(suggestion);
     setShowMobileSuggestions(false);
-    navigate(`/category/all?q=${encodeURIComponent(suggestion)}`);
+    setSearchSuggestions([]);
+    setIsSearchActive(false);
     setIsMenuOpen(false);
+    if (suggestion && typeof suggestion === 'object' && suggestion.route) {
+      navigate(suggestion.route);
+    } else {
+      const text = typeof suggestion === 'object' ? suggestion.text : suggestion;
+      navigate(`/category/all?q=${encodeURIComponent(text)}`);
+    }
   };
 
   const handleDesktopSearchSubmit = (e) => {
@@ -219,10 +240,14 @@ const Navbar = () => {
   };
 
   const handleDesktopSuggestionClick = (suggestion) => {
-    setDesktopSearchQuery(suggestion);
     setShowDesktopSuggestions(false);
-    navigate(`/category/all?q=${encodeURIComponent(suggestion)}`);
     setIsDesktopSearchActive(false);
+    if (suggestion && typeof suggestion === 'object' && suggestion.route) {
+      navigate(suggestion.route);
+    } else {
+      const text = typeof suggestion === 'object' ? suggestion.text : suggestion;
+      navigate(`/category/all?q=${encodeURIComponent(text)}`);
+    }
   };
 
   const handleDesktopSearchKeyDown = (e) => {
@@ -265,35 +290,25 @@ const Navbar = () => {
 
   useEffect(() => {
     if (mobileSearchQuery.length > 1) {
-      const allLinks = navData.flatMap(item => 
-        item.menu.columns.flatMap(col => col.links.map(l => l.text))
-      );
-      const filtered = [...new Set(allLinks)].filter(text => 
-        text.toLowerCase().includes(mobileSearchQuery.toLowerCase())
-      ).slice(0, 5);
-      setSearchSuggestions(filtered);
-      setShowMobileSuggestions(true);
+      const res = getSuggestionsForQuery(mobileSearchQuery);
+      setSearchSuggestions(res);
+      setShowMobileSuggestions(res.length > 0);
     } else {
       setSearchSuggestions([]);
       setShowMobileSuggestions(false);
     }
-  }, [mobileSearchQuery]);
+  }, [mobileSearchQuery, fetchedProducts]);
 
   useEffect(() => {
     if (desktopSearchQuery.length > 1) {
-      const allLinks = navData.flatMap(item => 
-        item.menu.columns.flatMap(col => col.links.map(l => l.text))
-      );
-      const filtered = [...new Set(allLinks)].filter(text => 
-        text.toLowerCase().includes(desktopSearchQuery.toLowerCase())
-      ).slice(0, 5);
-      setDesktopSuggestions(filtered);
-      setShowDesktopSuggestions(true);
+      const res = getSuggestionsForQuery(desktopSearchQuery);
+      setDesktopSuggestions(res);
+      setShowDesktopSuggestions(res.length > 0);
     } else {
       setDesktopSuggestions([]);
       setShowDesktopSuggestions(false);
     }
-  }, [desktopSearchQuery]);
+  }, [desktopSearchQuery, fetchedProducts]);
 
   // Lock background body scroll when mobile drawer is open
   useEffect(() => {
@@ -377,11 +392,17 @@ const Navbar = () => {
                       fullWidth
                       className={`mobile-menu__suggestion-item ${index === focusedSuggestionIndex ? 'is-focused' : ''}`}
                       onClick={() => handleDesktopSuggestionClick(suggestion)}
-                      style={{ textAlign: 'left', justifyContent: 'flex-start' }}
-                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>}
-                      iconPosition="left"
+                      style={{ textAlign: 'left', justifyContent: 'flex-start', gap: '10px' }}
                     >
-                      {suggestion}
+                      {suggestion.image ? (
+                        <img src={suggestion.image} alt="" style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                        <div style={{ fontWeight: 500, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{suggestion.text}</div>
+                        {suggestion.sub && <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '2px' }}>{suggestion.sub}</div>}
+                      </div>
                     </Button>
                   ))}
                 </div>
@@ -527,11 +548,17 @@ const Navbar = () => {
                         fullWidth
                         className="mobile-menu__suggestion-item"
                         onClick={() => handleSuggestionClick(suggestion)}
-                        style={{ textAlign: 'left', justifyContent: 'flex-start' }}
-                        icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>}
-                        iconPosition="left"
+                        style={{ textAlign: 'left', justifyContent: 'flex-start', gap: '10px' }}
                       >
-                        {suggestion}
+                        {suggestion.image ? (
+                          <img src={suggestion.image} alt="" style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                          <div style={{ fontWeight: 500, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{suggestion.text}</div>
+                          {suggestion.sub && <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '2px' }}>{suggestion.sub}</div>}
+                        </div>
                       </Button>
                     ))}
                   </div>
